@@ -10,30 +10,33 @@ namespace api.Controllers
     public class ValuesController : ApiController
     {
         // GET api/values
-        public IEnumerable<string> Get()
+        public  HttpResponseMessage Get()
         {
-            return new string[] { "value1", "value2" };
+            return Request.CreateResponse<IEnumerable<string>>(HttpStatusCode.OK, new string[] { "value1", "value2" });
         }
 
         // GET api/values/5
-        public string Get(int id)
+        public HttpResponseMessage Get(int id)
         {
-            return "value";
+            return Request.CreateResponse<IEnumerable<string>>(HttpStatusCode.OK, new string[] { "value" });
         }
 
         // POST api/values
-        public void Post([FromBody]string value)
+        public HttpResponseMessage Post([FromBody]dynamic value)
         {
+            return Request.CreateResponse<Int32>(HttpStatusCode.OK, 100);
         }
 
         // PUT api/values/5
-        public void Put(int id, [FromBody]string value)
+        public HttpResponseMessage Put(int id, [FromBody]dynamic value)
         {
+            return Request.CreateResponse(HttpStatusCode.OK);
         }
 
         // DELETE api/values/5
-        public void Delete(int id)
+        public HttpResponseMessage Delete(int id)
         {
+            return Request.CreateResponse(HttpStatusCode.OK);
         }
     }
 }
