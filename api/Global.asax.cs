@@ -6,6 +6,7 @@ using System.Web.Http;
 using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
+using WebMatrix.WebData;
 
 namespace api
 {
@@ -22,6 +23,8 @@ namespace api
             FilterConfig.RegisterGlobalFilters(GlobalFilters.Filters);
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
+
+            WebSecurity.InitializeDatabaseConnection("painel_taxservices_dbContext", "webpages_Users", "id_users", "ds_login", autoCreateTables: true);
         }
     }
 }

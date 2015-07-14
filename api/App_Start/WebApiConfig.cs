@@ -16,9 +16,22 @@ namespace api
 
 
             config.Routes.MapHttpRoute(
-                name: "DefaultApi",
-                routeTemplate: "api/{controller}/{id}",
-                defaults: new { id = RouteParameter.Optional }
+                name: "apimonitorposget",
+                routeTemplate: "monitor/cargas/pos/{controller}"
+            );
+
+            config.Routes.MapHttpRoute(
+                name: "RotaDinamica",
+                routeTemplate: "{folder}/{controller}/{token}/{colecao}/{campo}/{orderBy}/{pageSize}/{pageNumber}",
+                defaults: new
+                {
+                    token = RouteParameter.Optional,
+                    colecao = RouteParameter.Optional,
+                    campo = RouteParameter.Optional,
+                    orderBy = RouteParameter.Optional,
+                    pageSize = RouteParameter.Optional,
+                    pageNumber = RouteParameter.Optional
+                }
             );
 
 
