@@ -11,6 +11,10 @@ using api.Bibliotecas;
 using System.Web.Helpers;
 using System.Net.NetworkInformation;
 using WebMatrix.WebData;
+using System.Web;
+using System.Collections;
+using System.Web.Configuration;
+using System.Collections.Specialized;
 
 namespace api.Controllers.Login
 {
@@ -29,17 +33,29 @@ namespace api.Controllers.Login
             {
                //var ip = System.Web.HttpContext.Current != null ? System.Web.HttpContext.Current.Request.UserHostAddress : "";
 
-               //NetworkInterface[] nif = NetworkInterface.GetAllNetworkInterfaces();
-               //String MACAddress = string.Empty;
-               //foreach (NetworkInterface adapter in nif)
-               //{
-               //    if (MACAddress == String.Empty)
-               //    {
-               //        IPInterfaceProperties ipproperties = adapter.GetIPProperties();
-               //        MACAddress = adapter.GetPhysicalAddress().ToString();
-               //    }
-               //}
+                //NetworkInterface[] nif = NetworkInterface.GetAllNetworkInterfaces();
+                //String MACAddress = string.Empty;
+                //foreach (NetworkInterface adapter in nif)
+                //{
+                //    if (MACAddress == String.Empty)
+                //    {
+                //        if (adapter.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up)
+                //        {
+                //            IPInterfaceProperties ipproperties = adapter.GetIPProperties();
+                //            MACAddress = adapter.GetPhysicalAddress().ToString();
+                //        }
+                //    }
+                //}
 
+                //string labelText = null;
+                //if (Bibliotecas.Device.IsMobile())
+                //{
+                //    labelText = "Browser is a mobile device.";
+                //}
+                //else
+                //{
+                //    labelText = "Browser is not a mobile device.";
+                //}
 
                 if(Permissoes.Autenticado(token))
                 {
