@@ -312,26 +312,9 @@ namespace api.Negocios.Cliente
             {
                 CollectionEmpresa = query.Select(e => new
                 {
-
                     nu_cnpj = e.nu_cnpj,
-                    nu_BaseCnpj = e.nu_BaseCnpj,
-                    nu_SequenciaCnpj = e.nu_SequenciaCnpj,
-                    nu_DigitoCnpj = e.nu_DigitoCnpj,
                     ds_fantasia = e.ds_fantasia,
-                    ds_razaoSocial = e.ds_razaoSocial,
-                    ds_endereco = e.ds_endereco,
-                    ds_cidade = e.ds_cidade,
-                    sg_uf = e.sg_uf,
-                    nu_cep = e.nu_cep,
-                    nu_telefone = e.nu_telefone,
-                    ds_bairro = e.ds_bairro,
-                    ds_email = e.ds_email,
-                    dt_cadastro = e.dt_cadastro,
-                    fl_ativo = e.fl_ativo,
-                    token = e.token,
                     id_grupo = e.id_grupo,
-                    filial = e.filial,
-                    nu_inscEstadual = e.nu_inscEstadual,
                 }).ToList<dynamic>();
             }
 

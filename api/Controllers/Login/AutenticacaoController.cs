@@ -94,8 +94,8 @@ namespace api.Controllers.Login
                                                                                             {
                                                                                                 RoleId = r.RoleId,
                                                                                                 RolePrincipal = r.RolePrincipal,
-                                                                                                ControllerPrincipal = r.webpages_Roles.webpages_Permissions.Where(p => p.fl_principal == true).Select( p => p.webpages_Methods.webpages_Controllers.id_controller ).FirstOrDefault(), // .FirstOrDefault().webpages_Methods.webpages_Controllers.id_controller,
-                                                                                                Controllers = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Select(p => new { id_controller = p.webpages_Methods.id_controller }).ToList<dynamic>()
+                                                                                                ControllerPrincipal = r.webpages_Roles.webpages_Permissions.Where(p => p.fl_principal == true).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select( p => p.webpages_Methods.webpages_Controllers.id_controller ).FirstOrDefault(), // .FirstOrDefault().webpages_Methods.webpages_Controllers.id_controller,
+                                                                                                Controllers = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select(p => new { id_controller = p.webpages_Methods.id_controller }).ToList<dynamic>()
                                                                                             }
                                                                                         ).ToList<dynamic>();
 

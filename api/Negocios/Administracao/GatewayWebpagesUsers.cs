@@ -445,5 +445,51 @@ namespace api.Negocios.Administracao
 
         }
 
+
+
+
+        /// <summary>
+        /// Altera webpages_Users
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static void Update(string token, Int32 id_grupo)
+        {
+            Int32 IdUser = Permissoes.GetIdUser(token);
+            webpages_Users value = _db.webpages_Users
+                    .Where(e => e.id_users == IdUser)
+                    .First<webpages_Users>();
+
+            
+
+            if (value != null)
+            {
+                // VALIDAR PERMISSÂO PARA FUNCIONALIDADE
+
+                if (id_grupo == -1)
+                {
+                    value.id_grupo = null;
+                    _db.SaveChanges();
+                }
+                else
+                {
+                    grupo_empresa grupo = _db.grupo_empresa
+                                             .Where(g => g.id_grupo == id_grupo)
+                                             .First<grupo_empresa>();
+
+                    if (grupo != null)
+                    {
+                        value.id_grupo = id_grupo;
+                        _db.SaveChanges();
+                    }
+                    else
+                        throw new Exception("Grupo empresa inválido!");
+                }
+            }
+            else
+                throw new Exception("Usuário inválido inválido!");
+
+        }
+
     }
 }

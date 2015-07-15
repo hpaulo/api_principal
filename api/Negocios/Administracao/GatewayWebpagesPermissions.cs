@@ -253,7 +253,7 @@ namespace api.Negocios.Administracao
 
             if ((param.Deletar != null) && (param.Deletar.Count > 0))
             {
-                foreach (var item in param.Inserir)
+                foreach (var item in param.Deletar)
                 {
                     _db.webpages_Permissions.Remove(
                                                         _db.webpages_Permissions

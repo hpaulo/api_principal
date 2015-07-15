@@ -235,6 +235,7 @@ namespace api.Negocios.Pos
                     status = e.status,
                     estabelecimento = e.estabelecimento,
                     operadora = e.Operadora.nmOperadora,
+                    idOperadora = e.idOperadora
                 }).ToList<dynamic>();
             }
 

@@ -641,6 +641,7 @@
     <Compile Include="Models\webpages_Users.cs" />
     <Compile Include="Models\webpages_UsersInRoles.cs" />
     <Compile Include="Negocios\Administracao\GatewayLogAcesso.cs" />
+    <Compile Include="Negocios\Administracao\GatewayModulo.cs" />
     <Compile Include="Negocios\Administracao\GatewayPessoa.cs" />
     <Compile Include="Negocios\Administracao\GatewayWebpagesControllers.cs" />
     <Compile Include="Negocios\Administracao\GatewayWebpagesMembership.cs" />

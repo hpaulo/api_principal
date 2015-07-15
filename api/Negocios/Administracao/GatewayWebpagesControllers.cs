@@ -323,7 +323,28 @@ namespace api.Negocios.Administracao
 
                 retorno.TotalDeRegistros = CollectionWebpages_Controllers.Count;
             }
+            else if (colecao == 4)
+            {
+                Int32 IdController = Convert.ToInt32(queryString[((int)CAMPOS.ID_CONTROLLER).ToString()]);
+                Int32 IdUser = Permissoes.GetIdUser(token);
 
+
+                List<dynamic> List = _db.webpages_UsersInRoles.Where(r => r.UserId == IdUser)
+                                                    .Where(r => r.RoleId > 50)
+                                                    .Select(r => new
+                                                    {
+                                                        methods = _db.webpages_Permissions
+                                                                         .Where(p => p.id_roles == r.RoleId)
+                                                                         .Where(p => p.webpages_Methods.webpages_Controllers.id_controller == IdController)
+                                                                         .Select(p => new { ds_method = p.webpages_Methods.ds_method, id_method = p.webpages_Methods.id_method })
+                                                                         .ToList<dynamic>()
+                                                    }
+                                                            ).ToList<dynamic>();
+
+                CollectionWebpages_Controllers.Add(List[0].methods);
+
+                retorno.TotalDeRegistros = CollectionWebpages_Controllers.Count;
+            }
 
 
             retorno.Registros = CollectionWebpages_Controllers;
@@ -430,11 +451,13 @@ namespace api.Negocios.Administracao
             // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.id_controller != null && param.id_controller != value.id_controller)
-                value.id_controller = param.id_controller;
+            //if (param.id_controller != null && param.id_controller != value.id_controller)
+            //    value.id_controller = param.id_controller;
             if (param.ds_controller != null && param.ds_controller != value.ds_controller)
                 value.ds_controller = param.ds_controller;
-            if (param.nm_controller != null && param.nm_controller != value.nm_controller)
+            if (param.nm_controller == null && param.ds_controller != null && param.ds_controller != value.ds_controller)
+                value.nm_controller = param.ds_controller;
+            else if (param.nm_controller != null && param.nm_controller != value.nm_controller)
                 value.nm_controller = param.nm_controller;
             if (param.fl_menu != null && param.fl_menu != value.fl_menu)
                 value.fl_menu = param.fl_menu;

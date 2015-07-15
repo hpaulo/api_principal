@@ -19,6 +19,8 @@ namespace api.Controllers.Administracao
         {
             try
             {
+                var URLAPI = Request.RequestUri.Segments[1].ToUpper() + Request.RequestUri.Segments[2].ToUpper().Replace("/", "");
+
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
