@@ -285,7 +285,7 @@ namespace api.Negocios.Pos
                 }).ToList<dynamic>();
             }
             else if (colecao == 2)
-            {
+                    {
                 var consulta = query
                     .GroupBy(x => new { x.dtaVenda.Year, x.dtaVenda.Month, x.empresa.id_grupo })
                     .Select(e => new
