@@ -32,4 +32,14 @@ namespace api.Models.Object
 
         
     }
+
+    public class UpdateUsuario
+    {
+        private Int32 id_grupo;
+        public Int32 Id_grupo
+        {
+            get { return id_grupo; }
+            set { id_grupo = value; }
+        }
+    }
 }

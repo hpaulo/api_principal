@@ -318,6 +318,48 @@ namespace api.Negocios.Pos
                 }).ToList<dynamic>();
                  */
             }
+            else if (colecao == 3) // Portal/RelatorioTerminalLogico
+            {
+                var teste = query
+                .GroupBy(e => new { e.TerminalLogico, e.BandeiraPos })
+                .Select(e => new
+                {
+                    terminal = new {
+                                        e.Key.TerminalLogico.idTerminalLogico,
+                                        e.Key.TerminalLogico.dsTerminalLogico,
+                                        e.Key.TerminalLogico.idOperadora
+                    },
+                    bandeira = new {
+                                        e.Key.BandeiraPos.id,
+                                        e.Key.BandeiraPos.desBandeira,
+                                        e.Key.BandeiraPos.idOperadora
+                    },
+                    totalTransacoes = e.Count(),
+                    valorBruto = e.Sum( p => p.valorVendaBruta )
+
+
+                    /*
+                    id = e.id,
+                    idBandeira = e.idBandeira,
+                    cnpj = e.cnpj,
+                    nsu = e.nsu,
+                    cdAutorizador = e.cdAutorizador,
+                    dtaVenda = e.dtaVenda,
+                    valorVendaBruta = e.valorVendaBruta,
+                    valorVendaLiquida = e.valorVendaLiquida,
+                    loteImportacao = e.loteImportacao,
+                    dtaRecebimento = e.dtaRecebimento,
+                    idLogicoTerminal = e.idLogicoTerminal,
+                    codTituloERP = e.codTituloERP,
+                    codVendaERP = e.codVendaERP,
+                    codResumoVenda = e.codResumoVenda,
+                    numParcelaTotal = e.numParcelaTotal,*/
+                });///.ToList<dynamic>();
+                   ///
+                CollectionRecebimento = teste.ToList<dynamic>();
+                retorno.TotalDeRegistros = CollectionRecebimento.Count;
+            }
+
 
             retorno.Registros = CollectionRecebimento;
 

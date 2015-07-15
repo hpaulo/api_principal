@@ -18,7 +18,7 @@ namespace api.Controllers
             var userBrowser = new HttpBrowserCapabilities { Capabilities = new Hashtable { { string.Empty, userAgent } } };
             System.Web.HttpBrowserCapabilities myBrowserCaps = userBrowser;
 
-            return Request.CreateResponse<IEnumerable<string>>(HttpStatusCode.OK, new string[] { HttpContext.Current.Request.UserHostAddress, ((System.Web.Configuration.HttpCapabilitiesBase)myBrowserCaps).IsMobileDevice.ToString() });
+            return Request.CreateResponse<IEnumerable<string>>(HttpStatusCode.OK, new string[] { HttpContext.Current.Request.UserHostAddress, ((System.Web.Configuration.HttpCapabilitiesBase)myBrowserCaps).IsMobileDevice.ToString(), Request.Headers.UserAgent.ToString() });
         }
 
         // GET api/values/5

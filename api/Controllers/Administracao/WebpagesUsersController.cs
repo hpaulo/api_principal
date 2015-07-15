@@ -72,6 +72,26 @@ namespace api.Controllers.Administracao
             }
         }
 
+        // PUT /webpages_Users/token/
+        public HttpResponseMessage Put(string token, Int32 id_grupo)
+        {
+            try
+            {
+                HttpResponseMessage retorno = new HttpResponseMessage();
+                if (Permissoes.Autenticado(token))
+                {
+                    GatewayWebpagesUsers.Update(token, id_grupo);
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
+                else
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+            }
+            catch(Exception e)
+            {
+                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+        }
+
         // DELETE /webpages_Users/token/id_users
         public HttpResponseMessage Delete(string token, Int32 id_users)
         {

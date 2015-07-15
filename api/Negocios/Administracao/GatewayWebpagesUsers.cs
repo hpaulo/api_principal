@@ -453,9 +453,10 @@ namespace api.Negocios.Administracao
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, Int32 id_grupo)
+        public static void Update(string token, Int32 param)
         {
             Int32 IdUser = Permissoes.GetIdUser(token);
+            Int32 id_grupo = param;
             webpages_Users value = _db.webpages_Users
                     .Where(e => e.id_users == IdUser)
                     .First<webpages_Users>();
@@ -479,7 +480,7 @@ namespace api.Negocios.Administracao
 
                     if (grupo != null)
                     {
-                        value.id_grupo = id_grupo;
+                        value.id_grupo = grupo.id_grupo;
                         _db.SaveChanges();
                     }
                     else
