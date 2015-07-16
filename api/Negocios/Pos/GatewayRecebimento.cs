@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Globalization;
 
 namespace api.Negocios.Pos
 {
@@ -41,6 +42,8 @@ namespace api.Negocios.Pos
             CODVENDAERP = 112,
             CODRESUMOVENDA = 113,
             NUMPARCELATOTAL = 114,
+
+            ID_GRUPO = 316,
 
         };
 
@@ -90,10 +93,6 @@ namespace api.Negocios.Pos
                         string cdAutorizador = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.cdAutorizador.Equals(cdAutorizador)).AsQueryable<Recebimento>();
                         break;
-                    case CAMPOS.DTAVENDA:
-                        DateTime dtaVenda = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtaVenda.Equals(dtaVenda)).AsQueryable<Recebimento>();
-                        break;
                     case CAMPOS.VALORVENDABRUTA:
                         decimal valorVendaBruta = Convert.ToDecimal(item.Value);
                         entity = entity.Where(e => e.valorVendaBruta.Equals(valorVendaBruta)).AsQueryable<Recebimento>();
@@ -131,6 +130,41 @@ namespace api.Negocios.Pos
                         entity = entity.Where(e => e.numParcelaTotal.Equals(numParcelaTotal)).AsQueryable<Recebimento>();
                         break;
 
+                    /// PERSONALIZADO
+
+                    case CAMPOS.DTAVENDA:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0], "yyyyMMdd", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1], "yyyyMMdd", CultureInfo.InvariantCulture);
+                            if (dtaIni == dtaFim)
+                                entity = entity.Where(e => e.dtaVenda.Month == dtaIni.Month && e.dtaVenda.Year == dtaIni.Year);
+                            else
+                                entity = entity.Where(e => e.dtaVenda >= dtaIni && e.dtaVenda <= dtaFim);
+                        }
+                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca, "yyyyMMdd", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaVenda >= dta);
+                        }
+                        else if (item.Value.Contains("<")) // MENOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca, "yyyyMMdd", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaVenda <= dta);
+                        }
+                        else // IGUAL
+                        {
+                            DateTime dtvenda = Convert.ToDateTime(item.Value);
+                            entity = entity.Where(e => e.dtaVenda.Equals(dtvenda));
+                        }
+                        break;
+                    case CAMPOS.ID_GRUPO:
+                        Int32 idGrupo = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.empresa.id_grupo.Equals(idGrupo));
+                        break;
                 }
             }
             #endregion
@@ -285,38 +319,33 @@ namespace api.Negocios.Pos
                 }).ToList<dynamic>();
             }
             else if (colecao == 2)
-                    {
-                var consulta = query
+            {
+                var queryRecebimento = query
                     .GroupBy(x => new { x.dtaVenda.Year, x.dtaVenda.Month, x.empresa.id_grupo })
                     .Select(e => new
-                {
+                    {
 
-                    empresa = e.Key.id_grupo,
-                    dtaVenda = e.Key.Year,
-                    vlVenda = (e.Sum(p => p.valorVendaBruta))
-                }).Where(x => x.dtaVenda >= 20150701 && x.empresa.Equals(31));
+                        nrAno = e.Key.Year,
+                        nrMes = e.Key.Month,
+                        cdGrupo = e.Key.id_grupo,
+                        vlVenda = e.Sum(l => l.valorVendaBruta)
+                    });
 
-                /*
-                    CollectionRecebimento = query.Select(e => new
-                {
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
 
-                    id = e.id,
-                    idBandeira = e.idBandeira,
-                    cnpj = e.cnpj,
-                    nsu = e.nsu,
-                    cdAutorizador = e.cdAutorizador,
-                    dtaVenda = e.dtaVenda,
-                    valorVendaBruta = e.valorVendaBruta,
-                    valorVendaLiquida = e.valorVendaLiquida,
-                    loteImportacao = e.loteImportacao,
-                    dtaRecebimento = e.dtaRecebimento,
-                    idLogicoTerminal = e.idLogicoTerminal,
-                    codTituloERP = e.codTituloERP,
-                    codVendaERP = e.codVendaERP,
-                    codResumoVenda = e.codResumoVenda,
-                    numParcelaTotal = e.numParcelaTotal,
-                }).ToList<dynamic>();
-                 */
+                // PAGINAÇÃO
+                skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                CollectionRecebimento = queryRecebimento.OrderBy(o => new { o.nrAno, o.nrMes }).ToList<dynamic>();
+
             }
             else if (colecao == 3) // Portal/RelatorioTerminalLogico
             {
