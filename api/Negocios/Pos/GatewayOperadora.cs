@@ -30,6 +30,8 @@ namespace api.Negocios.Pos
             NMOPERADORA = 101,
             IDGRUPOEMPRESA = 102,
 
+            NU_CNPJ = 300,
+
         };
 
         /// <summary>
@@ -45,7 +47,7 @@ namespace api.Negocios.Pos
         private static IQueryable<Operadora> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
-            var entity = _db.Operadoras.AsQueryable<Operadora>();
+            var entity = _db.Operadoras.AsQueryable();
 
             #region WHERE - ADICIONA OS FILTROS A QUERY
 
@@ -58,15 +60,20 @@ namespace api.Negocios.Pos
                 {
                     case CAMPOS.ID:
                         Int32 id = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.id.Equals(id)).AsQueryable<Operadora>();
+                        entity = entity.Where(e => e.id.Equals(id)).AsQueryable();
                         break;
                     case CAMPOS.NMOPERADORA:
                         string nmOperadora = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nmOperadora.Equals(nmOperadora)).AsQueryable<Operadora>();
+                        entity = entity.Where(e => e.nmOperadora.Equals(nmOperadora)).AsQueryable();
                         break;
                     case CAMPOS.IDGRUPOEMPRESA:
                         Int32 idGrupoEmpresa = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idGrupoEmpresa.Equals(idGrupoEmpresa)).AsQueryable<Operadora>();
+                        entity = entity.Where(e => e.idGrupoEmpresa.Equals(idGrupoEmpresa)).AsQueryable();
+                        break;
+
+                    case CAMPOS.NU_CNPJ:
+                        string nu_cnpj = Convert.ToString(item.Value);
+                        entity = entity.Where(e => _db.LoginOperadoras.Where( l => l.cnpj.Equals(nu_cnpj) ).Select( l => l.idOperadora ).ToList().Contains( e.id )).AsQueryable();
                         break;
                 }
             }
@@ -104,6 +111,17 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
+            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+            string outValue = null;
+            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+            if (IdGrupo != 0)
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.IDGRUPOEMPRESA, out outValue))
+                    queryString["" + (int)CAMPOS.IDGRUPOEMPRESA] = IdGrupo.ToString();
+                else
+                    queryString.Add("" + (int)CAMPOS.IDGRUPOEMPRESA, IdGrupo.ToString());
+            }
+
             //DECLARAÇÕES
             List<dynamic> CollectionOperadora = new List<dynamic>();
             Retorno retorno = new Retorno();

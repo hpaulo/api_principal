@@ -153,6 +153,17 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
+            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+            string outValue = null;
+            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+            if (IdGrupo != 0)
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                else
+                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+            }
+
             //DECLARAÇÕES
             List<dynamic> CollectionGrupo_empresa = new List<dynamic>();
             Retorno retorno = new Retorno();

@@ -98,8 +98,8 @@ namespace api.Negocios.Pos
                         if (item.Value.Contains("|")) // BETWEEN
                         {
                             string[] busca = item.Value.Split('|');
-                            DateTime dtaIni = DateTime.ParseExact(busca[0], "yyyyMMdd", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1], "yyyyMMdd", CultureInfo.InvariantCulture);
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + "00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + "23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             if (dtaIni == dtaFim)
                                 entity = entity.Where(e => e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Year == dtaIni.Year);
                             else
@@ -108,19 +108,25 @@ namespace api.Negocios.Pos
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
                         {
                             string busca = item.Value.Replace(">", "");
-                            DateTime dta = DateTime.ParseExact(busca, "yyyyMMdd", CultureInfo.InvariantCulture);
+                            DateTime dta = DateTime.ParseExact(busca + "00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtaRecebimento >= dta);
                         }
                         else if (item.Value.Contains("<")) // MENOR IGUAL
                         {
-                            string busca = item.Value.Replace(">", "");
-                            DateTime dta = DateTime.ParseExact(busca, "yyyyMMdd", CultureInfo.InvariantCulture);
+                            string busca = item.Value.Replace("<", "");
+                            DateTime dta = DateTime.ParseExact(busca + "23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtaRecebimento <= dta);
                         }
                         else // IGUAL
                         {
-                            DateTime dtaRecebimento = Convert.ToDateTime(item.Value);
-                            entity = entity.Where(e => e.dtaRecebimento.Equals(dtaRecebimento));
+                            //DateTime dtaRecebimento = Convert.ToDateTime(item.Value);
+                            //entity = entity.Where(e => e.dtaRecebimento.Equals(dtaRecebimento));
+
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + "00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca + "23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dta = DateTime.ParseExact(busca, "yyyyMMdd", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaRecebimento >= dtaIni && e.dtaRecebimento <= dtaFim);
                         }
                         break;
                     case CAMPOS.VALORDESCONTADO:
@@ -198,12 +204,16 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            string outValue = null;
             // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-            if ( queryString.TryGetValue("316",out outValue) )
-                queryString["316"] = "31";
-            else
-                queryString.Add("316", "31"); 
+            string outValue = null;
+            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+            if (IdGrupo != 0)
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                else
+                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+            }
 
             //DECLARAÇÕES
             List<dynamic> CollectionRecebimentoParcela = new List<dynamic>();
@@ -278,9 +288,9 @@ namespace api.Negocios.Pos
 
                 }).ToList<dynamic>();
             }
-            else if (colecao == 2) // cashflow
+            else if (colecao == 2) // [mobile]/cashflow
             {
-                CollectionRecebimentoParcela = query
+                var subQuery = query
                     .GroupBy(x => new { x.dtaRecebimento.Year, x.dtaRecebimento.Month, x.Recebimento.empresa.id_grupo })
                     .Select(e => new
                     {
@@ -292,28 +302,28 @@ namespace api.Negocios.Pos
                         vlDescontado = (e.Sum(p => p.valorDescontado)),
                         vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                         nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
-                    }).ToList<dynamic>();
+                    });
 
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = CollectionRecebimentoParcela.Count();
 
 
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = subQuery.Count();
+
                 // PAGINAÇÃO
                 skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
+                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
                     pageNumber = 1;
 
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(r => r.nrAno).ThenBy(r => r.nrMes).ToList<dynamic>();
+                CollectionRecebimentoParcela = subQuery.OrderBy(r => r.nrAno).ThenBy(r => r.nrMes).ToList<dynamic>();
 
             }
-            else if (colecao == 3) // cashflow/tempo
+            else if (colecao == 3) // [mobile]/cashflow/tempo
             {
-                CollectionRecebimentoParcela = query
+                var subQuery = query
                     .GroupBy(x => new { x.dtaRecebimento.Day, x.Recebimento.empresa.id_grupo })
                     .Select(e => new
                     {
@@ -323,27 +333,27 @@ namespace api.Negocios.Pos
                         vlDescontado = (e.Sum(p => p.valorDescontado)),
                         vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                         nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
-                    }).ToList<dynamic>();
+                    });
 
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = CollectionRecebimentoParcela.Count();
 
 
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = subQuery.Count();
+
                 // PAGINAÇÃO
                 skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
+                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
                     pageNumber = 1;
 
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(r => r.nrDia).ToList<dynamic>();
+                CollectionRecebimentoParcela = subQuery.OrderBy(r => r.nrDia).ToList<dynamic>();
             }
-            else if (colecao == 3) // cashflow/dias
+            else if (colecao == 3) // [mobile]/cashflow/dias
             {
-                CollectionRecebimentoParcela = query
+                var subQuery = query
                     .GroupBy(x => new { x.dtaRecebimento.Day, x.Recebimento.empresa.id_grupo, x.Recebimento.cnpj })
                     .Select(e => new
                     {
@@ -354,27 +364,27 @@ namespace api.Negocios.Pos
                         vlDescontado = (e.Sum(p => p.valorDescontado)),
                         vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                         nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
-                    }).ToList<dynamic>();
+                    });
 
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = CollectionRecebimentoParcela.Count();
 
 
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = subQuery.Count();
+
                 // PAGINAÇÃO
                 skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
+                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
                     pageNumber = 1;
 
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(r => r.nrDia).ToList<dynamic>();
+                CollectionRecebimentoParcela = subQuery.OrderBy(r => r.nrDia).ToList<dynamic>();
             }
-            else if (colecao == 4) // cashflow/adquirente
+            else if (colecao == 4) // [mobile]/cashflow/adquirente
             {
-                CollectionRecebimentoParcela = query
+                var subQuery = query
                     .GroupBy(x => new { x.Recebimento.empresa.id_grupo, x.Recebimento.BandeiraPos.Operadora.nmOperadora })
                     .Select(e => new
                     {
@@ -384,28 +394,28 @@ namespace api.Negocios.Pos
                         vlDescontado = (e.Sum(p => p.valorDescontado)),
                         vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                         nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
-                    }).ToList<dynamic>();
+                    });
 
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = CollectionRecebimentoParcela.Count();
 
 
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = subQuery.Count();
+
                 // PAGINAÇÃO
                 skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
+                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
                     pageNumber = 1;
 
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(r => r.cdGrupo).ToList<dynamic>();
+                CollectionRecebimentoParcela = subQuery.OrderBy(r => r.cdGrupo).ToList<dynamic>();
             }
-            
-            else if (colecao == 5) // cashflow/adquirente/tempo
+
+            else if (colecao == 5) // [mobile]/cashflow/adquirente/tempo
             {
-                CollectionRecebimentoParcela = query
+                var subQuery = query
                     .GroupBy(x => new { x.dtaRecebimento.Day, x.Recebimento.empresa.id_grupo, x.Recebimento.BandeiraPos.Operadora.nmOperadora })
                     .Select(e => new
                     {
@@ -416,27 +426,27 @@ namespace api.Negocios.Pos
                         vlDescontado = (e.Sum(p => p.valorDescontado)),
                         vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                         nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
-                    }).ToList<dynamic>();
+                    });
 
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = CollectionRecebimentoParcela.Count();
 
 
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = subQuery.Count();
+
                 // PAGINAÇÃO
                 skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
+                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
                     pageNumber = 1;
 
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(r => r.nrDia).ToList<dynamic>();
+                CollectionRecebimentoParcela = subQuery.OrderBy(r => r.nrDia).ToList<dynamic>();
             }
-            else if (colecao == 6) // cashflow/filial
+            else if (colecao == 6) // [mobile]/cashflow/filial
             {
-                CollectionRecebimentoParcela = query
+                var subQuery = query
                     .GroupBy(x => new { x.Recebimento.empresa.id_grupo, x.Recebimento.cnpj, x.Recebimento.empresa.ds_fantasia, x.Recebimento.empresa.filial })
                     .Select(e => new
                     {
@@ -448,27 +458,27 @@ namespace api.Negocios.Pos
                         vlDescontado = (e.Sum(p => p.valorDescontado)),
                         vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                         nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
-                    }).ToList<dynamic>();
+                    });
 
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = CollectionRecebimentoParcela.Count();
 
 
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = subQuery.Count();
+
                 // PAGINAÇÃO
                 skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
+                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
                     pageNumber = 1;
 
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(r => r.cdGrupo).ThenBy(r => r.nuCnpj).ToList<dynamic>();
+                CollectionRecebimentoParcela = subQuery.OrderBy(r => r.cdGrupo).ThenBy(r => r.nuCnpj).ToList<dynamic>();
             }
-            else if (colecao == 7) // cashflow/filial/tempo
+            else if (colecao == 7) // [mobile]/cashflow/filial/tempo
             {
-                CollectionRecebimentoParcela = query
+                var subQuery = query
                     .GroupBy(x => new { x.dtaRecebimento.Day, x.Recebimento.empresa.id_grupo, x.Recebimento.cnpj })
                     .Select(e => new
                     {
@@ -479,24 +489,73 @@ namespace api.Negocios.Pos
                         vlDescontado = (e.Sum(p => p.valorDescontado)),
                         vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                         nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
-                    }).ToList<dynamic>();
+                    });
 
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = CollectionRecebimentoParcela.Count();
 
 
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = subQuery.Count();
+
                 // PAGINAÇÃO
                 skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
+                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
                     pageNumber = 1;
 
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(r => r.nrDia).ToList<dynamic>();
+                CollectionRecebimentoParcela = subQuery.OrderBy(r => r.nrDia).ToList<dynamic>();
             }
+            else if (colecao == 8) // [web]cashflow/Analitico
+            {
+                CollectionRecebimentoParcela = query
+                .Select(e => new
+                {
+
+                    cnpj = e.Recebimento.cnpj,
+                    desBandeira = e.Recebimento.BandeiraPos.desBandeira,
+                    dtaVenda = e.Recebimento.dtaVenda,
+                    dtaRecebimento = e.dtaRecebimento,
+                    codResumoVenda = e.Recebimento.codResumoVenda,
+                    nsu = e.Recebimento.nsu,
+                    numParcela = e.numParcela + " de " + e.Recebimento.numParcelaTotal,
+                    valorBruto = e.Recebimento.valorVendaBruta,
+                    valorParcela = e.valorParcelaBruta,
+                    valorLiquida = e.valorParcelaLiquida,
+                    valorDescontado = e.valorDescontado
+                }).ToList<dynamic>();
+            }
+            else if (colecao == 9) // [web]/cashflow/Sintético
+            {
+                var subQuery = query
+                    .GroupBy(x => new { x.Recebimento.BandeiraPos })
+                    .Select(e => new
+                    {
+                        bandeira = new {
+                                            desBandeira = e.Key.BandeiraPos.desBandeira,
+                                            idBandeira = e.Key.BandeiraPos.id,
+                                            idOperadora = e.Key.BandeiraPos.idOperadora
+                        },
+                        valorBruto = e.Sum(p => p.Recebimento.valorVendaBruta),
+                        valorParcela = e.Sum(p => p.valorParcelaBruta),
+                        valorLiquida = e.Sum(p => p.valorParcelaLiquida),
+                        valorDescontado = e.Sum(p => p.valorDescontado),
+                        totalTransacoes = e.Count()
+                    });
+
+                retorno.TotalDeRegistros = subQuery.Count();
+
+                // PAGINAÇÃO
+                skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                CollectionRecebimentoParcela = subQuery.ToList<dynamic>();
+            }
+
 
 
             retorno.Registros = CollectionRecebimentoParcela;

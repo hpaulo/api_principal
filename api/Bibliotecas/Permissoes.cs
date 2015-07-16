@@ -16,10 +16,7 @@ namespace api.Bibliotecas
             {
                 _db.Configuration.ProxyCreationEnabled = false;
 
-                var verify = (from v in _db.LoginAutenticacaos
-                              where v.token.Equals(token)
-                              select v
-                             ).FirstOrDefault();
+                var verify = _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v).FirstOrDefault();
 
                 if (verify != null)
                     return true;
@@ -30,19 +27,35 @@ namespace api.Bibliotecas
 
         public static Int32 GetIdUser(string token)
         {
+            Int32 idUser = 0;
             using (var _db = new painel_taxservices_dbContext())
             {
                 _db.Configuration.ProxyCreationEnabled = false;
 
-                var verify = (from v in _db.LoginAutenticacaos
-                              where v.token.Equals(token)
-                              select v
-                             ).FirstOrDefault();
+                var verify = _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v).FirstOrDefault();
 
                 if (verify != null)
-                    return verify.idUsers;
+                    idUser = (Int32)verify.idUsers;
             }
-            return 0;
+            return idUser;
+        }
+
+        public static Int32 GetIdGrupo(string token)
+        {
+            Int32 idGrupo = 0;
+            using (var _db = new painel_taxservices_dbContext())
+            {
+                _db.Configuration.ProxyCreationEnabled = false;
+
+                var verify = _db.LoginAutenticacaos.Where( v => v.token.Equals(token)).Select( v => v.webpages_Users).FirstOrDefault();
+
+                if (verify != null)
+                {
+                    if (verify.id_grupo != null)
+                        idGrupo = (Int32)verify.id_grupo;
+                }
+            }
+            return idGrupo;
         }
 
         public static Boolean GetPermissionMethod(string token, string ds_method)

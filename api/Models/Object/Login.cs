@@ -16,6 +16,8 @@ namespace api.Models.Object
         public string nome { get; set; }
         public string usuario { get; set; }
         public string token { get; set; }
+        public Int32 id_grupo { get; set; }
+        public Boolean filtro_empresa { get; set; }
         public List<dynamic> controllers { get; set; }
     }
 

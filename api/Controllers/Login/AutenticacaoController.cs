@@ -84,7 +84,7 @@ namespace api.Controllers.Login
                             #endregion
 
                             var usuario = _db.webpages_Users.Where(u => u.id_users == verify.idUsers)
-                                                            .Select(u => new { id_users = u.id_users, nm_pessoa = u.pessoa.nm_pessoa, ds_login = u.ds_login })
+                                                            .Select(u => new { id_users = u.id_users, nm_pessoa = u.pessoa.nm_pessoa, ds_login = u.ds_login , id_grupo = u.id_grupo})
                                                             .FirstOrDefault();
 
                             List<dynamic> permissoes = _db.webpages_UsersInRoles.Where(r => r.UserId == usuario.id_users)
@@ -95,12 +95,15 @@ namespace api.Controllers.Login
                                                                                                 RoleId = r.RoleId,
                                                                                                 RolePrincipal = r.RolePrincipal,
                                                                                                 ControllerPrincipal = r.webpages_Roles.webpages_Permissions.Where(p => p.fl_principal == true).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select( p => p.webpages_Methods.webpages_Controllers.id_controller ).FirstOrDefault(), // .FirstOrDefault().webpages_Methods.webpages_Controllers.id_controller,
-                                                                                                Controllers = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select(p => new { id_controller = p.webpages_Methods.id_controller }).ToList<dynamic>()
+                                                                                                Controllers = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select(p => new { id_controller = p.webpages_Methods.id_controller }).ToList<dynamic>(),
+                                                                                                FiltroEmpresa = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("FILTRO EMPRESA")).Select(p => new { id_controller = p.webpages_Methods.id_controller }).ToList<dynamic>().Count > 0,
+                                                                                                ABC = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("FILTRO EMPRESA")).Select(p => new { ds_method = p.webpages_Methods.ds_method }).ToList<dynamic>(),
                                                                                             }
                                                                                         ).ToList<dynamic>();
 
                             List<Int32> list = new List<Int32>();
                             int id_ControllerPrincipal = 0;
+                            Boolean filtro_empresa = false;
                             foreach (var item in permissoes)
                             {
                                 if (item.RolePrincipal == true)
@@ -110,6 +113,9 @@ namespace api.Controllers.Login
                                 {
                                     list.Add(subItem.id_controller);
                                 }
+
+                                if (item.FiltroEmpresa)
+                                    filtro_empresa = true;
                             }
 
                             list = list.Distinct().ToList<Int32>();
@@ -150,7 +156,7 @@ namespace api.Controllers.Login
                                                                             }).ToList<dynamic>()
                             }).ToList<dynamic>();
 
-                            return new Models.Object.Autenticado { nome = usuario.nm_pessoa, usuario = usuario.ds_login, token = token, controllers = controllers  };
+                            return new Models.Object.Autenticado { nome = usuario.nm_pessoa, usuario = usuario.ds_login, id_grupo = (usuario.id_grupo == null ? -1 : (Int32)usuario.id_grupo), filtro_empresa = filtro_empresa, token = token, controllers = controllers };
                         }
                         else
                             throw new HttpResponseException(HttpStatusCode.InternalServerError);
