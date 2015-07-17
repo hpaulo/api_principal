@@ -38,8 +38,8 @@ namespace api.Negocios.Pos
             ID_GRUPO = 316,
             NMOPERADORA = 401,
 
-
-
+            IDBANDEIRA = 500,
+            DESBANDEIRA = 501,
 
         };
 
@@ -98,35 +98,30 @@ namespace api.Negocios.Pos
                         if (item.Value.Contains("|")) // BETWEEN
                         {
                             string[] busca = item.Value.Split('|');
-                            DateTime dtaIni = DateTime.ParseExact(busca[0] + "00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1] + "23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            if (dtaIni == dtaFim)
-                                entity = entity.Where(e => e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Year == dtaIni.Year);
-                            else
-                                entity = entity.Where(e => e.dtaRecebimento >= dtaIni && e.dtaRecebimento <= dtaFim);
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimento.Year > dtaIni.Year || (e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month > dtaIni.Month) ||
+                                                                                          (e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Day >= dtaIni.Day))
+                                                    && (e.dtaRecebimento.Year < dtaFim.Year || (e.dtaRecebimento.Year == dtaFim.Year && e.dtaRecebimento.Month < dtaFim.Month) ||
+                                                                                          (e.dtaRecebimento.Year == dtaFim.Year && e.dtaRecebimento.Month == dtaFim.Month && e.dtaRecebimento.Day <= dtaFim.Day)));
                         }
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
                         {
                             string busca = item.Value.Replace(">", "");
-                            DateTime dta = DateTime.ParseExact(busca + "00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtaRecebimento >= dta);
                         }
                         else if (item.Value.Contains("<")) // MENOR IGUAL
                         {
                             string busca = item.Value.Replace("<", "");
-                            DateTime dta = DateTime.ParseExact(busca + "23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtaRecebimento <= dta);
                         }
                         else // IGUAL
                         {
-                            //DateTime dtaRecebimento = Convert.ToDateTime(item.Value);
-                            //entity = entity.Where(e => e.dtaRecebimento.Equals(dtaRecebimento));
-
                             string busca = item.Value;
-                            DateTime dtaIni = DateTime.ParseExact(busca + "00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca + "23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dta = DateTime.ParseExact(busca, "yyyyMMdd", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtaRecebimento >= dtaIni && e.dtaRecebimento <= dtaFim);
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Day == dtaIni.Day);
                         }
                         break;
                     case CAMPOS.VALORDESCONTADO:
@@ -153,6 +148,15 @@ namespace api.Negocios.Pos
                         entity = entity.Where(e => e.Recebimento.BandeiraPos.Operadora.nmOperadora.Equals(nmOperadora));
                         break;
 
+                    case CAMPOS.IDBANDEIRA:
+                        Int32 idBandeira = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.Recebimento.BandeiraPos.id == idBandeira);
+                        break; 
+
+                    case CAMPOS.DESBANDEIRA:
+                        string desBandeira = Convert.ToString(item.Value).ToUpper();
+                        entity = entity.Where(e => e.Recebimento.BandeiraPos.desBandeira.ToUpper().Equals(desBandeira));
+                        break;
                 }
             }
             
@@ -189,6 +193,13 @@ namespace api.Negocios.Pos
                     else entity = entity.OrderByDescending(e => e.valorDescontado);
                     break;
 
+
+                // PERSONALIZADO
+                case CAMPOS.DESBANDEIRA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.BandeiraPos.desBandeira);
+                    else entity = entity.OrderByDescending(e => e.Recebimento.BandeiraPos.desBandeira);
+                    break;
+
             }
             #endregion
 
@@ -218,7 +229,8 @@ namespace api.Negocios.Pos
             //DECLARAÇÕES
             List<dynamic> CollectionRecebimentoParcela = new List<dynamic>();
             Retorno retorno = new Retorno();
-        
+            retorno.Totais = new Dictionary<string, object>();
+
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
@@ -229,6 +241,12 @@ namespace api.Negocios.Pos
             // TOTAL DE REGISTROS
             retorno.TotalDeRegistros = queryTotal.Count();
 
+            if (colecao != 9) // relatório sintético
+            {
+                retorno.Totais.Add("valorDescontado", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorDescontado)) : 0);
+                retorno.Totais.Add("valorParcelaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaBruta)) : 0);
+                retorno.Totais.Add("valorParcelaLiquida", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaLiquida)) : 0);
+            }
 
             // PAGINAÇÃO
             int skipRows = (pageNumber - 1) * pageSize;
@@ -534,7 +552,7 @@ namespace api.Negocios.Pos
                     {
                         bandeira = new {
                                             desBandeira = e.Key.BandeiraPos.desBandeira,
-                                            idBandeira = e.Key.BandeiraPos.id,
+                                            id = e.Key.BandeiraPos.id,
                                             idOperadora = e.Key.BandeiraPos.idOperadora
                         },
                         valorBruto = e.Sum(p => p.Recebimento.valorVendaBruta),
@@ -545,6 +563,14 @@ namespace api.Negocios.Pos
                     });
 
                 retorno.TotalDeRegistros = subQuery.Count();
+
+                retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
+                retorno.Totais.Add("valorDescontado", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorDescontado)) : 0);
+                retorno.Totais.Add("valorLiquida", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorLiquida)) : 0);
+                retorno.Totais.Add("valorParcela", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorParcela)) : 0);
+                retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.totalTransacoes)) : 0);
+
+
 
                 // PAGINAÇÃO
                 skipRows = (pageNumber - 1) * pageSize;

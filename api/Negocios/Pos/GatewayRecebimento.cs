@@ -284,6 +284,7 @@ namespace api.Negocios.Pos
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
             // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+
             string outValue = null;
             Int32 IdGrupo = Permissoes.GetIdGrupo(token);
             if (IdGrupo != 0)
@@ -298,6 +299,7 @@ namespace api.Negocios.Pos
             //DECLARAÇÕES
             List<dynamic> CollectionRecebimento = new List<dynamic>();
             Retorno retorno = new Retorno();
+            retorno.Totais = new Dictionary<string, object>();
 
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
@@ -309,6 +311,8 @@ namespace api.Negocios.Pos
             {
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = queryTotal.Count();
+
+                retorno.Totais.Add("valorVendaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorVendaBruta)) : 0);
 
                 int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
@@ -381,7 +385,7 @@ namespace api.Negocios.Pos
                 retorno.TotalDeRegistros = queryTotal.Count();
 
                 // PAGINAÇÃO
-                skipRows = (pageNumber - 1) * pageSize;
+                int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
                     query = query.Skip(skipRows).Take(pageSize);
                 else
@@ -418,6 +422,9 @@ namespace api.Negocios.Pos
 
                 retorno.TotalDeRegistros = subQuery.Count();
 
+                retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToInt32(subQuery.Sum(r => r.totalTransacoes)) : 0);
+                retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
+
                 // PAGINAÇÃO
                 int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
@@ -447,6 +454,9 @@ namespace api.Negocios.Pos
 
                 retorno.TotalDeRegistros = subQuery.Count();
 
+                retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToInt32(subQuery.Sum(r => r.totalTransacoes)) : 0);
+                retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
+
                 // PAGINAÇÃO
                 int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
@@ -468,6 +478,8 @@ namespace api.Negocios.Pos
                          e.cdAutorizador,
                          e.valorVendaBruta
                  }).ToList<dynamic>();
+
+
             }
 
 

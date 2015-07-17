@@ -38,5 +38,13 @@ namespace api.Models.Object
             get { return paginaAtual; }
             set { paginaAtual = value; }
         }
+
+        private Dictionary<string, object> totais;
+
+        public Dictionary<string, object> Totais
+        {
+            get { return totais; }
+            set { totais = value; }
+        }
     }
 }
