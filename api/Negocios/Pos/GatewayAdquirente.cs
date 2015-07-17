@@ -157,7 +157,7 @@ namespace api.Negocios.Pos
                     hraExecucao = e.hraExecucao,
                 }).ToList<dynamic>();
             }
-            else if (colecao == 0)
+            else if (colecao == 0) // [web]
             {
                 CollectionAdquirente = query.Select(e => new
                 {

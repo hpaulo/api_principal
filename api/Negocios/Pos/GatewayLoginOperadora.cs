@@ -169,6 +169,20 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
+
+            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+
+            string outValue = null;
+            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+            if (IdGrupo != 0)
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.IDGRUPO, out outValue))
+                    queryString["" + (int)CAMPOS.IDGRUPO] = IdGrupo.ToString();
+                else
+                    queryString.Add("" + (int)CAMPOS.IDGRUPO, IdGrupo.ToString());
+            }
+
+
             //DECLARAÇÕES
             List<dynamic> CollectionLoginOperadora = new List<dynamic>();
             Retorno retorno = new Retorno();
@@ -224,7 +238,7 @@ namespace api.Negocios.Pos
                     estabelecimento = e.estabelecimento,
                 }).ToList<dynamic>();
             }
-            else if (colecao == 2)
+            else if (colecao == 2) // [mobile]
             {
                 CollectionLoginOperadora = query.Select(e => new
                 {
@@ -238,7 +252,25 @@ namespace api.Negocios.Pos
                     idOperadora = e.idOperadora
                 }).ToList<dynamic>();
             }
+            else if (colecao == 3) // [web]/Dados de Acesso/Grid
+            {
+                CollectionLoginOperadora = query.Select(e => new
+                {
 
+                    id = e.id,
+                    login = e.login,
+                    senha = e.senha,
+                    status = e.status,
+                    //empresa = new { cnpj = e.empresa.nu_cnpj, ds_fantasia = e.empresa.ds_fantasia },
+                    operadora = new { id = e.Operadora.id ,desOperadora = e.Operadora.nmOperadora },
+                    estabelecimento = e.estabelecimento
+                }).ToList<dynamic>();
+
+                CollectionLoginOperadora = CollectionLoginOperadora.OrderBy(l => l.operadora.desOperadora).ToList();
+            }
+
+
+            
             retorno.Registros = CollectionLoginOperadora;
 
             return retorno;
@@ -256,13 +288,12 @@ namespace api.Negocios.Pos
             _db.Operadoras.Add(newOperadora);
             _db.SaveChanges();
 
+            param.status = true;
             param.idOperadora = newOperadora.id;
             _db.LoginOperadoras.Add(param);
             _db.SaveChanges();
 
-            var op = (from o in _db.Adquirentes
-                      where o.nome.Equals(newOperadora.nmOperadora)
-                      select o).FirstOrDefault();
+            var op = _db.Adquirentes.Where(o => o.descricao.Equals(newOperadora.nmOperadora)).Select(o => o).FirstOrDefault();
             DateTime hrExec = (DateTime)op.hraExecucao;
 
             LogExecution newLogExecution = new LogExecution();

@@ -243,6 +243,7 @@ namespace api.Negocios.Pos
 
             if (colecao != 9) // relatório sintético
             {
+                retorno.Totais.Add("valorBruto", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.Recebimento.valorVendaBruta)) : 0);
                 retorno.Totais.Add("valorDescontado", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorDescontado)) : 0);
                 retorno.Totais.Add("valorParcelaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaBruta)) : 0);
                 retorno.Totais.Add("valorParcelaLiquida", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaLiquida)) : 0);
@@ -369,7 +370,7 @@ namespace api.Negocios.Pos
 
                 CollectionRecebimentoParcela = subQuery.OrderBy(r => r.nrDia).ToList<dynamic>();
             }
-            else if (colecao == 3) // [mobile]/cashflow/dias
+            else if (colecao == 33) // [mobile]/cashflow/dias
             {
                 var subQuery = query
                     .GroupBy(x => new { x.dtaRecebimento.Day, x.Recebimento.empresa.id_grupo, x.Recebimento.cnpj })

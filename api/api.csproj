@@ -258,6 +258,7 @@
     <Compile Include="Controllers\pos\TerminalLogicoController.cs" />
     <Compile Include="Controllers\pos\TicketCarController.cs" />
     <Compile Include="Controllers\pos\ValeCardController.cs" />
+    <Compile Include="Controllers\Util\ExportarController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -681,6 +682,7 @@
     <Compile Include="Negocios\Pos\GatewayTerminalLogico.cs" />
     <Compile Include="Negocios\Pos\GatewayTicketCar.cs" />
     <Compile Include="Negocios\Pos\GatewayValeCard.cs" />
+    <Compile Include="Negocios\Util\GatewayExportar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
