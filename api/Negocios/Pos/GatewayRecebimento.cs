@@ -370,7 +370,7 @@ namespace api.Negocios.Pos
             }
             else if (colecao == 2)
             {
-                var queryRecebimento = query
+                var subQuery = query
                     .GroupBy(x => new { x.dtaVenda.Year, x.dtaVenda.Month, x.empresa.id_grupo })
                     .Select(e => new
                     {
@@ -394,7 +394,7 @@ namespace api.Negocios.Pos
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
 
-                CollectionRecebimento = queryRecebimento.OrderBy(o => new { o.nrAno, o.nrMes }).ToList<dynamic>();
+                CollectionRecebimento = subQuery.OrderBy(o => new { o.nrAno, o.nrMes }).ToList<dynamic>();
 
             }
             else if (colecao == 3) // Portal/RelatorioTerminalLogico
@@ -481,6 +481,66 @@ namespace api.Negocios.Pos
 
 
             }
+            else if (colecao == 6)
+            {
+                var subQuery = query
+                    .GroupBy(x => new { x.dtaVenda, x.empresa.id_grupo,x.cnpj })
+                    .Select(e => new
+                    {
+
+                        nrDia = e.Key.dtaVenda.Day,
+                        cdGrupo = e.Key.id_grupo,
+                        nrCNPJ = e.Key.cnpj,
+                        vlVenda = e.Sum(l => l.valorVendaBruta)
+                    });
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                CollectionRecebimento = subQuery.OrderBy(o => o.nrDia).ToList<dynamic>();
+
+            }
+            else if (colecao == 7)
+            {
+                var subQuery = query
+                    .GroupBy(x => new { x.empresa.id_grupo, x.cnpj, x.BandeiraPos.Operadora.id, x.BandeiraPos.Operadora.nmOperadora })
+                    .Select(e => new
+                    {
+
+                        cdGrupo = e.Key.id_grupo,
+                        nrCNPJ = e.Key.cnpj,
+                        idAdquirente = e.Key.id,
+                        dsAdquirente = e.Key.nmOperadora,
+                        vlVenda = e.Sum(l => l.valorVendaBruta)
+                    });
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                CollectionRecebimento = subQuery.OrderBy(o => o.cdGrupo).ToList<dynamic>();
+
+            }
+
 
 
             retorno.Registros = CollectionRecebimento;
