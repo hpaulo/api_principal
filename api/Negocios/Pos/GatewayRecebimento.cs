@@ -365,16 +365,32 @@ namespace api.Negocios.Pos
                 }).ToList<dynamic>();
             }
             else if (colecao == 2)
-                    {
-                var consulta = query
+            {
+                var queryRecebimento = query
                     .GroupBy(x => new { x.dtaVenda.Year, x.dtaVenda.Month, x.empresa.id_grupo })
                     .Select(e => new
-                {
+                    {
 
-                    empresa = e.Key.id_grupo,
-                    dtaVenda = e.Key.Year,
-                    vlVenda = (e.Sum(p => p.valorVendaBruta))
-                }).Where(x => x.dtaVenda >= 20150701 && x.empresa.Equals(31));
+                        nrAno = e.Key.Year,
+                        nrMes = e.Key.Month,
+                        cdGrupo = e.Key.id_grupo,
+                        vlVenda = e.Sum(l => l.valorVendaBruta)
+                    });
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+                // PAGINAÇÃO
+                skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                CollectionRecebimento = queryRecebimento.OrderBy(o => new { o.nrAno, o.nrMes }).ToList<dynamic>();
 
             }
             else if (colecao == 3) // Portal/RelatorioTerminalLogico
