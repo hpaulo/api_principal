@@ -328,6 +328,28 @@ namespace api.Negocios.Cliente
                     id_grupo = e.id_grupo,
                 }).ToList<dynamic>();
             }
+            else if (colecao == 2)
+            {
+                CollectionEmpresa = query.Select(e => new
+                {
+
+                    nu_cnpj = e.nu_cnpj,
+                    ds_fantasia = e.ds_fantasia,
+                    ds_razaoSocial = e.ds_razaoSocial,
+                    ds_endereco = e.ds_endereco,
+                    ds_cidade = e.ds_cidade,
+                    sg_uf = e.sg_uf,
+                    nu_cep = e.nu_cep,
+                    nu_telefone = e.nu_telefone,
+                    ds_bairro = e.ds_bairro,
+                    ds_email = e.ds_email,
+                    dt_cadastro = e.dt_cadastro,
+                    fl_ativo = e.fl_ativo,
+                    id_grupo = e.id_grupo,
+                    filial = e.filial,
+                    nu_inscEstadual = e.nu_inscEstadual,
+                }).ToList<dynamic>();
+            }
 
             retorno.Registros = CollectionEmpresa;
 
@@ -349,7 +371,8 @@ namespace api.Negocios.Cliente
             param.nu_BaseCnpj = param.nu_cnpj.Substring(0,8);
             param.nu_SequenciaCnpj = param.nu_cnpj.Substring(8,4);
             param.nu_DigitoCnpj = param.nu_cnpj.Substring(12,2);
-            param.filial = " ";
+            if (param.filial == null)
+                param.filial = " ";            
 
 
             _db.empresas.Add(param);
@@ -385,14 +408,7 @@ namespace api.Negocios.Cliente
             // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.nu_cnpj != null && param.nu_cnpj != filial.nu_cnpj)
-                filial.nu_cnpj = param.nu_cnpj;
-            if (param.nu_BaseCnpj != null && param.nu_BaseCnpj != filial.nu_BaseCnpj)
-                filial.nu_BaseCnpj = param.nu_BaseCnpj;
-            if (param.nu_SequenciaCnpj != null && param.nu_SequenciaCnpj != filial.nu_SequenciaCnpj)
-                filial.nu_SequenciaCnpj = param.nu_SequenciaCnpj;
-            if (param.nu_DigitoCnpj != null && param.nu_DigitoCnpj != filial.nu_DigitoCnpj)
-                filial.nu_DigitoCnpj = param.nu_DigitoCnpj;
+
             if (param.ds_fantasia != null && param.ds_fantasia != filial.ds_fantasia)
                 filial.ds_fantasia = param.ds_fantasia;
             if (param.ds_razaoSocial != null && param.ds_razaoSocial != filial.ds_razaoSocial)
@@ -411,14 +427,14 @@ namespace api.Negocios.Cliente
                 filial.ds_bairro = param.ds_bairro;
             if (param.ds_email != null && param.ds_email != filial.ds_email)
                 filial.ds_email = param.ds_email;
-            if (param.dt_cadastro != null && param.dt_cadastro != filial.dt_cadastro)
-                filial.dt_cadastro = param.dt_cadastro;
+            //if (param.dt_cadastro != null && param.dt_cadastro != filial.dt_cadastro)
+            //    filial.dt_cadastro = param.dt_cadastro;
             if (param.fl_ativo != null && param.fl_ativo != filial.fl_ativo)
                 filial.fl_ativo = param.fl_ativo;
-            if (param.token != null && param.token != filial.token)
-                filial.token = param.token;
-            if (param.id_grupo != null && param.id_grupo != filial.id_grupo)
-                filial.id_grupo = param.id_grupo;
+            //if (param.token != null && param.token != filial.token)
+            //    filial.token = param.token;
+            //if (param.id_grupo != null && param.id_grupo != filial.id_grupo)
+            //    filial.id_grupo = param.id_grupo;
             if (param.filial != null && param.filial != filial.filial)
                 filial.filial = param.filial;
             if (param.nu_inscEstadual != null && param.nu_inscEstadual != filial.nu_inscEstadual)
