@@ -599,7 +599,35 @@ namespace api.Negocios.Pos
                 CollectionRecebimento = subQuery.OrderBy(o => o.cdGrupo).ToList<dynamic>();
 
             }
+            else if (colecao == 10)
+            {
+                var subQuery = query
+                    .GroupBy(x => new { x.dtaVenda, x.empresa.id_grupo, x.cnpj })
+                    .Select(e => new
+                    {
 
+                        nrDia = e.Key.dtaVenda.Day,
+                        cdGrupo = e.Key.id_grupo,
+                        nrCNPJ = e.Key.cnpj,
+                        vlVenda = e.Sum(l => l.valorVendaBruta)
+                    });
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                CollectionRecebimento = subQuery.OrderBy(o => o.nrDia).ToList<dynamic>();
+
+            }
 
 
             retorno.Registros = CollectionRecebimento;
