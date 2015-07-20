@@ -551,11 +551,11 @@ namespace api.Negocios.Pos
             else if (colecao == 8) // [mobile]/Vendas/Adquirente/tempo
             {
                 var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda, x.BandeiraPos.Operadora.nmOperadora })
+                    .GroupBy(x => new { x.dtaVenda.Date, x.BandeiraPos.Operadora.nmOperadora })
                     .Select(e => new
                     {
 
-                        nrDia = e.Key.dtaVenda.Day,
+                        nrDia = e.Key.Date,
                         //cdGrupo = e.Key.id_grupo,
                         //nrCNPJ = e.Key.cnpj,
                         //idAdquirente = e.Key.id,
