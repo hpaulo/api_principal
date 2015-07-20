@@ -47,6 +47,7 @@ namespace api.Negocios.Pos
             NMOPERADORA = 301,
 
             ID_GRUPO = 416,
+            DS_FANTASIA = 404,
 
         };
 
@@ -202,6 +203,10 @@ namespace api.Negocios.Pos
                         Int32 id_grupo = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.empresa.id_grupo == id_grupo).AsQueryable();
                         break;
+                    case CAMPOS.DS_FANTASIA:
+                        string dsfantasia = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.empresa.ds_fantasia.Equals(dsfantasia)).AsQueryable();
+                        break;
                 }
             }
             #endregion
@@ -283,6 +288,10 @@ namespace api.Negocios.Pos
                 case CAMPOS.NMOPERADORA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.BandeiraPos.Operadora.nmOperadora).AsQueryable();
                     else entity = entity.OrderByDescending(e => e.BandeiraPos.Operadora.nmOperadora).AsQueryable();
+                    break;
+                case CAMPOS.DS_FANTASIA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.empresa.ds_fantasia).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.empresa.ds_fantasia).AsQueryable();
                     break;
             }
             #endregion
@@ -593,6 +602,7 @@ namespace api.Negocios.Pos
             {
                 var subQuery = query
                     .GroupBy(x => new { x.empresa.id_grupo, x.empresa })
+                    .OrderBy(e => e.Key.empresa.ds_fantasia)
                     .Select(e => new
                     {
 
