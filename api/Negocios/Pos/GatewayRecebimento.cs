@@ -50,6 +50,12 @@ namespace api.Negocios.Pos
 
         };
 
+        public enum MES
+        {
+            Janeiro = 1, Fevereiro = 2, Março, Abril, Maio, Junho, Julho, Agosto, Setembro,
+            Outubro, Novembro, Dezembro
+        };
+
         /// <summary>
         /// Get Recebimento/Recebimento
         /// </summary>
@@ -376,6 +382,7 @@ namespace api.Negocios.Pos
                     {
 
                         nrAno = e.Key.Year,
+                        nmMes = ((MES)e.Key.Month).ToString(),
                         nrMes = e.Key.Month,
                         cdGrupo = e.Key.id_grupo,
                         vlVenda = e.Sum(l => l.valorVendaBruta)
@@ -394,7 +401,7 @@ namespace api.Negocios.Pos
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
 
-                CollectionRecebimento = subQuery.OrderBy(o => new { o.nrAno, o.nrMes }).ToList<dynamic>();
+                CollectionRecebimento = subQuery.OrderByDescending(o => new { o.nrAno, o.nrMes }).ToList<dynamic>();
 
             }
             else if (colecao == 3) // Portal/RelatorioTerminalLogico
@@ -473,6 +480,7 @@ namespace api.Negocios.Pos
                  {
                          e.cnpj,
                          e.dtaVenda,
+                         e.TerminalLogico.dsTerminalLogico,
                          e.BandeiraPos.desBandeira,
                          e.nsu,
                          e.cdAutorizador,
@@ -481,16 +489,16 @@ namespace api.Negocios.Pos
 
 
             }
-            else if (colecao == 6)
+            else if (colecao == 6) // [mobile]/Vendas/Tempo
             {
                 var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda, x.empresa.id_grupo,x.cnpj })
+                    .GroupBy(x => new { x.dtaVenda, x.empresa.id_grupo, })
                     .Select(e => new
                     {
 
                         nrDia = e.Key.dtaVenda.Day,
                         cdGrupo = e.Key.id_grupo,
-                        nrCNPJ = e.Key.cnpj,
+                        //nrCNPJ = e.Key.cnpj,
                         vlVenda = e.Sum(l => l.valorVendaBruta)
                     });
 
@@ -510,16 +518,16 @@ namespace api.Negocios.Pos
                 CollectionRecebimento = subQuery.OrderBy(o => o.nrDia).ToList<dynamic>();
 
             }
-            else if (colecao == 7)
+            else if (colecao == 7) // [mobile]/Vendas/Adquirente
             {
                 var subQuery = query
-                    .GroupBy(x => new { x.empresa.id_grupo, x.cnpj, x.BandeiraPos.Operadora.id, x.BandeiraPos.Operadora.nmOperadora })
+                    .GroupBy(x => new { x.empresa.id_grupo, x.BandeiraPos.Operadora.nmOperadora })
                     .Select(e => new
                     {
 
                         cdGrupo = e.Key.id_grupo,
-                        nrCNPJ = e.Key.cnpj,
-                        idAdquirente = e.Key.id,
+                        //nrCNPJ = e.Key.cnpj,
+                        //idAdquirente = e.Key.id,
                         dsAdquirente = e.Key.nmOperadora,
                         vlVenda = e.Sum(l => l.valorVendaBruta)
                     });
@@ -540,17 +548,17 @@ namespace api.Negocios.Pos
                 CollectionRecebimento = subQuery.OrderBy(o => o.cdGrupo).ToList<dynamic>();
 
             }
-            else if (colecao == 8)
+            else if (colecao == 8) // [mobile]/Vendas/Adquirente/tempo
             {
                 var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda, x.empresa.id_grupo, x.cnpj, x.BandeiraPos.Operadora.id, x.BandeiraPos.Operadora.nmOperadora })
+                    .GroupBy(x => new { x.dtaVenda, x.BandeiraPos.Operadora.nmOperadora })
                     .Select(e => new
                     {
 
                         nrDia = e.Key.dtaVenda,
-                        cdGrupo = e.Key.id_grupo,
-                        nrCNPJ = e.Key.cnpj,
-                        idAdquirente = e.Key.id,
+                        //cdGrupo = e.Key.id_grupo,
+                        //nrCNPJ = e.Key.cnpj,
+                        //idAdquirente = e.Key.id,
                         dsAdquirente = e.Key.nmOperadora,
                         vlVenda = e.Sum(l => l.valorVendaBruta)
                     });
@@ -571,7 +579,7 @@ namespace api.Negocios.Pos
                 CollectionRecebimento = subQuery.OrderBy(o => o.nrDia).ToList<dynamic>();
 
             }
-            else if (colecao == 9)
+            else if (colecao == 9) // [mobile]/Filial/Tempo
             {
                 var subQuery = query
                     .GroupBy(x => new { x.empresa.id_grupo, x.cnpj })
@@ -599,16 +607,16 @@ namespace api.Negocios.Pos
                 CollectionRecebimento = subQuery.OrderBy(o => o.cdGrupo).ToList<dynamic>();
 
             }
-            else if (colecao == 10)
+            else if (colecao == 10) // [mobile]/Filial/Tempo
             {
                 var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda, x.empresa.id_grupo, x.cnpj })
+                    .GroupBy(x => new { x.dtaVenda, x.empresa.id_grupo })
                     .Select(e => new
                     {
 
                         nrDia = e.Key.dtaVenda.Day,
                         cdGrupo = e.Key.id_grupo,
-                        nrCNPJ = e.Key.cnpj,
+                        //nrCNPJ = e.Key.cnpj,
                         vlVenda = e.Sum(l => l.valorVendaBruta)
                     });
 
