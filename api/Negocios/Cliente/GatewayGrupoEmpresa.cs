@@ -228,6 +228,9 @@ namespace api.Negocios.Cliente
                 }
                     
                 ).ToList<dynamic>();
+
+                CollectionGrupo_empresa = CollectionGrupo_empresa.OrderByDescending(d => d.dt_ultimoAcesso).ToList();
+
             }
             retorno.Registros = CollectionGrupo_empresa;
             
