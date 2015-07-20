@@ -376,6 +376,7 @@ namespace api.Negocios.Pos
                     {
 
                         nrAno = e.Key.Year,
+                        nmMes = ((MES)e.Key.Month).ToString(),
                         nrMes = e.Key.Month,
                         cdGrupo = e.Key.id_grupo,
                         vlVenda = e.Sum(l => l.valorVendaBruta)
