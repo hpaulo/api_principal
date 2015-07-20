@@ -555,7 +555,7 @@ namespace api.Negocios.Pos
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
 
-                CollectionRecebimento = subQuery.OrderBy(o => o.cdGrupo).ToList<dynamic>();
+                CollectionRecebimento = subQuery.ToList<dynamic>();
 
             }
             else if (colecao == 8) // [mobile]/Vendas/Adquirente/tempo
@@ -615,7 +615,7 @@ namespace api.Negocios.Pos
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
 
-                CollectionRecebimento = subQuery.OrderBy(o => o.cdGrupo).ToList<dynamic>();
+                CollectionRecebimento = subQuery.ToList<dynamic>();
 
             }
             else if (colecao == 10) // [mobile]/Filial/Tempo
