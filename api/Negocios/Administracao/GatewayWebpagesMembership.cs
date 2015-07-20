@@ -277,9 +277,11 @@ namespace api.Negocios.Administracao
 
         /// <summary>
         /// Altera webpages_Membership
+        /// Reseta Senha de usuário
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
+        /// 
         public static void Update(string token, webpages_Membership param)
         {
             var value = _db.webpages_Users
@@ -293,6 +295,37 @@ namespace api.Negocios.Administracao
             else
                 WebSecurity.ResetPassword(resetToken, param.Password);
         }
+
+
+
+
+        /// <summary>
+        /// Altera webpages_Membership
+        /// Alterar senha do usuário logado
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static void Update(string token, Models.Object.AlterarSenha param)
+        {
+            Int32 idUser = Permissoes.GetIdUser(token);
+
+            var value = _db.webpages_Users
+                    .Where(e => e.id_users.Equals(idUser))
+                    .FirstOrDefault();
+
+            if (WebSecurity.Login(value.ds_login, param.SenhaAtual, persistCookie: false))
+            {
+                string resetToken = WebSecurity.GeneratePasswordResetToken(value.ds_login, 2);
+                if (param.NovaSenha == "")
+                    WebSecurity.ResetPassword(resetToken, "atos123");
+                else
+                    WebSecurity.ResetPassword(resetToken, param.NovaSenha);
+            }
+            else
+                throw new Exception("Senha inválida!");
+        }
+
+
 
     }
 }

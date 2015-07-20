@@ -554,6 +554,7 @@
     <Compile Include="Models\notificacao_iservices.cs" />
     <Compile Include="Models\Nutricash.cs" />
     <Compile Include="Models\Object\Admin.cs" />
+    <Compile Include="Models\Object\AlterarSenha.cs" />
     <Compile Include="Models\Object\CadastroControllers.cs" />
     <Compile Include="Models\Object\Kpi.cs" />
     <Compile Include="Models\Object\Log.cs" />

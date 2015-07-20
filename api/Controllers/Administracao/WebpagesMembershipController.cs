@@ -65,11 +65,32 @@ namespace api.Controllers.Administracao
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
+
+        // PUT /webpages_Membership/token/
+        public HttpResponseMessage Put(string token, [FromBody]Models.Object.AlterarSenha param)
+        {
+            try
+            {
+                HttpResponseMessage retorno = new HttpResponseMessage();
+                if (Permissoes.Autenticado(token))
+                {
+                    GatewayWebpagesMembership.Update(token, param);
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
+                else
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+            }
+            catch (Exception e)
+            {
+                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+        }
+
 
         // DELETE /webpages_Membership/token/UserId
         public HttpResponseMessage Delete(string token, Int32 UserId)
