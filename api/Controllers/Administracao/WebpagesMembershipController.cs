@@ -52,26 +52,6 @@ namespace api.Controllers.Administracao
         }
 
         // PUT /webpages_Membership/token/
-        public HttpResponseMessage Put(string token, [FromBody]webpages_Membership param)
-        {
-            try
-            {
-                HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
-                {
-                    GatewayWebpagesMembership.Update(token, param);
-                    return Request.CreateResponse(HttpStatusCode.OK);
-                }
-                else
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
-            }
-            catch (Exception e)
-            {
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
-            }
-        }
-
-        // PUT /webpages_Membership/token/
         public HttpResponseMessage Put(string token, [FromBody]Models.Object.AlterarSenha param)
         {
             try

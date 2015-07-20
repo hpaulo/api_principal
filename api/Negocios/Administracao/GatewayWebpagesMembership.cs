@@ -307,22 +307,34 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Update(string token, Models.Object.AlterarSenha param)
         {
-            Int32 idUser = Permissoes.GetIdUser(token);
+            Int32 idUser = 0;
+
+            if (param.UserId == -1)
+                idUser = Permissoes.GetIdUser(token);
+            else
+                idUser = param.UserId;
 
             var value = _db.webpages_Users
                     .Where(e => e.id_users.Equals(idUser))
                     .FirstOrDefault();
 
-            if (WebSecurity.Login(value.ds_login, param.SenhaAtual, persistCookie: false))
+            if (value != null)
             {
                 string resetToken = WebSecurity.GeneratePasswordResetToken(value.ds_login, 2);
                 if (param.NovaSenha == "")
                     WebSecurity.ResetPassword(resetToken, "atos123");
+                else if (param.SenhaAtual != null)
+                {
+                    if (WebSecurity.Login(value.ds_login, param.SenhaAtual, persistCookie: false))
+                        WebSecurity.ResetPassword(resetToken, param.NovaSenha);
+                    else
+                        throw new Exception("Senha inválida!");
+                }
                 else
-                    WebSecurity.ResetPassword(resetToken, param.NovaSenha);
+                    throw new Exception("Operação inválida!");
             }
             else
-                throw new Exception("Senha inválida!");
+                throw new Exception("Usuário inválido!");
         }
 
 

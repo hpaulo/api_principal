@@ -21,5 +21,12 @@ namespace api.Models.Object
             set { novaSenha = value; }
         }
 
+        private Int32 userId;
+        public Int32 UserId
+        {
+            get { return userId; }
+            set { userId = value; }
+        }
+
     }
 }
