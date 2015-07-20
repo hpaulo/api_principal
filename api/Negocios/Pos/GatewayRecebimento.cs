@@ -492,7 +492,7 @@ namespace api.Negocios.Pos
             else if (colecao == 6) // [mobile]/Vendas/Tempo
             {
                 var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda, x.empresa.id_grupo, })
+                    .GroupBy(x => new { x.dtaVenda, x.empresa.id_grupo })
                     .Select(e => new
                     {
 
@@ -555,7 +555,7 @@ namespace api.Negocios.Pos
                     .Select(e => new
                     {
 
-                        nrDia = e.Key.dtaVenda,
+                        nrDia = e.Key.dtaVenda.Day,
                         //cdGrupo = e.Key.id_grupo,
                         //nrCNPJ = e.Key.cnpj,
                         //idAdquirente = e.Key.id,
@@ -582,12 +582,13 @@ namespace api.Negocios.Pos
             else if (colecao == 9) // [mobile]/Filial/Tempo
             {
                 var subQuery = query
-                    .GroupBy(x => new { x.empresa.id_grupo, x.cnpj })
+                    .GroupBy(x => new { x.empresa.id_grupo, x.empresa })
                     .Select(e => new
                     {
 
+                        nmNome = e.Key.empresa.ds_fantasia,
                         cdGrupo = e.Key.id_grupo,
-                        nrCNPJ = e.Key.cnpj,
+                        nrCNPJ = e.Key.empresa.nu_cnpj,
                         vlVenda = e.Sum(l => l.valorVendaBruta)
                     });
 
