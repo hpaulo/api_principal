@@ -50,6 +50,12 @@ namespace api.Negocios.Pos
 
         };
 
+        public enum MES
+        {
+            Janeiro = 1, Fevereiro = 2, Março, Abril, Maio, Junho, Julho, Agosto, Setembro,
+            Outubro, Novembro, Dezembro
+        };
+
         /// <summary>
         /// Get Recebimento/Recebimento
         /// </summary>
