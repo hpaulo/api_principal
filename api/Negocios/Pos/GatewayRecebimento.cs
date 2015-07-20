@@ -401,7 +401,7 @@ namespace api.Negocios.Pos
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
 
-                CollectionRecebimento = subQuery.OrderBy(o => new { o.nrAno, o.nrMes }).ToList<dynamic>();
+                CollectionRecebimento = subQuery.OrderByDescending(o => new { o.nrAno, o.nrMes }).ToList<dynamic>();
 
             }
             else if (colecao == 3) // Portal/RelatorioTerminalLogico
