@@ -130,12 +130,22 @@ namespace api.Negocios.Pos
                             DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtaVenda <= dta);
                         }
+                        else if (item.Value.Length == 4)
+                        {
+                            string busca = item.Value + "0101";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year);
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month);
+                        }
                         else // IGUAL
                         {
                             string busca = item.Value;
                             DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            //DateTime dtaFim = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.FFF", CultureInfo.InvariantCulture);
-                            //entity = entity.Where(e => e .dtaVenda >= dtaIni && e.dtaVenda <= dtaFim);
                             entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month && e.dtaVenda.Day == dtaIni.Day);
                         }
                         break;
@@ -492,11 +502,11 @@ namespace api.Negocios.Pos
             else if (colecao == 6) // [mobile]/Vendas/Tempo
             {
                 var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda, x.empresa.id_grupo })
+                    .GroupBy(x => new { x.dtaVenda.Day, x.empresa.id_grupo })
                     .Select(e => new
                     {
 
-                        nrDia = e.Key.dtaVenda.Day,
+                        nrDia = e.Key.Day,
                         cdGrupo = e.Key.id_grupo,
                         //nrCNPJ = e.Key.cnpj,
                         vlVenda = e.Sum(l => l.valorVendaBruta)
@@ -551,11 +561,11 @@ namespace api.Negocios.Pos
             else if (colecao == 8) // [mobile]/Vendas/Adquirente/tempo
             {
                 var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda.Date, x.BandeiraPos.Operadora.nmOperadora })
+                    .GroupBy(x => new { x.dtaVenda.Day, x.BandeiraPos.Operadora.nmOperadora })
                     .Select(e => new
                     {
 
-                        nrDia = e.Key.Date,
+                        nrDia = e.Key.Day,
                         //cdGrupo = e.Key.id_grupo,
                         //nrCNPJ = e.Key.cnpj,
                         //idAdquirente = e.Key.id,
@@ -611,11 +621,11 @@ namespace api.Negocios.Pos
             else if (colecao == 10) // [mobile]/Filial/Tempo
             {
                 var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda, x.empresa.id_grupo })
+                    .GroupBy(x => new { x.dtaVenda.Day, x.empresa.id_grupo })
                     .Select(e => new
                     {
 
-                        nrDia = e.Key.dtaVenda.Day,
+                        nrDia = e.Key.Day,
                         cdGrupo = e.Key.id_grupo,
                         //nrCNPJ = e.Key.cnpj,
                         vlVenda = e.Sum(l => l.valorVendaBruta)
