@@ -112,7 +112,9 @@ namespace api.Negocios.Administracao
 
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+            query = query.Where(e => e.RoleId > 50);
             var queryTotal = query;
+
 
             // TOTAL DE REGISTROS
             retorno.TotalDeRegistros = queryTotal.Count();
@@ -132,7 +134,6 @@ namespace api.Negocios.Administracao
             if (colecao == 1)
             {
                 CollectionWebpages_Roles = query
-                .Where( e => e.RoleId > 50)
                 .Select(e => new
                 {
 
@@ -143,7 +144,6 @@ namespace api.Negocios.Administracao
             else if (colecao == 0)
             {
                 CollectionWebpages_Roles = query
-                .Where(e => e.RoleId > 50)
                 .Select(e => new
                 {
 
@@ -154,7 +154,6 @@ namespace api.Negocios.Administracao
             else if (colecao == 2)
             {
                 CollectionWebpages_Roles = query
-                .Where(e => e.RoleId > 50)
                 .Select(e => new
                 {
 
