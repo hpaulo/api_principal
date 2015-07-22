@@ -87,19 +87,20 @@ namespace api.Controllers.Login
                                                             .Select(u => new { id_users = u.id_users, nm_pessoa = u.pessoa.nm_pessoa, ds_login = u.ds_login , id_grupo = u.id_grupo})
                                                             .FirstOrDefault();
 
-                            List<dynamic> permissoes = _db.webpages_UsersInRoles.Where(r => r.UserId == usuario.id_users)
-                                                                                .Where(r => r.RoleId > 50)
-                                                                                .Select(
-                                                                                            r => new
-                                                                                            {
-                                                                                                RoleId = r.RoleId,
-                                                                                                RolePrincipal = r.RolePrincipal,
-                                                                                                ControllerPrincipal = r.webpages_Roles.webpages_Permissions.Where(p => p.fl_principal == true).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select( p => p.webpages_Methods.webpages_Controllers.id_controller ).FirstOrDefault(), // .FirstOrDefault().webpages_Methods.webpages_Controllers.id_controller,
-                                                                                                Controllers = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select(p => new { id_controller = p.webpages_Methods.id_controller }).ToList<dynamic>(),
-                                                                                                FiltroEmpresa = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("FILTRO EMPRESA")).Select(p => new { id_controller = p.webpages_Methods.id_controller }).ToList<dynamic>().Count > 0,
-                                                                                                ABC = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("FILTRO EMPRESA")).Select(p => new { ds_method = p.webpages_Methods.ds_method }).ToList<dynamic>(),
-                                                                                            }
-                                                                                        ).ToList<dynamic>();
+                            var rolesDoUsuario = _db.webpages_UsersInRoles
+                                                                        .Where(r => r.UserId == usuario.id_users)
+                                                                        .Where(r => r.RoleId > 50)
+                                                                        .AsQueryable();
+
+                            List<dynamic> permissoes = rolesDoUsuario.Select( r => new
+                                                                                {
+                                                                                    RoleId = r.RoleId,
+                                                                                    RolePrincipal = r.RolePrincipal,
+                                                                                    ControllerPrincipal = r.webpages_Roles.webpages_Permissions.Where(p => p.fl_principal == true).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select( p => p.webpages_Methods.webpages_Controllers.id_controller ).FirstOrDefault(), // .FirstOrDefault().webpages_Methods.webpages_Controllers.id_controller,
+                                                                                    Controllers = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select(p => new { id_controller = p.webpages_Methods.id_controller }).ToList<dynamic>(),
+                                                                                    FiltroEmpresa = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("FILTRO EMPRESA")).Select(p => new { id_controller = p.webpages_Methods.id_controller }).ToList<dynamic>().Count > 0,
+                                                                                }
+                                                                            ).ToList<dynamic>();
 
                             List<Int32> list = new List<Int32>();
                             int id_ControllerPrincipal = 0;
@@ -120,8 +121,8 @@ namespace api.Controllers.Login
 
                             list = list.Distinct().ToList<Int32>();
 
-
-
+                            // Retorna os controllers na estrutura de árvore
+                            // Em cada controller é listado os métodos permitidos para o usuário logado
                             List<dynamic> controllers = _db.webpages_Controllers
                             .Where(e => e.id_subController == null)
                             .Where(e => list.Contains( e.id_controller ) )
@@ -132,6 +133,21 @@ namespace api.Controllers.Login
                                 id_controller = e.id_controller,
                                 ds_controller = e.ds_controller,
                                 home = e.id_controller == id_ControllerPrincipal,
+                                methods = rolesDoUsuario.Select(r => new
+                                                                    {
+                                                                        metodos = _db.webpages_Permissions
+                                                                                      .Where(p => p.id_roles == r.RoleId)
+                                                                                      .Where(p => p.webpages_Methods.id_controller == e.id_controller)
+                                                                                      .Select(p => new
+                                                                                                  {
+                                                                                                      id_method = p.webpages_Methods.id_method,
+                                                                                                      ds_method = p.webpages_Methods.ds_method,
+                                                                                                      nm_method = p.webpages_Methods.nm_method,
+                                                                                                      id_controller = p.webpages_Methods.id_controller
+                                                                                                  }
+                                                                                      ).ToList<dynamic>(),
+                                                                    }
+                                                                    ).ToList<dynamic>(),
                                 subControllers = _db.webpages_Controllers
                                                                             .Where(sub => sub.id_subController == e.id_controller)
                                                                             .Where(sub => list.Contains(sub.id_controller))
@@ -141,6 +157,21 @@ namespace api.Controllers.Login
                                                                                 id_controller = sub.id_controller,
                                                                                 ds_controller = sub.ds_controller,
                                                                                 home = sub.id_controller == id_ControllerPrincipal,
+                                                                                methods = rolesDoUsuario.Select(r => new
+                                                                                                                   {
+                                                                                                                       metodos = _db.webpages_Permissions
+                                                                                                                                     .Where(p => p.id_roles == r.RoleId)
+                                                                                                                                     .Where(p => p.webpages_Methods.id_controller == sub.id_controller)
+                                                                                                                                     .Select(p => new
+                                                                                                                                     {
+                                                                                                                                         id_method = p.webpages_Methods.id_method,
+                                                                                                                                         ds_method = p.webpages_Methods.ds_method,
+                                                                                                                                         nm_method = p.webpages_Methods.nm_method,
+                                                                                                                                         id_controller = p.webpages_Methods.id_controller
+                                                                                                                                     }
+                                                                                                                                     ).ToList<dynamic>(),
+                                                                                                                   }
+                                                                                                                    ).ToList<dynamic>(),
                                                                                 subControllers = _db.webpages_Controllers
                                                                                                     .OrderBy(sub2 => sub2.ds_controller)
                                                                                                     .Where(sub2 => sub2.id_subController == sub.id_controller)
@@ -150,11 +181,58 @@ namespace api.Controllers.Login
                                                                                                         id_controller = sub2.id_controller,
                                                                                                         ds_controller = sub2.ds_controller,
                                                                                                         home = sub2.id_controller == id_ControllerPrincipal,
+                                                                                                        methods = rolesDoUsuario.Select(r => new
+                                                                                                        {
+                                                                                                            metodos = _db.webpages_Permissions
+                                                                                                                          .Where(p => p.id_roles == r.RoleId)
+                                                                                                                          .Where(p => p.webpages_Methods.id_controller == sub2.id_controller)
+                                                                                                                          .Select(p => new
+                                                                                                                          {
+                                                                                                                              id_method = p.webpages_Methods.id_method,
+                                                                                                                              ds_method = p.webpages_Methods.ds_method,
+                                                                                                                              nm_method = p.webpages_Methods.nm_method,
+                                                                                                                              id_controller = p.webpages_Methods.id_controller
+                                                                                                                          }
+                                                                                                                          ).ToList<dynamic>(),
+                                                                                                        }
+                                                                                                                    ).ToList<dynamic>(),
                                                                                                     }).ToList<dynamic>()
 
 
                                                                             }).ToList<dynamic>()
                             }).ToList<dynamic>();
+
+                            // Obtém o array de métodos permitidos no mesmo nível dos outros campos
+                            foreach (var controller in controllers)
+                            {
+                                if (controller.methods.Count > 0)
+                                {
+                                    var m = controller.methods[0];
+                                    controller.methods.Clear();
+                                    foreach (var method in m.metodos)
+                                        controller.methods.Add(method);
+                                }
+                                foreach (var subController in controller.subControllers)
+                                {
+                                    if (subController.methods.Count > 0)
+                                    {
+                                        var m = subController.methods[0];
+                                        subController.methods.Clear();
+                                        foreach (var method in m.metodos)
+                                            subController.methods.Add(method);
+                                    }
+                                    foreach (var subController2 in subController.subControllers)
+                                    {
+                                        if (subController2.methods.Count > 0)
+                                        {
+                                            var m = subController2.methods[0];
+                                            subController2.methods.Clear();
+                                            foreach (var method in m.metodos)
+                                                subController.methods.Add(method);
+                                        }
+                                    }
+                                }
+                            }
 
                             return new Models.Object.Autenticado { nome = usuario.nm_pessoa, usuario = usuario.ds_login, id_grupo = (usuario.id_grupo == null ? -1 : (Int32)usuario.id_grupo), filtro_empresa = filtro_empresa, token = token, controllers = controllers };
                         }
