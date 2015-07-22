@@ -30,6 +30,9 @@ namespace api.Negocios.Administracao
                 ID_METHOD = 101,
                 FL_PRINCIPAL = 102,
 
+                // PERSONALIZADO
+                ID_CONTROLLER = 200,
+
        };
 
         /// <summary>
@@ -151,6 +154,36 @@ namespace api.Negocios.Administracao
 					id_method = e.id_method,
 					fl_principal = e.fl_principal,
                 }).ToList<dynamic>();
+            }
+            else if (colecao == 2)
+            {
+                // Retorna os métodos permitidos para o usuário logado em relação ao controller informado
+                Int32 userId = Permissoes.GetIdUser(token);
+                Int32 controllerId = Convert.ToInt32(queryString[((int)CAMPOS.ID_CONTROLLER).ToString()]);
+
+
+                var permissoes = _db.webpages_UsersInRoles.Where(r => r.UserId == userId)
+                                                                    .Where(r => r.RoleId > 50)
+                                                                    .Select(
+                                                                                r => new
+                                                                                {
+                                                                                    metodos = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId)
+                                                                                                                          .Where(p => p.webpages_Methods.id_controller == controllerId)
+                                                                                                                          .Select(p => new { id_method = p.webpages_Methods.id_method,
+                                                                                                                                             ds_method = p.webpages_Methods.ds_method,
+                                                                                                                                             nm_method = p.webpages_Methods.nm_method,
+                                                                                                                                             id_controller = p.webpages_Methods.id_controller
+                                                                                                                                           }
+                                                                                                                          ).ToList<dynamic>(),
+                                                                                }
+                                                                            ).FirstOrDefault();
+
+                if (permissoes != null)
+                {
+                    CollectionWebpages_Permissions = permissoes.metodos;
+                }
+
+                retorno.TotalDeRegistros = CollectionWebpages_Permissions.Count;
             }
 
             retorno.Registros = CollectionWebpages_Permissions;

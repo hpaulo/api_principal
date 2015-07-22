@@ -213,7 +213,7 @@ namespace api.Negocios.Cliente
                     fl_proinfo = e.fl_proinfo,
                 }).ToList<dynamic>();
             }
-            else if (colecao == 2)
+            else if (colecao == 2 || colecao == 3)
             {
                 CollectionGrupo_empresa = query.Select(e => new
                 {
@@ -229,9 +229,12 @@ namespace api.Negocios.Cliente
                     
                 ).ToList<dynamic>();
 
-                CollectionGrupo_empresa = CollectionGrupo_empresa.OrderByDescending(d => d.dt_ultimoAcesso).ToList();
+                // a diferença entre a colecao 2 e a 3 é que a 2 sempre ordena decrescente por dt ultimo acesso
+                // A coleção 2 é usada no mobile, já a 3 é usada no portal web
+                if(colecao == 2) CollectionGrupo_empresa = CollectionGrupo_empresa.OrderByDescending(d => d.dt_ultimoAcesso).ToList();
 
             }
+
             retorno.Registros = CollectionGrupo_empresa;
             
             return retorno;
