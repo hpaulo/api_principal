@@ -34,13 +34,21 @@ namespace api.Negocios.Pos
             DTARECEBIMENTO = 104,
             VALORDESCONTADO = 105,
 
+            // EMPRESA
             NU_CNPJ = 300,
             ID_GRUPO = 316,
+
+            // OPERADORA (ADQUIRENTE)
             NMOPERADORA = 401,
 
+            // BANDEIRA
             IDBANDEIRA = 500,
             DESBANDEIRA = 501,
 
+            // RECEBIMENTO
+            NSU = 603,
+            DTAVENDA = 605,
+            CODRESUMOVENDA = 613,
         };
 
         public enum MES
@@ -169,6 +177,57 @@ namespace api.Negocios.Pos
                         string desBandeira = Convert.ToString(item.Value).ToUpper();
                         entity = entity.Where(e => e.Recebimento.BandeiraPos.desBandeira.ToUpper().Equals(desBandeira));
                         break;
+
+                    case CAMPOS.DTAVENDA:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.Recebimento.dtaVenda.Year > dtaIni.Year || (e.Recebimento.dtaVenda.Year == dtaIni.Year && e.Recebimento.dtaVenda.Month > dtaIni.Month) ||
+                                                                                          (e.Recebimento.dtaVenda.Year == dtaIni.Year && e.Recebimento.dtaVenda.Month == dtaIni.Month && e.Recebimento.dtaVenda.Day >= dtaIni.Day))
+                                                    && (e.Recebimento.dtaVenda.Year < dtaFim.Year || (e.Recebimento.dtaVenda.Year == dtaFim.Year && e.Recebimento.dtaVenda.Month < dtaFim.Month) ||
+                                                                                          (e.Recebimento.dtaVenda.Year == dtaFim.Year && e.Recebimento.dtaVenda.Month == dtaFim.Month && e.Recebimento.dtaVenda.Day <= dtaFim.Day)));
+                        }
+                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.Recebimento.dtaVenda >= dta);
+                        }
+                        else if (item.Value.Contains("<")) // MENOR IGUAL
+                        {
+                            string busca = item.Value.Replace("<", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.Recebimento.dtaVenda <= dta);
+                        }
+                        else if (item.Value.Length == 4)
+                        {
+                            string busca = item.Value + "0101";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.Recebimento.dtaVenda.Year == dtaIni.Year);
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.Recebimento.dtaVenda.Year == dtaIni.Year && e.Recebimento.dtaVenda.Month == dtaIni.Month);
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.Recebimento.dtaVenda.Year == dtaIni.Year && e.Recebimento.dtaVenda.Month == dtaIni.Month && e.Recebimento.dtaVenda.Day == dtaIni.Day);
+                        }
+                        break;
+                    case CAMPOS.NSU:
+                        string nsu = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.Recebimento.nsu.Equals(nsu)).AsQueryable();
+                        break;
+                    case CAMPOS.CODRESUMOVENDA:
+                        string codResumoVenda = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.Recebimento.codResumoVenda.Equals(codResumoVenda)).AsQueryable();
+                        break;
                 }
             }
             
@@ -261,13 +320,15 @@ namespace api.Negocios.Pos
                 retorno.Totais.Add("valorParcelaLiquida", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaLiquida)) : 0);
             }
 
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
+            if (colecao == 0 || colecao == 8)
+            {   // coleções que não fazem groupby
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+            }
             retorno.PaginaAtual = pageNumber;
             retorno.ItensPorPagina = pageSize;
 
@@ -343,7 +404,7 @@ namespace api.Negocios.Pos
                 retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
-                skipRows = (pageNumber - 1) * pageSize;
+                int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
                     subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
@@ -374,7 +435,7 @@ namespace api.Negocios.Pos
                 retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
-                skipRows = (pageNumber - 1) * pageSize;
+                int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
                     subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
@@ -405,7 +466,7 @@ namespace api.Negocios.Pos
                 retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
-                skipRows = (pageNumber - 1) * pageSize;
+                int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
                     subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
@@ -435,7 +496,7 @@ namespace api.Negocios.Pos
                 retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
-                skipRows = (pageNumber - 1) * pageSize;
+                int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
                     subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
@@ -467,7 +528,7 @@ namespace api.Negocios.Pos
                 retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
-                skipRows = (pageNumber - 1) * pageSize;
+                int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
                     subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
@@ -499,7 +560,7 @@ namespace api.Negocios.Pos
                 retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
-                skipRows = (pageNumber - 1) * pageSize;
+                int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
                     subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
@@ -530,7 +591,7 @@ namespace api.Negocios.Pos
                 retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
-                skipRows = (pageNumber - 1) * pageSize;
+                int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
                     subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
@@ -541,6 +602,7 @@ namespace api.Negocios.Pos
             else if (colecao == 8) // [web]cashflow/Analitico
             {
                 CollectionRecebimentoParcela = query
+                .OrderBy(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira)
                 .Select(e => new
                 {
 
@@ -561,6 +623,7 @@ namespace api.Negocios.Pos
             {
                 var subQuery = query
                     .GroupBy(x => new { x.Recebimento.BandeiraPos })
+                    .OrderBy(e => e.Key.BandeiraPos.desBandeira)
                     .Select(e => new
                     {
                         bandeira = new {
@@ -586,7 +649,7 @@ namespace api.Negocios.Pos
 
 
                 // PAGINAÇÃO
-                skipRows = (pageNumber - 1) * pageSize;
+                int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
                     subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else

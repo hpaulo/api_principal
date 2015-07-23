@@ -43,11 +43,19 @@ namespace api.Negocios.Pos
             CODRESUMOVENDA = 113,
             NUMPARCELATOTAL = 114,
 
+            // OPERADORA (ADQUIRENTE)
             IDOPERADORA = 300,
             NMOPERADORA = 301,
 
-            ID_GRUPO = 416,
+            // EMPRESA
             DS_FANTASIA = 404,
+            ID_GRUPO = 416,
+
+            // BANDEIRA
+            DESBANDEIRA = 501,
+
+            // TERMINAL LÓGICO
+            DSTERMINALLOGICO = 601,
 
         };
 
@@ -207,6 +215,8 @@ namespace api.Negocios.Pos
                         string dsfantasia = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.empresa.ds_fantasia.Equals(dsfantasia)).AsQueryable();
                         break;
+
+                    
                 }
             }
             #endregion
@@ -293,6 +303,14 @@ namespace api.Negocios.Pos
                     if (orderby == 0) entity = entity.OrderBy(e => e.empresa.ds_fantasia).AsQueryable();
                     else entity = entity.OrderByDescending(e => e.empresa.ds_fantasia).AsQueryable();
                     break;
+                case CAMPOS.DESBANDEIRA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.BandeiraPos.desBandeira).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.BandeiraPos.desBandeira).AsQueryable();
+                    break;
+                case CAMPOS.DSTERMINALLOGICO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
+                    break;
             }
             #endregion
 
@@ -332,7 +350,7 @@ namespace api.Negocios.Pos
 
 
             // PAGINAÇÃO
-            if (colecao != 3 && colecao != 4) // relatório terminal lógico e relatório sintético
+            if (colecao != 3 && colecao != 4) // relatório terminal lógico e relatório sintético => Por causa do GroupBy
             {
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = queryTotal.Count();

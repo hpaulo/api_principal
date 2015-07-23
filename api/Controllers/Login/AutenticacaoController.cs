@@ -228,7 +228,7 @@ namespace api.Controllers.Login
                                             var m = subController2.methods[0];
                                             subController2.methods.Clear();
                                             foreach (var method in m.metodos)
-                                                subController.methods.Add(method);
+                                                subController2.methods.Add(method);
                                         }
                                     }
                                 }
