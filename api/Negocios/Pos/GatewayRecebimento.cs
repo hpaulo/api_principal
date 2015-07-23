@@ -513,11 +513,12 @@ namespace api.Negocios.Pos
             else if (colecao == 5) // Portal/RelatorioAnalitico
             {
                 CollectionRecebimento = query
+
                  .Select(e => new
                  {
                          e.cnpj,
                          e.dtaVenda,
-                         e.TerminalLogico.dsTerminalLogico,
+                         dsTerminalLogico = e.TerminalLogico.dsTerminalLogico.Equals("0") ? "-" : e.TerminalLogico.dsTerminalLogico,
                          e.BandeiraPos.desBandeira,
                          e.nsu,
                          e.cdAutorizador,

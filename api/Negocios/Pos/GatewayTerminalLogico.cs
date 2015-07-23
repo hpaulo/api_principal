@@ -153,7 +153,7 @@ namespace api.Negocios.Pos
                 {
 
                     idTerminalLogico = e.idTerminalLogico,
-                    dsTerminalLogico = (e.dsTerminalLogico.Equals("0")) ? "-" : e.dsTerminalLogico,
+                    dsTerminalLogico = e.dsTerminalLogico.Equals("0") ? "-" : e.dsTerminalLogico,
                     idOperadora = e.idOperadora,
                 }).ToList<dynamic>();
             }
