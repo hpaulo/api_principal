@@ -222,10 +222,22 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.NSU:
                         string nsu = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.Recebimento.nsu.Equals(nsu)).AsQueryable();
+                        if (nsu.Contains("%")) // usa LIKE => STARTS WITH
+                        {
+                            string busca = nsu.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.Recebimento.nsu.StartsWith(busca));
+                        }
+                        else
+                            entity = entity.Where(e => e.Recebimento.nsu.Equals(nsu)).AsQueryable();
                         break;
                     case CAMPOS.CODRESUMOVENDA:
                         string codResumoVenda = Convert.ToString(item.Value);
+                        if (codResumoVenda.Contains("%")) // usa LIKE => STARTS WITH
+                        {
+                            string busca = codResumoVenda.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.Recebimento.codResumoVenda.StartsWith(busca));
+                        }
+                        else
                         entity = entity.Where(e => e.Recebimento.codResumoVenda.Equals(codResumoVenda)).AsQueryable();
                         break;
                 }

@@ -105,11 +105,23 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.NSU:
                         string nsu = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nsu.Equals(nsu)).AsQueryable();
+                        if (nsu.Contains("%")) // usa LIKE => STARTS WITH
+                        {
+                            string busca = nsu.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.nsu.StartsWith(busca));
+                        }
+                        else
+                            entity = entity.Where(e => e.nsu.Equals(nsu)).AsQueryable();
                         break;
                     case CAMPOS.CDAUTORIZADOR:
                         string cdAutorizador = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.cdAutorizador.Equals(cdAutorizador)).AsQueryable();
+                        if (cdAutorizador.Contains("%")) // usa LIKE => STARTS WITH
+                        {
+                            string busca = cdAutorizador.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.cdAutorizador.StartsWith(busca));
+                        }
+                        else
+                            entity = entity.Where(e => e.cdAutorizador.Equals(cdAutorizador)).AsQueryable();
                         break;
                     case CAMPOS.DTAVENDA:
                         //DateTime dtaVenda = Convert.ToDateTime(item.Value);
@@ -350,7 +362,8 @@ namespace api.Negocios.Pos
 
 
             // PAGINAÇÃO
-            if (colecao != 3 && colecao != 4) // relatório terminal lógico e relatório sintético => Por causa do GroupBy
+            if (colecao != 3 && colecao != 4 && // relatório terminal lógico e relatório sintético => Por causa do GroupBy
+                colecao != 11 && colecao != 12) // NSUS e Cod Autorizador de todo o filtro (sem paginação)
             {
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = queryTotal.Count();
@@ -541,7 +554,7 @@ namespace api.Negocios.Pos
                     });
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
                 int skipRows = (pageNumber - 1) * pageSize;
@@ -571,7 +584,7 @@ namespace api.Negocios.Pos
                     });
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
                 int skipRows = (pageNumber - 1) * pageSize;
@@ -602,7 +615,7 @@ namespace api.Negocios.Pos
                     });
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
                 int skipRows = (pageNumber - 1) * pageSize;
@@ -632,7 +645,7 @@ namespace api.Negocios.Pos
                     });
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
                 int skipRows = (pageNumber - 1) * pageSize;
@@ -661,7 +674,7 @@ namespace api.Negocios.Pos
                     });
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = subQuery.Count();
 
                 // PAGINAÇÃO
                 int skipRows = (pageNumber - 1) * pageSize;
@@ -675,6 +688,26 @@ namespace api.Negocios.Pos
 
                 CollectionRecebimento = subQuery.OrderBy(o => o.nrDia).ToList<dynamic>();
 
+            }
+            else if (colecao == 11) // Portal/RelatorioAnalitico => Listagem dos NSUs
+            {
+                CollectionRecebimento = query
+                 .OrderBy(e => e.nsu)
+                 .Select(e => e.nsu)
+                 .ToList<dynamic>();
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = CollectionRecebimento.Count;
+            }
+            else if (colecao == 12) // Portal/RelatorioAnalitico => Listagem dos cod. autorizador
+            {
+                CollectionRecebimento = query
+                 .OrderBy(e => e.cdAutorizador)
+                 .Select(e => e.cdAutorizador)
+                 .ToList<dynamic>();
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = CollectionRecebimento.Count;
             }
 
 
