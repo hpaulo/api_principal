@@ -199,6 +199,7 @@ namespace api.Negocios.Administracao
         public static void Delete(string token, Int32 RoleId)
         {
             GatewayWebpagesPermissions.Delete(token, RoleId);
+            GatewayWebpagesUsersInRoles.Delete(token, RoleId, true);
             _db.webpages_Roles.Remove(_db.webpages_Roles.Where(e => e.RoleId.Equals(RoleId)).First());
             _db.SaveChanges();
         }

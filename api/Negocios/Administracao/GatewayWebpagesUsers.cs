@@ -360,7 +360,7 @@ namespace api.Negocios.Administracao
 
         public static void Delete(string token, Int32 id_users)
         {
-            GatewayWebpagesUsersInRoles.Delete(token, id_users);
+            GatewayWebpagesUsersInRoles.Delete(token, id_users, false);
             GatewayWebpagesMembership.Delete(token, id_users);
             // Obtem o usuário com o id_users
             webpages_Users value = _db.webpages_Users

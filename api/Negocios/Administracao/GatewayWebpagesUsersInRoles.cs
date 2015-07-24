@@ -167,14 +167,15 @@ namespace api.Negocios.Administracao
         /// <summary>
         /// Apaga uma Webpages_UsersInRoles
         /// </summary>
-        /// <param name="param"></param>
+        /// <param name="id"></param>
+        /// <param name="isRole"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 UserId)
+        public static void Delete(string token, Int32 id, Boolean isRole)
         {
-            _db.webpages_UsersInRoles.RemoveRange(_db.webpages_UsersInRoles.Where(e => e.UserId == UserId));
+            if (isRole) _db.webpages_UsersInRoles.RemoveRange(_db.webpages_UsersInRoles.Where(e => e.RoleId == id));
+            else _db.webpages_UsersInRoles.RemoveRange(_db.webpages_UsersInRoles.Where(e => e.UserId == id));
             _db.SaveChanges();
         }
-
 
         /// <summary>
         /// Apaga uma Webpages_UsersInRoles
