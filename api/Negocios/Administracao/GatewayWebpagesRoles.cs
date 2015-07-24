@@ -69,7 +69,7 @@ namespace api.Negocios.Administracao
                             entity = _db.webpages_Roles.Where(e => e.RoleName.Contains(busca));
                         }
                         else
-                        entity = entity.Where(e => e.RoleName.Equals(RoleName)).AsQueryable<webpages_Roles>();
+                            entity = entity.Where(e => e.RoleName.Equals(RoleName)).AsQueryable<webpages_Roles>();
                         break;
 
                 }
@@ -169,6 +169,92 @@ namespace api.Negocios.Administracao
                                     + " > ": "") +
                                     e.webpages_Permissions.Where(p => p.fl_principal == true).FirstOrDefault().webpages_Methods.webpages_Controllers.ds_controller
                 }).ToList<dynamic>();
+            }
+            else if (colecao == 3)
+            {
+                List<int> sub2List = new List<int>();
+                CollectionWebpages_Roles = query
+                .Select(r => new
+                {
+
+                    RoleId = r.RoleId,
+                    RoleName = r.RoleName,
+
+                    Controllers = _db.webpages_Permissions
+                    .Where(e => e.id_roles == r.RoleId)
+                    .GroupBy(e => new { e.webpages_Methods.webpages_Controllers })
+                    .Where(e => e.Key.webpages_Controllers.id_subController == null)
+                    .Where(e => e.Key.webpages_Controllers.id_controller >= 50)
+                    .OrderBy(e => e.Key.webpages_Controllers.ds_controller)
+                    .Select(e => new
+                    {
+
+                        id_controller = e.Key.webpages_Controllers.id_controller,
+                        ds_controller = e.Key.webpages_Controllers.ds_controller,
+                        principal = _db.webpages_Permissions
+                                        .Where(p => p.id_roles == r.RoleId)
+                                        .Where(p => p.webpages_Methods.id_controller == e.Key.webpages_Controllers.id_controller)
+                                        .Where(p => p.fl_principal == true).ToList<webpages_Permissions>().Count > 0,
+                        methods = e.Key.webpages_Controllers.webpages_Methods
+                                                    .OrderBy(m => m.ds_method)
+                                                    .Where(m => m.webpages_Permissions.Where(p => p.id_roles == r.RoleId).ToList().Count > 0)
+                                                    .Select(m => new
+                                                                     {
+                                                                         id_method = m.id_method,
+                                                                         ds_method = m.ds_method,
+                                                                     })
+                                                    .ToList<dynamic>(),
+                        subControllers = _db.webpages_Permissions
+                                                .Where(sub => sub.id_roles == r.RoleId)
+                                                .GroupBy(sub => new { sub.webpages_Methods.webpages_Controllers })
+                                                .Where(sub => sub.Key.webpages_Controllers.id_subController == e.Key.webpages_Controllers.id_controller)
+                                                .OrderBy(sub => sub.Key.webpages_Controllers.ds_controller)
+                                                .Select(sub => new
+                                                {
+                                                    id_controller = sub.Key.webpages_Controllers.id_controller,
+                                                    ds_controller = sub.Key.webpages_Controllers.ds_controller,
+                                                    principal = _db.webpages_Permissions
+                                                                    .Where(p => p.id_roles == r.RoleId)
+                                                                    .Where(p => p.webpages_Methods.id_controller == sub.Key.webpages_Controllers.id_controller)
+                                                                    .Where(p => p.fl_principal == true).ToList<webpages_Permissions>().Count > 0,
+                                                    methods = sub.Key.webpages_Controllers.webpages_Methods
+                                                                .OrderBy(ms => ms.ds_method)
+                                                                .Where(ms => ms.webpages_Permissions.Where(ps => ps.id_roles == r.RoleId).ToList().Count > 0)
+                                                                .Select(ms => new
+                                                                {
+                                                                    id_method = ms.id_method,
+                                                                    ds_method = ms.ds_method,
+                                                                }).ToList<dynamic>(),
+                                                    subControllers = _db.webpages_Permissions
+                                                                            .Where(sub2 => sub2.id_roles == r.RoleId)
+                                                                            .GroupBy(sub2 => new { sub2.webpages_Methods.webpages_Controllers })
+                                                                            .Where(sub2 => sub2.Key.webpages_Controllers.id_subController == sub.Key.webpages_Controllers.id_controller)
+                                                                            .OrderBy(sub2 => sub2.Key.webpages_Controllers.ds_controller)
+                                                                            .Select(sub2 => new
+                                                                            {
+                                                                                id_controller = sub2.Key.webpages_Controllers.id_controller,
+                                                                                ds_controller = sub2.Key.webpages_Controllers.ds_controller,
+                                                                                principal = _db.webpages_Permissions
+                                                                                            .Where(p => p.id_roles == r.RoleId)
+                                                                                            .Where(p => p.webpages_Methods.id_controller == sub2.Key.webpages_Controllers.id_controller)
+                                                                                            .Where(p => p.fl_principal == true).ToList<webpages_Permissions>().Count > 0,
+                                                                                methods = sub2.Key.webpages_Controllers.webpages_Methods
+                                                                                            .OrderBy(ms2 => ms2.ds_method)
+                                                                                            .Where(ms2 => ms2.webpages_Permissions.Where(ps2 => ps2.id_roles == r.RoleId).ToList().Count > 0)
+                                                                                            .Select(ms2 => new
+                                                                                            {
+                                                                                                id_method = ms2.id_method,
+                                                                                                ds_method = ms2.ds_method,
+                                                                                            }).ToList<dynamic>(),
+                                                                                subControllers = sub2List
+                                                                            }).ToList<dynamic>()
+
+
+                                                }).ToList<dynamic>()
+                    }).ToList<dynamic>()
+
+                }).ToList<dynamic>();
+
             }
 
             retorno.Registros = CollectionWebpages_Roles;

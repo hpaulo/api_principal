@@ -115,6 +115,7 @@ namespace api.Controllers.Login
                                                                             ).ToList<dynamic>();
 
                             // VER PERMISSÕES => OBTEM CONTROLLERS ASSOCIADOS AO CARD SERVICES, PROINFO, TAX SERVICES
+                            // ESSAS PERMISSÕES SÓ VALERÃO SE A ROLE DO USUÁRIO NÃO FOR RELACIONADA AO PESSOAL DA ATOS ("ADMINISTRATIVO", "DESENVOLVEDOR", "COMERCIAL")
                             Boolean fl_cardservices = usuario.grupo_empresa != null ? usuario.grupo_empresa.fl_cardservices /*&& !usuario.grupo_empresa.fl_ativo*/ : true;
                             Boolean fl_proinfo = usuario.grupo_empresa != null ? usuario.grupo_empresa.fl_proinfo /*&& !usuario.grupo_empresa.fl_ativo*/ : true;
                             Boolean fl_taxservices = usuario.grupo_empresa != null ? usuario.grupo_empresa.fl_taxservices /*&& !usuario.grupo_empresa.fl_ativo*/ : true;
