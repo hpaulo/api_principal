@@ -434,6 +434,8 @@ namespace api.Negocios.Administracao
                 }
 
 
+                if (param.Webpagesusers.ds_login != null && param.Webpagesusers.ds_login != value.ds_login)
+                    value.ds_login = param.Webpagesusers.ds_login;
                 if (param.Webpagesusers.ds_email != null && param.Webpagesusers.ds_email != value.ds_email)
                     value.ds_email = param.Webpagesusers.ds_email;
                 if (param.Webpagesusers.id_grupo != 0 && param.Webpagesusers.id_grupo != value.id_grupo)
