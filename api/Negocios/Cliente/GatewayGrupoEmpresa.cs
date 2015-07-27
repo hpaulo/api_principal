@@ -284,17 +284,17 @@ namespace api.Negocios.Cliente
             // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.id_grupo != null && param.id_grupo != value.id_grupo)
-                value.id_grupo = param.id_grupo;
+            //if (param.id_grupo != null && param.id_grupo != value.id_grupo)
+            //    value.id_grupo = param.id_grupo;
             if (param.ds_nome != null && param.ds_nome != value.ds_nome)
                 value.ds_nome = param.ds_nome;
-            if (param.token != null && param.token != value.token)
-                value.token = param.token;
-            if (param.fl_cardservices != null && param.fl_cardservices != value.fl_cardservices)
+            //if (param.token != null && param.token != value.token)
+            //    value.token = param.token;
+            if (param.fl_cardservices != value.fl_cardservices)
                 value.fl_cardservices = param.fl_cardservices;
-            if (param.fl_taxservices != null && param.fl_taxservices != value.fl_taxservices)
+            if (param.fl_taxservices != value.fl_taxservices)
                 value.fl_taxservices = param.fl_taxservices;
-            if (param.fl_proinfo != null && param.fl_proinfo != value.fl_proinfo)
+            if (param.fl_proinfo != value.fl_proinfo)
                 value.fl_proinfo = param.fl_proinfo;
             _db.SaveChanges();
 

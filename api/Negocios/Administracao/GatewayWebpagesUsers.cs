@@ -360,7 +360,7 @@ namespace api.Negocios.Administracao
 
         public static void Delete(string token, Int32 id_users)
         {
-            GatewayWebpagesUsersInRoles.Delete(token, id_users);
+            GatewayWebpagesUsersInRoles.Delete(token, id_users, false);
             GatewayWebpagesMembership.Delete(token, id_users);
             // Obtem o usuário com o id_users
             webpages_Users value = _db.webpages_Users
@@ -434,6 +434,8 @@ namespace api.Negocios.Administracao
                 }
 
 
+                if (param.Webpagesusers.ds_login != null && param.Webpagesusers.ds_login != value.ds_login)
+                    value.ds_login = param.Webpagesusers.ds_login;
                 if (param.Webpagesusers.ds_email != null && param.Webpagesusers.ds_email != value.ds_email)
                     value.ds_email = param.Webpagesusers.ds_email;
                 if (param.Webpagesusers.id_grupo != 0 && param.Webpagesusers.id_grupo != value.id_grupo)

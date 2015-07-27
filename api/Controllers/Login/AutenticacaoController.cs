@@ -62,8 +62,19 @@ namespace api.Controllers.Login
                             #endregion
 
                             var usuario = _db.webpages_Users.Where(u => u.id_users == verify.idUsers)
-                                                            .Select(u => new { id_users = u.id_users, nm_pessoa = u.pessoa.nm_pessoa, ds_login = u.ds_login , id_grupo = u.id_grupo})
+                                                            .Select(u => new { id_users = u.id_users, 
+                                                                               nm_pessoa = u.pessoa.nm_pessoa, 
+                                                                               ds_login = u.ds_login , 
+                                                                               grupo_empresa = u.grupo_empresa,
+                                                                               empresa = u.empresa,
+                                                                               //fl_ativo = u.fl_ativo,
+                                                                           }
+                                                                    )
                                                             .FirstOrDefault();
+
+                            //if((usuario.grupo_empresa != null && !usuario.grupo_empresa.fl_ativo) || 
+                            //   (usuario.empresa != null && !usuario.empresa.fl_ativo) || !usuario.fl_ativo) 
+                            // => RETORNAR ALGUM ERRO, JÁ QUE O USUÁRIO ESTÁ INATIVO (diretamente ou pela empresa/filial associado)
 
                             var rolesDoUsuario = _db.webpages_UsersInRoles
                                                                         .Where(r => r.UserId == usuario.id_users)
@@ -75,13 +86,24 @@ namespace api.Controllers.Login
                             List<dynamic> permissoes = rolesDoUsuario.Select( r => new
                                                                                 {
                                                                                     RoleId = r.RoleId,
+                                                                                    RoleName = r.webpages_Roles.RoleName,
                                                                                     RolePrincipal = r.RolePrincipal,
                                                                                     ControllerPrincipal = r.webpages_Roles.webpages_Permissions.Where(p => p.fl_principal == true).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select( p => p.webpages_Methods.webpages_Controllers.id_controller ).FirstOrDefault(), // .FirstOrDefault().webpages_Methods.webpages_Controllers.id_controller,
-                                                                                    Controllers = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select(p => new { id_controller = p.webpages_Methods.id_controller }).ToList<dynamic>(),
+                                                                                    Controllers = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select(p => new { id_controller = p.webpages_Methods.id_controller, ds_controller = p.webpages_Methods.webpages_Controllers.ds_controller }).ToList<dynamic>(),
                                                                                     FiltroEmpresa = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("FILTRO EMPRESA")).Select(p => new { id_controller = p.webpages_Methods.id_controller }).ToList<dynamic>().Count > 0,
                                                                                 }
                                                                             ).ToList<dynamic>();
 
+                            // VER PERMISSÕES => OBTEM CONTROLLERS ASSOCIADOS AO CARD SERVICES, PROINFO, TAX SERVICES
+                            // ESSAS PERMISSÕES SÓ VALERÃO SE A ROLE DO USUÁRIO NÃO FOR RELACIONADA AO PESSOAL DA ATOS ("ADMINISTRATIVO", "DESENVOLVEDOR", "COMERCIAL")
+                            Boolean fl_cardservices = usuario.grupo_empresa != null ? usuario.grupo_empresa.fl_cardservices /*&& !usuario.grupo_empresa.fl_ativo*/ : true;
+                            Boolean fl_proinfo = usuario.grupo_empresa != null ? usuario.grupo_empresa.fl_proinfo /*&& !usuario.grupo_empresa.fl_ativo*/ : true;
+                            Boolean fl_taxservices = usuario.grupo_empresa != null ? usuario.grupo_empresa.fl_taxservices /*&& !usuario.grupo_empresa.fl_ativo*/ : true;
+                            List<webpages_Controllers> cardservices = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = 'Card Services' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
+                            List<webpages_Controllers> proinfo = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = 'ProInfo' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
+                            List<webpages_Controllers> taxservices = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = 'Tax Services' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
+
+                            // Adiciona os controllers
                             List<Int32> list = new List<Int32>();
                             int id_ControllerPrincipal = 0;
                             Boolean filtro_empresa = false;
@@ -90,9 +112,25 @@ namespace api.Controllers.Login
                                 if (item.RolePrincipal == true)
                                     id_ControllerPrincipal = item.ControllerPrincipal;
 
+                                // Avalia controllers
                                 foreach (var subItem in item.Controllers)
                                 {
-                                    list.Add(subItem.id_controller);
+                                    // É de Card Service ?
+                                    if (cardservices.Any(c => c.id_controller == subItem.id_controller))
+                                    {
+                                        if (fl_cardservices) list.Add(subItem.id_controller); // só add se tiver acesso ao card services
+                                    }
+                                    // É de Pro info ?
+                                    else if (proinfo.Any(c => c.id_controller == subItem.id_controller))
+                                    {
+                                        if (fl_proinfo) list.Add(subItem.id_controller); // só add se tiver acesso ao pro info
+                                    }
+                                    // É de Tax Service ?
+                                    else if (taxservices.Any(c => c.id_controller == subItem.id_controller))
+                                    {
+                                        if (fl_taxservices) list.Add(subItem.id_controller); // só add se tiver acesso ao tax services
+                                    }
+                                    else list.Add(subItem.id_controller);
                                 }
 
                                 if (item.FiltroEmpresa)
@@ -214,7 +252,12 @@ namespace api.Controllers.Login
                                 }
                             }
 
-                            return new Models.Object.Autenticado { nome = usuario.nm_pessoa, usuario = usuario.ds_login, id_grupo = (usuario.id_grupo == null ? -1 : (Int32)usuario.id_grupo), filtro_empresa = filtro_empresa, token = token, controllers = controllers };
+                            return new Models.Object.Autenticado { nome = usuario.nm_pessoa, 
+                                                                   usuario = usuario.ds_login, 
+                                                                   id_grupo = (usuario.grupo_empresa == null ? -1 : (Int32)usuario.grupo_empresa.id_grupo), 
+                                                                   filtro_empresa = filtro_empresa, 
+                                                                   token = token, 
+                                                                   controllers = controllers };
                         }
                         else
                             throw new HttpResponseException(HttpStatusCode.InternalServerError);
@@ -286,8 +329,19 @@ namespace api.Controllers.Login
 
 
                         var usuario = _db.webpages_Users.Where(u => u.id_users == verify.idUsers)
-                                                            .Select(u => new { id_users = u.id_users, nm_pessoa = u.pessoa.nm_pessoa, ds_login = u.ds_login })
+                                                            .Select(u => new { id_users = u.id_users, 
+                                                                               nm_pessoa = u.pessoa.nm_pessoa, 
+                                                                               ds_login = u.ds_login,
+                                                                               //fl_ativo = u.fl_ativo,
+                                                                               grupo_empresa = u.grupo_empresa,
+                                                                               empresa = u.empresa,
+                                                                             }
+                                                                    )
                                                             .FirstOrDefault();
+
+                        //if((usuario.grupo_empresa != null && !usuario.grupo_empresa.fl_ativo) || 
+                        //   (usuario.empresa != null && !usuario.empresa.fl_ativo) || !usuario.fl_ativo) 
+                        // => RETORNAR ALGUM ERRO, JÁ QUE O USUÁRIO ESTÁ INATIVO (diretamente ou pela empresa/filial associado)
 
                         List<dynamic> permissoes = _db.webpages_UsersInRoles.Where(r => r.UserId == usuario.id_users)
                                                                             .Where(r => r.RoleId > 50)

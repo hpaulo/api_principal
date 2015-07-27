@@ -79,7 +79,7 @@ namespace api.Controllers.Dbo
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayWebpagesUsersInRoles.Delete(token, UserId);
+                    GatewayWebpagesUsersInRoles.Delete(token, UserId, false);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
