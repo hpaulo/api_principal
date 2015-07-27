@@ -44,7 +44,7 @@ namespace api.Controllers.Monitor.cargas.pos
                                         WHERE
 	                                        pos.LogExecution.statusExecution = 7
                                             AND  pos.LogExecution.dtaExecucaoProxima  <= (CONVERT(VARCHAR(25), GETDATE(), 112) + ' 23:59:59')
-                                            --AND pos.LogExecution.[row_number] > " + pageNumber + @"
+                                            AND pos.LogExecution.[row_number] > " + pageNumber + @"
                                         ORDER BY pos.LogExecution.dtaExecucaoProxima ASC
 
                                     ";
