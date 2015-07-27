@@ -28,6 +28,14 @@ namespace api.Models.Mapping
             this.Property(t => t.fl_cardservices).HasColumnName("fl_cardservices");
             this.Property(t => t.fl_taxservices).HasColumnName("fl_taxservices");
             this.Property(t => t.fl_proinfo).HasColumnName("fl_proinfo");
+            this.Property(t => t.id_vendedor).HasColumnName("id_vendedor");
+            this.Property(t => t.fl_ativo).HasColumnName("fl_ativo");
+
+
+            // Relationships
+            this.HasOptional(t => t.Vendedor)
+                .WithMany(t => t.grupo_empresa_vendedor)
+                .HasForeignKey(d => d.id_vendedor);
         }
     }
 }

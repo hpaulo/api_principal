@@ -32,6 +32,11 @@ namespace api.Models.Mapping
             //            m.MapRightKey("UserId");
             //        });
 
+            // Relationships
+            this.HasRequired(t => t.webpages_RoleLevels)
+                .WithMany(t => t.webpages_Roles)
+                .HasForeignKey(d => d.RoleLevel);
+
 
         }
     }

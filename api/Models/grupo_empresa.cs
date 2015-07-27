@@ -20,6 +20,7 @@ namespace api.Models
             this.Bandeiras1 = new List<Bandeira1>();
             this.Operadoras = new List<Operadora>();
             this.LoginOperadoras = new List<LoginOperadora>();
+            this.Vendedor = new webpages_Users();
         }
 
         public int id_grupo { get; set; }
@@ -29,6 +30,8 @@ namespace api.Models
         public bool fl_cardservices { get; set; }
         public bool fl_taxservices { get; set; }
         public bool fl_proinfo { get; set; }
+        public Nullable<int> id_vendedor { get; set; }
+        public bool fl_ativo { get; set; }
         public virtual ICollection<ConnectionString> ConnectionStrings { get; set; }
         public virtual ICollection<LogExceptionWinApp> LogExceptionWinApps { get; set; }
         public virtual ICollection<Bandeira> Bandeiras { get; set; }
@@ -42,5 +45,6 @@ namespace api.Models
         public virtual ICollection<Bandeira1> Bandeiras1 { get; set; }
         public virtual ICollection<Operadora> Operadoras { get; set; }
         public virtual ICollection<LoginOperadora> LoginOperadoras { get; set; }
+        public virtual webpages_Users Vendedor { get; set; }
     }
 }

@@ -216,6 +216,7 @@
     <Compile Include="Controllers\Administracao\WebpagesMembershipController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesMethodsController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesPermissionsController.cs" />
+    <Compile Include="Controllers\Administracao\WebpagesRoleLevelsController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesRolesController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersInRolesController.cs" />
@@ -534,6 +535,7 @@
     <Compile Include="Models\Mapping\webpages_MethodsMap.cs" />
     <Compile Include="Models\Mapping\webpages_OAuthMembershipMap.cs" />
     <Compile Include="Models\Mapping\webpages_PermissionsMap.cs" />
+    <Compile Include="Models\Mapping\webpages_RoleLevelsMap.cs" />
     <Compile Include="Models\Mapping\webpages_RolesMap.cs" />
     <Compile Include="Models\Mapping\webpages_UsersInRolesMap.cs" />
     <Compile Include="Models\Mapping\webpages_UsersMap.cs" />
@@ -639,6 +641,7 @@
     <Compile Include="Models\webpages_Methods.cs" />
     <Compile Include="Models\webpages_OAuthMembership.cs" />
     <Compile Include="Models\webpages_Permissions.cs" />
+    <Compile Include="Models\webpages_RoleLevels.cs" />
     <Compile Include="Models\webpages_Roles.cs" />
     <Compile Include="Models\webpages_Users.cs" />
     <Compile Include="Models\webpages_UsersInRoles.cs" />
@@ -649,6 +652,7 @@
     <Compile Include="Negocios\Administracao\GatewayWebpagesMembership.cs" />
     <Compile Include="Negocios\Administracao\GatewayWebpagesMethods.cs" />
     <Compile Include="Negocios\Administracao\GatewayWebpagesPermissions.cs" />
+    <Compile Include="Negocios\Administracao\GatewayWebpagesRoleLevels.cs" />
     <Compile Include="Negocios\Administracao\GatewayWebpagesRoles.cs" />
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsers.cs" />
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsersInRoles.cs" />

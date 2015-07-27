@@ -19,8 +19,10 @@ namespace api.Models
         public string nu_cnpjEmpresa { get; set; }
         public string nu_cnpjBaseEmpresa { get; set; }
         public Nullable<int> id_pessoa { get; set; }
+        public bool fl_ativo { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual grupo_empresa grupo_empresa { get; set; }
+        public virtual ICollection<grupo_empresa> grupo_empresa_vendedor { get; set; }
         public virtual pessoa pessoa { get; set; }
         public virtual webpages_Membership webpages_Membership { get; set; }
         public virtual ICollection<ConciliacaoRecebimento> ConciliacaoRecebimentoes { get; set; }

@@ -200,6 +200,7 @@ namespace api.Models
         public DbSet<TerminalLogico> TerminalLogicoes { get; set; }
         public DbSet<TicketCar> TicketCars { get; set; }
         public DbSet<ValeCard> ValeCards { get; set; }
+        public DbSet<webpages_RoleLevels> webpages_RoleLevels { get; set; }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -387,6 +388,7 @@ namespace api.Models
             modelBuilder.Configurations.Add(new TerminalLogicoMap());
             modelBuilder.Configurations.Add(new TicketCarMap());
             modelBuilder.Configurations.Add(new ValeCardMap());
+            modelBuilder.Configurations.Add(new webpages_RoleLevelsMap());
         }
     }
 }
