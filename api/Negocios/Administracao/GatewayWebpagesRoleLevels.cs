@@ -57,7 +57,7 @@ namespace api.Negocios.Dbo
                 {
                     case CAMPOS.LEVELID:
                         Int32 LevelId = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.LevelId.Equals(LevelId)).AsQueryable<webpages_RoleLevels>();
+                        entity = entity.Where(e => e.LevelId == LevelId).AsQueryable<webpages_RoleLevels>();
                         break;
                     case CAMPOS.LEVELNAME:
                         string LevelName = Convert.ToString(item.Value);
@@ -161,7 +161,7 @@ namespace api.Negocios.Dbo
         /// <returns></returns>
         public static void Delete(string token, Int32 LevelId)
         {
-            _db.webpages_RoleLevels.Remove(_db.webpages_RoleLevels.Where(e => e.LevelId.Equals(LevelId)).First());
+            _db.webpages_RoleLevels.Remove(_db.webpages_RoleLevels.Where(e => e.LevelId == LevelId).First());
             _db.SaveChanges();
         }
         /// <summary>
@@ -178,7 +178,7 @@ namespace api.Negocios.Dbo
             // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.LevelId != null && param.LevelId != value.LevelId)
+            if (param.LevelId != value.LevelId)
                 value.LevelId = param.LevelId;
             if (param.LevelName != null && param.LevelName != value.LevelName)
                 value.LevelName = param.LevelName;

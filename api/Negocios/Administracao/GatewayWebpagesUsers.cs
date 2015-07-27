@@ -256,6 +256,7 @@ namespace api.Negocios.Administracao
                     ds_login = e.ds_login,
                     ds_email = e.ds_email,
                     id_grupo = e.id_grupo,
+                    fl_ativo = e.fl_ativo,
                     nu_cnpjEmpresa = e.nu_cnpjEmpresa,
                     nu_cnpjBaseEmpresa = e.nu_cnpjBaseEmpresa,
                     id_pessoa = e.id_pessoa,
@@ -270,6 +271,7 @@ namespace api.Negocios.Administracao
                     ds_login = e.ds_login,
                     ds_email = e.ds_email,
                     id_grupo = e.id_grupo,
+                    fl_ativo = e.fl_ativo,
                     nu_cnpjEmpresa = e.nu_cnpjEmpresa,
                     nu_cnpjBaseEmpresa = e.nu_cnpjBaseEmpresa,
                     id_pessoa = e.id_pessoa,
@@ -286,6 +288,7 @@ namespace api.Negocios.Administracao
                         ds_login = e.ds_login,
                         ds_email = e.ds_email,
                         id_grupo = e.id_grupo,
+                        fl_ativo = e.fl_ativo,
                         nu_cnpjEmpresa = e.nu_cnpjEmpresa,
                         nu_cnpjBaseEmpresa = e.nu_cnpjBaseEmpresa,
                         id_pessoa = e.id_pessoa
@@ -331,6 +334,7 @@ namespace api.Negocios.Administracao
             usr.nu_cnpjBaseEmpresa = param.Webpagesusers.nu_cnpjBaseEmpresa;
             usr.nu_cnpjEmpresa = param.Webpagesusers.nu_cnpjEmpresa;
             usr.id_pessoa = param.Pessoa.id_pesssoa;
+            usr.fl_ativo = true;
             _db.SaveChanges();
 
             foreach (var item in param.Webpagesusersinroles)
@@ -438,7 +442,11 @@ namespace api.Negocios.Administracao
                     value.ds_login = param.Webpagesusers.ds_login;
                 if (param.Webpagesusers.ds_email != null && param.Webpagesusers.ds_email != value.ds_email)
                     value.ds_email = param.Webpagesusers.ds_email;
-                if (param.Webpagesusers.id_grupo != 0 && param.Webpagesusers.id_grupo != value.id_grupo)
+                if (param.Webpagesusers.fl_ativo != value.fl_ativo)
+                {
+                    value.fl_ativo = param.Webpagesusers.fl_ativo;
+                }
+                if (param.Webpagesusers.id_grupo != null && param.Webpagesusers.id_grupo != 0 && param.Webpagesusers.id_grupo != value.id_grupo)
                 {
                     if (param.Webpagesusers.id_grupo == -1)
                         value.id_grupo = null;

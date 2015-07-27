@@ -67,14 +67,18 @@ namespace api.Controllers.Login
                                                                                ds_login = u.ds_login , 
                                                                                grupo_empresa = u.grupo_empresa,
                                                                                empresa = u.empresa,
-                                                                               //fl_ativo = u.fl_ativo,
+                                                                               fl_ativo = u.fl_ativo,
                                                                            }
                                                                     )
                                                             .FirstOrDefault();
 
-                            //if((usuario.grupo_empresa != null && !usuario.grupo_empresa.fl_ativo) || 
-                            //   (usuario.empresa != null && !usuario.empresa.fl_ativo) || !usuario.fl_ativo) 
-                            // => RETORNAR ALGUM ERRO, JÁ QUE O USUÁRIO ESTÁ INATIVO (diretamente ou pela empresa/filial associado)
+                            if((usuario.grupo_empresa != null && !usuario.grupo_empresa.fl_ativo) ||
+                               (usuario.empresa != null && usuario.empresa.fl_ativo == 0) || !usuario.fl_ativo)
+                            {
+                                // Usuário inativado
+                                throw new Exception("401");
+                            } 
+                            
 
                             var rolesDoUsuario = _db.webpages_UsersInRoles
                                                                         .Where(r => r.UserId == usuario.id_users)
@@ -270,7 +274,8 @@ namespace api.Controllers.Login
             }
             catch(Exception e)
             {
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                if (e.Message.Equals("401")) throw new HttpResponseException(HttpStatusCode.Unauthorized);
+                else throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
 
@@ -332,16 +337,18 @@ namespace api.Controllers.Login
                                                             .Select(u => new { id_users = u.id_users, 
                                                                                nm_pessoa = u.pessoa.nm_pessoa, 
                                                                                ds_login = u.ds_login,
-                                                                               //fl_ativo = u.fl_ativo,
+                                                                               fl_ativo = u.fl_ativo,
                                                                                grupo_empresa = u.grupo_empresa,
                                                                                empresa = u.empresa,
                                                                              }
                                                                     )
                                                             .FirstOrDefault();
 
-                        //if((usuario.grupo_empresa != null && !usuario.grupo_empresa.fl_ativo) || 
-                        //   (usuario.empresa != null && !usuario.empresa.fl_ativo) || !usuario.fl_ativo) 
-                        // => RETORNAR ALGUM ERRO, JÁ QUE O USUÁRIO ESTÁ INATIVO (diretamente ou pela empresa/filial associado)
+                        if ((usuario.grupo_empresa != null && !usuario.grupo_empresa.fl_ativo) ||
+                               (usuario.empresa != null && usuario.empresa.fl_ativo == 0) || !usuario.fl_ativo)
+                        {
+                            throw new Exception("401");
+                        } 
 
                         List<dynamic> permissoes = _db.webpages_UsersInRoles.Where(r => r.UserId == usuario.id_users)
                                                                             .Where(r => r.RoleId > 50)
@@ -416,7 +423,8 @@ namespace api.Controllers.Login
             }
             catch(Exception e)
             {
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                if (e.Message.Equals("401")) throw new HttpResponseException(HttpStatusCode.Unauthorized);
+                else throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
 

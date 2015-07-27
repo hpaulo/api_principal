@@ -195,6 +195,7 @@ namespace api.Negocios.Cliente
                     ds_nome = e.ds_nome,
                     dt_cadastro = e.dt_cadastro,
                     token = e.token,
+                    fl_ativo = e.fl_ativo,
                     fl_cardservices = e.fl_cardservices,
                     fl_taxservices = e.fl_taxservices,
                     fl_proinfo = e.fl_proinfo,
@@ -208,6 +209,7 @@ namespace api.Negocios.Cliente
                     ds_nome = e.ds_nome,
                     dt_cadastro = e.dt_cadastro,
                     token = e.token,
+                    fl_ativo = e.fl_ativo,
                     fl_cardservices = e.fl_cardservices,
                     fl_taxservices = e.fl_taxservices,
                     fl_proinfo = e.fl_proinfo,
@@ -221,6 +223,7 @@ namespace api.Negocios.Cliente
                     ds_nome = e.ds_nome,
                     dt_cadastro = e.dt_cadastro,
                     token = e.token,
+                    fl_ativo = e.fl_ativo,
                     fl_cardservices = e.fl_cardservices,
                     fl_taxservices = e.fl_taxservices,
                     fl_proinfo = e.fl_proinfo,
@@ -251,6 +254,7 @@ namespace api.Negocios.Cliente
         {
             param.dt_cadastro = DateTime.Now;
             param.token = "null";
+            param.fl_ativo = true;
             _db.grupo_empresa.Add(param);
             _db.SaveChanges();
             return param.id_grupo;
@@ -290,6 +294,10 @@ namespace api.Negocios.Cliente
                 value.ds_nome = param.ds_nome;
             //if (param.token != null && param.token != value.token)
             //    value.token = param.token;
+            if (param.fl_ativo != value.fl_ativo)
+            {
+                value.fl_ativo = param.fl_ativo;
+            }
             if (param.fl_cardservices != value.fl_cardservices)
                 value.fl_cardservices = param.fl_cardservices;
             if (param.fl_taxservices != value.fl_taxservices)
