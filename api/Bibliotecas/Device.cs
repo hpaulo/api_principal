@@ -13,7 +13,13 @@ namespace api.Bibliotecas
         public static Boolean IsMobile()
         {
             var userAgent = HttpContext.Current.Request.UserAgent;
-            //Console.WriteLine(HttpContext.Current.Request.UserHostAddress);
+
+            if( userAgent.Contains("Mobile") )
+                return true;
+            else
+                return false;
+
+            /*//Console.WriteLine(HttpContext.Current.Request.UserHostAddress);
             var userBrowser = new HttpBrowserCapabilities { Capabilities = new Hashtable { { string.Empty, userAgent } } };
             //var factory = new BrowserCapabilitiesFactory();
             //factory.ConfigureBrowserCapabilities(new NameValueCollection(), userBrowser);
@@ -22,7 +28,7 @@ namespace api.Bibliotecas
             if (((System.Web.Configuration.HttpCapabilitiesBase)myBrowserCaps).IsMobileDevice)
                 return true;
             else
-                return false;
+                return false;*/
         }
     }
 }

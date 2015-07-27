@@ -20,6 +20,8 @@ namespace api.Controllers.Login
 {
     public class AutenticacaoController : ApiController
     {
+        public Boolean Mobile = false;
+
         // GET api/autenticacao
         public IEnumerable<string> Get()
         {
@@ -31,31 +33,7 @@ namespace api.Controllers.Login
         {
             try
             {
-               //var ip = System.Web.HttpContext.Current != null ? System.Web.HttpContext.Current.Request.UserHostAddress : "";
-
-                //NetworkInterface[] nif = NetworkInterface.GetAllNetworkInterfaces();
-                //String MACAddress = string.Empty;
-                //foreach (NetworkInterface adapter in nif)
-                //{
-                //    if (MACAddress == String.Empty)
-                //    {
-                //        if (adapter.OperationalStatus == System.Net.NetworkInformation.OperationalStatus.Up)
-                //        {
-                //            IPInterfaceProperties ipproperties = adapter.GetIPProperties();
-                //            MACAddress = adapter.GetPhysicalAddress().ToString();
-                //        }
-                //    }
-                //}
-
-                //string labelText = null;
-                //if (Bibliotecas.Device.IsMobile())
-                //{
-                //    labelText = "Browser is a mobile device.";
-                //}
-                //else
-                //{
-                //    labelText = "Browser is not a mobile device.";
-                //}
+                Mobile = Bibliotecas.Device.IsMobile();
 
                 if(Permissoes.Autenticado(token))
                 {
@@ -90,8 +68,10 @@ namespace api.Controllers.Login
                             var rolesDoUsuario = _db.webpages_UsersInRoles
                                                                         .Where(r => r.UserId == usuario.id_users)
                                                                         .Where(r => r.RoleId > 50)
+                                                                        .Where(r => (Mobile) ? r.webpages_Roles.RoleName.Contains( "[Mobile]" ) : true)
                                                                         .AsQueryable();
 
+                            
                             List<dynamic> permissoes = rolesDoUsuario.Select( r => new
                                                                                 {
                                                                                     RoleId = r.RoleId,
