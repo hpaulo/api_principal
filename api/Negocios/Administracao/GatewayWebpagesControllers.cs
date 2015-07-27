@@ -462,7 +462,12 @@ namespace api.Negocios.Administracao
             if (param.fl_menu != null && param.fl_menu != value.fl_menu)
                 value.fl_menu = param.fl_menu;
             if (param.id_subController != null && param.id_subController != value.id_subController)
-                value.id_subController = param.id_subController;
+            {
+                if (param.id_subController == -1)
+                    value.id_subController = null;
+                else
+                    value.id_subController = param.id_subController;
+            }
             _db.SaveChanges();
 
         }

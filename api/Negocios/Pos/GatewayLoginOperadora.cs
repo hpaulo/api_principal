@@ -191,16 +191,19 @@ namespace api.Negocios.Pos
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
             var queryTotal = query;
 
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
 
             // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
+            if (colecao != 4) // senhas inválidas
+            {
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+            }
 
             retorno.PaginaAtual = pageNumber;
             retorno.ItensPorPagina = pageSize;
@@ -268,6 +271,34 @@ namespace api.Negocios.Pos
 
                 CollectionLoginOperadora = CollectionLoginOperadora.OrderBy(l => l.operadora.desOperadora).ToList();
             }
+            else if (colecao == 4) // [web]/Senhas Inválidas/Grid
+            {
+                CollectionLoginOperadora = query
+                    .OrderBy(e => e.grupo_empresa.ds_nome).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.Operadora.nmOperadora)
+                    .Where(e => e.status == false)
+                    .Select(e => new
+                                {
+
+                                    id = e.id,
+                                    login = e.login,
+                                    senha = e.senha,
+                                    status = e.status,
+                                    empresa = e.empresa.ds_fantasia,
+                                    grupoempresa = e.grupo_empresa.ds_nome,
+                                    operadora = e.Operadora.nmOperadora,
+                                    estabelecimento = e.estabelecimento
+                                }).ToList<dynamic>();
+
+                retorno.TotalDeRegistros = CollectionLoginOperadora.Count;
+
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                //CollectionLoginOperadora = CollectionLoginOperadora.OrderBy(l => l.operadora.desOperadora).ToList();
+            }
 
 
             
@@ -332,23 +363,15 @@ namespace api.Negocios.Pos
                     .Where(e => e.id.Equals(param.id))
                     .First<LoginOperadora>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
-
 
             if (param.login != null && param.login != value.login)
                 value.login = param.login;
             if (param.senha != null && param.senha != value.senha)
+            {
                 value.senha = param.senha;
-            if (param.data_alteracao != null && param.data_alteracao != value.data_alteracao)
-                value.data_alteracao = param.data_alteracao;
-            if (param.status != value.status)
-                value.status = param.status;
-            if (param.cnpj != null && param.cnpj != value.cnpj)
-                value.cnpj = param.cnpj;
-            if (param.idOperadora != 0 && param.idOperadora != value.idOperadora)
-                value.idOperadora = param.idOperadora;
-            if (param.idGrupo != 0 && param.idGrupo != value.idGrupo)
-                value.idGrupo = param.idGrupo;
+                value.status = true;
+                value.data_alteracao = DateTime.Now;
+            }
             if (param.estabelecimento != null && param.estabelecimento != value.estabelecimento)
                 value.estabelecimento = param.estabelecimento;
             _db.SaveChanges();
