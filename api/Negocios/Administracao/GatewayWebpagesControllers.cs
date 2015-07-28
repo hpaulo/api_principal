@@ -332,13 +332,13 @@ namespace api.Negocios.Administracao
                 List<dynamic> List = _db.webpages_UsersInRoles.Where(r => r.UserId == IdUser)
                                                     .Where(r => r.RoleId > 50)
                                                     .Select(r => new
-                                                    {
-                                                        methods = _db.webpages_Permissions
-                                                                         .Where(p => p.id_roles == r.RoleId)
-                                                                         .Where(p => p.webpages_Methods.webpages_Controllers.id_controller == IdController)
-                                                                         .Select(p => new { ds_method = p.webpages_Methods.ds_method, id_method = p.webpages_Methods.id_method })
-                                                                         .ToList<dynamic>()
-                                                    }
+                                                                {
+                                                                    methods = _db.webpages_Permissions
+                                                                                     .Where(p => p.id_roles == r.RoleId)
+                                                                                     .Where(p => p.webpages_Methods.webpages_Controllers.id_controller == IdController)
+                                                                                     .Select(p => new { ds_method = p.webpages_Methods.ds_method, id_method = p.webpages_Methods.id_method })
+                                                                                     .ToList<dynamic>()
+                                                                }
                                                             ).ToList<dynamic>();
 
                 CollectionWebpages_Controllers.Add(List[0].methods);

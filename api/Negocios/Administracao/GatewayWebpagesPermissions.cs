@@ -162,21 +162,22 @@ namespace api.Negocios.Administracao
                 Int32 controllerId = Convert.ToInt32(queryString[((int)CAMPOS.ID_CONTROLLER).ToString()]);
 
 
-                var permissoes = _db.webpages_UsersInRoles.Where(r => r.UserId == userId)
-                                                                    .Where(r => r.RoleId > 50)
-                                                                    .Select(
-                                                                                r => new
-                                                                                {
-                                                                                    metodos = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId)
-                                                                                                                          .Where(p => p.webpages_Methods.id_controller == controllerId)
-                                                                                                                          .Select(p => new { id_method = p.webpages_Methods.id_method,
-                                                                                                                                             ds_method = p.webpages_Methods.ds_method,
-                                                                                                                                             nm_method = p.webpages_Methods.nm_method,
-                                                                                                                                             id_controller = p.webpages_Methods.id_controller
-                                                                                                                                           }
-                                                                                                                          ).ToList<dynamic>(),
-                                                                                }
-                                                                            ).FirstOrDefault();
+                var permissoes = _db.webpages_UsersInRoles
+                                            .Where(r => r.UserId == userId)
+                                            .Where(r => r.RoleId > 50)
+                                            .Select(r => new
+                                                    {
+                                                        metodos = _db.webpages_Permissions
+                                                                            .Where(p => p.id_roles == r.RoleId)
+                                                                            .Where(p => p.webpages_Methods.webpages_Controllers.id_controller == controllerId)
+                                                                            .Select(p => new { id_method = p.webpages_Methods.id_method,
+                                                                                               ds_method = p.webpages_Methods.ds_method,
+                                                                                               nm_method = p.webpages_Methods.nm_method,
+                                                                                               id_controller = p.webpages_Methods.id_controller
+                                                                                            }
+                                                                            ).ToList<dynamic>(),
+                                                    }
+                                                ).FirstOrDefault();
 
                 if (permissoes != null)
                 {

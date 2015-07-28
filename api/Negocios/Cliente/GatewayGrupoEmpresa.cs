@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 
 namespace api.Negocios.Cliente
@@ -211,6 +212,7 @@ namespace api.Negocios.Cliente
                     fl_cardservices = e.fl_cardservices,
                     fl_taxservices = e.fl_taxservices,
                     fl_proinfo = e.fl_proinfo,
+                    vendedor = new {e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa},
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -225,6 +227,7 @@ namespace api.Negocios.Cliente
                     fl_cardservices = e.fl_cardservices,
                     fl_taxservices = e.fl_taxservices,
                     fl_proinfo = e.fl_proinfo,
+                    id_vendedor = e.id_vendedor,
                 }).ToList<dynamic>();
             }
             else if (colecao == 2 || colecao == 3)
@@ -239,6 +242,7 @@ namespace api.Negocios.Cliente
                     fl_cardservices = e.fl_cardservices,
                     fl_taxservices = e.fl_taxservices,
                     fl_proinfo = e.fl_proinfo,
+                    vendedor = new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa },
                     dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault()
                 }
                     
@@ -264,11 +268,31 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static Int32 Add(string token, grupo_empresa param)
         {
-            param.dt_cadastro = DateTime.Now;
-            param.token = "null";
-            param.fl_ativo = true;
-            _db.grupo_empresa.Add(param);
-            _db.SaveChanges();
+            try
+            {
+                param.id_grupo = -1;
+                param.dt_cadastro = DateTime.Now;
+                param.token = "null";
+                param.fl_ativo = true;
+                // Verificar se usuário logado é de perfil comercial
+                if (Permissoes.isAtosRole(token) && Permissoes.GetRoleName(token).ToUpper().Equals("COMERCIAL"))
+                    // Perfil Comercial tem uma carteira de clientes específica
+                    param.id_vendedor = Permissoes.GetIdUser(token);
+
+                _db.grupo_empresa.Add(param);
+                _db.SaveChanges();
+
+            }
+            catch (DbEntityValidationException dbEx)
+            {
+                foreach (var validationErrors in dbEx.EntityValidationErrors)
+                {
+                    foreach (var validationError in validationErrors.ValidationErrors)
+                    {
+                        Console.WriteLine("Property: {0} Error: {1}", validationError.PropertyName, validationError.ErrorMessage);
+                    }
+                }
+            }
             return param.id_grupo;
         }
 

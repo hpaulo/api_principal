@@ -8,6 +8,7 @@ using api.Models;
 using api.Negocios.Cliente;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Controllers.cliente
 {
@@ -43,10 +44,22 @@ namespace api.Controllers.cliente
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
-            catch(Exception e)
+            catch (DbEntityValidationException dbEx)
             {
+                foreach (var validationErrors in dbEx.EntityValidationErrors)
+                {
+                    foreach (var validationError in validationErrors.ValidationErrors)
+                    {
+                        Console.WriteLine("Property: {0} Error: {1}", validationError.PropertyName, validationError.ErrorMessage);
+                    }
+                }
+
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
+            //catch(Exception e)
+            //{
+            //    throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            //}
 
 
         }
