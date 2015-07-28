@@ -223,6 +223,7 @@ namespace api.Negocios.Administracao
                 else
                     queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
             }
+            
 
             //DECLARAÇÕES
             List<dynamic> CollectionWebpages_Users = new List<dynamic>();
@@ -230,6 +231,25 @@ namespace api.Negocios.Administracao
 
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+
+            // Restringe consulta pelo perfil do usuário logado
+            Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+            String RoleName = Permissoes.GetRoleName(token).ToUpper();
+            if (IdGrupo == 0 && RoleName.Equals("COMERCIAL"))
+            {
+                // Perfil Comercial tem uma carteira de clientes específica
+                List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin 
+                                         && e.id_grupo != null && listaIdsGruposEmpresas.Contains(e.id_grupo ?? -1)).AsQueryable<webpages_Users>();
+            }
+            else if (Permissoes.isAtosRole(token) && !RoleName.Equals("COMERCIAL"))
+                // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
+                query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
+            else
+                // Só exibe os usuários de RoleLevelMin
+                query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
+
+
             var queryTotal = query;
 
             // TOTAL DE REGISTROS
@@ -303,6 +323,7 @@ namespace api.Negocios.Administracao
                     webpagesusersinroles = _db.webpages_UsersInRoles.Where(r => r.UserId == e.id_users).Select(r => new { RoleId = r.RoleId, RolePrincipal = r.RolePrincipal }).ToList(),
                     grupoempresa = e.grupo_empresa.ds_nome,
                     empresa = e.empresa.ds_fantasia,
+                    gruposempresasvendedor = e.grupo_empresa_vendedor.Select( g => new { g.id_grupo, g.ds_nome })
 
                 }).ToList<dynamic>();
             }
@@ -344,6 +365,22 @@ namespace api.Negocios.Administracao
                     item.UserId = param.Webpagesusers.id_users;
                     _db.webpages_UsersInRoles.Add(item);
                     _db.SaveChanges();
+                }
+            }
+
+            // Associa grupos empresas ao vendedor
+            if (param.Addidsgrupoempresavendedor != null)
+            {
+                foreach (var idGrupo in param.Addidsgrupoempresavendedor)
+                {
+
+                    grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == idGrupo).FirstOrDefault();
+
+                    if (grupo != null)
+                    {
+                        grupo.id_vendedor = param.Webpagesusers.id_users;
+                        _db.SaveChanges();
+                    }
                 }
             }
 
@@ -391,127 +428,141 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Update(string token, Models.Object.Usuario param)
         {
-            webpages_Users value = _db.webpages_Users
-                    .Where(e => e.id_users == param.Webpagesusers.id_users )
-                    .First<webpages_Users>();
-
-            if (value != null)
+            if (param.Id_grupo != 0)
             {
+                // Altera grupo empresa do usuário logado
+                Int32 IdUser = Permissoes.GetIdUser(token);
+                webpages_Users value = _db.webpages_Users
+                        .Where(e => e.id_users == IdUser)
+                        .FirstOrDefault<webpages_Users>();
 
-
-                if (param.Pessoa != null)
+                if (value != null)
                 {
-                    param.Pessoa.id_pesssoa = (int)value.id_pessoa;
-                    GatewayPessoa.Update(token, param.Pessoa);
-                }
+                    // VALIDAR PERMISSÂO PARA FUNCIONALIDADE
 
-                if (param.Webpagesusersinroles != null)
-                {
-                    foreach (var item in param.Webpagesusersinroles)
+                    if (param.Id_grupo == -1)
                     {
-                        if (item.UserId == -1)
-                        {
-                            item.UserId = param.Webpagesusers.id_users;
-                            GatewayWebpagesUsersInRoles.Delete(token, item);
-                        }
-                        else
-                        {
-                            item.UserId = param.Webpagesusers.id_users;
-                            webpages_UsersInRoles verificacao = _db.webpages_UsersInRoles.Where(p => p.UserId == item.UserId).Where(p => p.RoleId == item.RoleId).FirstOrDefault();
-                            if (verificacao != null)
-                            {
-                                webpages_UsersInRoles principal = _db.webpages_UsersInRoles
-                                                                    .Where(p => p.UserId == item.UserId)
-                                                                    .Where(p => p.RolePrincipal == true).FirstOrDefault();
-                                if ( principal != null ) 
-                                    principal.RolePrincipal = false;
-
-                                verificacao.RolePrincipal = item.RolePrincipal;
-                                _db.SaveChanges();
-                            }
-                            else
-                            {
-                                GatewayWebpagesUsersInRoles.Add(token, item);
-                            }
-                        }
-                    }
-                }
-
-
-                if (param.Webpagesusers.ds_login != null && param.Webpagesusers.ds_login != value.ds_login)
-                    value.ds_login = param.Webpagesusers.ds_login;
-                if (param.Webpagesusers.ds_email != null && param.Webpagesusers.ds_email != value.ds_email)
-                    value.ds_email = param.Webpagesusers.ds_email;
-                if (param.Webpagesusers.fl_ativo != value.fl_ativo)
-                {
-                    value.fl_ativo = param.Webpagesusers.fl_ativo;
-                }
-                if (param.Webpagesusers.id_grupo != null && param.Webpagesusers.id_grupo != 0 && param.Webpagesusers.id_grupo != value.id_grupo)
-                {
-                    if (param.Webpagesusers.id_grupo == -1)
                         value.id_grupo = null;
-                    else
-                        value.id_grupo = param.Webpagesusers.id_grupo;
-                }
-                if (param.Webpagesusers.nu_cnpjEmpresa != null && param.Webpagesusers.nu_cnpjEmpresa != value.nu_cnpjEmpresa)
-                {
-                    if (param.Webpagesusers.nu_cnpjEmpresa == "")
-                        value.nu_cnpjEmpresa = null;
-                    else
-                        value.nu_cnpjEmpresa = param.Webpagesusers.nu_cnpjEmpresa;
-                }
-
-                _db.SaveChanges();
-            }
-
-        }
-
-
-
-
-        /// <summary>
-        /// Altera webpages_Users
-        /// </summary>
-        /// <param name="param"></param>
-        /// <returns></returns>
-        public static void Update(string token, Int32 param)
-        {
-            Int32 IdUser = Permissoes.GetIdUser(token);
-            Int32 id_grupo = param;
-            webpages_Users value = _db.webpages_Users
-                    .Where(e => e.id_users == IdUser)
-                    .First<webpages_Users>();
-
-            
-
-            if (value != null)
-            {
-                // VALIDAR PERMISSÂO PARA FUNCIONALIDADE
-
-                if (id_grupo == -1)
-                {
-                    value.id_grupo = null;
-                    _db.SaveChanges();
-                }
-                else
-                {
-                    grupo_empresa grupo = _db.grupo_empresa
-                                             .Where(g => g.id_grupo == id_grupo)
-                                             .First<grupo_empresa>();
-
-                    if (grupo != null)
-                    {
-                        value.id_grupo = grupo.id_grupo;
                         _db.SaveChanges();
                     }
                     else
-                        throw new Exception("Grupo empresa inválido!");
+                    {
+                        value.id_grupo = param.Id_grupo;
+                        _db.SaveChanges();
+                    }
                 }
+                else
+                    throw new Exception("Usuário inválido inválido!");
             }
             else
-                throw new Exception("Usuário inválido inválido!");
+            {
+                // Altera um usuário que não necessiariamente é o logado
+                webpages_Users value = _db.webpages_Users
+                        .Where(e => e.id_users == param.Webpagesusers.id_users)
+                        .First<webpages_Users>();
+
+                if (value != null)
+                {
+
+
+                    if (param.Pessoa != null)
+                    {
+                        param.Pessoa.id_pesssoa = (int)value.id_pessoa;
+                        GatewayPessoa.Update(token, param.Pessoa);
+                    }
+
+                    if (param.Webpagesusersinroles != null)
+                    {
+                        foreach (var item in param.Webpagesusersinroles)
+                        {
+                            if (item.UserId == -1)
+                            {
+                                item.UserId = param.Webpagesusers.id_users;
+                                GatewayWebpagesUsersInRoles.Delete(token, item);
+                            }
+                            else
+                            {
+                                item.UserId = param.Webpagesusers.id_users;
+                                webpages_UsersInRoles verificacao = _db.webpages_UsersInRoles.Where(p => p.UserId == item.UserId).Where(p => p.RoleId == item.RoleId).FirstOrDefault();
+                                if (verificacao != null)
+                                {
+                                    webpages_UsersInRoles principal = _db.webpages_UsersInRoles
+                                                                        .Where(p => p.UserId == item.UserId)
+                                                                        .Where(p => p.RolePrincipal == true).FirstOrDefault();
+                                    if (principal != null)
+                                        principal.RolePrincipal = false;
+
+                                    verificacao.RolePrincipal = item.RolePrincipal;
+                                    _db.SaveChanges();
+                                }
+                                else
+                                {
+                                    GatewayWebpagesUsersInRoles.Add(token, item);
+                                }
+                            }
+                        }
+                    }
+                    // Associa grupos empresas ao vendedor
+                    if (param.Addidsgrupoempresavendedor != null)
+                    {
+                        foreach (var idGrupo in param.Addidsgrupoempresavendedor)
+                        {
+
+                            grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == idGrupo).FirstOrDefault();
+
+                            if (grupo != null)
+                            {
+                                grupo.id_vendedor = param.Webpagesusers.id_users;
+                                _db.SaveChanges();
+                            }
+                        }
+                    }
+                    // Desassocia grupos empresas
+                    if (param.Removeidsgrupoempresavendedor != null)
+                    {
+                        foreach (var idGrupo in param.Removeidsgrupoempresavendedor)
+                        {
+
+                            grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == idGrupo).FirstOrDefault();
+
+                            if (grupo != null)
+                            {
+                                grupo.id_vendedor = null;
+                                _db.SaveChanges();
+                            }
+                        }
+                    }
+
+
+                    if (param.Webpagesusers.ds_login != null && param.Webpagesusers.ds_login != value.ds_login)
+                        value.ds_login = param.Webpagesusers.ds_login;
+                    if (param.Webpagesusers.ds_email != null && param.Webpagesusers.ds_email != value.ds_email)
+                        value.ds_email = param.Webpagesusers.ds_email;
+                    if (param.Webpagesusers.fl_ativo != value.fl_ativo)
+                    {
+                        value.fl_ativo = param.Webpagesusers.fl_ativo;
+                    }
+                    if (param.Webpagesusers.id_grupo != null && param.Webpagesusers.id_grupo != 0 && param.Webpagesusers.id_grupo != value.id_grupo)
+                    {
+                        if (param.Webpagesusers.id_grupo == -1)
+                            value.id_grupo = null;
+                        else
+                            value.id_grupo = param.Webpagesusers.id_grupo;
+                    }
+                    if (param.Webpagesusers.nu_cnpjEmpresa != null && param.Webpagesusers.nu_cnpjEmpresa != value.nu_cnpjEmpresa)
+                    {
+                        if (param.Webpagesusers.nu_cnpjEmpresa == "")
+                            value.nu_cnpjEmpresa = null;
+                        else
+                            value.nu_cnpjEmpresa = param.Webpagesusers.nu_cnpjEmpresa;
+                    }
+
+                    _db.SaveChanges();
+                }
+            }
 
         }
+
 
     }
 }

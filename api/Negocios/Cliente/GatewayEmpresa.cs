@@ -276,6 +276,18 @@ namespace api.Negocios.Cliente
 
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+
+            // Restringe consulta pelo perfil do usuário logado
+            Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+            String RoleName = Permissoes.GetRoleName(token).ToUpper();
+            if (IdGrupo == 0 && RoleName.Equals("COMERCIAL"))
+            {
+                // Perfil Comercial tem uma carteira de clientes específica
+                List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<empresa>();
+            }
+
+
             var queryTotal = query;
 
             // TOTAL DE REGISTROS

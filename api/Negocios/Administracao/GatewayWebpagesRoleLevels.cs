@@ -101,6 +101,11 @@ namespace api.Negocios.Dbo
 
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+
+            // só exibe a partir do RoleLevelMin
+            Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+            query = query.Where(e => e.LevelId >= RoleLevelMin).AsQueryable<webpages_RoleLevels>(); 
+
             var queryTotal = query;
 
             // TOTAL DE REGISTROS

@@ -91,6 +91,7 @@ namespace api.Controllers.Login
                                                                                 {
                                                                                     RoleId = r.RoleId,
                                                                                     RoleName = r.webpages_Roles.RoleName,
+                                                                                    RoleLevel = r.webpages_Roles.RoleLevel,
                                                                                     RolePrincipal = r.RolePrincipal,
                                                                                     ControllerPrincipal = r.webpages_Roles.webpages_Permissions.Where(p => p.fl_principal == true).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select( p => p.webpages_Methods.webpages_Controllers.id_controller ).FirstOrDefault(), // .FirstOrDefault().webpages_Methods.webpages_Controllers.id_controller,
                                                                                     Controllers = _db.webpages_Permissions.Where(p => p.id_roles == r.RoleId).Where(p => p.webpages_Methods.ds_method.ToUpper().Equals("LEITURA")).Select(p => new { id_controller = p.webpages_Methods.id_controller, ds_controller = p.webpages_Methods.webpages_Controllers.ds_controller }).ToList<dynamic>(),
@@ -100,12 +101,33 @@ namespace api.Controllers.Login
 
                             // VER PERMISSÕES => OBTEM CONTROLLERS ASSOCIADOS AO CARD SERVICES, PROINFO, TAX SERVICES
                             // ESSAS PERMISSÕES SÓ VALERÃO SE A ROLE DO USUÁRIO NÃO FOR RELACIONADA AO PESSOAL DA ATOS ("ADMINISTRATIVO", "DESENVOLVEDOR", "COMERCIAL")
-                            Boolean fl_cardservices = usuario.grupo_empresa != null ? usuario.grupo_empresa.fl_cardservices /*&& !usuario.grupo_empresa.fl_ativo*/ : true;
-                            Boolean fl_proinfo = usuario.grupo_empresa != null ? usuario.grupo_empresa.fl_proinfo /*&& !usuario.grupo_empresa.fl_ativo*/ : true;
-                            Boolean fl_taxservices = usuario.grupo_empresa != null ? usuario.grupo_empresa.fl_taxservices /*&& !usuario.grupo_empresa.fl_ativo*/ : true;
-                            List<webpages_Controllers> cardservices = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = 'Card Services' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
-                            List<webpages_Controllers> proinfo = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = 'ProInfo' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
-                            List<webpages_Controllers> taxservices = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = 'Tax Services' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
+                            Boolean fl_cardservices = true;
+                            Boolean fl_proinfo = true;
+                            Boolean fl_taxservices = true;
+                            List<webpages_Controllers> cardservices = new List<webpages_Controllers>();
+                            List<webpages_Controllers> proinfo = new List<webpages_Controllers>();
+                            List<webpages_Controllers> taxservices = new List<webpages_Controllers>();
+
+                            if (!Permissoes.isAtosRole(token))
+                            {
+                                // Não é da ATOS!
+                                if (usuario.grupo_empresa != null)
+                                {
+                                    fl_cardservices = usuario.grupo_empresa.fl_cardservices;
+                                    fl_proinfo = usuario.grupo_empresa.fl_proinfo;
+                                    fl_taxservices = usuario.grupo_empresa.fl_taxservices;
+                                }
+                                else
+                                {
+                                    // Não é usuário da ATOS e não está associado a um grupo empresa???!
+                                    fl_cardservices = false;
+                                    fl_proinfo = false;
+                                    fl_taxservices = false;
+                                }
+                                cardservices = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = 'Card Services' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
+                                proinfo = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = 'ProInfo' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
+                                taxservices = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = 'Tax Services' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
+                            }
 
                             // Adiciona os controllers
                             List<Int32> list = new List<Int32>();
