@@ -29,6 +29,8 @@ namespace api.Negocios.Administracao
             ROLEID = 100,
             ROLENAME = 101,
 
+            ROLELEVEL = 103,
+
         };
 
         /// <summary>
@@ -71,6 +73,10 @@ namespace api.Negocios.Administracao
                         else
                             entity = entity.Where(e => e.RoleName.Equals(RoleName)).AsQueryable<webpages_Roles>();
                         break;
+                    case CAMPOS.ROLELEVEL:
+                        Int32 rolelevel = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.RoleLevel == rolelevel).AsQueryable<webpages_Roles>();
+                        break;
 
                 }
             }
@@ -90,7 +96,10 @@ namespace api.Negocios.Administracao
                     if (orderby == 0) entity = entity.OrderBy(e => e.RoleName).AsQueryable<webpages_Roles>();
                     else entity = entity.OrderByDescending(e => e.RoleName).AsQueryable<webpages_Roles>();
                     break;
-
+                case CAMPOS.ROLELEVEL:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.RoleLevel).AsQueryable<webpages_Roles>();
+                    else entity = entity.OrderByDescending(e => e.RoleLevel).AsQueryable<webpages_Roles>();
+                    break;
             }
             #endregion
 
