@@ -112,7 +112,11 @@ namespace api.Negocios.Administracao
 
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            query = query.Where(e => e.RoleId > 50);
+
+            // só exibe a partir do RoleId 51 e os que tiverem RoleLevel no mínimo igual ao RoleLevelMin
+            Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+            query = query.Where(e => e.RoleId > 50 && e.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Roles>(); 
+
             var queryTotal = query;
 
 
@@ -139,6 +143,7 @@ namespace api.Negocios.Administracao
 
                     RoleId = e.RoleId,
                     RoleName = e.RoleName,
+                    RoleLevels = e.webpages_RoleLevels,
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -149,6 +154,7 @@ namespace api.Negocios.Administracao
 
                     RoleId = e.RoleId,
                     RoleName = e.RoleName,
+                    RoleLevel = e.RoleLevel,
                 }).ToList<dynamic>();
             }
             else if (colecao == 2)
@@ -159,14 +165,14 @@ namespace api.Negocios.Administracao
 
                     RoleId = e.RoleId,
                     RoleName = e.RoleName,
-
+                    RoleLevels = e.webpages_RoleLevels,
                     PaginaInicial = (e.webpages_Permissions.Where(p => p.fl_principal == true).FirstOrDefault().webpages_Methods.webpages_Controllers.id_subController != null
                                      && e.webpages_Permissions.Where(p => p.fl_principal == true).FirstOrDefault().webpages_Methods.webpages_Controllers.webpages_Controllers2.id_subController != null ?
                                     e.webpages_Permissions.Where(p => p.fl_principal == true).FirstOrDefault().webpages_Methods.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller
-                                    + " > ": "") + 
+                                    + " > " : "") +
                                     (e.webpages_Permissions.Where(p => p.fl_principal == true).FirstOrDefault().webpages_Methods.webpages_Controllers.id_subController != null ?
                                     e.webpages_Permissions.Where(p => p.fl_principal == true).FirstOrDefault().webpages_Methods.webpages_Controllers.webpages_Controllers2.ds_controller
-                                    + " > ": "") +
+                                    + " > " : "") +
                                     e.webpages_Permissions.Where(p => p.fl_principal == true).FirstOrDefault().webpages_Methods.webpages_Controllers.ds_controller
                 }).ToList<dynamic>();
             }
@@ -179,7 +185,7 @@ namespace api.Negocios.Administracao
 
                     RoleId = r.RoleId,
                     RoleName = r.RoleName,
-
+                    RoleLevels = r.webpages_RoleLevels,
                     Controllers = _db.webpages_Permissions
                     .Where(e => e.id_roles == r.RoleId)
                     .GroupBy(e => new { e.webpages_Methods.webpages_Controllers })
@@ -271,6 +277,9 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, webpages_Roles param)
         {
+            // Por segurança, só deixa alterar se o usuário tiver permissão para setar aquela role 
+            Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+            if (param.RoleLevel < RoleLevelMin) throw new Exception("401"); // não possui autorização para criar um privilégio com esse RoleLevel
             _db.webpages_Roles.Add(param);
             _db.SaveChanges();
             return param.RoleId;
@@ -305,6 +314,14 @@ namespace api.Negocios.Administracao
 
             if (param.RoleName != null && param.RoleName != value.RoleName)
                 value.RoleName = param.RoleName;
+            if (param.RoleLevel != value.RoleLevel)
+            {
+                // Por segurança, só deixa alterar se o usuário tiver permissão para setar aquela role 
+                Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+                if (param.RoleLevel >= RoleLevelMin)
+                    value.RoleLevel = param.RoleLevel;
+                else throw new Exception("401"); // não possui autorização para criar um privilégio com esse RoleLevel
+            }
             _db.SaveChanges();
 
         }

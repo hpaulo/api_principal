@@ -273,7 +273,7 @@ namespace api.Negocios.Pos
             }
             else if (colecao == 4) // [web]/Senhas Inválidas/Grid
             {
-                CollectionLoginOperadora = query
+                var subQuery = query
                     .OrderBy(e => e.grupo_empresa.ds_nome).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.Operadora.nmOperadora)
                     .Where(e => e.status == false)
                     .Select(e => new
@@ -287,17 +287,17 @@ namespace api.Negocios.Pos
                                     grupoempresa = e.grupo_empresa.ds_nome,
                                     operadora = e.Operadora.nmOperadora,
                                     estabelecimento = e.estabelecimento
-                                }).ToList<dynamic>();
+                                });
 
-                retorno.TotalDeRegistros = CollectionLoginOperadora.Count;
+                retorno.TotalDeRegistros = subQuery.Count();
 
                 int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
+                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
                 else
                     pageNumber = 1;
 
-                //CollectionLoginOperadora = CollectionLoginOperadora.OrderBy(l => l.operadora.desOperadora).ToList();
+                CollectionLoginOperadora = subQuery.ToList<dynamic>();
             }
 
 

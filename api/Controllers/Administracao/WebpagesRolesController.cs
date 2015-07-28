@@ -43,9 +43,10 @@ namespace api.Controllers.Administracao
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
-            catch
+            catch (Exception e)
             {
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                if (e.Message.Equals("401")) throw new HttpResponseException(HttpStatusCode.Unauthorized);
+                else throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
 
 
@@ -65,9 +66,10 @@ namespace api.Controllers.Administracao
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
-            catch
+            catch (Exception e)
             {
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                if (e.Message.Equals("401")) throw new HttpResponseException(HttpStatusCode.Unauthorized);
+                else throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
 
