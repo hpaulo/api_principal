@@ -323,7 +323,8 @@ namespace api.Negocios.Administracao
                     webpagesusersinroles = _db.webpages_UsersInRoles.Where(r => r.UserId == e.id_users).Select(r => new { RoleId = r.RoleId, RolePrincipal = r.RolePrincipal }).ToList(),
                     grupoempresa = e.grupo_empresa.ds_nome,
                     empresa = e.empresa.ds_fantasia,
-                    gruposempresasvendedor = e.grupo_empresa_vendedor.Select( g => new { g.id_grupo, g.ds_nome })
+                    //gruposempresasvendedor2 = _db.grupo_empresa.Where(g => g.id_vendedor == e.id_users).Select(g => new { g.id_grupo, g.ds_nome }).ToList(),
+                    gruposvendedor = e.grupo_empresa_vendedor.Select( g => new { g.id_grupo, g.ds_nome }).ToList()
 
                 }).ToList<dynamic>();
             }

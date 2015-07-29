@@ -20,7 +20,7 @@ namespace api.Models
             this.Bandeiras1 = new List<Bandeira1>();
             this.Operadoras = new List<Operadora>();
             this.LoginOperadoras = new List<LoginOperadora>();
-            this.Vendedor = new webpages_Users();
+            //this.Vendedor = new webpages_Users();
         }
 
         public int id_grupo { get; set; }

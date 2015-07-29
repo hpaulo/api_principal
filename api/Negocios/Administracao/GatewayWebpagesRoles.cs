@@ -121,10 +121,14 @@ namespace api.Negocios.Administracao
 
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-
-            // só exibe a partir do RoleId 51 e os que tiverem RoleLevel no mínimo igual ao RoleLevelMin
-            Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-            query = query.Where(e => e.RoleId > 50 && e.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Roles>(); 
+            
+            string outValue = null;
+            if ( !(queryString.TryGetValue("" + (int)CAMPOS.ROLENAME, out outValue)) )
+            {
+                // só exibe a partir do RoleId 51 e os que tiverem RoleLevel no mínimo igual ao RoleLevelMin
+                Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+                query = query.Where(e => e.RoleId > 50 && e.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Roles>();
+            }
 
             var queryTotal = query;
 
@@ -152,7 +156,7 @@ namespace api.Negocios.Administracao
 
                     RoleId = e.RoleId,
                     RoleName = e.RoleName,
-                    RoleLevels = e.webpages_RoleLevels,
+                    RoleLevels = new { LevelId = e.webpages_RoleLevels.LevelId, LevelName = e.webpages_RoleLevels.LevelName }
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -174,7 +178,7 @@ namespace api.Negocios.Administracao
 
                     RoleId = e.RoleId,
                     RoleName = e.RoleName,
-                    RoleLevels = e.webpages_RoleLevels,
+                    RoleLevels = new { LevelId = e.webpages_RoleLevels.LevelId, LevelName = e.webpages_RoleLevels.LevelName },
                     PaginaInicial = (e.webpages_Permissions.Where(p => p.fl_principal == true).FirstOrDefault().webpages_Methods.webpages_Controllers.id_subController != null
                                      && e.webpages_Permissions.Where(p => p.fl_principal == true).FirstOrDefault().webpages_Methods.webpages_Controllers.webpages_Controllers2.id_subController != null ?
                                     e.webpages_Permissions.Where(p => p.fl_principal == true).FirstOrDefault().webpages_Methods.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller
@@ -194,7 +198,7 @@ namespace api.Negocios.Administracao
 
                     RoleId = r.RoleId,
                     RoleName = r.RoleName,
-                    RoleLevels = r.webpages_RoleLevels,
+                    RoleLevels = new { LevelId = r.webpages_RoleLevels.LevelId, LevelName = r.webpages_RoleLevels.LevelName },
                     Controllers = _db.webpages_Permissions
                     .Where(e => e.id_roles == r.RoleId)
                     .GroupBy(e => new { e.webpages_Methods.webpages_Controllers })
