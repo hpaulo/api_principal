@@ -145,6 +145,14 @@ namespace api.Models
         public DbSet<transaco> transacoes { get; set; }
         public DbSet<uf> ufs { get; set; }
         public DbSet<usuario> usuarios { get; set; }
+        public DbSet<tbBandeiraTef> tbBandeiraTefs { get; set; }
+        public DbSet<tbProdutoTef> tbProdutoTefs { get; set; }
+        public DbSet<tbModoEntradaTef> tbModoEntradaTefs { get; set; }
+        public DbSet<tbEstadoTransacaoTef> tbEstadoTransacaoTefs { get; set; }
+        public DbSet<tbRedeTef> tbRedeTefs { get; set; }
+        public DbSet<tbSituacaoRedeTef> tbSituacaoRedeTefs { get; set; }
+        public DbSet<tbTipoProdutoTef> tbTipoProdutoTefs { get; set; }
+        public DbSet<tbTransacaoTef> tbTransacaoTefs { get; set; }
         public DbSet<webpages_Controllers> webpages_Controllers { get; set; }
         public DbSet<webpages_Membership> webpages_Membership { get; set; }
         public DbSet<webpages_Methods> webpages_Methods { get; set; }
@@ -333,6 +341,14 @@ namespace api.Models
             modelBuilder.Configurations.Add(new transacoMap());
             modelBuilder.Configurations.Add(new ufMap());
             modelBuilder.Configurations.Add(new usuarioMap());
+            modelBuilder.Configurations.Add(new tbBandeiraTefMap());
+            modelBuilder.Configurations.Add(new tbEstadoTransacaoTefMap());
+            modelBuilder.Configurations.Add(new tbModoEntradaTefMap());
+            modelBuilder.Configurations.Add(new tbProdutoTefMap());
+            modelBuilder.Configurations.Add(new tbRedeTefMap());
+            modelBuilder.Configurations.Add(new tbSituacaoRedeTefMap());
+            modelBuilder.Configurations.Add(new tbTipoProdutoTefMap());
+            modelBuilder.Configurations.Add(new tbTransacaoTefMap()); 
             modelBuilder.Configurations.Add(new webpages_ControllersMap());
             modelBuilder.Configurations.Add(new webpages_MembershipMap());
             modelBuilder.Configurations.Add(new webpages_MethodsMap());
