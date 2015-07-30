@@ -26,26 +26,47 @@ namespace api.Controllers.Monitor.cargas.pos
 
                     string script = @"
                                         SELECT
-                                            TOP (" + pageSize + @")
-	                                        pos.LogExecution.id as idLogExecucao,
-	                                        pos.LogExecution.qtdTransacoes as quantodade,
-	                                        pos.LogExecution.vlTotalTransacoes as valor_total,
-	                                        pos.LogExecution.statusExecution as status,
-	                                        CONVERT(nvarchar(MAX), pos.LogExecution.dtaFiltroTransacoes, 103) as data_carga,
-	                                        CONVERT(nvarchar(MAX), pos.LogExecution.dtaExecucaoInicio, 103) as data_inicio,
-	                                        cliente.empresa.ds_fantasia as empresa,
-	                                        pos.Operadora.nmOperadora as adquirente,
-                                            pos.Operadora.id AS idAdquirente
+	                                        TOP (" + pageSize + @") *
                                         FROM
-	                                        pos.LogExecution
-                                        INNER JOIN pos.LoginOperadora ON pos.LogExecution.idLoginOperadora = pos.LoginOperadora.id
-                                        INNER JOIN cliente.empresa ON pos.LoginOperadora.cnpj = cliente.empresa.nu_cnpj
-                                        INNER JOIN pos.Operadora ON pos.LoginOperadora.idOperadora = pos.Operadora.id
+	                                        (
+		                                        SELECT
+			                                        pos.LogExecution.id AS idLogExecucao,
+			                                        pos.LogExecution.qtdTransacoes AS quantodade,
+			                                        pos.LogExecution.vlTotalTransacoes AS valor_total,
+			                                        pos.LogExecution.statusExecution AS status,
+			                                        CONVERT (
+				                                        nvarchar (MAX),
+				                                        pos.LogExecution.dtaFiltroTransacoes,
+				                                        103
+			                                        ) AS data_carga,
+			                                        CONVERT (
+				                                        nvarchar (MAX),
+				                                        pos.LogExecution.dtaExecucaoInicio,
+				                                        103
+			                                        ) AS data_inicio,
+			                                        cliente.empresa.ds_fantasia AS empresa,
+			                                        pos.Operadora.nmOperadora AS adquirente,
+			                                        pos.Operadora.id AS idAdquirente,
+			                                        row_number () OVER (
+
+				                                        ORDER BY
+					                                        pos.LogExecution.dtaExecucaoProxima ASC
+			                                        ) AS [row_number]
+		                                        FROM
+			                                        pos.LogExecution
+		                                        INNER JOIN pos.LoginOperadora ON pos.LogExecution.idLoginOperadora = pos.LoginOperadora.id
+		                                        INNER JOIN cliente.empresa ON pos.LoginOperadora.cnpj = cliente.empresa.nu_cnpj
+		                                        INNER JOIN pos.Operadora ON pos.LoginOperadora.idOperadora = pos.Operadora.id
+		                                        WHERE
+			                                        pos.LogExecution.statusExecution = 7
+		                                        AND pos.LogExecution.dtaExecucaoProxima <= (
+			                                        CONVERT (VARCHAR(25), GETDATE(), 112) + ' 23:59:59'
+		                                        )
+	                                        ) AS [Extent1]
                                         WHERE
-	                                        pos.LogExecution.statusExecution = 7
-                                            AND  pos.LogExecution.dtaExecucaoProxima  <= (CONVERT(VARCHAR(25), GETDATE(), 112) + ' 23:59:59')
-                                            --AND  pos.LogExecution.[row_number] > " + pageNumber + @"
-                                        ORDER BY pos.LogExecution.dtaExecucaoProxima ASC
+	                                        [Extent1].[row_number] > " + (pageNumber * pageSize) + @"
+                                        ORDER BY
+	                                        [Extent1].row_number ASC
 
                                     ";
 

@@ -212,7 +212,7 @@ namespace api.Negocios.Cliente
                     fl_cardservices = e.fl_cardservices,
                     fl_taxservices = e.fl_taxservices,
                     fl_proinfo = e.fl_proinfo,
-                    vendedor = new {e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa},
+                    vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa} : null,
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -242,7 +242,7 @@ namespace api.Negocios.Cliente
                     fl_cardservices = e.fl_cardservices,
                     fl_taxservices = e.fl_taxservices,
                     fl_proinfo = e.fl_proinfo,
-                    vendedor = new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa },
+                    vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
                     dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault()
                 }
                     
