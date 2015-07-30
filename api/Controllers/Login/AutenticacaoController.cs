@@ -314,7 +314,6 @@ namespace api.Controllers.Login
         {
             try
             {
-
                 if (ModelState.IsValid && WebSecurity.Login(data.usuario, data.senha, persistCookie: false))
                 {
 
