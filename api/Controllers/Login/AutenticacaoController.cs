@@ -74,8 +74,8 @@ namespace api.Controllers.Login
                                                                     )
                                                             .FirstOrDefault();
 
-                            if (!Permissoes.isAtosRole(token) && (usuario.grupo_empresa != null && !usuario.grupo_empresa.fl_ativo) ||
-                               (usuario.empresa != null && usuario.empresa.fl_ativo == 0) || !usuario.fl_ativo)
+                            if ((!Permissoes.isAtosRole(token) && ((usuario.grupo_empresa != null && !usuario.grupo_empresa.fl_ativo) ||
+                               (usuario.empresa != null && usuario.empresa.fl_ativo == 0))) || !usuario.fl_ativo)
                             {
                                 // Usuário inativado
                                 throw new Exception("401");
@@ -374,8 +374,8 @@ namespace api.Controllers.Login
                                                                     )
                                                             .FirstOrDefault();
 
-                        if (!Permissoes.isAtosRole(token) && (usuario.grupo_empresa != null && !usuario.grupo_empresa.fl_ativo) ||
-                               (usuario.empresa != null && usuario.empresa.fl_ativo == 0) || !usuario.fl_ativo)
+                        if ((!Permissoes.isAtosRole(token) && ((usuario.grupo_empresa != null && !usuario.grupo_empresa.fl_ativo) ||
+                           (usuario.empresa != null && usuario.empresa.fl_ativo == 0))) || !usuario.fl_ativo)
                         {
                             throw new Exception("401");
                         }

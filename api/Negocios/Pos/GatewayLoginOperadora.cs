@@ -315,6 +315,7 @@ namespace api.Negocios.Pos
         {
             Operadora newOperadora = new Operadora();
             newOperadora.nmOperadora = param.Operadora.nmOperadora;
+            param.Operadora.idGrupoEmpresa = param.idGrupo;
             newOperadora.idGrupoEmpresa = param.idGrupo;
             _db.Operadoras.Add(newOperadora);
             _db.SaveChanges();
@@ -324,6 +325,20 @@ namespace api.Negocios.Pos
             _db.LoginOperadoras.Add(param);
             _db.SaveChanges();
 
+            /*
+
+{ 
+    login: "meulogin", 
+    senha: "123456", 
+    cnpj: "22388768000117", 
+    idGrupo: 41, 
+    estabelecimento: "meuestabelecimento",
+    operadora :
+                {
+                    nmOperadora: "BANESE CARD"
+                }
+}
+             */
             var op = _db.Adquirentes.Where(o => o.descricao.Equals(newOperadora.nmOperadora)).Select(o => o).FirstOrDefault();
             DateTime hrExec = (DateTime)op.hraExecucao;
 
