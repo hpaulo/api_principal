@@ -304,8 +304,14 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static void Delete(string token, Int32 id_grupo)
         {
-            _db.grupo_empresa.Remove(_db.grupo_empresa.Where(e => e.id_grupo.Equals(id_grupo)).First());
-            _db.SaveChanges();
+            if (_db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == id_grupo).ToList().Count == 0)
+            {
+                _db.grupo_empresa.Remove(_db.grupo_empresa.Where(e => e.id_grupo.Equals(id_grupo)).First());
+                _db.SaveChanges();
+            }
+            else
+                throw new Exception("Grupo empresa não pode ser deletado!");
+
         }
 
 

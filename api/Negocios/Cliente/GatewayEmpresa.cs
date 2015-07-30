@@ -400,8 +400,13 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static void Delete(string token, string nu_cnpj)
         {
-            _db.empresas.Remove(_db.empresas.Where(e => e.nu_cnpj.Equals(nu_cnpj)).First());
-            _db.SaveChanges();
+            if (_db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa == nu_cnpj).ToList().Count == 0)
+            {
+                _db.empresas.Remove(_db.empresas.Where(e => e.nu_cnpj.Equals(nu_cnpj)).First());
+                _db.SaveChanges();
+            }
+            else
+                throw new Exception("Empresa não pode ser deletada!");
         }
 
 

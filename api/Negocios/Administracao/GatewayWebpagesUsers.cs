@@ -402,21 +402,26 @@ namespace api.Negocios.Administracao
 
         public static void Delete(string token, Int32 id_users)
         {
-            GatewayWebpagesUsersInRoles.Delete(token, id_users, false);
-            GatewayWebpagesMembership.Delete(token, id_users);
-            // Obtem o usuário com o id_users
-            webpages_Users value = _db.webpages_Users
-                                      .Where(e => e.id_users.Equals(id_users))
-                                      .First<webpages_Users>();
-
-            int id_pessoa = (value.id_pessoa != null)?Convert.ToInt32(value.id_pessoa):0;
-
-            _db.webpages_Users.RemoveRange(_db.webpages_Users.Where(e => e.id_users == id_users));
-            _db.SaveChanges();
-            if (id_pessoa > 0)
+            if (_db.LogAcesso1.Where(e => e.idUsers == id_users).ToList().Count == 0)
             {
-                GatewayPessoa.Delete(token, id_pessoa);
+                GatewayWebpagesUsersInRoles.Delete(token, id_users, false);
+                GatewayWebpagesMembership.Delete(token, id_users);
+                // Obtem o usuário com o id_users
+                webpages_Users value = _db.webpages_Users
+                                          .Where(e => e.id_users.Equals(id_users))
+                                          .First<webpages_Users>();
+
+                int id_pessoa = (value.id_pessoa != null) ? Convert.ToInt32(value.id_pessoa) : 0;
+
+                _db.webpages_Users.RemoveRange(_db.webpages_Users.Where(e => e.id_users == id_users));
+                _db.SaveChanges();
+                if (id_pessoa > 0)
+                {
+                    GatewayPessoa.Delete(token, id_pessoa);
+                }
             }
+            else
+                throw new Exception("Usuário não pode ser deletado!");
 
         }
 
