@@ -5,16 +5,17 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using api.Models;
-using api.Negocios.Pos;
+using api.Negocios.Card;
 using api.Bibliotecas;
 using api.Models.Object;
+using api.Negocios.Card;
 
-namespace api.Controllers.Pos
+namespace api.Controllers.Card
 {
-    public class TbRecebimentoTEFController : ApiController
+    public class TbProdutoTefController : ApiController
     {
-    
-        // GET /tbRecebimentoTEF /token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
+
+        // GET /tbProdutoTef/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             try
@@ -22,24 +23,24 @@ namespace api.Controllers.Pos
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayTbRecebimentoTEF .Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayTbProdutoTef.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
-            catch(Exception e)
+            catch
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
 
-        // POST /tbRecebimentoTEF /token/
-        public HttpResponseMessage Post(string token, [FromBody]tbRecebimentoTEF  param)
+        // POST /tbProdutoTef/token/
+        public HttpResponseMessage Post(string token, [FromBody]tbProdutoTef param)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, GatewayTbRecebimentoTEF .Add(token, param));
+                    return Request.CreateResponse<short>(HttpStatusCode.OK, GatewayTbProdutoTef.Add(token, param));
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
@@ -51,15 +52,15 @@ namespace api.Controllers.Pos
 
         }
 
-        // PUT /tbRecebimentoTEF /token/
-        public HttpResponseMessage Put(string token, [FromBody]tbRecebimentoTEF  param)
+        // PUT /tbProdutoTef/token/
+        public HttpResponseMessage Put(string token, [FromBody]tbProdutoTef param)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbRecebimentoTEF .Update(token, param);
+                    GatewayTbProdutoTef.Update(token, param);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
@@ -71,15 +72,15 @@ namespace api.Controllers.Pos
             }
         }
 
-        // DELETE /tbRecebimentoTEF /token/idRecebimentoTEF
-        public HttpResponseMessage Delete(string token, Int32 idRecebimentoTEF)
+        // DELETE /tbProdutoTef/token/cdProdutoTef
+        public HttpResponseMessage Delete(string token, short cdProdutoTef)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbRecebimentoTEF .Delete(token, idRecebimentoTEF);
+                    GatewayTbProdutoTef.Delete(token, cdProdutoTef);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else

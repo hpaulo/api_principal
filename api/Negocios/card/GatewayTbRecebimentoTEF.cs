@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 
-namespace api.Negocios.Pos
+namespace api.Negocios.Card
 {
     public class GatewayTbRecebimentoTEF
     {
