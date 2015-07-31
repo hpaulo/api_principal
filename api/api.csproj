@@ -228,6 +228,7 @@
     <Compile Include="Controllers\Cliente\GrupoEmpresaController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\Login\AutenticacaoController.cs" />
+    <Compile Include="Controllers\Login\StatusController.cs" />
     <Compile Include="Controllers\Monitor\cargas\pos\ContadorController.cs" />
     <Compile Include="Controllers\Monitor\cargas\pos\ErroController.cs" />
     <Compile Include="Controllers\Monitor\cargas\pos\ExecucaoController.cs" />

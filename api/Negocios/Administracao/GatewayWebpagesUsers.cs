@@ -229,26 +229,41 @@ namespace api.Negocios.Administracao
             List<dynamic> CollectionWebpages_Users = new List<dynamic>();
             Retorno retorno = new Retorno();
 
+            if (colecao == 3)
+            {
+                int IdUsers = Permissoes.GetIdUser(token);
+                if (IdUsers != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_USERS, out outValue))
+                        queryString["" + (int)CAMPOS.ID_USERS] = IdUsers.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_USERS, IdUsers.ToString());
+                }
+            }
+
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
-            // Restringe consulta pelo perfil do usuário logado
-            Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-            String RoleName = Permissoes.GetRoleName(token).ToUpper();
-            if (IdGrupo == 0 && RoleName.Equals("COMERCIAL"))
-            {
-                // Perfil Comercial tem uma carteira de clientes específica
-                List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
-                query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin 
-                                         && e.id_grupo != null && listaIdsGruposEmpresas.Contains(e.id_grupo ?? -1)).AsQueryable<webpages_Users>();
-            }
-            else if (Permissoes.isAtosRole(token) && !RoleName.Equals("COMERCIAL"))
-                // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
-                query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
-            else
-                // Só exibe os usuários de RoleLevelMin
-                query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
 
+            if (colecao != 3) // [WEB] A coleção 3 permite que o usuário de qualquer perfil obtenha os seus propios dados
+            {
+                // Restringe consulta pelo perfil do usuário logado
+                Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+                String RoleName = Permissoes.GetRoleName(token).ToUpper();
+                if (IdGrupo == 0 && RoleName.Equals("COMERCIAL"))
+                {
+                    // Perfil Comercial tem uma carteira de clientes específica
+                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                    query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin
+                                             && e.id_grupo != null && listaIdsGruposEmpresas.Contains(e.id_grupo ?? -1)).AsQueryable<webpages_Users>();
+                }
+                else if (Permissoes.isAtosRole(token) && !RoleName.Equals("COMERCIAL"))
+                    // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
+                    query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
+                else
+                    // Só exibe os usuários de RoleLevelMin
+                    query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
+            }
 
             var queryTotal = query;
 
@@ -297,7 +312,7 @@ namespace api.Negocios.Administracao
                     id_pessoa = e.id_pessoa,
                 }).ToList<dynamic>();
             }
-            else if (colecao == 2)
+            else if (colecao == 2 || colecao == 3) // [WEB] Dados do Usuário Logado COLEÇÃO 3
             {
                 CollectionWebpages_Users = query.Select(
                 e => new
@@ -320,13 +335,17 @@ namespace api.Negocios.Administracao
                         nu_telefone = e.pessoa.nu_telefone,
                         nu_ramal = e.pessoa.nu_ramal
                     },
-                    webpagesusersinroles = _db.webpages_UsersInRoles.Where(r => r.UserId == e.id_users).Select(r => new { RoleId = r.RoleId, RolePrincipal = r.RolePrincipal }).ToList(),
+                    webpagesusersinroles = _db.webpages_UsersInRoles.Where(r => r.UserId == e.id_users).Select(r => new { RoleId = r.RoleId, RoleName = r.webpages_Roles.RoleName, RolePrincipal = r.RolePrincipal }).ToList(),
                     grupoempresa = e.grupo_empresa.ds_nome,
                     empresa = e.empresa.ds_fantasia,
                     //gruposempresasvendedor2 = _db.grupo_empresa.Where(g => g.id_vendedor == e.id_users).Select(g => new { g.id_grupo, g.ds_nome }).ToList(),
-                    gruposvendedor = e.grupo_empresa_vendedor.Select( g => new { g.id_grupo, g.ds_nome }).ToList()
+                    gruposvendedor = e.grupo_empresa_vendedor.Select(g => new { g.id_grupo, g.ds_nome }).ToList()
 
                 }).ToList<dynamic>();
+            }
+            else if (colecao == 3) // [WEB] Dados do Usuário Logado
+            {
+                // OBS: UTILIZADO EM CONJUNTO COM A COLEÇÃO 2
             }
 
             retorno.Registros = CollectionWebpages_Users;
