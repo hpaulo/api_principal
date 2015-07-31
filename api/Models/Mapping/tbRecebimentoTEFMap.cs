@@ -41,7 +41,7 @@ namespace api.Models.Mapping
                 .HasMaxLength(30);
 
             // Table & Column Mappings
-            this.ToTable("tbRecebimentoTEF", "pos");
+            this.ToTable("tbRecebimentoTEF", "card");
             this.Property(t => t.idRecebimentoTEF).HasColumnName("idRecebimentoTEF");
             this.Property(t => t.cdGrupo).HasColumnName("cdGrupo");
             this.Property(t => t.nrCNPJ).HasColumnName("nrCNPJ");
