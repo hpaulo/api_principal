@@ -165,7 +165,7 @@ namespace api.Negocios.Card
             _db.SaveChanges();
         }
         /// <summary>
-        /// Altera TbTipoProdutoTef
+        /// Altera tbTipoProdutoTef
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
