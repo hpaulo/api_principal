@@ -8,7 +8,6 @@ using api.Models;
 using api.Negocios.Card;
 using api.Bibliotecas;
 using api.Models.Object;
-using api.Negocios.Card;
 
 namespace api.Controllers.Card
 {
