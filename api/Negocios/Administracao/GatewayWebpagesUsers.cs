@@ -247,22 +247,40 @@ namespace api.Negocios.Administracao
 
             if (colecao != 3) // [WEB] A coleção 3 permite que o usuário de qualquer perfil obtenha os seus propios dados
             {
-                // Restringe consulta pelo perfil do usuário logado
-                Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-                String RoleName = Permissoes.GetRoleName(token).ToUpper();
-                if (IdGrupo == 0 && RoleName.Equals("COMERCIAL"))
+                Boolean FiltraPorNivel = true;
+
+                if (colecao == 0)
                 {
-                    // Perfil Comercial tem uma carteira de clientes específica
-                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
-                    query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin
-                                             && e.id_grupo != null && listaIdsGruposEmpresas.Contains(e.id_grupo ?? -1)).AsQueryable<webpages_Users>();
+                    Boolean FiltraPorNivelLogin = queryString.TryGetValue("" + (int)CAMPOS.DS_LOGIN, out outValue);
+                    Boolean FiltraPorNivelEmail = queryString.TryGetValue("" + (int)CAMPOS.DS_EMAIL, out outValue);
+
+                    if (FiltraPorNivelLogin && FiltraPorNivelEmail)
+                        FiltraPorNivel = queryString["" + (int)CAMPOS.DS_LOGIN].Contains("%") || queryString["" + (int)CAMPOS.DS_EMAIL].Contains("%") ;
+                    else if (FiltraPorNivelLogin)
+                        FiltraPorNivel = queryString["" + (int)CAMPOS.DS_LOGIN].Contains("%");
+                    else if (FiltraPorNivelEmail)
+                        FiltraPorNivel = queryString["" + (int)CAMPOS.DS_EMAIL].Contains("%");
                 }
-                else if (Permissoes.isAtosRole(token) && !RoleName.Equals("COMERCIAL"))
-                    // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
-                    query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
-                else
-                    // Só exibe os usuários de RoleLevelMin
-                    query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
+
+                if (FiltraPorNivel)
+                {
+                    // Restringe consulta pelo perfil do usuário logado
+                    Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+                    String RoleName = Permissoes.GetRoleName(token).ToUpper();
+                    if (IdGrupo == 0 && RoleName.Equals("COMERCIAL"))
+                    {
+                        // Perfil Comercial tem uma carteira de clientes específica
+                        List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                        query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin
+                                                 && e.id_grupo != null && listaIdsGruposEmpresas.Contains(e.id_grupo ?? -1)).AsQueryable<webpages_Users>();
+                    }
+                    else if (Permissoes.isAtosRole(token) && !RoleName.Equals("COMERCIAL"))
+                        // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
+                        query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
+                    else
+                        // Só exibe os usuários de RoleLevelMin
+                        query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
+                }
             }
 
             var queryTotal = query;
