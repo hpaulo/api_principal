@@ -147,7 +147,18 @@ namespace api.Negocios.Pos
                         }
                         else if (item.Value.Contains("<")) // MENOR IGUAL
                         {
-                            string busca = item.Value.Replace("<", "");
+                            string busca;
+                            if (item.Value.Length == 8)
+                            {
+                                string dia = item.Value.Substring(6, 1);
+                                string anoMes = item.Value.Substring(0, 6);
+                                busca = anoMes + "0" + dia;
+                            }
+                            else
+                            {
+                                busca = item.Value.Replace("<", "");
+                            }
+                            //busca = item.Value.Replace("<", "");
                             DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtaVenda <= dta);
                         }
@@ -162,6 +173,14 @@ namespace api.Negocios.Pos
                             string busca = item.Value + "01";
                             DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month);
+                        }
+                        else if (item.Value.Length == 7)
+                        {
+                            string dia = item.Value.Substring(6, 1);
+                            string anoMes = item.Value.Substring(0, 6);
+                            string busca = anoMes + "0" + dia;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month && e.dtaVenda.Day == dtaIni.Day);
                         }
                         else // IGUAL
                         {
