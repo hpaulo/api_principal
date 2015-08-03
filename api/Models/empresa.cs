@@ -32,6 +32,7 @@ namespace api.Models
             this.LoginOperadoras = new List<LoginOperadora>();
             this.ConciliacaoPagamentosPos = new List<ConciliacaoPagamentosPos>();
             this.TaxaAdministracaos = new List<TaxaAdministracao>();
+            this.tbContaCorrentes = new List<tbContaCorrente>();
         }
 
         public string nu_cnpj { get; set; }
@@ -79,5 +80,6 @@ namespace api.Models
         public virtual ICollection<LoginOperadora> LoginOperadoras { get; set; }
         public virtual ICollection<ConciliacaoPagamentosPos> ConciliacaoPagamentosPos { get; set; }
         public virtual ICollection<TaxaAdministracao> TaxaAdministracaos { get; set; }
+        public virtual ICollection<tbContaCorrente> tbContaCorrentes { get; set; }
     }
 }

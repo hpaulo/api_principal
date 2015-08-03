@@ -20,6 +20,7 @@ namespace api.Models
             this.Bandeiras1 = new List<Bandeira1>();
             this.Operadoras = new List<Operadora>();
             this.LoginOperadoras = new List<LoginOperadora>();
+            this.tbContaCorrentes = new List<tbContaCorrente>();
             //this.Vendedor = new webpages_Users();
         }
 
@@ -46,5 +47,6 @@ namespace api.Models
         public virtual ICollection<Operadora> Operadoras { get; set; }
         public virtual ICollection<LoginOperadora> LoginOperadoras { get; set; }
         public virtual webpages_Users Vendedor { get; set; }
+        public virtual ICollection<tbContaCorrente> tbContaCorrentes { get; set; }
     }
 }

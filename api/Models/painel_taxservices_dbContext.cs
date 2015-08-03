@@ -209,6 +209,13 @@ namespace api.Models
         public DbSet<TicketCar> TicketCars { get; set; }
         public DbSet<ValeCard> ValeCards { get; set; }
         public DbSet<webpages_RoleLevels> webpages_RoleLevels { get; set; }
+        public DbSet<tbContaCorrente> tbContaCorrentes { get; set; }
+        public DbSet<tbContaCorrente_tbLoginAdquirenteEmpresa> tbContaCorrente_tbLoginAdquirenteEmpresas { get; set; }
+        public DbSet<tbExtrato> tbExtratos { get; set; }
+        public DbSet<tbRebimentoResumo> tbRebimentoResumos { get; set; }
+        public DbSet<tbLogAcessoUsuario> tbLogAcessoUsuarios { get; set; }
+
+
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
         {
@@ -405,6 +412,11 @@ namespace api.Models
             modelBuilder.Configurations.Add(new TicketCarMap());
             modelBuilder.Configurations.Add(new ValeCardMap());
             modelBuilder.Configurations.Add(new webpages_RoleLevelsMap());
+            modelBuilder.Configurations.Add(new tbContaCorrenteMap());
+            modelBuilder.Configurations.Add(new tbContaCorrente_tbLoginAdquirenteEmpresaMap());
+            modelBuilder.Configurations.Add(new tbExtratoMap());
+            modelBuilder.Configurations.Add(new tbRebimentoResumoMap());
+            modelBuilder.Configurations.Add(new tbLogAcessoUsuarioMap());
         }
     }
 }
