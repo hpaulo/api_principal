@@ -278,6 +278,10 @@ namespace api.Negocios.Pos
 
 
                 // PERSONALIZADO
+                case CAMPOS.DTAVENDA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.dtaVenda);
+                    else entity = entity.OrderByDescending(e => e.Recebimento.dtaVenda);
+                    break;
                 case CAMPOS.DESBANDEIRA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.BandeiraPos.desBandeira);
                     else entity = entity.OrderByDescending(e => e.Recebimento.BandeiraPos.desBandeira);

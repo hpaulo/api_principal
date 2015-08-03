@@ -32,6 +32,7 @@ namespace api.Controllers.Pos
             }
         }
 
+        /*
         // POST /Recebimento/token/
         public HttpResponseMessage Post(string token, [FromBody]Recebimento param)
         {
@@ -89,6 +90,6 @@ namespace api.Controllers.Pos
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-        }
+        }*/
     }
 }
