@@ -17,5 +17,8 @@ namespace api.Models
         public int codResposta { get; set; }
         public string msgErro { get; set; }
         public string dsJson { get; set; }
+        public virtual webpages_Users webpages_Users { get; set; }
+        public virtual webpages_Controllers webpages_Controllers { get; set; }
+        public virtual webpages_Methods webpages_Methods { get; set; }
     }
 }

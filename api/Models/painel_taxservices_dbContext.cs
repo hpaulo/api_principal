@@ -214,7 +214,7 @@ namespace api.Models
         public DbSet<tbExtrato> tbExtratos { get; set; }
         public DbSet<tbRebimentoResumo> tbRebimentoResumos { get; set; }
         public DbSet<tbLogAcessoUsuario> tbLogAcessoUsuarios { get; set; }
-
+        
 
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
