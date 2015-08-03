@@ -19,5 +19,6 @@ namespace api.Models
         public virtual webpages_Controllers webpages_Controllers { get; set; }
         public virtual ICollection<LogAcesso1> LogAcesso1 { get; set; }
         public virtual ICollection<webpages_Permissions> webpages_Permissions { get; set; }
+        public virtual ICollection<tbLogAcessoUsuario> tbLogAcessoUsuarios { get; set; }
     }
 }

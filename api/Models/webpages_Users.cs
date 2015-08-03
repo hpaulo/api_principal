@@ -28,5 +28,6 @@ namespace api.Models
         public virtual ICollection<ConciliacaoRecebimento> ConciliacaoRecebimentoes { get; set; }
         public virtual ICollection<LogAcesso1> LogAcesso1 { get; set; }
         public virtual ICollection<LoginAutenticacao> LoginAutenticacaos { get; set; }
+        public virtual ICollection<tbLogAcessoUsuario> tbLogAcessoUsuarios { get; set; }
     }
 }

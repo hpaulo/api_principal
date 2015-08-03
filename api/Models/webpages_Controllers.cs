@@ -21,5 +21,6 @@ namespace api.Models
         public virtual ICollection<webpages_Methods> webpages_Methods { get; set; }
         public virtual ICollection<webpages_Controllers> webpages_Controllers1 { get; set; }
         public virtual webpages_Controllers webpages_Controllers2 { get; set; }
+        public virtual ICollection<tbLogAcessoUsuario> tbLogAcessoUsuarios { get; set; }
     }
 }

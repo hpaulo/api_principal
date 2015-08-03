@@ -40,6 +40,18 @@ namespace api.Models.Mapping
             this.Property(t => t.codResposta).HasColumnName("codResposta");
             this.Property(t => t.msgErro).HasColumnName("msgErro");
             this.Property(t => t.dsJson).HasColumnName("dsJson");
+
+            // Relationships
+            this.HasRequired(t => t.webpages_Users)
+                .WithMany(t => t.tbLogAcessoUsuarios)
+                .HasForeignKey(d => d.idUser);
+            this.HasOptional(t => t.webpages_Controllers)
+                .WithMany(t => t.tbLogAcessoUsuarios)
+                .HasForeignKey(d => d.idController);
+            this.HasOptional(t => t.webpages_Methods)
+                .WithMany(t => t.tbLogAcessoUsuarios)
+                .HasForeignKey(d => d.idMethod);
+
         }
     }
 }
