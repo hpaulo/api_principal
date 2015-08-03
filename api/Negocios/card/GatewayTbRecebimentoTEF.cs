@@ -378,6 +378,32 @@ namespace api.Negocios.Card
                     cdEstabelecimentoHost = e.cdEstabelecimentoHost,
                 }).ToList<dynamic>();
             }
+            else if (colecao == 2)
+            {
+                CollectionTbRecebimentoTEF = query
+                    .GroupBy(x => new { x.cdGrupo })
+                    .Select(e => new
+                    {
+                        cdGrupo = e.Key.cdGrupo,
+                        nmGrupo = _db.grupo_empresa.Where(g => g.id_grupo == e.Key.cdGrupo).Select(g => g.ds_nome).FirstOrDefault(),
+                        dtVenda = (e.Max(p => p.dthrVenda)),
+                    }).ToList<dynamic>();
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = CollectionTbRecebimentoTEF.Count();
+
+
+                // PAGINAÇÃO
+                skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+            }
 
             retorno.Registros = CollectionTbRecebimentoTEF;
 
