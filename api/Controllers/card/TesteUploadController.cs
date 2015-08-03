@@ -1,5 +1,7 @@
-﻿using System;
+﻿using OFXSharp;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -33,12 +35,20 @@ namespace api.Controllers.Card
                 foreach (string file in httpRequest.Files)
                 {
                     var postedFile = httpRequest.Files[file];
-                    var filePath = HttpContext.Current.Server.MapPath("~/App_Data/" + postedFile.FileName);
-                    postedFile.SaveAs(filePath);
 
-                    docfiles.Add(filePath);
+                    if (!File.Exists("~/App_Data/" + postedFile.FileName))
+                    {
+                        var filePath = HttpContext.Current.Server.MapPath("~/App_Data/" + postedFile.FileName);
+                        postedFile.SaveAs(filePath);
+
+                        var parser = new OFXDocumentParser();
+                        OFXDocument ofxDocument = parser.Import(new FileStream(filePath, FileMode.Open));
+
+                        docfiles.Add(filePath);
+                        result = Request.CreateResponse(HttpStatusCode.Created, ofxDocument);
+                    }
                 }
-                result = Request.CreateResponse(HttpStatusCode.Created, docfiles);
+                
             }
             else
             {
