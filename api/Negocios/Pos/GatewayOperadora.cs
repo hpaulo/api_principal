@@ -121,6 +121,14 @@ namespace api.Negocios.Pos
                 else
                     queryString.Add("" + (int)CAMPOS.IDGRUPOEMPRESA, IdGrupo.ToString());
             }
+            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+            if (CnpjEmpresa != "")
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                    queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                else
+                    queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
+            }
 
             //DECLARAÇÕES
             List<dynamic> CollectionOperadora = new List<dynamic>();

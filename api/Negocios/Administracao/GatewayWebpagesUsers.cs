@@ -213,21 +213,48 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-            string outValue = null;
-            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-            if (IdGrupo != 0)
-            {
-                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
-                else
-                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
-            }
-            
-
             //DECLARAÇÕES
             List<dynamic> CollectionWebpages_Users = new List<dynamic>();
             Retorno retorno = new Retorno();
+
+            // Se for uma consulta por um login ou e-mail específico na coleção 0, não força filtro por empresa, filial e rolelevel
+            string outValue = null;
+            Boolean FiltroForcado = true;
+
+            if (colecao == 0)
+            {
+                Boolean filtroLogin = queryString.TryGetValue("" + (int)CAMPOS.DS_LOGIN, out outValue);
+                Boolean filtroEmail = queryString.TryGetValue("" + (int)CAMPOS.DS_EMAIL, out outValue);
+
+                if (filtroLogin && filtroEmail)
+                    FiltroForcado = queryString["" + (int)CAMPOS.DS_LOGIN].Contains("%") || queryString["" + (int)CAMPOS.DS_EMAIL].Contains("%");
+                else if (filtroLogin)
+                    FiltroForcado = queryString["" + (int)CAMPOS.DS_LOGIN].Contains("%");
+                else if (filtroEmail)
+                    FiltroForcado = queryString["" + (int)CAMPOS.DS_EMAIL].Contains("%");
+            }
+
+            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+            Int32 IdGrupo = 0;
+            if (FiltroForcado)
+            {
+                IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (CnpjEmpresa != "")
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJEMPRESA, out outValue))
+                        queryString["" + (int)CAMPOS.NU_CNPJEMPRESA] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NU_CNPJEMPRESA, CnpjEmpresa);
+                }
+            }
 
             if (colecao == 3)
             {
@@ -245,24 +272,10 @@ namespace api.Negocios.Administracao
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
 
-            if (colecao != 3) // [WEB] A coleção 3 permite que o usuário de qualquer perfil obtenha os seus propios dados
+            if (colecao != 3) // [WEB] A coleção 3 permite que o usuário de qualquer perfil obtenha os seus próprios dados
             {
-                Boolean FiltraPorNivel = true;
 
-                if (colecao == 0)
-                {
-                    Boolean FiltraPorNivelLogin = queryString.TryGetValue("" + (int)CAMPOS.DS_LOGIN, out outValue);
-                    Boolean FiltraPorNivelEmail = queryString.TryGetValue("" + (int)CAMPOS.DS_EMAIL, out outValue);
-
-                    if (FiltraPorNivelLogin && FiltraPorNivelEmail)
-                        FiltraPorNivel = queryString["" + (int)CAMPOS.DS_LOGIN].Contains("%") || queryString["" + (int)CAMPOS.DS_EMAIL].Contains("%") ;
-                    else if (FiltraPorNivelLogin)
-                        FiltraPorNivel = queryString["" + (int)CAMPOS.DS_LOGIN].Contains("%");
-                    else if (FiltraPorNivelEmail)
-                        FiltraPorNivel = queryString["" + (int)CAMPOS.DS_EMAIL].Contains("%");
-                }
-
-                if (FiltraPorNivel)
+                if (FiltroForcado)
                 {
                     // Restringe consulta pelo perfil do usuário logado
                     Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
@@ -380,7 +393,6 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, Models.Object.Usuario param)
         {
-
             _db.pessoas.Add(param.Pessoa);
             _db.SaveChanges();
 
@@ -484,15 +496,12 @@ namespace api.Negocios.Administracao
                     // VALIDAR PERMISSÂO PARA FUNCIONALIDADE
 
                     if (param.Id_grupo == -1)
-                    {
                         value.id_grupo = null;
-                        _db.SaveChanges();
-                    }
                     else
-                    {
                         value.id_grupo = param.Id_grupo;
-                        _db.SaveChanges();
-                    }
+
+                    value.nu_cnpjEmpresa = null;
+                    _db.SaveChanges();
                 }
                 else
                     throw new Exception("Usuário inválido inválido!");
@@ -585,19 +594,38 @@ namespace api.Negocios.Administracao
                     {
                         value.fl_ativo = param.Webpagesusers.fl_ativo;
                     }
-                    if (param.Webpagesusers.id_grupo != null && param.Webpagesusers.id_grupo != 0 && param.Webpagesusers.id_grupo != value.id_grupo)
-                    {
-                        if (param.Webpagesusers.id_grupo == -1)
-                            value.id_grupo = null;
-                        else
-                            value.id_grupo = param.Webpagesusers.id_grupo;
-                    }
+
+                    Boolean grupoEmpresaAlterado = false;
                     if (param.Webpagesusers.nu_cnpjEmpresa != null && param.Webpagesusers.nu_cnpjEmpresa != value.nu_cnpjEmpresa)
                     {
                         if (param.Webpagesusers.nu_cnpjEmpresa == "")
                             value.nu_cnpjEmpresa = null;
                         else
+                        {
                             value.nu_cnpjEmpresa = param.Webpagesusers.nu_cnpjEmpresa;
+                            value.id_grupo = _db.empresas.Where(f => f.nu_cnpj.Equals(param.Webpagesusers.nu_cnpjEmpresa)).Select(f => f.id_grupo).FirstOrDefault();
+                            grupoEmpresaAlterado = true; // já forçou o grupo pela filial
+                        }
+                    }// só pode colocar grupo empresa ao qual a filial está ou sem nenhuma filial
+
+                    if (!grupoEmpresaAlterado && param.Webpagesusers.id_grupo != null && param.Webpagesusers.id_grupo != 0 && param.Webpagesusers.id_grupo != value.id_grupo)
+                    {
+                        if (param.Webpagesusers.id_grupo == -1)
+                        {
+                            value.id_grupo = null;
+                            value.nu_cnpjEmpresa = null; // Não pode estar associado a uma filial sem estar associado a um grupo
+                        }
+                        else
+                        {
+                            value.id_grupo = param.Webpagesusers.id_grupo;
+                            // Avalia se tem empresa associado => A filial TEM QUE SER associada ao grupo
+                            if(value.nu_cnpjEmpresa != null)
+                            {
+                                Int32 id_grupo = _db.empresas.Where(f => f.nu_cnpj.Equals(value.nu_cnpjEmpresa)).Select(f => f.id_grupo).FirstOrDefault();
+                                if (id_grupo != value.id_grupo)
+                                    value.nu_cnpjEmpresa = null; // filial que estava associado é de um grupo diferente do grupo recém associado
+                            }
+                        }
                     }
 
                     _db.SaveChanges();

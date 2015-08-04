@@ -268,8 +268,8 @@ namespace api.Negocios.Pos
                     else entity = entity.OrderByDescending(e => e.valorParcelaLiquida);
                     break;
                 case CAMPOS.DTARECEBIMENTO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtaRecebimento);
-                    else entity = entity.OrderByDescending(e => e.dtaRecebimento);
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
+                    else entity = entity.OrderByDescending(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
                     break;
                 case CAMPOS.VALORDESCONTADO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.valorDescontado);
@@ -279,8 +279,8 @@ namespace api.Negocios.Pos
 
                 // PERSONALIZADO
                 case CAMPOS.DTAVENDA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.dtaVenda);
-                    else entity = entity.OrderByDescending(e => e.Recebimento.dtaVenda);
+                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
+                    else entity = entity.OrderByDescending(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
                     break;
                 case CAMPOS.DESBANDEIRA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.BandeiraPos.desBandeira);
@@ -311,6 +311,14 @@ namespace api.Negocios.Pos
                     queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
                 else
                     queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+            }
+            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+            if (CnpjEmpresa != "")
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                    queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                else
+                    queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
             }
 
             //DECLARAÇÕES
@@ -618,7 +626,6 @@ namespace api.Negocios.Pos
             else if (colecao == 8) // [web]cashflow/Analitico
             {
                 CollectionRecebimentoParcela = query
-                .OrderBy(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira)
                 .Select(e => new
                 {
 

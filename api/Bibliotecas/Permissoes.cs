@@ -58,6 +58,24 @@ namespace api.Bibliotecas
             return idGrupo;
         }
 
+        public static string GetCNPJEmpresa(string token)
+        {
+            string cnpj = "";
+            using (var _db = new painel_taxservices_dbContext())
+            {
+                _db.Configuration.ProxyCreationEnabled = false;
+
+                var verify = _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v.webpages_Users).FirstOrDefault();
+
+                if (verify != null)
+                {
+                    if (verify.id_grupo != null)
+                        cnpj = verify.nu_cnpjEmpresa;
+                }
+            }
+            return cnpj != null ? cnpj : "";
+        }
+
         public static String GetRoleName(string token)
         {
             String RoleName = String.Empty;
@@ -131,6 +149,23 @@ namespace api.Bibliotecas
                             .ToList<Int32>();
             }
             return lista;
+        }
+
+        public static Int32 GetIdMethod(Int32 idController, string ds_method )
+        {
+            Int32 idMethod = 0;
+            using (var _db = new painel_taxservices_dbContext())
+            {
+                _db.Configuration.ProxyCreationEnabled = false;
+
+                var method = _db.webpages_Methods.Where(m => m.id_controller == idController)
+                                                 .Where(m => m.ds_method.ToUpper().Equals(ds_method.ToUpper()))
+                                                 .FirstOrDefault();
+
+                if (method != null)
+                    idMethod = method.id_method;
+            }
+            return idMethod;
         }
 
         public static Boolean GetPermissionMethod(string token, string ds_method)
