@@ -261,10 +261,10 @@ namespace api.Negocios.Cliente
         {
             // Se for uma consulta por um cnpj específico na coleção 0, não força filtro por empresa, filial e rolelevel
             string outValue = null;
-            Boolean FiltroCNPJ = true;
+            Boolean FiltroCNPJ = false;
 
             if (colecao == 0 && queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
-                FiltroCNPJ = queryString["" + (int)CAMPOS.NU_CNPJ].Contains("%");
+                FiltroCNPJ = !queryString["" + (int)CAMPOS.NU_CNPJ].Contains("%");
             
 
             //DECLARAÇÕES
@@ -273,7 +273,7 @@ namespace api.Negocios.Cliente
 
             // Implementar o filtro por Grupo apartir do TOKEN do Usuário
             Int32 IdGrupo = 0;
-            if (FiltroCNPJ)
+            if (!FiltroCNPJ)
             {
                 Permissoes.GetIdGrupo(token);
                 if (IdGrupo != 0)
@@ -298,7 +298,7 @@ namespace api.Negocios.Cliente
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
             // Se não for uma consulta de CNPJ na coleção 0, restringe consulta pelo perfil Comercial que não estiver "amarrado" a um grupo
-            if (FiltroCNPJ)
+            if (!FiltroCNPJ)
             {
                 Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
                 String RoleName = Permissoes.GetRoleName(token).ToUpper();
@@ -383,6 +383,7 @@ namespace api.Negocios.Cliente
                     id_grupo = e.id_grupo,
                     filial = e.filial,
                     nu_inscEstadual = e.nu_inscEstadual,
+                    dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault()
                 }).ToList<dynamic>();
             }
 
