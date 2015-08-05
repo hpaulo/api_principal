@@ -486,11 +486,10 @@ namespace api.Negocios.Administracao
             if (param.Id_grupo != 0)
             {
                 // Altera grupo empresa do usuário logado
-                /*Int32 IdUser = Permissoes.GetIdUser(token);
+                Int32 IdUser = Permissoes.GetIdUser(token);
                 webpages_Users value = _db.webpages_Users
                         .Where(e => e.id_users == IdUser)
-                        .FirstOrDefault<webpages_Users>();*/
-                webpages_Users value = Permissoes.GetUser(token);
+                        .FirstOrDefault<webpages_Users>();
 
                 if (value != null)
                 {

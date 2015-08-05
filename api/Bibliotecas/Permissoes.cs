@@ -94,7 +94,11 @@ namespace api.Bibliotecas
         {
             _db.Configuration.ProxyCreationEnabled = false;
 
-            return _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v.webpages_Users).FirstOrDefault();
+            return _db.LoginAutenticacaos.Where(v => v.token.Equals(token))
+                        .Select(v => v.webpages_Users)
+                        .FirstOrDefault<webpages_Users>();
+
+            //return _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v.webpages_Users).FirstOrDefault();
         }
 
         public static Int32 GetIdUser(string token)
