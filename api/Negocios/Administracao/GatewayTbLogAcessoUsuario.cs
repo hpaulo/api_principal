@@ -39,6 +39,13 @@ namespace api.Negocios.Admin
             MSGERRO = 110,
             DSJSON = 111,
 
+            // WEBPAGESUSERS
+            NU_CNPJ = 200,
+            DS_LOGIN = 201,
+            ID_GRUPO = 203,
+
+            // WEBPAGESCONTROLLERS
+            DS_CONTROLLER = 301,
         };
 
         /// <summary>
@@ -67,23 +74,29 @@ namespace api.Negocios.Admin
                 {
                     case CAMPOS.IDLOGACESSOUSUARIO:
                         Int32 idLogAcessoUsuario = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idLogAcessoUsuario.Equals(idLogAcessoUsuario)).AsQueryable<tbLogAcessoUsuario>();
+                        entity = entity.Where(e => e.idLogAcessoUsuario == idLogAcessoUsuario).AsQueryable<tbLogAcessoUsuario>();
                         break;
                     case CAMPOS.IDUSER:
                         Int32 idUser = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idUser.Equals(idUser)).AsQueryable<tbLogAcessoUsuario>();
+                        entity = entity.Where(e => e.idUser == idUser).AsQueryable<tbLogAcessoUsuario>();
                         break;
                     case CAMPOS.DSURL:
                         string dsUrl = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsUrl.Equals(dsUrl)).AsQueryable<tbLogAcessoUsuario>();
+                        if (dsUrl.Contains("%")) // usa LIKE
+                        {
+                            string busca = dsUrl.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.dsUrl.Contains(busca)).AsQueryable<tbLogAcessoUsuario>();
+                        }
+                        else
+                            entity = entity.Where(e => e.dsUrl.Equals(dsUrl)).AsQueryable<tbLogAcessoUsuario>();
                         break;
                     case CAMPOS.IDCONTROLLER:
                         Int32 idController = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idController.Equals(idController)).AsQueryable<tbLogAcessoUsuario>();
+                        entity = entity.Where(e => e.idController == idController).AsQueryable<tbLogAcessoUsuario>();
                         break;
                     case CAMPOS.IDMETHOD:
                         Int32 idMethod = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idMethod.Equals(idMethod)).AsQueryable<tbLogAcessoUsuario>();
+                        entity = entity.Where(e => e.idMethod == idMethod).AsQueryable<tbLogAcessoUsuario>();
                         break;
                     case CAMPOS.DSPARAMETROS:
                         string dsParametros = Convert.ToString(item.Value);
@@ -103,7 +116,7 @@ namespace api.Negocios.Admin
                         break;
                     case CAMPOS.CODRESPOSTA:
                         Int32 codResposta = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.codResposta.Equals(codResposta)).AsQueryable<tbLogAcessoUsuario>();
+                        entity = entity.Where(e => e.codResposta == codResposta).AsQueryable<tbLogAcessoUsuario>();
                         break;
                     case CAMPOS.MSGERRO:
                         string msgErro = Convert.ToString(item.Value);
@@ -112,6 +125,38 @@ namespace api.Negocios.Admin
                     case CAMPOS.DSJSON:
                         string dsJson = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.dsJson.Equals(dsJson)).AsQueryable<tbLogAcessoUsuario>();
+                        break;
+
+
+                    // PERSONALIZADO
+                    case CAMPOS.NU_CNPJ:
+                        string nu_cnpj = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.webpages_Users.nu_cnpjEmpresa.Equals(nu_cnpj)).AsQueryable<tbLogAcessoUsuario>();
+                        break;
+                    case CAMPOS.DS_LOGIN:
+                        string ds_login = Convert.ToString(item.Value);
+                        if (ds_login.Contains("%")) // usa LIKE
+                        {
+                            string busca = ds_login.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.webpages_Users.ds_login.Contains(busca)).AsQueryable<tbLogAcessoUsuario>();
+                        }
+                        else
+                            entity = entity.Where(e => e.webpages_Users.ds_login.Equals(ds_login)).AsQueryable<tbLogAcessoUsuario>();
+                        break;
+                    case CAMPOS.ID_GRUPO:
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.webpages_Users.id_grupo == id_grupo).AsQueryable<tbLogAcessoUsuario>();
+                        break;
+
+                    case CAMPOS.DS_CONTROLLER:
+                        string ds_controller = Convert.ToString(item.Value);
+                        if (ds_controller.Contains("%")) // usa LIKE
+                        {
+                            string busca = ds_controller.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.webpages_Controllers.ds_controller.Contains(busca)).AsQueryable<tbLogAcessoUsuario>();
+                        }
+                        else
+                            entity = entity.Where(e => e.webpages_Controllers.ds_controller.Equals(ds_controller)).AsQueryable<tbLogAcessoUsuario>();
                         break;
                 }
             }
@@ -131,8 +176,8 @@ namespace api.Negocios.Admin
                     else entity = entity.OrderByDescending(e => e.idUser).AsQueryable<tbLogAcessoUsuario>();
                     break;
                 case CAMPOS.DSURL:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsUrl).AsQueryable<tbLogAcessoUsuario>();
-                    else entity = entity.OrderByDescending(e => e.dsUrl).AsQueryable<tbLogAcessoUsuario>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsUrl).ThenByDescending(e => e.dtAcesso).AsQueryable<tbLogAcessoUsuario>();
+                    else entity = entity.OrderByDescending(e => e.dsUrl).ThenByDescending(e => e.dtAcesso).AsQueryable<tbLogAcessoUsuario>();
                     break;
                 case CAMPOS.IDCONTROLLER:
                     if (orderby == 0) entity = entity.OrderBy(e => e.idController).AsQueryable<tbLogAcessoUsuario>();
@@ -151,8 +196,8 @@ namespace api.Negocios.Admin
                     else entity = entity.OrderByDescending(e => e.dsFiltros).AsQueryable<tbLogAcessoUsuario>();
                     break;
                 case CAMPOS.DTACESSO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtAcesso).AsQueryable<tbLogAcessoUsuario>();
-                    else entity = entity.OrderByDescending(e => e.dtAcesso).AsQueryable<tbLogAcessoUsuario>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtAcesso).ThenBy(e => e.webpages_Users.ds_login).AsQueryable<tbLogAcessoUsuario>();
+                    else entity = entity.OrderByDescending(e => e.dtAcesso).ThenBy(e => e.webpages_Users.ds_login).AsQueryable<tbLogAcessoUsuario>();
                     break;
                 case CAMPOS.DSAPLICACAO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsAplicacao).AsQueryable<tbLogAcessoUsuario>();
@@ -170,6 +215,21 @@ namespace api.Negocios.Admin
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsJson).AsQueryable<tbLogAcessoUsuario>();
                     else entity = entity.OrderByDescending(e => e.dsJson).AsQueryable<tbLogAcessoUsuario>();
                     break;
+
+                // PERSONALIZADO
+                case CAMPOS.DS_LOGIN:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.webpages_Users.ds_login).ThenByDescending(e => e.dtAcesso).AsQueryable<tbLogAcessoUsuario>();
+                    else entity = entity.OrderByDescending(e => e.webpages_Users.ds_login).ThenByDescending(e => e.dtAcesso).AsQueryable<tbLogAcessoUsuario>();
+                    break;
+                case CAMPOS.ID_GRUPO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.webpages_Users.id_grupo).ThenByDescending(e => e.dtAcesso).AsQueryable<tbLogAcessoUsuario>();
+                    else entity = entity.OrderByDescending(e => e.webpages_Users.id_grupo).ThenByDescending(e => e.dtAcesso).AsQueryable<tbLogAcessoUsuario>();
+                    break;
+
+                case CAMPOS.DS_CONTROLLER:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.webpages_Controllers.ds_controller).ThenByDescending(e => e.dtAcesso).AsQueryable<tbLogAcessoUsuario>();
+                    else entity = entity.OrderByDescending(e => e.webpages_Controllers.ds_controller).ThenByDescending(e => e.dtAcesso).AsQueryable<tbLogAcessoUsuario>();
+                    break;
             }
             #endregion
 
@@ -185,6 +245,27 @@ namespace api.Negocios.Admin
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
+
+            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+            string outValue = null;
+            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+            if (IdGrupo != 0)
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                else
+                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+            }
+            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+            if (CnpjEmpresa != "")
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                    queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                else
+                    queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
+            }
+
+
             //DECLARAÇÕES
             List<dynamic> CollectionTbLogAcessoUsuario = new List<dynamic>();
             Retorno retorno = new Retorno();
@@ -246,6 +327,57 @@ namespace api.Negocios.Admin
                     dsJson = e.dsJson,
                 }).ToList<dynamic>();
             }
+            else if (colecao == 2) // [Portal] Acesso de usuários => POST, PUT e DELETE (desenvolvedor)
+            {
+                CollectionTbLogAcessoUsuario = query.Select(e => new
+                {
+
+                    idLogAcessoUsuario = e.idLogAcessoUsuario,
+                    user = new { idUser = e.idUser,
+                                 ds_login = e.webpages_Users.ds_login
+                               },
+                    method = new { idMethod = e.idMethod,
+                                   ds_method = e.webpages_Methods.ds_method
+                                 },
+                    dsUrl = e.dsUrl,
+                    dsParametros = e.dsParametros,
+                    dsFiltros = e.dsFiltros,
+                    dtAcesso = e.dtAcesso,
+                    dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" : 
+                                  e.dsAplicacao.ToUpper() == "P" ? "Portal" : e.dsAplicacao,
+                    codResposta = e.codResposta,
+                    msgErro = e.msgErro,
+                    dsJson = e.dsJson,
+                }).ToList<dynamic>();
+            }
+            else if (colecao == 3) // [Portal] Acesso de usuários => Acesso aos controllers (usuário)
+            {
+                CollectionTbLogAcessoUsuario = query.Select(e => new
+                {
+
+                    idLogAcessoUsuario = e.idLogAcessoUsuario,
+                    user = new
+                    {
+                        idUser = e.idUser,
+                        ds_login = e.webpages_Users.ds_login
+                    },
+                    controller = new
+                    {
+                        idController = e.idController,
+                        path = e.idController == null ? "" :
+                                             (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
+                                                e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
+                                              (e.webpages_Controllers.id_subController != null ?
+                                                e.webpages_Methods.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
+                                              e.webpages_Controllers.ds_controller
+                    },
+                    dtAcesso = e.dtAcesso,
+                    dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" :
+                                  e.dsAplicacao.ToUpper() == "P" ? "Portal" : e.dsAplicacao,
+                    codResposta = e.codResposta,
+                    msgErro = e.msgErro,
+                }).ToList<dynamic>();
+            }
 
             retorno.Registros = CollectionTbLogAcessoUsuario;
 
@@ -271,7 +403,7 @@ namespace api.Negocios.Admin
         /// <returns></returns>
         public static void Delete(string token, Int32 idLogAcessoUsuario)
         {
-            _db.tbLogAcessoUsuarios.Remove(_db.tbLogAcessoUsuarios.Where(e => e.idLogAcessoUsuario.Equals(idLogAcessoUsuario)).First());
+            _db.tbLogAcessoUsuarios.Remove(_db.tbLogAcessoUsuarios.Where(e => e.idLogAcessoUsuario == idLogAcessoUsuario).First());
             _db.SaveChanges();
         }
         /// <summary>
@@ -282,16 +414,16 @@ namespace api.Negocios.Admin
         public static void Update(string token, tbLogAcessoUsuario param)
         {
             tbLogAcessoUsuario value = _db.tbLogAcessoUsuarios
-                    .Where(e => e.idLogAcessoUsuario.Equals(param.idLogAcessoUsuario))
+                    .Where(e => e.idLogAcessoUsuario == param.idLogAcessoUsuario)
                     .First<tbLogAcessoUsuario>();
 
             // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.idLogAcessoUsuario != null && param.idLogAcessoUsuario != value.idLogAcessoUsuario)
-                value.idLogAcessoUsuario = param.idLogAcessoUsuario;
-            if (param.idUser != null && param.idUser != value.idUser)
-                value.idUser = param.idUser;
+            //if (param.idLogAcessoUsuario != null && param.idLogAcessoUsuario != value.idLogAcessoUsuario)
+            //    value.idLogAcessoUsuario = param.idLogAcessoUsuario;
+            //if (param.idUser != null && param.idUser != value.idUser)
+            //    value.idUser = param.idUser;
             if (param.dsUrl != null && param.dsUrl != value.dsUrl)
                 value.dsUrl = param.dsUrl;
             if (param.idController != null && param.idController != value.idController)
@@ -306,7 +438,7 @@ namespace api.Negocios.Admin
                 value.dtAcesso = param.dtAcesso;
             if (param.dsAplicacao != null && param.dsAplicacao != value.dsAplicacao)
                 value.dsAplicacao = param.dsAplicacao;
-            if (param.codResposta != null && param.codResposta != value.codResposta)
+            if (param.codResposta != value.codResposta)
                 value.codResposta = param.codResposta;
             if (param.msgErro != null && param.msgErro != value.msgErro)
                 value.msgErro = param.msgErro;

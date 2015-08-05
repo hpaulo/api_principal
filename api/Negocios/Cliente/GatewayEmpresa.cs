@@ -259,32 +259,55 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+            // Se for uma consulta por um cnpj específico na coleção 0, não força filtro por empresa, filial e rolelevel
             string outValue = null;
-            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-            if (IdGrupo != 0)
-            {
-                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
-                else
-                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
-            }
+            Boolean FiltroCNPJ = false;
+
+            if (colecao == 0 && queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                FiltroCNPJ = !queryString["" + (int)CAMPOS.NU_CNPJ].Contains("%");
+            
 
             //DECLARAÇÕES
             List<dynamic> CollectionEmpresa = new List<dynamic>();
             Retorno retorno = new Retorno();
 
+            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+            Int32 IdGrupo = 0;
+            if (!FiltroCNPJ)
+            {
+                IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (CnpjEmpresa != "")
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
+                }
+            }
+            
+
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
-            // Restringe consulta pelo perfil do usuário logado
-            Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-            String RoleName = Permissoes.GetRoleName(token).ToUpper();
-            if (IdGrupo == 0 && RoleName.Equals("COMERCIAL"))
+            // Se não for uma consulta de CNPJ na coleção 0, restringe consulta pelo perfil Comercial que não estiver "amarrado" a um grupo
+            if (!FiltroCNPJ)
             {
-                // Perfil Comercial tem uma carteira de clientes específica
-                List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
-                query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<empresa>();
+                Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+                String RoleName = Permissoes.GetRoleName(token).ToUpper();
+                if (IdGrupo == 0 && RoleName.Equals("COMERCIAL"))
+                {
+                    // Perfil Comercial tem uma carteira de clientes específica
+                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                    query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<empresa>();
+                }
             }
 
 
@@ -360,6 +383,7 @@ namespace api.Negocios.Cliente
                     id_grupo = e.id_grupo,
                     filial = e.filial,
                     nu_inscEstadual = e.nu_inscEstadual,
+                    dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault()
                 }).ToList<dynamic>();
             }
 

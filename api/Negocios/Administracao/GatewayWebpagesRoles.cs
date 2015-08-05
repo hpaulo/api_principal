@@ -119,11 +119,15 @@ namespace api.Negocios.Administracao
             List<dynamic> CollectionWebpages_Roles = new List<dynamic>();
             Retorno retorno = new Retorno();
 
+            string outValue = null;
+            Boolean FiltroRoleName= false;
+            if (colecao == 0 && queryString.TryGetValue("" + (int)CAMPOS.ROLENAME, out outValue))
+                FiltroRoleName = !queryString["" + (int)CAMPOS.ROLENAME].Contains("%");
+
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
             
-            string outValue = null;
-            if ( !(queryString.TryGetValue("" + (int)CAMPOS.ROLENAME, out outValue)) )
+            if (!FiltroRoleName)
             {
                 // só exibe a partir do RoleId 51 e os que tiverem RoleLevel no mínimo igual ao RoleLevelMin
                 Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);

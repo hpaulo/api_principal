@@ -51,7 +51,7 @@ namespace api.Controllers.Admin
 
         }
 
-        // PUT /tbLogAcessoUsuario/token/
+        /* PUT /tbLogAcessoUsuario/token/
         public HttpResponseMessage Put(string token, [FromBody]tbLogAcessoUsuario param)
         {
             try
@@ -69,7 +69,7 @@ namespace api.Controllers.Admin
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-        }
+        }*/
 
         // DELETE /tbLogAcessoUsuario/token/idLogAcessoUsuario
         public HttpResponseMessage Delete(string token, Int32 idLogAcessoUsuario)

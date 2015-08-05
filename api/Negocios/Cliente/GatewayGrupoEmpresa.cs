@@ -154,15 +154,26 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+            // Se for uma consulta por um nome de grupo específico na coleção 0, não força filtro por empresa
             string outValue = null;
-            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-            if (IdGrupo != 0)
+            Boolean FiltroNome = false; 
+
+            // Esse filtro só acontecerá para perfis que tem a funcionalidade FILTRO EMPRESA
+            /*if (colecao == 0 && queryString.TryGetValue("" + (int)CAMPOS.DS_NOME, out outValue))
+                FiltroNome = !queryString["" + (int)CAMPOS.DS_NOME].Contains("%");*/ 
+
+            // Só filtra o grupo do usuário logado se não for um filtro de nome
+            Int32 IdGrupo = 0;
+            if (!FiltroNome)
             {
-                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
-                else
-                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
             }
 
             //DECLARAÇÕES
@@ -172,16 +183,18 @@ namespace api.Negocios.Cliente
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
-            // Restringe consulta pelo perfil do usuário logado
-            Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-            String RoleName = Permissoes.GetRoleName(token).ToUpper();
-            if (IdGrupo == 0 && RoleName.Equals("COMERCIAL"))
+            if (!FiltroNome && IdGrupo > 0)
             {
-                // Perfil Comercial tem uma carteira de clientes específica
-                List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
-                query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<grupo_empresa>();
+                // Restringe consulta pelo perfil do usuário logado
+                Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+                String RoleName = Permissoes.GetRoleName(token).ToUpper();
+                if (RoleName.Equals("COMERCIAL"))
+                {
+                    // Perfil Comercial tem uma carteira de clientes específica
+                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                    query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<grupo_empresa>();
+                }
             }
-
 
             var queryTotal = query;
 
