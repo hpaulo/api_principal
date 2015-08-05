@@ -275,7 +275,7 @@ namespace api.Negocios.Cliente
             Int32 IdGrupo = 0;
             if (!FiltroCNPJ)
             {
-                Permissoes.GetIdGrupo(token);
+                IdGrupo = Permissoes.GetIdGrupo(token);
                 if (IdGrupo != 0)
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))

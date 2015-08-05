@@ -161,8 +161,8 @@ namespace api.Negocios.Administracao
                     else entity = entity.OrderByDescending(e => e.ds_login).AsQueryable<webpages_Users>();
                     break;
                 case CAMPOS.DS_EMAIL:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.ds_email).AsQueryable<webpages_Users>();
-                    else entity = entity.OrderByDescending(e => e.ds_email).AsQueryable<webpages_Users>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.ds_email).ThenBy(e => e.ds_login).AsQueryable<webpages_Users>();
+                    else entity = entity.OrderByDescending(e => e.ds_email).ThenByDescending(e => e.ds_login).AsQueryable<webpages_Users>();
                     break;
                 case CAMPOS.ID_GRUPO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.id_grupo).AsQueryable<webpages_Users>();
@@ -188,14 +188,14 @@ namespace api.Negocios.Administracao
 
 
                 case CAMPOS.DS_NOME:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.grupo_empresa.ds_nome).AsQueryable<webpages_Users>();
-                    else entity = entity.OrderByDescending(e => e.grupo_empresa.ds_nome).AsQueryable<webpages_Users>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.grupo_empresa.ds_nome).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.ds_login).AsQueryable<webpages_Users>();
+                    else entity = entity.OrderByDescending(e => e.grupo_empresa.ds_nome).ThenByDescending(e => e.empresa.ds_fantasia).ThenByDescending(e => e.ds_login).AsQueryable<webpages_Users>();
                     break;
 
 
                 case CAMPOS.DS_FANTASIA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.empresa.ds_fantasia).AsQueryable<webpages_Users>();
-                    else entity = entity.OrderByDescending(e => e.empresa.ds_fantasia).AsQueryable<webpages_Users>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.empresa.ds_fantasia).ThenBy(e => e.ds_login).AsQueryable<webpages_Users>();
+                    else entity = entity.OrderByDescending(e => e.empresa.ds_fantasia).ThenByDescending(e => e.ds_login).AsQueryable<webpages_Users>();
                     break;
 
             }
@@ -486,10 +486,11 @@ namespace api.Negocios.Administracao
             if (param.Id_grupo != 0)
             {
                 // Altera grupo empresa do usuário logado
-                Int32 IdUser = Permissoes.GetIdUser(token);
+                /*Int32 IdUser = Permissoes.GetIdUser(token);
                 webpages_Users value = _db.webpages_Users
                         .Where(e => e.id_users == IdUser)
-                        .FirstOrDefault<webpages_Users>();
+                        .FirstOrDefault<webpages_Users>();*/
+                webpages_Users value = Permissoes.GetUser(token);
 
                 if (value != null)
                 {
