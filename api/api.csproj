@@ -65,6 +65,14 @@
       <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="OFXSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\Desktop\OFXSharp-master\OFXSharp-master\source\WindowsFormsApplication1\bin\Debug\OFXSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="SgmlReaderDll, Version=1.8.11.0, Culture=neutral, PublicKeyToken=46b2db9ca481831b, processorArchitecture=MSIL">
+      <HintPath>..\packages\SgmlReader.1.8.11\lib\4.0\SgmlReaderDll.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -206,6 +214,7 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\SampleDirection.cs" />
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
+    <Compile Include="Bibliotecas\CodigoCompensacaoBancos.cs" />
     <Compile Include="Bibliotecas\Device.cs" />
     <Compile Include="Bibliotecas\LogAcesso.cs" />
     <Compile Include="Bibliotecas\Permissoes.cs" />
@@ -229,6 +238,7 @@
     <Compile Include="Controllers\Card\TbTipoProdutoTefController.cs" />
     <Compile Include="Controllers\Card\TbSituacaoRedeTefController.cs" />
     <Compile Include="Controllers\Card\TbRedeTefController.cs" />
+    <Compile Include="Controllers\Card\TesteUploadController.cs" />
     <Compile Include="Controllers\Cliente\EmpresaController.cs" />
     <Compile Include="Controllers\Cliente\GrupoEmpresaController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -271,6 +281,7 @@
     <Compile Include="Controllers\Pos\TerminalLogicoController.cs" />
     <Compile Include="Controllers\Pos\TicketCarController.cs" />
     <Compile Include="Controllers\Pos\ValeCardController.cs" />
+    <Compile Include="Controllers\Util\BancosController.cs" />
     <Compile Include="Controllers\Util\ExportarController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Global.asax.cs">
@@ -740,6 +751,7 @@
     <Compile Include="Negocios\Card\GatewayTbBandeiraTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbEstadoTransacaoTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbProdutoTef.cs" />
+    <Compile Include="Negocios\Util\GatewayBancos.cs" />
     <Compile Include="Negocios\Util\GatewayExportar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

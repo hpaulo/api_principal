@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using api.Negocios.Util;
 
 namespace api.Negocios.Card
 {
@@ -131,6 +132,26 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
+            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+            string outValue = null;
+            Int32 IdGrupo = 0;
+            IdGrupo = Permissoes.GetIdGrupo(token);
+            if (IdGrupo != 0)
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.CDGRUPO, out outValue))
+                    queryString["" + (int)CAMPOS.CDGRUPO] = IdGrupo.ToString();
+                else
+                    queryString.Add("" + (int)CAMPOS.CDGRUPO, IdGrupo.ToString());
+            }
+            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+            if (CnpjEmpresa != "")
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
+                    queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
+                else
+                    queryString.Add("" + (int)CAMPOS.NRCNPJ, CnpjEmpresa);
+            }
+
             //DECLARAÇÕES
             List<dynamic> CollectionTbContaCorrente = new List<dynamic>();
             Retorno retorno = new Retorno();
@@ -180,6 +201,18 @@ namespace api.Negocios.Card
                     nrConta = e.nrConta,
                 }).ToList<dynamic>();
             }
+            else if (colecao == 2) // [WEB] 
+            {
+                CollectionTbContaCorrente = query.Select(e => new
+                {
+                    idContaCorrente = e.idContaCorrente,
+                    cdGrupo = e.cdGrupo,
+                    nrCnpj = e.nrCnpj,
+                    banco = new { Codigo = e.cdBanco, NomeReduzido = GatewayBancos.Get(e.cdBanco) },
+                    nrAgencia = e.nrAgencia,
+                    nrConta = e.nrConta,
+                }).ToList<dynamic>();
+            }
 
             retorno.Registros = CollectionTbContaCorrente;
 
@@ -192,9 +225,22 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Int32 Add(string token, tbContaCorrente param)
         {
-            _db.tbContaCorrentes.Add(param);
-            _db.SaveChanges();
-            return param.idContaCorrente;
+            var verify = _db.tbContaCorrentes
+                            .Where(e => e.cdGrupo == param.cdGrupo)
+                            .Where(e => e.nrCnpj.Equals(param.nrCnpj))
+                            .Where(e => e.cdBanco.Equals(param.cdBanco))
+                            .Where(e => e.nrAgencia.Equals(param.nrAgencia))
+                            .Where(e => e.nrConta.Equals(param.nrConta))
+                            .FirstOrDefault();
+
+            if (verify == null)
+            {
+                _db.tbContaCorrentes.Add(param);
+                _db.SaveChanges();
+                return param.idContaCorrente;
+            }
+               
+            throw new Exception("Conta já cadastrada!");
         }
 
 
@@ -205,6 +251,7 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 idContaCorrente)
         {
+            // Deletar todos os Extratos?
             _db.tbContaCorrentes.Remove(_db.tbContaCorrentes.Where(e => e.idContaCorrente.Equals(idContaCorrente)).First());
             _db.SaveChanges();
         }
@@ -220,12 +267,7 @@ namespace api.Negocios.Card
                     .First<tbContaCorrente>();
 
             // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
-
-
-            if (param.idContaCorrente != null && param.idContaCorrente != value.idContaCorrente)
-                value.idContaCorrente = param.idContaCorrente;
-            if (param.cdGrupo != null && param.cdGrupo != value.cdGrupo)
-                value.cdGrupo = param.cdGrupo;
+            
             if (param.nrCnpj != null && param.nrCnpj != value.nrCnpj)
                 value.nrCnpj = param.nrCnpj;
             if (param.cdBanco != null && param.cdBanco != value.cdBanco)
