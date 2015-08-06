@@ -354,9 +354,13 @@ namespace api.Negocios.Pos
             newLogExecution.idLoginOperadora = param.id;
             newLogExecution.idOperadora = param.idOperadora;
             newLogExecution.statusExecution = "7"; //0 = Em execução; 1 = Executado com Sucesso; 2 = Erro na Execução; 3 = Re-Executar; 7 = Elegivel
-            newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second); ;
-            newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
+            //newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
+            //newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
+            newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
+            newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
             newLogExecution.dtaExecucaoProxima = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 2, hrExec.Hour, hrExec.Minute, hrExec.Second);
+            newLogExecution.qtdTransacoes = 0;
+            newLogExecution.vlTotalTransacoes = 0;
 
             _db.LogExecutions.Add(newLogExecution);
             _db.SaveChanges();
