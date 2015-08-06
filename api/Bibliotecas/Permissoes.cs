@@ -11,7 +11,7 @@ namespace api.Bibliotecas
     public class Permissoes
     {
 
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         // Dicionário para gerenciamento de segurança de métodos POST, PUT e DELETE
         // A partir da url da API, retorna o ID do controller associado
@@ -46,30 +46,36 @@ namespace api.Bibliotecas
 
         private static Int32 GetIdController(List<string> dscontrollers)
         {
-            if (dscontrollers.Count == 0) return 0;
+            using (var _db = new painel_taxservices_dbContext())
+            {
+                _db.Configuration.ProxyCreationEnabled = false;
 
-            //_db.Configuration.ProxyCreationEnabled = false;
-            var query = _db.webpages_Controllers.AsQueryable<webpages_Controllers>();
+                if (dscontrollers.Count == 0) return 0;
 
-            // Verifica se o nome é único
-            List<webpages_Controllers> list = query.Where(e => e.ds_controller.ToUpper().Equals(dscontrollers[0].ToUpper())).ToList<webpages_Controllers>();
-            if (dscontrollers.Count == 1 || list.Count == 1) return list[0].id_controller;
+                //_db.Configuration.ProxyCreationEnabled = false;
+                var query = _db.webpages_Controllers.AsQueryable<webpages_Controllers>();
 
-            // Verifica o nome dele com o nome do pai dele
-            list = query.Where(e => e.ds_controller.ToUpper().Equals(dscontrollers[0].ToUpper()))
-                        .Where(e => e.webpages_Controllers2.ds_controller.ToUpper().Equals(dscontrollers[1].ToUpper()))
-                        .ToList<webpages_Controllers>();
+                // Verifica se o nome é único
+                List<webpages_Controllers> list = query.Where(e => e.ds_controller.ToUpper().Equals(dscontrollers[0].ToUpper())).ToList<webpages_Controllers>();
+                if (dscontrollers.Count == 1 || list.Count == 1) return list[0].id_controller;
 
-            if (dscontrollers.Count == 2 || list.Count == 1) return list[0].id_controller;
+                // Verifica o nome dele com o nome do pai dele
+                list = query.Where(e => e.ds_controller.ToUpper().Equals(dscontrollers[0].ToUpper()))
+                            .Where(e => e.webpages_Controllers2.ds_controller.ToUpper().Equals(dscontrollers[1].ToUpper()))
+                            .ToList<webpages_Controllers>();
 
-            // Verifica o nome dele com os nomes do pai e avô dele
-            list = query.Where(e => e.ds_controller.ToUpper().Equals(dscontrollers[0].ToUpper()))
-                        .Where(e => e.webpages_Controllers2.ds_controller.ToUpper().Equals(dscontrollers[1].ToUpper()))
-                        .Where(e => e.webpages_Controllers2.webpages_Controllers2.ds_controller.ToUpper().Equals(dscontrollers[2].ToUpper()))
-                        .ToList<webpages_Controllers>();
+                if (dscontrollers.Count == 2 || list.Count == 1) return list[0].id_controller;
 
-            if (list.Count > 1) return list[0].id_controller;
-            return 0;
+                // Verifica o nome dele com os nomes do pai e avô dele
+                list = query.Where(e => e.ds_controller.ToUpper().Equals(dscontrollers[0].ToUpper()))
+                            .Where(e => e.webpages_Controllers2.ds_controller.ToUpper().Equals(dscontrollers[1].ToUpper()))
+                            .Where(e => e.webpages_Controllers2.webpages_Controllers2.ds_controller.ToUpper().Equals(dscontrollers[2].ToUpper()))
+                            .ToList<webpages_Controllers>();
+
+                if (list.Count > 1) return list[0].id_controller;
+                return 0;
+
+            }
         }
 
 
@@ -77,27 +83,29 @@ namespace api.Bibliotecas
 
         public static bool Autenticado(string token)
         {
-            //using (_db = new painel_taxservices_dbContext()){
+            using (var _db = new painel_taxservices_dbContext()){
 
-            //_db.Configuration.ProxyCreationEnabled = false;
+                _db.Configuration.ProxyCreationEnabled = false;
 
-            var verify = _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v).FirstOrDefault();
+                var verify = _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v).FirstOrDefault();
 
-            if (verify != null)
-                return true;
-            //}
+                if (verify != null)
+                    return true;
+            }
             return false;
         }
 
 
         public static webpages_Users GetUser(string token)
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            using (var _db = new painel_taxservices_dbContext())
+            {
+                _db.Configuration.ProxyCreationEnabled = false;
 
-            return _db.LoginAutenticacaos.Where(v => v.token.Equals(token))
-                        .Select(v => v.webpages_Users)
-                        .FirstOrDefault<webpages_Users>();
-
+                return _db.LoginAutenticacaos.Where(v => v.token.Equals(token))
+                            .Select(v => v.webpages_Users)
+                            .FirstOrDefault<webpages_Users>();
+            }
             //return _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v.webpages_Users).FirstOrDefault();
         }
 
@@ -127,12 +135,15 @@ namespace api.Bibliotecas
             webpages_Users user = GetUser(token);
             if (user != null)
             {
-                _db.Configuration.ProxyCreationEnabled = false;
-                return _db.webpages_UsersInRoles
-                                        .Where(r => r.UserId == user.id_users)
-                                        .Where(r => r.RoleId > 50)
-                                        .Select(r => r.webpages_Roles)
-                                        .FirstOrDefault();
+                using (var _db = new painel_taxservices_dbContext())
+                {
+                    _db.Configuration.ProxyCreationEnabled = false;
+                    return _db.webpages_UsersInRoles
+                                            .Where(r => r.UserId == user.id_users)
+                                            .Where(r => r.RoleId > 50)
+                                            .Select(r => r.webpages_Roles)
+                                            .FirstOrDefault();
+                }
             }
             return null;
         }
@@ -182,28 +193,36 @@ namespace api.Bibliotecas
             List<Int32> lista = new List<Int32>();
  
             Int32 UserId = GetIdUser(token);
-            lista = _db.grupo_empresa
+
+            using (var _db = new painel_taxservices_dbContext())
+            {
+                _db.Configuration.ProxyCreationEnabled = false;
+                lista = _db.grupo_empresa
                         .Where(g => g.id_vendedor == UserId)
                         .Select(g => g.id_grupo)
                         .ToList<Int32>();
 
-            return lista;
+                return lista;
+            }
         }
 
         public static Int32 GetIdMethod(Int32 idController, string ds_method)
         {
             Int32 idMethod = 0;
-   
-            _db.Configuration.ProxyCreationEnabled = false;
 
-            var method = _db.webpages_Methods.Where(m => m.id_controller == idController)
-                                                .Where(m => m.ds_method.ToUpper().Equals(ds_method.ToUpper()))
-                                                .FirstOrDefault();
+            using (var _db = new painel_taxservices_dbContext())
+            {
+                _db.Configuration.ProxyCreationEnabled = false;
 
-            if (method != null)
-                idMethod = method.id_method;
+                var method = _db.webpages_Methods.Where(m => m.id_controller == idController)
+                                                    .Where(m => m.ds_method.ToUpper().Equals(ds_method.ToUpper()))
+                                                    .FirstOrDefault();
 
-            return idMethod;
+                if (method != null)
+                    idMethod = method.id_method;
+
+                return idMethod;
+            }
         }
 
         public static bool usuarioTemPermissao(string token, Int32 idController, string ds_method)
@@ -214,11 +233,14 @@ namespace api.Bibliotecas
             Int32 idRole = GetRoleId(token);
             Int32 idMethod = GetIdMethod(idController, ds_method);
 
-            _db.Configuration.ProxyCreationEnabled = false;
+            using (var _db = new painel_taxservices_dbContext())
+            {
+                _db.Configuration.ProxyCreationEnabled = false;
 
-            return _db.webpages_Permissions.Where(p => p.id_roles == idRole)
-                                            .Where(p => p.id_method == idMethod)
-                                            .Count() > 0;
+                return _db.webpages_Permissions.Where(p => p.id_roles == idRole)
+                                               .Where(p => p.id_method == idMethod)
+                                               .Count() > 0;
+            }
         }
 
         public static Boolean GetPermissionMethod(string token, string ds_method)

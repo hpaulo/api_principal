@@ -273,7 +273,8 @@ namespace api.Negocios.Pos
                     senha = e.senha,
                     status = e.status,
                     //empresa = new { cnpj = e.empresa.nu_cnpj, ds_fantasia = e.empresa.ds_fantasia },
-                    operadora = new { id = e.Operadora.id ,desOperadora = e.Operadora.nmOperadora },
+                    //operadora = new { id = e.Operadora.id ,desOperadora = e.Operadora.nmOperadora },
+                    operadora = new { id = e.Operadora.id, desOperadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault() },
                     estabelecimento = e.estabelecimento
                 }).ToList<dynamic>();
 
@@ -293,7 +294,8 @@ namespace api.Negocios.Pos
                                     status = e.status,
                                     empresa = e.empresa.ds_fantasia,
                                     grupoempresa = e.grupo_empresa.ds_nome,
-                                    operadora = e.Operadora.nmOperadora,
+                                    //operadora = e.Operadora.nmOperadora,
+                                    operadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault(),
                                     estabelecimento = e.estabelecimento
                                 });
 
@@ -322,7 +324,7 @@ namespace api.Negocios.Pos
         public static Int32 Add(string token, LoginOperadora param)
         {
             Operadora newOperadora = new Operadora();
-            newOperadora.nmOperadora = param.Operadora.nmOperadora;
+            newOperadora.nmOperadora = param.Operadora.nmOperadora; // TEM QUE SER O CAMPO nome DA TABELA Adquirente
             param.Operadora.idGrupoEmpresa = param.idGrupo;
             newOperadora.idGrupoEmpresa = param.idGrupo;
             _db.Operadoras.Add(newOperadora);
@@ -343,11 +345,12 @@ namespace api.Negocios.Pos
     estabelecimento: "meuestabelecimento",
     operadora :
                 {
-                    nmOperadora: "BANESE CARD"
+                    nmOperadora: "BANESECARD"
                 }
 }
              */
-            var op = _db.Adquirentes.Where(o => o.descricao.Equals(newOperadora.nmOperadora)).Select(o => o).FirstOrDefault();
+            //var op = _db.Adquirentes.Where(o => o.descricao.Equals(newOperadora.nmOperadora)).Select(o => o).FirstOrDefault();
+            Models.Adquirente op = _db.Adquirentes.Where(o => o.nome.Equals(newOperadora.nmOperadora)).FirstOrDefault(); // o que é enviado é o nome e não a descrição
             DateTime hrExec = (DateTime)op.hraExecucao;
 
             LogExecution newLogExecution = new LogExecution();

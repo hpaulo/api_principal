@@ -9,7 +9,7 @@ namespace api.Negocios.Util
 {
     public class GatewayBancos
     {
-        static List<CodigoCompensacaoBancos> ListBancos = new List<CodigoCompensacaoBancos>();
+        private static List<CodigoCompensacaoBancos> ListBancos = new List<CodigoCompensacaoBancos>();
 
         /// <summary>
         /// Auto Loader
@@ -215,7 +215,8 @@ namespace api.Negocios.Util
         private static IQueryable<CodigoCompensacaoBancos> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
-            var entity = ListBancos.Select(e => new CodigoCompensacaoBancos { Codigo = e.Codigo, NomeReduzido = e.NomeReduzido, NomeExtenso = e.NomeExtenso }).AsQueryable();
+            //var entity = ListBancos.Select(e => new CodigoCompensacaoBancos { Codigo = e.Codigo, NomeReduzido = e.NomeReduzido, NomeExtenso = e.NomeExtenso }).AsQueryable();
+            var entity = ListBancos.AsQueryable<CodigoCompensacaoBancos>();
 
             #region WHERE - ADICIONA OS FILTROS A QUERY
 
@@ -228,27 +229,27 @@ namespace api.Negocios.Util
                 {
                     case CAMPOS.CODIGO:
                         string codigo = item.Value.ToString();
-                        entity = entity.Where(e => e.Codigo.Equals(codigo)).AsQueryable();
+                        entity = entity.Where(e => e.Codigo.Equals(codigo)).AsQueryable<CodigoCompensacaoBancos>();
                         break;
                     case CAMPOS.NOMEREDUZIDO:
-                        string nomereduzido = item.Value.ToString();
+                        string nomereduzido = item.Value.ToString().ToUpper(); // ignore case
                         if (nomereduzido.Contains("%")) // usa LIKE
                         {
                             string busca = nomereduzido.Replace("%", "").ToString();
-                            entity = entity.Where(e => e.NomeReduzido.Contains(busca)).AsQueryable();
+                            entity = entity.Where(e => e.NomeReduzido.ToUpper().Contains(busca)).AsQueryable<CodigoCompensacaoBancos>();
                         }
                         else
-                            entity = entity.Where(e => e.NomeReduzido.Equals(nomereduzido)).AsQueryable();
+                            entity = entity.Where(e => e.NomeReduzido.ToUpper().Equals(nomereduzido)).AsQueryable<CodigoCompensacaoBancos>();
                         break;
                     case CAMPOS.NOMEEXTENSO:
-                        string nomeextenso = item.Value.ToString();
+                        string nomeextenso = item.Value.ToString().ToUpper(); // ignore case
                         if (nomeextenso.Contains("%")) // usa LIKE
                         {
                             string busca = nomeextenso.Replace("%", "").ToString();
-                            entity = entity.Where(e => e.NomeExtenso.Contains(busca)).AsQueryable();
+                            entity = entity.Where(e => e.NomeExtenso.ToUpper().Contains(busca)).AsQueryable<CodigoCompensacaoBancos>();
                         }
                         else
-                            entity = entity.Where(e => e.NomeExtenso.Equals(nomeextenso)).AsQueryable();
+                            entity = entity.Where(e => e.NomeExtenso.ToUpper().Equals(nomeextenso)).AsQueryable<CodigoCompensacaoBancos>();
                         break;
                 }
             }
@@ -260,16 +261,16 @@ namespace api.Negocios.Util
             switch (filtro)
             {
                 case CAMPOS.CODIGO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.Codigo).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.Codigo).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.Codigo).AsQueryable<CodigoCompensacaoBancos>();
+                    else entity = entity.OrderByDescending(e => e.Codigo).AsQueryable<CodigoCompensacaoBancos>();
                     break;
                 case CAMPOS.NOMEREDUZIDO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.NomeReduzido).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.NomeReduzido).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.NomeReduzido).AsQueryable<CodigoCompensacaoBancos>();
+                    else entity = entity.OrderByDescending(e => e.NomeReduzido).AsQueryable<CodigoCompensacaoBancos>();
                     break;
                 case CAMPOS.NOMEEXTENSO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.NomeExtenso).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.NomeExtenso).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.NomeExtenso).AsQueryable<CodigoCompensacaoBancos>();
+                    else entity = entity.OrderByDescending(e => e.NomeExtenso).AsQueryable<CodigoCompensacaoBancos>();
                     break;
             }
             #endregion
@@ -342,7 +343,7 @@ namespace api.Negocios.Util
         public static string Get(string CodigoBanco)
         {
             Populate();
-            return ListBancos.Where(e => e.Codigo.Equals(CodigoBanco)).Select(e => e.NomeReduzido).FirstOrDefault<string>();
+            return ListBancos.Where(e => e.Codigo.Equals(CodigoBanco)).Select(e => e.NomeExtenso).FirstOrDefault();
         }
     }
 }

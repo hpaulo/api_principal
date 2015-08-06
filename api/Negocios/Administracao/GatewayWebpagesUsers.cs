@@ -508,6 +508,8 @@ namespace api.Negocios.Administracao
             }
             else
             {
+                if (param.Webpagesusers.id_users == 0) throw new Exception("Falha ao parâmetro");
+
                 // Altera um usuário que não necessiariamente é o logado
                 webpages_Users value = _db.webpages_Users
                         .Where(e => e.id_users == param.Webpagesusers.id_users)
@@ -619,7 +621,7 @@ namespace api.Negocios.Administracao
                         {
                             value.id_grupo = param.Webpagesusers.id_grupo;
                             // Avalia se tem empresa associado => A filial TEM QUE SER associada ao grupo
-                            if(value.nu_cnpjEmpresa != null)
+                            if (value.nu_cnpjEmpresa != null)
                             {
                                 Int32 id_grupo = _db.empresas.Where(f => f.nu_cnpj.Equals(value.nu_cnpjEmpresa)).Select(f => f.id_grupo).FirstOrDefault();
                                 if (id_grupo != value.id_grupo)
@@ -630,6 +632,8 @@ namespace api.Negocios.Administracao
 
                     _db.SaveChanges();
                 }
+                else
+                    throw new Exception("Usuário não cadastrado");
             }
 
         }

@@ -98,8 +98,8 @@ namespace api.Negocios.Card
                     else entity = entity.OrderByDescending(e => e.idContaCorrente).AsQueryable<tbContaCorrente>();
                     break;
                 case CAMPOS.CDGRUPO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdGrupo).AsQueryable<tbContaCorrente>();
-                    else entity = entity.OrderByDescending(e => e.cdGrupo).AsQueryable<tbContaCorrente>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdGrupo).ThenBy(e => e.nrAgencia).ThenBy(e => e.nrConta).ThenBy(e => e.nrCnpj).AsQueryable<tbContaCorrente>();
+                    else entity = entity.OrderByDescending(e => e.cdGrupo).ThenByDescending(e => e.nrAgencia).ThenByDescending(e => e.nrConta).ThenByDescending(e => e.nrCnpj).AsQueryable<tbContaCorrente>();
                     break;
                 case CAMPOS.NRCNPJ:
                     if (orderby == 0) entity = entity.OrderBy(e => e.nrCnpj).AsQueryable<tbContaCorrente>();
@@ -203,15 +203,29 @@ namespace api.Negocios.Card
             }
             else if (colecao == 2) // [WEB] 
             {
-                CollectionTbContaCorrente = query.Select(e => new
+                List<dynamic> contas = query.Select(e => new
                 {
                     idContaCorrente = e.idContaCorrente,
                     cdGrupo = e.cdGrupo,
-                    nrCnpj = e.nrCnpj,
-                    banco = new { Codigo = e.cdBanco, NomeReduzido = GatewayBancos.Get(e.cdBanco) },
+                    empresa = new { nu_cnpj = e.nrCnpj, ds_fantasia = e.empresa.ds_fantasia },
+                    banco = new { Codigo = e.cdBanco, NomeExtenso = "" }, // Não dá para chamar a função direto daqui pois esse código é convertido em SQL e não acessa os dados de um objeto em memória
                     nrAgencia = e.nrAgencia,
                     nrConta = e.nrConta,
                 }).ToList<dynamic>();
+
+                // Após transformar em lista (isto é, trazer para a memória), atualiza o valor do NomeExtenso associado ao banco
+                foreach( var conta in contas )
+                {
+                    CollectionTbContaCorrente.Add(new
+                    {
+                        idContaCorrente = conta.idContaCorrente,
+                        cdGrupo = conta.cdGrupo,
+                        empresa = conta.empresa,
+                        banco = new { Codigo = conta.banco.Codigo, NomeExtenso = GatewayBancos.Get(conta.banco.Codigo) },
+                        nrAgencia = conta.nrAgencia,
+                        nrConta = conta.nrConta,
+                    });
+                }
             }
 
             retorno.Registros = CollectionTbContaCorrente;
@@ -263,7 +277,7 @@ namespace api.Negocios.Card
         public static void Update(string token, tbContaCorrente param)
         {
             tbContaCorrente value = _db.tbContaCorrentes
-                    .Where(e => e.idContaCorrente.Equals(param.idContaCorrente))
+                    .Where(e => e.idContaCorrente == param.idContaCorrente)
                     .First<tbContaCorrente>();
 
             // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
