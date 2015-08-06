@@ -1,4 +1,5 @@
-﻿using System;
+﻿using api.Bibliotecas;
+using System;
 using System.Collections.Generic;
 
 namespace api.Models
