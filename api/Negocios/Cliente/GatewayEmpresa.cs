@@ -383,6 +383,7 @@ namespace api.Negocios.Cliente
                     id_grupo = e.id_grupo,
                     filial = e.filial,
                     nu_inscEstadual = e.nu_inscEstadual,
+                    login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
                     dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault()
                 }).ToList<dynamic>();
             }
