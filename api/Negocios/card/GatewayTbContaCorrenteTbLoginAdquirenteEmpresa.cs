@@ -191,25 +191,38 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbContaCorrente_tbLoginAdquirenteEmpresa param)
+        public static void Update(string token, ContaCorrenteLoginAdquirenteEmpresa param)//tbContaCorrente_tbLoginAdquirenteEmpresa param)
         {
-            tbContaCorrente_tbLoginAdquirenteEmpresa value = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
-                    .Where(e => e.cdContaCorrente.Equals(param.cdContaCorrente))
-                    .First<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+            if (_db.tbContaCorrentes.Where(e => e.idContaCorrente == param.IdContaCorrente).FirstOrDefault() == null)
+                throw new Exception("Conta inexistente");
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+            // Associa novas loginAdquirenteEmpresas à conta
+            if (param.Associar != null)
+            {
+                foreach (var cdLoginAdquirenteEmpresa in param.Associar)
+                {
+                    tbContaCorrente_tbLoginAdquirenteEmpresa vigencia = new tbContaCorrente_tbLoginAdquirenteEmpresa();
+                    vigencia.dtInicio = DateTime.Now;
+                    vigencia.dtFim = null;
+                    vigencia.cdContaCorrente = param.IdContaCorrente;
+                    vigencia.cdLoginAdquirenteEmpresa = cdLoginAdquirenteEmpresa;
+                    Int32 id = GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.Add(token, vigencia);
+                }
+            }
 
-
-            if (param.cdContaCorrente != null && param.cdContaCorrente != value.cdContaCorrente)
-                value.cdContaCorrente = param.cdContaCorrente;
-            if (param.cdLoginAdquirenteEmpresa != null && param.cdLoginAdquirenteEmpresa != value.cdLoginAdquirenteEmpresa)
-                value.cdLoginAdquirenteEmpresa = param.cdLoginAdquirenteEmpresa;
-            if (param.dtInicio != null && param.dtInicio != value.dtInicio)
-                value.dtInicio = param.dtInicio;
-            if (param.dtFim != null && param.dtFim != value.dtFim)
-                value.dtFim = param.dtFim;
-            _db.SaveChanges();
-
+            // Desassocia loginAdquirenteEmpresas da conta => seta o valor de dtFim
+            if (param.Desassociar != null)
+            {
+                foreach (var cdLoginAdquirenteEmpresa in param.Desassociar)
+                {
+                    tbContaCorrente_tbLoginAdquirenteEmpresa vigencia = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                                .Where(e => e.cdContaCorrente == param.IdContaCorrente)
+                                                                                .Where(e => e.cdLoginAdquirenteEmpresa == cdLoginAdquirenteEmpresa)
+                                                                                .FirstOrDefault();
+                    if (vigencia != null) vigencia.dtFim = DateTime.Now;
+                    _db.SaveChanges();
+                }
+            }
         }
 
     }

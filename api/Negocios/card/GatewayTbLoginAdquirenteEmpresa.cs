@@ -235,7 +235,7 @@ namespace api.Negocios.Card
                     cdEstabelecimento = e.cdEstabelecimento,
                     dtAlteracao = e.dtAlteracao,
                     stLoginAdquirente = e.stLoginAdquirente,
-                    stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa
+                    //stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa // controle de bruno
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -251,7 +251,7 @@ namespace api.Negocios.Card
                     cdEstabelecimento = e.cdEstabelecimento,
                     dtAlteracao = e.dtAlteracao,
                     stLoginAdquirente = e.stLoginAdquirente,
-                    stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa
+                    //stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa  // controle de bruno
                 }).ToList<dynamic>();
             }
             else if (colecao == 2) // [WEB] 
@@ -275,7 +275,7 @@ namespace api.Negocios.Card
                     //cdEstabelecimento = e.cdEstabelecimento,
                     //dtAlteracao = e.dtAlteracao,
                     stLoginAdquirente = e.stLoginAdquirente,
-                    stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa
+                    //stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa  // controle de bruno
                 }).ToList<dynamic>();
             }
 
