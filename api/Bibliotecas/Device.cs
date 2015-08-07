@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -29,6 +30,20 @@ namespace api.Bibliotecas
                 return true;
             else
                 return false;*/
+        }
+
+        public static object Info()
+        {
+            object dados = new object();
+            var Request = HttpContext.Current.Request;
+
+            dados = new {
+                                Plataforma = Request.Browser.Platform,
+                                Browser = Request.Browser.Browser,
+                                Versao = Request.Browser.Version,
+                        };
+
+            return JsonConvert.SerializeObject(dados);
         }
     }
 }
