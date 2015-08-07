@@ -212,7 +212,8 @@ namespace api.Negocios.Card
                     nrAgencia = e.nrAgencia,
                     nrConta = e.nrConta,
                     vigentes = e.tbContaCorrente_tbLoginAdquirenteEmpresas
-                                            .OrderBy(l => l.dtInicio)
+                                            .OrderBy(l => l.tbLoginAdquirenteEmpresa.empresa.ds_fantasia)
+                                            .ThenBy(l => l.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente)
                                             .Where(l => l.dtFim == null) // somente as que estão vigentes
                                             .Select(l => new
                                                         {
@@ -232,8 +233,8 @@ namespace api.Negocios.Card
                                                                     nu_cnpj = l.tbLoginAdquirenteEmpresa.empresa.nu_cnpj,
                                                                     ds_fantasia = l.tbLoginAdquirenteEmpresa.empresa.ds_fantasia
                                                                 },
-                                                                stLoginAdquirente = l.tbLoginAdquirenteEmpresa.stLoginAdquirente,
-                                                                stLoginAdquirenteEmpresa = l.tbLoginAdquirenteEmpresa.stLoginAdquirenteEmpresa
+                                                                stLoginAdquirente = l.tbLoginAdquirenteEmpresa.stLoginAdquirente, 
+                                                                //stLoginAdquirenteEmpresa = l.tbLoginAdquirenteEmpresa.stLoginAdquirenteEmpresa // controle de bruno
                                                             }
                                                         }
                                             ).ToList<dynamic>()

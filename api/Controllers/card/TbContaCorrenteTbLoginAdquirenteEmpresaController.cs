@@ -32,7 +32,8 @@ namespace api.Controllers.Card
             }
         }
 
-        // POST /tbContaCorrente_tbLoginAdquirenteEmpresa/token/
+        // Adiciona via PUT
+        /* POST /tbContaCorrente_tbLoginAdquirenteEmpresa/token/    
         public HttpResponseMessage Post(string token, [FromBody]tbContaCorrente_tbLoginAdquirenteEmpresa param)
         {
             try
@@ -49,10 +50,10 @@ namespace api.Controllers.Card
             }
 
 
-        }
+        }*/
 
         // PUT /tbContaCorrente_tbLoginAdquirenteEmpresa/token/
-        public HttpResponseMessage Put(string token, [FromBody]tbContaCorrente_tbLoginAdquirenteEmpresa param)
+        public HttpResponseMessage Put(string token, ContaCorrenteLoginAdquirenteEmpresa param)//[FromBody]tbContaCorrente_tbLoginAdquirenteEmpresa param)
         {
             try
             {
@@ -65,14 +66,14 @@ namespace api.Controllers.Card
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
-            catch
+            catch(Exception e)
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
 
         // DELETE /tbContaCorrente_tbLoginAdquirenteEmpresa/token/cdContaCorrente
-        public HttpResponseMessage Delete(string token, Int32 cdContaCorrente)
+        /*public HttpResponseMessage Delete(string token, Int32 cdContaCorrente) // Não deleta pela api
         {
             try
             {
@@ -89,6 +90,6 @@ namespace api.Controllers.Card
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-        }
+        }*/
     }
 }
