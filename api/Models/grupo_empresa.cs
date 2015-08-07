@@ -21,7 +21,7 @@ namespace api.Models
             this.Operadoras = new List<Operadora>();
             this.LoginOperadoras = new List<LoginOperadora>();
             this.tbContaCorrentes = new List<tbContaCorrente>();
-            //this.Vendedor = new webpages_Users();
+            this.tbLoginAdquirenteEmpresas = new List<tbLoginAdquirenteEmpresa>();
         }
 
         public int id_grupo { get; set; }
@@ -48,5 +48,6 @@ namespace api.Models
         public virtual ICollection<LoginOperadora> LoginOperadoras { get; set; }
         public virtual webpages_Users Vendedor { get; set; }
         public virtual ICollection<tbContaCorrente> tbContaCorrentes { get; set; }
+        public virtual ICollection<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
     }
 }

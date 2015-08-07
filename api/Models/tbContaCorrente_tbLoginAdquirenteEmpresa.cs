@@ -10,5 +10,6 @@ namespace api.Models
         public Nullable<System.DateTime> dtInicio { get; set; }
         public Nullable<System.DateTime> dtFim { get; set; }
         public virtual tbContaCorrente tbContaCorrente { get; set; }
+        public virtual tbLoginAdquirenteEmpresa tbLoginAdquirenteEmpresa { get; set; }
     }
 }

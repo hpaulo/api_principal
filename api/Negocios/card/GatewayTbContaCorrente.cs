@@ -211,6 +211,32 @@ namespace api.Negocios.Card
                     banco = new { Codigo = e.cdBanco, NomeExtenso = "" }, // Não dá para chamar a função direto daqui pois esse código é convertido em SQL e não acessa os dados de um objeto em memória
                     nrAgencia = e.nrAgencia,
                     nrConta = e.nrConta,
+                    vigentes = e.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                            .OrderBy(l => l.dtInicio)
+                                            .Where(l => l.dtFim == null) // somente as que estão vigentes
+                                            .Select(l => new
+                                                        {
+                                                            dtInicio = l.dtInicio,
+                                                            //dtFim = l.dtFim, // sempre NULL
+                                                            loginAdquirenteEmpresa = new
+                                                            {
+                                                                cdLoginAdquirenteEmpresa = l.tbLoginAdquirenteEmpresa.cdLoginAdquirenteEmpresa,
+                                                                adquirente = new
+                                                                {
+                                                                    cdAdquirente = l.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente,
+                                                                    nmAdquirente = l.tbLoginAdquirenteEmpresa.tbAdquirente.nmAdquirente,
+                                                                    dsAdquirente = l.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente,
+                                                                    stAdquirente = l.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente,
+                                                                },
+                                                                empresa = new {
+                                                                    nu_cnpj = l.tbLoginAdquirenteEmpresa.empresa.nu_cnpj,
+                                                                    ds_fantasia = l.tbLoginAdquirenteEmpresa.empresa.ds_fantasia
+                                                                },
+                                                                stLoginAdquirente = l.tbLoginAdquirenteEmpresa.stLoginAdquirente,
+                                                                stLoginAdquirenteEmpresa = l.tbLoginAdquirenteEmpresa.stLoginAdquirenteEmpresa
+                                                            }
+                                                        }
+                                            ).ToList<dynamic>()
                 }).ToList<dynamic>();
 
                 // Após transformar em lista (isto é, trazer para a memória), atualiza o valor do NomeExtenso associado ao banco
@@ -224,6 +250,7 @@ namespace api.Negocios.Card
                         banco = new { Codigo = conta.banco.Codigo, NomeExtenso = GatewayBancos.Get(conta.banco.Codigo) },
                         nrAgencia = conta.nrAgencia,
                         nrConta = conta.nrConta,
+                        vigentes = conta.vigentes,
                     });
                 }
             }

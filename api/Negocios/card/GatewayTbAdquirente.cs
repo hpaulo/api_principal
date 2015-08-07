@@ -60,7 +60,7 @@ namespace api.Negocios.Card
                 {
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdAdquirente.Equals(cdAdquirente)).AsQueryable<tbAdquirente>();
+                        entity = entity.Where(e => e.cdAdquirente == cdAdquirente).AsQueryable<tbAdquirente>();
                         break;
                     case CAMPOS.NMADQUIRENTE:
                         string nmAdquirente = Convert.ToString(item.Value);
@@ -194,7 +194,7 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 cdAdquirente)
         {
-            _db.tbAdquirentes.Remove(_db.tbAdquirentes.Where(e => e.cdAdquirente.Equals(cdAdquirente)).First());
+            _db.tbAdquirentes.Remove(_db.tbAdquirentes.Where(e => e.cdAdquirente == cdAdquirente).First());
             _db.SaveChanges();
         }
         /// <summary>
@@ -205,19 +205,16 @@ namespace api.Negocios.Card
         public static void Update(string token, tbAdquirente param)
         {
             tbAdquirente value = _db.tbAdquirentes
-                    .Where(e => e.cdAdquirente.Equals(param.cdAdquirente))
+                    .Where(e => e.cdAdquirente == param.cdAdquirente)
                     .First<tbAdquirente>();
 
             // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
-
-            if (param.cdAdquirente != null && param.cdAdquirente != value.cdAdquirente)
-                value.cdAdquirente = param.cdAdquirente;
             if (param.nmAdquirente != null && param.nmAdquirente != value.nmAdquirente)
                 value.nmAdquirente = param.nmAdquirente;
             if (param.dsAdquirente != null && param.dsAdquirente != value.dsAdquirente)
                 value.dsAdquirente = param.dsAdquirente;
-            if (param.stAdquirente != null && param.stAdquirente != value.stAdquirente)
+            if (param.stAdquirente != value.stAdquirente)
                 value.stAdquirente = param.stAdquirente;
             if (param.hrExecucao != null && param.hrExecucao != value.hrExecucao)
                 value.hrExecucao = param.hrExecucao;

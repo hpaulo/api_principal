@@ -26,8 +26,11 @@ namespace api.Models.Mapping
 
             // Relationships
             this.HasRequired(t => t.tbContaCorrente)
-                .WithMany(t => t.tbContaCorrente_tbLoginAdquirenteEmpresa)
+                .WithMany(t => t.tbContaCorrente_tbLoginAdquirenteEmpresas)
                 .HasForeignKey(d => d.cdContaCorrente);
+            this.HasRequired(t => t.tbLoginAdquirenteEmpresa)
+                .WithMany(t => t.tbContaCorrente_tbLoginAdquirenteEmpresas)
+                .HasForeignKey(d => d.cdLoginAdquirenteEmpresa);
 
         }
     }

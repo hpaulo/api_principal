@@ -33,6 +33,8 @@ namespace api.Models
             this.ConciliacaoPagamentosPos = new List<ConciliacaoPagamentosPos>();
             this.TaxaAdministracaos = new List<TaxaAdministracao>();
             this.tbContaCorrentes = new List<tbContaCorrente>();
+            this.tbLoginAdquirenteEmpresas = new List<tbLoginAdquirenteEmpresa>();
+            //this.tbRecebimentos = new List<tbRecebimento>();
         }
 
         public string nu_cnpj { get; set; }
@@ -81,5 +83,7 @@ namespace api.Models
         public virtual ICollection<ConciliacaoPagamentosPos> ConciliacaoPagamentosPos { get; set; }
         public virtual ICollection<TaxaAdministracao> TaxaAdministracaos { get; set; }
         public virtual ICollection<tbContaCorrente> tbContaCorrentes { get; set; }
+        public virtual ICollection<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
+        //public virtual ICollection<tbRecebimento> tbRecebimentos { get; set; }
     }
 }
