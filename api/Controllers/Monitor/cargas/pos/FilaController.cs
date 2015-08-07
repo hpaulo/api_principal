@@ -64,12 +64,17 @@ namespace api.Controllers.Monitor.cargas.pos
 		                                        )
 	                                        ) AS [Extent1]
                                         WHERE
-	                                        [Extent1].[row_number] > " + (pageNumber * pageSize) + @"
-                                        ORDER BY
-	                                        [Extent1].row_number ASC
+	                                        [Extent1].[row_number] > " + (pageNumber * pageSize);
 
-                                    ";
-
+                    if (orderBy == 0)
+                    {
+                        script += " ORDER BY [Extent1].row_number ASC ";
+                    }
+                    else
+                    {
+                        script += " ORDER BY [Extent1].row_number DESC ";
+                    }
+                    
                     List<api.Models.Object.LogExecucao> log = _db.Database.SqlQuery<api.Models.Object.LogExecucao>(script).ToList();
 
                     return log;
