@@ -231,6 +231,7 @@
     <Compile Include="Controllers\Administracao\WebpagesRolesController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersInRolesController.cs" />
+    <Compile Include="Controllers\Card\TbAdquirenteController.cs" />
     <Compile Include="Controllers\Card\TbRebimentoResumoController.cs" />
     <Compile Include="Controllers\Card\TbExtratoController.cs" />
     <Compile Include="Controllers\Card\TbContaCorrenteTbLoginAdquirenteEmpresaController.cs" />
@@ -708,6 +709,7 @@
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsers.cs" />
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsersInRoles.cs" />
     <Compile Include="Controllers\Card\TbModoEntradaTefController.cs" />
+    <Compile Include="Negocios\Card\GatewayTbAdquirente.cs" />
     <Compile Include="Negocios\Card\GatewayTbRebimentoResumo.cs" />
     <Compile Include="Negocios\Card\GatewayTbExtrato.cs" />
     <Compile Include="Negocios\Card\GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.cs" />
