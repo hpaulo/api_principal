@@ -60,7 +60,7 @@ namespace api.Negocios.Pos
                 {
                     case CAMPOS.ID:
                         Int32 id = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.id.Equals(id)).AsQueryable();
+                        entity = entity.Where(e => e.id == id).AsQueryable();
                         break;
                     case CAMPOS.NMOPERADORA:
                         string nmOperadora = Convert.ToString(item.Value);
@@ -68,7 +68,7 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.IDGRUPOEMPRESA:
                         Int32 idGrupoEmpresa = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idGrupoEmpresa.Equals(idGrupoEmpresa)).AsQueryable();
+                        entity = entity.Where(e => e.idGrupoEmpresa == idGrupoEmpresa).AsQueryable();
                         break;
 
                     case CAMPOS.NU_CNPJ:
@@ -198,7 +198,9 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Delete(string token, Int32 id)
         {
-            _db.Operadoras.Remove(_db.Operadoras.Where(e => e.id.Equals(id)).First());
+            Operadora op = _db.Operadoras.Where(e => e.id == id).FirstOrDefault();
+            if (op == null) throw new Exception("Operadora inexistente");
+            _db.Operadoras.Remove(op);
             _db.SaveChanges();
         }
         /// <summary>
@@ -209,8 +211,10 @@ namespace api.Negocios.Pos
         public static void Update(string token, Operadora param)
         {
             Operadora value = _db.Operadoras
-                    .Where(e => e.id.Equals(param.id))
+                    .Where(e => e.id == param.id)
                     .First<Operadora>();
+
+            if (value == null) throw new Exception("Operadora inexistente");
 
             // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
