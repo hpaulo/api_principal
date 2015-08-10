@@ -8,13 +8,16 @@ namespace api.Models.Mapping
         public tbContaCorrente_tbLoginAdquirenteEmpresaMap()
         {
             // Primary Key
-            this.HasKey(t => new { t.cdContaCorrente, t.cdLoginAdquirenteEmpresa });
+            this.HasKey(t => new { t.cdContaCorrente, t.cdLoginAdquirenteEmpresa, t.dtInicio });
 
             // Properties
             this.Property(t => t.cdContaCorrente)
                 .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);
 
             this.Property(t => t.cdLoginAdquirenteEmpresa)
+                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);
+
+            this.Property(t => t.dtInicio)
                 .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);
 
             // Table & Column Mappings

@@ -368,7 +368,7 @@ namespace api.Negocios.Administracao
                     },
                     webpagesusersinroles = _db.webpages_UsersInRoles.Where(r => r.UserId == e.id_users).Select(r => new { RoleId = r.RoleId, RoleName = r.webpages_Roles.RoleName, RolePrincipal = r.RolePrincipal }).ToList(),
                     grupoempresa = e.grupo_empresa.ds_nome,
-                    empresa = e.empresa.ds_fantasia,
+                    empresa = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
                     //gruposempresasvendedor2 = _db.grupo_empresa.Where(g => g.id_vendedor == e.id_users).Select(g => new { g.id_grupo, g.ds_nome }).ToList(),
                     gruposvendedor = e.grupo_empresa_vendedor.Select(g => new { g.id_grupo, g.ds_nome }).ToList()
 
@@ -632,9 +632,18 @@ namespace api.Negocios.Administracao
 
 
                     if (param.Webpagesusers.ds_login != null && param.Webpagesusers.ds_login != value.ds_login)
-                        value.ds_login = param.Webpagesusers.ds_login;
+                    {
+                        webpages_Users old = _db.webpages_Users.Where(e => e.ds_login.ToLower().Equals(param.Webpagesusers.ds_login.ToLower()))
+                                                               .FirstOrDefault();
+                        if (old == null || old.id_users == value.id_users) value.ds_login = param.Webpagesusers.ds_login;
+                    }
                     if (param.Webpagesusers.ds_email != null && param.Webpagesusers.ds_email != value.ds_email)
-                        value.ds_email = param.Webpagesusers.ds_email;
+                    {
+                        webpages_Users old = _db.webpages_Users.Where(e => e.ds_email.ToLower().Equals(param.Webpagesusers.ds_email.ToLower()))
+                                                               .FirstOrDefault();
+                        if (old == null || old.id_users == value.id_users)
+                            value.ds_email = param.Webpagesusers.ds_email;
+                    }
                     if (param.Webpagesusers.fl_ativo != value.fl_ativo)
                     {
                         value.fl_ativo = param.Webpagesusers.fl_ativo;

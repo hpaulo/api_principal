@@ -331,8 +331,8 @@ namespace api.Negocios.Pos
                     else entity = entity.OrderByDescending(e => e.BandeiraPos.Operadora.nmOperadora).AsQueryable();
                     break;
                 case CAMPOS.DS_FANTASIA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.empresa.ds_fantasia).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.empresa.ds_fantasia).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.empresa.ds_fantasia).ThenByDescending(e => e.empresa.filial).AsQueryable();
                     break;
                 case CAMPOS.DESBANDEIRA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.BandeiraPos.desBandeira).AsQueryable();
