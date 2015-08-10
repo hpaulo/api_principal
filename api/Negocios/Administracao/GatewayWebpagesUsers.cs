@@ -379,6 +379,17 @@ namespace api.Negocios.Administracao
                 // OBS: UTILIZADO EM CONJUNTO COM A COLEÇÃO 2
             }
 
+            else if (colecao == 4)
+	        {
+                string ds_login = queryString[((int)CAMPOS.DS_LOGIN).ToString()];
+                string ds_email = queryString[((int)CAMPOS.DS_EMAIL).ToString()];
+                var o = new { 
+                            login = _db.webpages_Users.Where(e => e.ds_login.Equals(ds_login)).Count() > 0,
+                            Email = _db.webpages_Users.Where(e => e.ds_email.Equals(ds_email)).Count() > 0, 
+                }; 
+
+	        }
+
             retorno.Registros = CollectionWebpages_Users;
 
             return retorno;
