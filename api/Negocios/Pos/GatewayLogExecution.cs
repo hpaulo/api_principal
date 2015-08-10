@@ -271,7 +271,7 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Delete(string token, Int32 id)
         {
-            _db.LogExecutions.Remove(_db.LogExecutions.Where(e => e.id.Equals(id)).First());
+            _db.LogExecutions.RemoveRange(_db.LogExecutions.Where(e => e.id == id));
             _db.SaveChanges();
         }
         /// <summary>

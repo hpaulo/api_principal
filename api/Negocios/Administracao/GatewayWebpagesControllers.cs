@@ -375,10 +375,10 @@ namespace api.Negocios.Administracao
                 webpages_Methods delete = new webpages_Methods { ds_method = "Remoção", id_controller = param.Webpagescontrollers.id_controller };
                 //webpages_Methods filtroempresa = new webpages_Methods { ds_method = "Filtro Empresa", id_controller = param.Webpagescontrollers.id_controller };
 
-                GatewayWebpagesMethods.Add(token, put);
-                GatewayWebpagesMethods.Add(token, post);
-                GatewayWebpagesMethods.Add(token, get);
-                GatewayWebpagesMethods.Add(token, delete);
+                try { GatewayWebpagesMethods.Add(token, put); }catch {  }
+                try { GatewayWebpagesMethods.Add(token, post); }catch {  }
+                try { GatewayWebpagesMethods.Add(token, get); } catch { }
+                try { GatewayWebpagesMethods.Add(token, delete); } catch { }
                 //GatewayWebpagesMethods.Add(token, filtroempresa);
             }
 

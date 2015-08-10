@@ -393,12 +393,24 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, Models.Object.Usuario param)
         {
-            _db.pessoas.Add(param.Pessoa);
-            _db.SaveChanges();
+            // Adiciona os dados da pessoa
+            param.Pessoa.id_pesssoa = GatewayPessoa.Add(token, param.Pessoa);
+            //_db.pessoas.Add(param.Pessoa);
+            //_db.SaveChanges();
 
-            WebSecurity.CreateUserAndAccount(param.Webpagesusers.ds_login, "atos123", null, false);
+            // Cria a conta com o login informado e a senha padrão "atos123"
+            try {
+                WebSecurity.CreateUserAndAccount(param.Webpagesusers.ds_login, "atos123", null, false);
+            }catch
+            {
+                // Remove a pessoa criada
+                GatewayPessoa.Delete(token, param.Pessoa.id_pesssoa);
+                // Reporta a falha
+                throw new Exception("500");
+            }
             param.Webpagesusers.id_users = WebSecurity.GetUserId(param.Webpagesusers.ds_login);
 
+            // Cria o usuário
             webpages_Users usr = _db.webpages_Users.Find(param.Webpagesusers.id_users);
             usr.ds_email = param.Webpagesusers.ds_email;
             usr.id_grupo = param.Webpagesusers.id_grupo;
@@ -406,7 +418,17 @@ namespace api.Negocios.Administracao
             usr.nu_cnpjEmpresa = param.Webpagesusers.nu_cnpjEmpresa;
             usr.id_pessoa = param.Pessoa.id_pesssoa;
             usr.fl_ativo = true;
-            _db.SaveChanges();
+            try {
+                _db.SaveChanges();
+            }
+            catch
+            {
+                // Remova a pessoa e a conta criada
+                GatewayPessoa.Delete(token, param.Pessoa.id_pesssoa);
+                GatewayWebpagesMembership.Delete(token, param.Webpagesusers.id_users);
+                // Reporta a falha
+                throw new Exception("500");
+            }
 
             foreach (var item in param.Webpagesusersinroles)
             {
@@ -414,7 +436,12 @@ namespace api.Negocios.Administracao
                 {
                     item.UserId = param.Webpagesusers.id_users;
                     _db.webpages_UsersInRoles.Add(item);
-                    _db.SaveChanges();
+                    try {
+                        _db.SaveChanges();
+                    }catch
+                    {
+                        // não é porque não associou alguma role que deve retornar erro por completo
+                    }
                 }
             }
 
@@ -429,7 +456,12 @@ namespace api.Negocios.Administracao
                     if (grupo != null)
                     {
                         grupo.id_vendedor = param.Webpagesusers.id_users;
-                        _db.SaveChanges();
+                        try {
+                            _db.SaveChanges();
+                        }catch
+                        {
+                            // não é porque não associou algum grupo ao vendedor que deve retornar erro por completo
+                        }
                     }
                 }
             }
@@ -504,7 +536,7 @@ namespace api.Negocios.Administracao
                     _db.SaveChanges();
                 }
                 else
-                    throw new Exception("Usuário inválido inválido!");
+                    throw new Exception("Usuário inválido!");
             }
             else
             {

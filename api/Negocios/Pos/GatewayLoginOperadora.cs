@@ -323,50 +323,107 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Int32 Add(string token, LoginOperadora param)
         {
-            Operadora newOperadora = new Operadora();
-            newOperadora.nmOperadora = param.Operadora.nmOperadora; // TEM QUE SER O CAMPO nome DA TABELA Adquirente
-            param.Operadora.idGrupoEmpresa = param.idGrupo;
-            newOperadora.idGrupoEmpresa = param.idGrupo;
-            _db.Operadoras.Add(newOperadora);
-            _db.SaveChanges();
+            // Avalia adquirente
+            if (param.Operadora.nmOperadora == null) throw new Exception("Adquirente inválida");
+            Models.Adquirente op = _db.Adquirentes.Where(o => o.nome.Equals(param.Operadora.nmOperadora)).FirstOrDefault(); // o que é enviado é o nome e não a descrição
+            if (op == null) throw new Exception("Adquirente inválida");
 
-            param.status = true;
-            param.idOperadora = newOperadora.id;
-            _db.LoginOperadoras.Add(param);
-            _db.SaveChanges();
+            // Busca possível registro da adquirente para a filial
+            LoginOperadora loginOperadora = _db.LoginOperadoras
+                                                    .Where(l => l.cnpj.Equals(param.cnpj))
+                                                    .Where(l => l.Operadora.nmOperadora.Equals(param.Operadora.nmOperadora))
+                                                    .FirstOrDefault();
 
-            /*
+            if (loginOperadora == null)
+            {
+                // Cria um novo registro de loginoperadora para a filial
 
-{ 
-    login: "meulogin", 
-    senha: "123456", 
-    cnpj: "22388768000117", 
-    idGrupo: 41, 
-    estabelecimento: "meuestabelecimento",
-    operadora :
+                // Procura pela operadora
+                Operadora operadora = _db.Operadoras
+                                            .Where(e => _db.LoginOperadoras
+                                                                .Where(l => l.cnpj.Equals(param.cnpj))
+                                                                .Select(l => l.idOperadora)
+                                                                .ToList().Contains(e.id)
+                                                  )
+                                            .Where(e => e.nmOperadora.Equals(param.Operadora.nmOperadora))
+                                            .FirstOrDefault();
+
+                if (operadora == null)
                 {
-                    nmOperadora: "BANESECARD"
+                    // Cria um novo registro de operadora para a filial
+                    Operadora newOperadora = new Operadora();
+                    newOperadora.nmOperadora = param.Operadora.nmOperadora;
+                    newOperadora.idGrupoEmpresa = param.idGrupo;
+                    _db.Operadoras.Add(newOperadora);
+                    _db.SaveChanges();
+                    // Obtém o id da nova operadora
+                    param.idOperadora = newOperadora.id;
                 }
-}
-             */
-            //var op = _db.Adquirentes.Where(o => o.descricao.Equals(newOperadora.nmOperadora)).Select(o => o).FirstOrDefault();
-            Models.Adquirente op = _db.Adquirentes.Where(o => o.nome.Equals(newOperadora.nmOperadora)).FirstOrDefault(); // o que é enviado é o nome e não a descrição
-            DateTime hrExec = (DateTime)op.hraExecucao;
+                else
+                    // Já existe operadora com nmOperadora para a filial
+                    param.idOperadora = operadora.id;
 
-            LogExecution newLogExecution = new LogExecution();
-            newLogExecution.idLoginOperadora = param.id;
-            newLogExecution.idOperadora = param.idOperadora;
-            newLogExecution.statusExecution = "7"; //0 = Em execução; 1 = Executado com Sucesso; 2 = Erro na Execução; 3 = Re-Executar; 7 = Elegivel
-            //newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
-            //newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
-            newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
-            newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
-            newLogExecution.dtaExecucaoProxima = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 2, hrExec.Hour, hrExec.Minute, hrExec.Second);
-            newLogExecution.qtdTransacoes = 0;
-            newLogExecution.vlTotalTransacoes = 0;
+                // Salva na base
+                param.Operadora.idGrupoEmpresa = param.idGrupo;
+                param.status = true;
+                try {
+                    _db.LoginOperadoras.Add(param);
+                    _db.SaveChanges();
+                }
+                catch
+                {
+                    // Remove a operadora criada
+                    GatewayOperadora.Delete(token, param.idOperadora);
+                    // Reporta a falha
+                    throw new Exception("500");
+                }
+            }
+            else
+            {
+                // Já existe uma operadora registrada (nmOperadora) para aquela filial
+                param.idOperadora = loginOperadora.idOperadora;
+                param.id = loginOperadora.id;
+                // Atualiza o status para true
+                if (!loginOperadora.status)
+                {
+                    loginOperadora.status = true;
+                    _db.SaveChanges();
+                }
+            }
 
-            _db.LogExecutions.Add(newLogExecution);
-            _db.SaveChanges();
+            // Verifica se já existe logExecution para o registro corrente
+            LogExecution logExecution = _db.LogExecutions
+                                                .Where(l => l.idLoginOperadora == param.id)
+                                                .Where(l => l.idOperadora == param.idOperadora)
+                                                .FirstOrDefault();
+
+            if (logExecution == null)
+            {
+                DateTime hrExec = (DateTime)op.hraExecucao;
+
+                LogExecution newLogExecution = new LogExecution();
+                newLogExecution.idLoginOperadora = param.id;
+                newLogExecution.idOperadora = param.idOperadora;
+                newLogExecution.statusExecution = "7"; //0 = Em execução; 1 = Executado com Sucesso; 2 = Erro na Execução; 3 = Re-Executar; 7 = Elegivel
+                //newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
+                //newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
+                newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
+                newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
+                newLogExecution.dtaExecucaoProxima = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 2, hrExec.Hour, hrExec.Minute, hrExec.Second);
+                newLogExecution.qtdTransacoes = 0;
+                newLogExecution.vlTotalTransacoes = new decimal(0.0);
+
+                try {
+                    _db.LogExecutions.Add(newLogExecution);
+                    _db.SaveChanges();
+                }catch
+                {
+                    // Remove LoginOperadora e Operadora possivelmente criados
+                    Delete(token, param.id);
+                    // Reporta a falha
+                    throw new Exception("500");
+                }
+            }
 
             return param.id;
         }
@@ -379,7 +436,17 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Delete(string token, Int32 id)
         {
-            _db.LoginOperadoras.Remove(_db.LoginOperadoras.Where(e => e.id.Equals(id)).First());
+            LoginOperadora loginOperadora = _db.LoginOperadoras.Where(e => e.id == id).FirstOrDefault();
+            if (loginOperadora == null) throw new Exception("Login Operadora inexistente");
+
+            // Remove logexecutions
+            _db.LogExecutions.RemoveRange(_db.LogExecutions.Where(l => l.idLoginOperadora == loginOperadora.id));
+
+            // Remove operadora
+            _db.Operadoras.RemoveRange(_db.Operadoras.Where(o => o.id == loginOperadora.idOperadora));
+                
+            // Por fim, remove login operadora
+            _db.LoginOperadoras.Remove(loginOperadora);
             _db.SaveChanges();
         }
         /// <summary>
@@ -390,7 +457,7 @@ namespace api.Negocios.Pos
         public static void Update(string token, LoginOperadora param)
         {
             LoginOperadora value = _db.LoginOperadoras
-                    .Where(e => e.id.Equals(param.id))
+                    .Where(e => e.id == param.id)
                     .First<LoginOperadora>();
 
 

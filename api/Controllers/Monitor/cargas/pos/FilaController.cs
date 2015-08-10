@@ -66,14 +66,29 @@ namespace api.Controllers.Monitor.cargas.pos
                                         WHERE
 	                                        [Extent1].[row_number] > " + (pageNumber * pageSize);
 
-                    if (orderBy == 0)
+                    if (colecao == 0)
                     {
-                        script += " ORDER BY [Extent1].row_number ASC ";
+                        if (orderBy == 0)
+                        {
+                            script += " ORDER BY [Extent1].row_number ASC ";
+                        }
+                        else
+                        {
+                            script += " ORDER BY [Extent1].row_number DESC ";
+                        }
+
                     }
-                    else
-                    {
-                        script += " ORDER BY [Extent1].row_number DESC ";
+                    else {
+                        if (orderBy == 0)
+                        {
+                            script += " ORDER BY [Extent1].idLogExecucao ASC ";
+                        }
+                        else
+                        {
+                            script += " ORDER BY [Extent1].idLogExecucao DESC ";
+                        }
                     }
+                    
                     
                     List<api.Models.Object.LogExecucao> log = _db.Database.SqlQuery<api.Models.Object.LogExecucao>(script).ToList();
 
