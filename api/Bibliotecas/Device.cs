@@ -38,10 +38,16 @@ namespace api.Bibliotecas
             var Request = HttpContext.Current.Request;
 
             dados = new {
+                                UserAgente = Request.UserAgent,
                                 Plataforma = Request.Browser.Platform,
                                 Browser = Request.Browser.Browser,
                                 Versao = Request.Browser.Version,
+                                MobileDeviceModel = Request.Browser.MobileDeviceModel,
+                                MobileDeviceManufacturer = Request.Browser.MobileDeviceManufacturer,
+                                IsMobileDevice = Request.Browser.IsMobileDevice
+
                         };
+
 
             return JsonConvert.SerializeObject(dados);
         }
