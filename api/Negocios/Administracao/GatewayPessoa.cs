@@ -189,8 +189,6 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, pessoa param)
         {
-
-
             _db.pessoas.Add(param);
             _db.SaveChanges();
             return param.id_pesssoa;

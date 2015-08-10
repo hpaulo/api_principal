@@ -366,8 +366,17 @@ namespace api.Negocios.Pos
                 // Salva na base
                 param.Operadora.idGrupoEmpresa = param.idGrupo;
                 param.status = true;
-                _db.LoginOperadoras.Add(param);
-                _db.SaveChanges();
+                try {
+                    _db.LoginOperadoras.Add(param);
+                    _db.SaveChanges();
+                }
+                catch
+                {
+                    // Remove a operadora criada
+                    GatewayOperadora.Delete(token, param.idOperadora);
+                    // Reporta a falha
+                    throw new Exception("500");
+                }
             }
             else
             {
@@ -404,8 +413,16 @@ namespace api.Negocios.Pos
                 newLogExecution.qtdTransacoes = 0;
                 newLogExecution.vlTotalTransacoes = new decimal(0.0);
 
-                _db.LogExecutions.Add(newLogExecution);
-                _db.SaveChanges();
+                try {
+                    _db.LogExecutions.Add(newLogExecution);
+                    _db.SaveChanges();
+                }catch
+                {
+                    // Remove LoginOperadora e Operadora possivelmente criados
+                    Delete(token, param.id);
+                    // Reporta a falha
+                    throw new Exception("500");
+                }
             }
 
             return param.id;
