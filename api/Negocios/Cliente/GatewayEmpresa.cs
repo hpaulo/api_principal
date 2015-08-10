@@ -184,8 +184,8 @@ namespace api.Negocios.Cliente
                     else entity = entity.OrderByDescending(e => e.nu_DigitoCnpj).AsQueryable<empresa>();
                     break;
                 case CAMPOS.DS_FANTASIA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.ds_fantasia).AsQueryable<empresa>();
-                    else entity = entity.OrderByDescending(e => e.ds_fantasia).AsQueryable<empresa>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.ds_fantasia).ThenBy(e => e.filial).AsQueryable<empresa>();
+                    else entity = entity.OrderByDescending(e => e.ds_fantasia).ThenByDescending(e => e.filial).AsQueryable<empresa>();
                     break;
                 case CAMPOS.DS_RAZAOSOCIAL:
                     if (orderby == 0) entity = entity.OrderBy(e => e.ds_razaoSocial).AsQueryable<empresa>();
@@ -361,6 +361,7 @@ namespace api.Negocios.Cliente
                     nu_cnpj = e.nu_cnpj,
                     ds_fantasia = e.ds_fantasia,
                     id_grupo = e.id_grupo,
+                    filial = e.filial,
                 }).ToList<dynamic>();
             }
             else if (colecao == 2)
