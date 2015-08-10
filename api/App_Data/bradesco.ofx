@@ -1,0 +1,191 @@
+OFXHEADER:100
+DATA:OFXSGML
+VERSION:102
+SECURITY:NONE
+ENCODING:USASCII
+CHARSET:1252
+COMPRESSION:NONE
+OLDFILEUID:NONE
+NEWFILEUID:NONE
+
+<OFX>
+	<SIGNONMSGSRSV1>
+		<SONRS>
+			<STATUS>
+				<CODE>0
+				<SEVERITY>INFO
+			</STATUS>
+			<DTSERVER>00000000000000
+			<LANGUAGE>POR
+		</SONRS>
+	</SIGNONMSGSRSV1>
+	<BANKMSGSRSV1>
+		<STMTTRNRS>
+			<TRNUID>1001
+			<STATUS>
+				<CODE>0
+				<SEVERITY>INFO
+			</STATUS>
+			<STMTRS>
+				<CURDEF>BRL
+				<BANKACCTFROM>
+					<BANKID>0237
+					<ACCTID>3490/10116
+					<ACCTTYPE>CHECKING
+				</BANKACCTFROM>
+				<BANKTRANLIST>
+					<DTSTART>20150101000000
+					<DTEND>20150131000000
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150102000000[-03:EST]
+						<TRNAMT>-5000.00
+						<FITID>N10085:02/01/15:-5000.0:5423261: Ted Dif.titul: Dest. Flavio Silva Bento
+						<CHECKNUM>5423261
+						<MEMO>Ted Dif.titul Dest. Flavio Silva Bento
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150102000000[-03:EST]
+						<TRNAMT>-345.30
+						<FITID>N100A3:02/01/15:-345.3:1430114: Enc Lim Credito: Encargo - 09,51%
+						<CHECKNUM>1430114
+						<MEMO>Enc Lim Credito Encargo - 09,51%
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150105000000[-03:EST]
+						<TRNAMT>-31.03
+						<FITID>N100C1:05/01/15:-31.03:1430114: Iof Util Limite:
+						<CHECKNUM>1430114
+						<MEMO>Iof Util Limite 
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150112000000[-03:EST]
+						<TRNAMT>-2600.26
+						<FITID>N100DE:12/01/15:-2600.26:0725390: Parc Cred Imob:
+						<CHECKNUM>0725390
+						<MEMO>Parc Cred Imob 
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150112000000[-03:EST]
+						<TRNAMT>-2028.88
+						<FITID>N100FB:12/01/15:-2028.88:4500012: Parc Cred Pess: Contr 223089691 Parc 028/120
+						<CHECKNUM>4500012
+						<MEMO>Parc Cred Pess Contr 223089691 Parc 028/120
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150112000000[-03:EST]
+						<TRNAMT>-319.50
+						<FITID>N10119:12/01/15:-319.5:5660012: Vida e Previd: Pgbl Fix Ind   01/2015
+						<CHECKNUM>5660012
+						<MEMO>Vida e Previd Pgbl Fix Ind 01/2015
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>CREDIT
+						<DTPOSTED>20150114000000[-03:EST]
+						<TRNAMT>1200.00
+						<FITID>N10137:14/01/15:1200.0:1139942: Dep Trf Autoat: Ag03162maq031139seq06942
+						<CHECKNUM>1139942
+						<MEMO>Dep Trf Autoat Ag03162maq031139seq06942
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150115000000[-03:EST]
+						<TRNAMT>-48.90
+						<FITID>N10154:15/01/15:-48.9:0020115: Tarifa Bancaria: Cesta Prime Classica
+						<CHECKNUM>0020115
+						<MEMO>Tarifa Bancaria Cesta Prime Classica
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150115000000[-03:EST]
+						<TRNAMT>-54.04
+						<FITID>N10172:15/01/15:-54.04:8820015: Vida e Previd: Bc. Ind.vii    01/2015
+						<CHECKNUM>8820015
+						<MEMO>Vida e Previd Bc. Ind.vii 01/2015
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150115000000[-03:EST]
+						<TRNAMT>-108.09
+						<FITID>N10190:15/01/15:-108.09:8820015: Vida e Previd: Bc. Ind.vii    01/2015
+						<CHECKNUM>8820015
+						<MEMO>Vida e Previd Bc. Ind.vii 01/2015
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>CREDIT
+						<DTPOSTED>20150116000000[-03:EST]
+						<TRNAMT>11537.56
+						<FITID>N101AE:16/01/15:11537.56:1030687: Ted-t Elet Disp: Remet.sped Nordeste Aracaj
+						<CHECKNUM>1030687
+						<MEMO>Ted-t Elet Disp Remet.sped Nordeste Aracaj
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150116000000[-03:EST]
+						<TRNAMT>-6247.60
+						<FITID>N101CB:16/01/15:-6247.6:1782106: Transf Autoriz: Joao Flaviano Dos Santos Ribeiro
+						<CHECKNUM>1782106
+						<MEMO>Transf Autoriz Joao Flaviano Dos Santos Ribeiro
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150120000000[-03:EST]
+						<TRNAMT>-400.00
+						<FITID>N101E9:20/01/15:-400.0:2269076: Transf Fdos Doc: Dest.acerte na Midia - Publicida
+						<CHECKNUM>2269076
+						<MEMO>Transf Fdos Doc Dest.acerte na Midia - Publicida
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150120000000[-03:EST]
+						<TRNAMT>-5000.00
+						<FITID>N10207:20/01/15:-5000.0:1913219: Ted Dif.titul: Dest. Dmg Imobiliaria e co
+						<CHECKNUM>1913219
+						<MEMO>Ted Dif.titul Dest. Dmg Imobiliaria e co
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150121000000[-03:EST]
+						<TRNAMT>-290.79
+						<FITID>N10225:21/01/15:-290.79:2607443: Transf Fdos Doc: Dest.rocha Comunicacao
+						<CHECKNUM>2607443
+						<MEMO>Transf Fdos Doc Dest.rocha Comunicacao
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>CREDIT
+						<DTPOSTED>20150803000000[-03:EST]
+						<TRNAMT>2450.00
+						<FITID>N10009:03/08/15:2450.0:7026086: Ted-transf Elet Dispon: Remet.cm.project.ing South
+						<CHECKNUM>7026086
+						<MEMO>Ted-transf Elet Dispon Remet.cm.project.ing South
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150803000000[-03:EST]
+						<TRNAMT>-4500.00
+						<FITID>N10026:03/08/15:-4500.0:7204499: Ted Dif.titul.cc H.bank: Dest. Flavio Silva Bento
+						<CHECKNUM>7204499
+						<MEMO>Ted Dif.titul.cc H.bank Dest. Flavio Silva Bento
+					</STMTTRN>
+					<STMTTRN>
+						<TRNTYPE>DEBIT
+						<DTPOSTED>20150803000000[-03:EST]
+						<TRNAMT>-1778.79
+						<FITID>N10044:03/08/15:-1778.79:5180215: Encargos Limite de Cred:
+						<CHECKNUM>5180215
+						<MEMO>Encargos Limite de Cred 
+					</STMTTRN>
+				</BANKTRANLIST>
+				<LEDGERBAL>
+					<BALAMT>-10524.36
+					<DTASOF>20150121000000[-03:EST]
+				</LEDGERBAL>
+			</STMTRS>
+		</STMTTRNRS>
+	</BANKMSGSRSV1>
+</OFX>

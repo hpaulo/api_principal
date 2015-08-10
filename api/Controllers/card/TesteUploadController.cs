@@ -25,7 +25,7 @@ namespace api.Controllers.Card
         }
 
         // POST: api/TesteUpload
-        public HttpResponseMessage Post()
+        public HttpResponseMessage Patch()
         {
             HttpResponseMessage result = null;
             var httpRequest = HttpContext.Current.Request;
