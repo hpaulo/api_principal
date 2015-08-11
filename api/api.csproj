@@ -294,6 +294,7 @@
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbLoginAdquirenteEmpresaMap.cs" />
     <Compile Include="Models\Mapping\tbAdquirenteMap.cs" />
+    <Compile Include="Models\Object\ContaCorrenteLoginAdquirenteEmpresa.cs" />
     <Compile Include="Models\tbLoginAdquirenteEmpresa.cs" />
     <Compile Include="Models\Amex.cs" />
     <Compile Include="Models\arquivo_email.cs" />
@@ -820,7 +821,7 @@
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\CollectionModelDescription.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\ApiGroup.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
-    <Content Include="ClassDiagram1.cd" />
+    <Content Include="ClassDiagram.cd" />
     <None Include="Properties\PublishProfiles\Api.AtosCapital-V2.pubxml" />
     <None Include="Properties\PublishProfiles\Api.AtosCpaital.pubxml" />
     <None Include="Properties\PublishProfiles\ApiPortal.pubxml" />
