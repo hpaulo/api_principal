@@ -215,7 +215,8 @@ namespace api.Negocios.Card
                     empresa = new
                     {
                         nu_cnpj = e.tbLoginAdquirenteEmpresa.empresa.nu_cnpj,
-                        ds_fantasia = e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia
+                        ds_fantasia = e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia,
+                        filial = e.tbLoginAdquirenteEmpresa.empresa.filial
                     },
                     stLoginAdquirente = e.tbLoginAdquirenteEmpresa.stLoginAdquirente,
                     //stLoginAdquirenteEmpresa = l.tbLoginAdquirenteEmpresa.stLoginAdquirenteEmpresa // controle de bruno
@@ -230,6 +231,7 @@ namespace api.Negocios.Card
 
         /**
           * Procura por conflitos de período de vigência a partir do parâmetro
+          * Retorna null se não houve conflito. Caso contrário, retorna o registro ao qual o período conflita
           */
         private static tbContaCorrente_tbLoginAdquirenteEmpresa conflitoPeriodoVigencia(tbContaCorrente_tbLoginAdquirenteEmpresa param)
         {
@@ -255,10 +257,9 @@ namespace api.Negocios.Card
                     if (param.dtFim == null)
                     {
                         // Data início do parâmetro deve ser superior a dtFim do encontrado na base
-                        // no máximo, o dia exato (dia, mês e ano) podem coicidir
                         if (param.dtInicio.Year < Convert.ToDateTime(value.dtFim).Year ||
                            (param.dtInicio.Year == Convert.ToDateTime(value.dtFim).Year && param.dtInicio.Month < Convert.ToDateTime(value.dtFim).Month) ||
-                           (param.dtInicio.Year == Convert.ToDateTime(value.dtFim).Year && param.dtInicio.Month == Convert.ToDateTime(value.dtFim).Month && param.dtInicio.Day < Convert.ToDateTime(value.dtFim).Day))
+                           (param.dtInicio.Year == Convert.ToDateTime(value.dtFim).Year && param.dtInicio.Month == Convert.ToDateTime(value.dtFim).Month && param.dtInicio.Day <= Convert.ToDateTime(value.dtFim).Day))
                             return value;
                     }
                     else
@@ -270,15 +271,15 @@ namespace api.Negocios.Card
                         DateTime valueFim = new DateTime(Convert.ToDateTime(value.dtInicio).Year, Convert.ToDateTime(value.dtFim).Month, Convert.ToDateTime(value.dtFim).Day);
 
                         // Início de um não pode estar dentro do intervalo do outro
-                        if (paramInicio.Ticks >= valueInicio.Ticks && paramInicio.Ticks < valueFim.Ticks)
+                        if (paramInicio.Ticks >= valueInicio.Ticks && paramInicio.Ticks <= valueFim.Ticks)
                             return value;
-                        if (valueInicio.Ticks >= paramInicio.Ticks && valueInicio.Ticks < paramFim.Ticks)
+                        if (valueInicio.Ticks >= paramInicio.Ticks && valueInicio.Ticks <= paramFim.Ticks)
                             return value;
 
                         // Fim de um não pode estar dentro do intervalo do outro
-                        if (paramFim.Ticks > valueInicio.Ticks && paramFim.Ticks <= valueFim.Ticks)
+                        if (paramFim.Ticks >= valueInicio.Ticks && paramFim.Ticks <= valueFim.Ticks)
                             return value;
-                        if (valueFim.Ticks > paramInicio.Ticks && valueFim.Ticks <= paramFim.Ticks)
+                        if (valueFim.Ticks >= paramInicio.Ticks && valueFim.Ticks <= paramFim.Ticks)
                             return value;
                     }
 
@@ -287,16 +288,17 @@ namespace api.Negocios.Card
                 {
                     // Já existe um vigente com dtFim nulo => período de dtInicio até oo
                     
-                    if (param.dtFim == null) return value; // Só pode existir um com dtFim nulo
+                    if (param.dtFim == null)
+                        return value; // Só pode existir um com dtFim nulo
 
                     // Data início do parâmetro deve ser inferior a do encontrado na base
                     if (param.dtInicio.Year > value.dtInicio.Year ||
                        (param.dtInicio.Year == value.dtInicio.Year && param.dtInicio.Month > value.dtInicio.Month) ||
                        (param.dtInicio.Year == value.dtInicio.Year && param.dtInicio.Month == value.dtInicio.Month && param.dtInicio.Day >= value.dtInicio.Day) ||
-                       // Data fim do parâmetro pode ser no máximo igual a dtInício do encontrado na base
+                       // Data fim do parâmetro deve ser inferior a dtInício do encontrado na base
                        Convert.ToDateTime(param.dtFim).Year > value.dtInicio.Year ||
                        (Convert.ToDateTime(param.dtFim).Year == value.dtInicio.Year && Convert.ToDateTime(param.dtFim).Month > value.dtInicio.Month) ||
-                       (Convert.ToDateTime(param.dtFim).Year == value.dtInicio.Year && Convert.ToDateTime(param.dtFim).Month == value.dtInicio.Month && Convert.ToDateTime(param.dtFim).Day > value.dtInicio.Day))
+                       (Convert.ToDateTime(param.dtFim).Year == value.dtInicio.Year && Convert.ToDateTime(param.dtFim).Month == value.dtInicio.Month && Convert.ToDateTime(param.dtFim).Day >= value.dtInicio.Day))
                         return value;
                 }
             }
@@ -369,7 +371,7 @@ namespace api.Negocios.Card
                                                                    .FirstOrDefault();
             if (value == null) throw new Exception("Vigência inválida!");
 
-            if (conflitoPeriodoVigencia(value) != null) throw new Exception("Conflito de período de vigência");
+            if (conflitoPeriodoVigencia(param) != null) throw new Exception("Conflito de período de vigência");
 
             // Só altera a data fim => SEMPRE TEM QUE SER ENVIADO A DATA FIM, POIS ESTÁ PODE SER SETADA PARA NULL
             if (!param.dtFim.Equals(value.dtFim))
