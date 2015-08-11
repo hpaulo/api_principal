@@ -390,6 +390,17 @@ namespace api.Negocios.Administracao
                 CollectionWebpages_Users.Add(o);
 	        }
 
+            else if (colecao == 5) // se o usuário tiver atividade no log, retorno = false
+            {
+                int idUsers = int.Parse(queryString[((int)CAMPOS.ID_USERS).ToString()]);
+                
+                var o = new
+                {
+                    log = _db.LogAcesso1.Where(e => e.idUsers == idUsers).Count() == 0
+                };
+                CollectionWebpages_Users.Add(o);
+                }
+
             retorno.Registros = CollectionWebpages_Users;
 
             return retorno;

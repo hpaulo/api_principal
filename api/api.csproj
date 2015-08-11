@@ -220,6 +220,7 @@
     <Compile Include="Bibliotecas\LogAcesso.cs" />
     <Compile Include="Bibliotecas\Permissoes.cs" />
     <Compile Include="Bibliotecas\Token.cs" />
+    <Compile Include="Controllers\Administracao\TbLogManifestoController.cs" />
     <Compile Include="Controllers\Administracao\TbLogAcessoUsuarioController.cs" />
     <Compile Include="Controllers\Administracao\LogAcessoController.cs" />
     <Compile Include="Controllers\Administracao\PessoaController.cs" />
@@ -284,6 +285,7 @@
     <Compile Include="Controllers\Pos\TerminalLogicoController.cs" />
     <Compile Include="Controllers\Pos\TicketCarController.cs" />
     <Compile Include="Controllers\Pos\ValeCardController.cs" />
+    <Compile Include="Controllers\Tax\TbManifestoController.cs" />
     <Compile Include="Controllers\Util\BancosController.cs" />
     <Compile Include="Controllers\Util\ExportarController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
@@ -292,6 +294,10 @@
     </Compile>
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
+    <Compile Include="Models\Mapping\tbManifestoMap.cs" />
+    <Compile Include="Models\tbManifesto.cs" />
+    <Compile Include="Models\Mapping\tbLogManifestoMap.cs" />
+    <Compile Include="Models\tbLogManifesto.cs" />
     <Compile Include="Models\Mapping\tbLoginAdquirenteEmpresaMap.cs" />
     <Compile Include="Models\Mapping\tbAdquirenteMap.cs" />
     <Compile Include="Models\tbLoginAdquirenteEmpresa.cs" />
@@ -701,6 +707,7 @@
     <Compile Include="Models\webpages_Roles.cs" />
     <Compile Include="Models\webpages_Users.cs" />
     <Compile Include="Models\webpages_UsersInRoles.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbLogManifesto.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbLogAcessoUsuario.cs" />
     <Compile Include="Negocios\Administracao\GatewayLogAcesso.cs" />
     <Compile Include="Negocios\Administracao\GatewayModulo.cs" />
@@ -760,6 +767,7 @@
     <Compile Include="Negocios\Card\GatewayTbBandeiraTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbEstadoTransacaoTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbProdutoTef.cs" />
+    <Compile Include="Negocios\Tax\GatewayTbManifesto.cs" />
     <Compile Include="Negocios\Util\GatewayBancos.cs" />
     <Compile Include="Negocios\Util\GatewayExportar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
