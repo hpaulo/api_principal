@@ -216,6 +216,8 @@ namespace api.Models
         public DbSet<tbLogAcessoUsuario> tbLogAcessoUsuarios { get; set; }
         public DbSet<tbAdquirente> tbAdquirentes { get; set; }
         public DbSet<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
+        public DbSet<tbManifesto> tbManifestos { get; set; }
+        public DbSet<tbLogManifesto> tbLogManifestos { get; set; }
 
 
 
@@ -421,6 +423,8 @@ namespace api.Models
             modelBuilder.Configurations.Add(new tbLogAcessoUsuarioMap());
             modelBuilder.Configurations.Add(new tbAdquirenteMap());
             modelBuilder.Configurations.Add(new tbLoginAdquirenteEmpresaMap());
+            modelBuilder.Configurations.Add(new tbManifestoMap());
+            modelBuilder.Configurations.Add(new tbLogManifestoMap());
         }
     }
 }
