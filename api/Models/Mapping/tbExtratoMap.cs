@@ -13,6 +13,8 @@ namespace api.Models.Mapping
             // Properties
             this.Property(t => t.nrDocumento)
                 .HasMaxLength(20);
+            this.Property(t => t.dsDocumento)
+                .HasMaxLength(50);
 
             // Table & Column Mappings
             this.ToTable("tbExtrato", "card");
@@ -20,6 +22,7 @@ namespace api.Models.Mapping
             this.Property(t => t.cdContaCorrente).HasColumnName("cdContaCorrente");
             this.Property(t => t.nrDocumento).HasColumnName("nrDocumento");
             this.Property(t => t.dtExtrato).HasColumnName("dtExtrato");
+            this.Property(t => t.dsDocumento).HasColumnName("dsDocumento");
             this.Property(t => t.vlMovimento).HasColumnName("vlMovimento");
         }
     }
