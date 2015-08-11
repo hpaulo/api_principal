@@ -294,7 +294,6 @@
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbLoginAdquirenteEmpresaMap.cs" />
     <Compile Include="Models\Mapping\tbAdquirenteMap.cs" />
-    <Compile Include="Models\Object\ContaCorrenteLoginAdquirenteEmpresa.cs" />
     <Compile Include="Models\tbLoginAdquirenteEmpresa.cs" />
     <Compile Include="Models\Amex.cs" />
     <Compile Include="Models\arquivo_email.cs" />
