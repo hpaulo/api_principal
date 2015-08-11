@@ -186,6 +186,7 @@ namespace api.Negocios.Card
                     cdBanco = e.cdBanco,
                     nrAgencia = e.nrAgencia,
                     nrConta = e.nrConta,
+                    flAtivo = e.flAtivo
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -199,6 +200,7 @@ namespace api.Negocios.Card
                     cdBanco = e.cdBanco,
                     nrAgencia = e.nrAgencia,
                     nrConta = e.nrConta,
+                    flAtivo = e.flAtivo
                 }).ToList<dynamic>();
             }
             else if (colecao == 2) // [WEB] 
@@ -208,11 +210,13 @@ namespace api.Negocios.Card
                     idContaCorrente = e.idContaCorrente,
                     cdGrupo = e.cdGrupo,
                     empresa = new { nu_cnpj = e.nrCnpj,
-                                    ds_fantasia = e.empresa.ds_fantasia,
-                                    filial = e.empresa.filial },
+                        ds_fantasia = e.empresa.ds_fantasia,
+                        filial = e.empresa.filial },
                     banco = new { Codigo = e.cdBanco, NomeExtenso = "" }, // Não dá para chamar a função direto daqui pois esse código é convertido em SQL e não acessa os dados de um objeto em memória
                     nrAgencia = e.nrAgencia,
-                    nrConta = e.nrConta
+                    nrConta = e.nrConta,
+                    flAtivo = e.flAtivo,
+                    podeAtualizar = e.tbContaCorrente_tbLoginAdquirenteEmpresas.Count() == 0 && e.tbExtratos.Count() == 0
                 }).ToList<dynamic>();
 
                 // Após transformar em lista (isto é, trazer para a memória), atualiza o valor do NomeExtenso associado ao banco
@@ -225,7 +229,9 @@ namespace api.Negocios.Card
                         empresa = conta.empresa,
                         banco = new { Codigo = conta.banco.Codigo, NomeExtenso = GatewayBancos.Get(conta.banco.Codigo) },
                         nrAgencia = conta.nrAgencia,
-                        nrConta = conta.nrConta
+                        nrConta = conta.nrConta,
+                        flAtivo = conta.flAtivo,
+                        podeAtualizar = conta.podeAtualizar
                     });
                 }
             }
@@ -251,6 +257,7 @@ namespace api.Negocios.Card
 
             if (verify == null)
             {
+                param.flAtivo = true;
                 _db.tbContaCorrentes.Add(param);
                 _db.SaveChanges();
                 return param.idContaCorrente;
@@ -270,9 +277,10 @@ namespace api.Negocios.Card
             tbContaCorrente conta = _db.tbContaCorrentes.Where(e => e.idContaCorrente == idContaCorrente).FirstOrDefault();
             if(conta == null) throw new Exception("Conta inexistente!");
             // Remove as vigências
-            GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.Delete(token, conta.idContaCorrente);
-            // Remove os extratos
-            // ....
+            /*GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.Delete(token, conta.idContaCorrente);
+            // Remove os extratos e os arquivos associados
+            List<tbExtrato> extratos = _db.tbExtratos.Where(e => e.cdContaCorrente == conta.idContaCorrente).ToList<tbExtrato>();
+            foreach (var extrato in extratos) GatewayTbExtrato.Delete(token, extrato.idExtrato);*/
             // Remove a conta
             _db.tbContaCorrentes.Remove(conta);
             _db.SaveChanges();
@@ -298,6 +306,8 @@ namespace api.Negocios.Card
                 value.nrAgencia = param.nrAgencia;
             if (param.nrConta != null && param.nrConta != value.nrConta)
                 value.nrConta = param.nrConta;
+            if (param.flAtivo != value.flAtivo)
+                value.flAtivo = param.flAtivo;
             _db.SaveChanges();
 
         }

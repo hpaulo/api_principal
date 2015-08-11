@@ -37,6 +37,7 @@ namespace api.Models.Mapping
             this.Property(t => t.cdBanco).HasColumnName("cdBanco");
             this.Property(t => t.nrAgencia).HasColumnName("nrAgencia");
             this.Property(t => t.nrConta).HasColumnName("nrConta");
+            this.Property(t => t.flAtivo).HasColumnName("flAtivo");
 
             // Relationships
             this.HasRequired(t => t.empresa)

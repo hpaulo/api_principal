@@ -9,6 +9,7 @@ namespace api.Models
         public tbContaCorrente()
         {
             this.tbContaCorrente_tbLoginAdquirenteEmpresas = new List<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+            this.tbExtratos = new List<tbExtrato>();
         }
 
         public int idContaCorrente { get; set; }
@@ -17,7 +18,9 @@ namespace api.Models
         public string cdBanco { get; set; }
         public string nrAgencia { get; set; }
         public string nrConta { get; set; }
+        public bool flAtivo { get; set; }
         public virtual ICollection<tbContaCorrente_tbLoginAdquirenteEmpresa> tbContaCorrente_tbLoginAdquirenteEmpresas { get; set; }
+        public virtual ICollection<tbExtrato> tbExtratos { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual grupo_empresa grupo_empresa { get; set; }
     }

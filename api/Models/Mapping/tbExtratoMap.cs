@@ -15,6 +15,8 @@ namespace api.Models.Mapping
                 .HasMaxLength(20);
             this.Property(t => t.dsDocumento)
                 .HasMaxLength(50);
+            this.Property(t => t.dsTipo)
+                .HasMaxLength(30); 
 
             // Table & Column Mappings
             this.ToTable("tbExtrato", "card");
@@ -24,6 +26,13 @@ namespace api.Models.Mapping
             this.Property(t => t.dtExtrato).HasColumnName("dtExtrato");
             this.Property(t => t.dsDocumento).HasColumnName("dsDocumento");
             this.Property(t => t.vlMovimento).HasColumnName("vlMovimento");
+            this.Property(t => t.dsTipo).HasColumnName("dsTipo");
+            this.Property(t => t.dsArquivo).HasColumnName("dsArquivo");
+
+            // Relationships
+            this.HasRequired(t => t.tbContaCorrente)
+                .WithMany(t => t.tbExtratos)
+                .HasForeignKey(d => d.cdContaCorrente);
         }
     }
 }

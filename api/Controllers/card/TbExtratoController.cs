@@ -51,7 +51,7 @@ namespace api.Controllers.Card
 
         }
 
-        // PUT /tbExtrato/token/
+        /* PUT /tbExtrato/token/ => Não altera
         public HttpResponseMessage Put(string token, [FromBody]tbExtrato param)
         {
             try
@@ -69,7 +69,7 @@ namespace api.Controllers.Card
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-        }
+        }*/
 
         // DELETE /tbExtrato/token/idExtrato
         public HttpResponseMessage Delete(string token, Int32 idExtrato)
@@ -86,6 +86,27 @@ namespace api.Controllers.Card
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
             catch
+            {
+                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        // PATCH: /tbExtrato/token/ => upload de um arquivo ofx
+        public HttpResponseMessage Patch(string token)
+        {
+            try
+            {
+                HttpResponseMessage retorno = new HttpResponseMessage();
+                if (Permissoes.Autenticado(token))
+                {
+                    Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
+                    GatewayTbExtrato.Patch(token, queryString);
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
+                else
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+            }
+            catch(Exception e)
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }

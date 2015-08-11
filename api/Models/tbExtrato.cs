@@ -11,5 +11,8 @@ namespace api.Models
         public System.DateTime dtExtrato { get; set; }
         public string dsDocumento { get; set; }
         public Nullable<decimal> vlMovimento { get; set; }
+        public string dsTipo { get; set; }
+        public string dsArquivo { get; set; }
+        public virtual tbContaCorrente tbContaCorrente { get; set; }
     }
 }

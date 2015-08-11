@@ -183,17 +183,14 @@ namespace api.Negocios.Cliente
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
-            if (!FiltroNome && IdGrupo > 0)
+            String RoleName = Permissoes.GetRoleName(token).ToUpper();
+            if (!FiltroNome && RoleName.Equals("COMERCIAL"))
             {
                 // Restringe consulta pelo perfil do usuário logado
                 Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-                String RoleName = Permissoes.GetRoleName(token).ToUpper();
-                if (RoleName.Equals("COMERCIAL"))
-                {
-                    // Perfil Comercial tem uma carteira de clientes específica
-                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
-                    query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<grupo_empresa>();
-                }
+                // Perfil Comercial tem uma carteira de clientes específica
+                List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<grupo_empresa>();
             }
 
             var queryTotal = query;
