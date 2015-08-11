@@ -424,6 +424,7 @@ namespace api.Negocios.Card
                 bool armazenou = false;
                 foreach (var transacao in ofxDocument.Transactions)
                 {
+                    // Obtém a nova movimentação
                     tbExtrato extrato = new tbExtrato();
                     extrato.cdContaCorrente = idContaCorrente;
                     extrato.dtExtrato = new DateTime(transacao.Date.Year, transacao.Date.Month, transacao.Date.Day);
@@ -432,15 +433,42 @@ namespace api.Negocios.Card
                     extrato.dsTipo = transacao.TransType.ToString();
                     extrato.dsDocumento = transacao.Memo;
                     extrato.dsArquivo = filePath;
-                    // Salva na base
-                    try
+
+                    // Verifica se existe uma movimentação com as mesmas informações
+                    tbExtrato old = _db.tbExtratos.Where(e => e.cdContaCorrente == extrato.cdContaCorrente)
+                                                  .Where(e => e.dtExtrato.Equals(extrato.dtExtrato))
+                                                  .Where(e => e.nrDocumento.Equals(extrato.nrDocumento))
+                                                  .Where(e => e.vlMovimento == extrato.vlMovimento)
+                                                  .Where(e => e.dsDocumento.Equals(extrato.dsDocumento))
+                                                  .Where(e => e.dsTipo.Equals(extrato.dsTipo))
+                                                  .FirstOrDefault();
+                    if (old != null)
                     {
-                        Add(token, extrato);
-                        armazenou = true; // notifica que armazenou o extrato na base
-                    }catch(Exception e)
+                        // Já existe um registro  com essas informações
+                        // Verifica se o extrato atual possui mais movimentações que o anterior
+                        if (ofxDocument.Transactions.Count > _db.tbExtratos.Where(e => e.dsArquivo.Equals(old.dsArquivo)).Count())
+                        {
+                            var arquivoAntigo = old.dsArquivo;
+                            // Atualiza o arquivo
+                            old.dsArquivo = extrato.dsArquivo;
+                            // Ainda tem movimentações referenciando o arquivo antigo?
+                            if (_db.tbExtratos.Where(e => e.dsArquivo.Equals(arquivoAntigo)).Count() == 0)
+                                File.Delete(arquivoAntigo); // Deleta o arquivo antigo
+                        }
+                    }
+                    else
                     {
-                        // JÁ EXISTE UM EXTRATO COM ESSAS INFORMAÇÕES
-                        ;
+                        // Salva o novo registro na base
+                        try
+                        {
+                            Add(token, extrato);
+                            armazenou = true; // notifica que armazenou o extrato na base
+                        }
+                        catch (Exception e)
+                        {
+                            // JÁ EXISTE UM EXTRATO COM ESSAS INFORMAÇÕES
+                            ;
+                        }
                     }
                 }
 
