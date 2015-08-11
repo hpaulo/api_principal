@@ -386,8 +386,8 @@ namespace api.Negocios.Administracao
                 var o = new { 
                             login = _db.webpages_Users.Where(e => e.ds_login.Equals(ds_login)).Count() > 0,
                             Email = _db.webpages_Users.Where(e => e.ds_email.Equals(ds_email)).Count() > 0, 
-                }; 
-
+                };
+                CollectionWebpages_Users.Add(o);
 	        }
 
             retorno.Registros = CollectionWebpages_Users;
