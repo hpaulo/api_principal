@@ -297,7 +297,8 @@ namespace api.Negocios.Administracao
             // Por segurança, só deixa alterar se o usuário tiver permissão para setar aquela role 
             Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
             if (param.RoleLevel < RoleLevelMin) throw new Exception("401"); // não possui autorização para criar um privilégio com esse RoleLevel
-            if(_db.webpages_Roles.Where(r => r.RoleName.ToUpper().Equals(param.RoleName.ToUpper())).FirstOrDefault() != null) throw new Exception("500"); // já existe um privilégio com esse nome
+            if(_db.webpages_Roles.Where(r => r.RoleName.ToUpper().Equals(param.RoleName.ToUpper())).FirstOrDefault() != null)
+                throw new Exception("Já existe uma role com o nome '" + param.RoleName.ToUpper() + "'"); // já existe um privilégio com esse nome
             _db.webpages_Roles.Add(param);
             _db.SaveChanges();
             return param.RoleId;
@@ -313,10 +314,12 @@ namespace api.Negocios.Administracao
         {
             webpages_Roles role = _db.webpages_Roles.Where(r => r.RoleId == RoleId).FirstOrDefault();
 
-            if(role == null) throw new Exception("500"); // não existe role com o Id informado
+            if(role == null) throw new Exception("Role inexistente"); // não existe role com o Id informado
 
             Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-            if (role.RoleName.ToUpper().Equals("COMERCIAL") || role.RoleLevel < RoleLevelMin) throw new Exception("401"); // não possui autorização para remover o privilégio
+            //if (role.RoleName.ToUpper().Equals("COMERCIAL") || role.RoleLevel < RoleLevelMin) throw new Exception("401"); // não possui autorização para remover o privilégio
+            if (Permissoes.isAtosRoleVendedor(role) || role.RoleLevel < RoleLevelMin) throw new Exception("401"); // não possui autorização para remover o privilégio
+
 
             GatewayWebpagesPermissions.Delete(token, RoleId);
             GatewayWebpagesUsersInRoles.Delete(token, RoleId, true);
@@ -337,9 +340,13 @@ namespace api.Negocios.Administracao
                     .Where(e => e.RoleId.Equals(param.RoleId))
                     .First<webpages_Roles>();
 
+            if (value == null) throw new Exception("Role inexistente"); // não existe role com o Id informado
+
+
             if (param.RoleName != null && param.RoleName != value.RoleName)
             {
-                if(value.RoleName.ToUpper().Equals("COMERCIAL")) throw new Exception("401"); // não possui autorização para alterar o nome privilégio comercial
+                //if(value.RoleName.ToUpper().Equals("COMERCIAL")) throw new Exception("401"); // não possui autorização para alterar o nome privilégio comercial
+                if (Permissoes.isAtosRoleVendedor(value)) throw new Exception("401"); // não possui autorização para alterar o nome privilégio comercial
                 value.RoleName = param.RoleName;
             }
             if (param.RoleLevel != value.RoleLevel)

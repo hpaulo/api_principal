@@ -445,30 +445,22 @@ namespace api.Negocios.Card
                     if (old != null)
                     {
                         // Já existe um registro  com essas informações
+                        int totalTransacoesOld = _db.tbExtratos.Where(e => e.dsArquivo.Equals(old.dsArquivo)).Count();
                         // Verifica se o extrato atual possui mais movimentações que o anterior
-                        if (ofxDocument.Transactions.Count > _db.tbExtratos.Where(e => e.dsArquivo.Equals(old.dsArquivo)).Count())
+                        if (ofxDocument.Transactions.Count > totalTransacoesOld)
                         {
                             var arquivoAntigo = old.dsArquivo;
                             // Atualiza o arquivo
                             old.dsArquivo = extrato.dsArquivo;
                             // Ainda tem movimentações referenciando o arquivo antigo?
-                            if (_db.tbExtratos.Where(e => e.dsArquivo.Equals(arquivoAntigo)).Count() == 0)
-                                File.Delete(arquivoAntigo); // Deleta o arquivo antigo
+                            if (totalTransacoesOld <= 1) File.Delete(arquivoAntigo); // Deleta o arquivo antigo
                         }
                     }
                     else
                     {
-                        // Salva o novo registro na base
-                        try
-                        {
-                            Add(token, extrato);
-                            armazenou = true; // notifica que armazenou o extrato na base
-                        }
-                        catch (Exception e)
-                        {
-                            // JÁ EXISTE UM EXTRATO COM ESSAS INFORMAÇÕES
-                            ;
-                        }
+                        // Salva uma nova movimentação
+                        _db.tbExtratos.Add(extrato);
+                        _db.SaveChanges();
                     }
                 }
 

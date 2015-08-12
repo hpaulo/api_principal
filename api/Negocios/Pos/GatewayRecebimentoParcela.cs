@@ -39,6 +39,7 @@ namespace api.Negocios.Pos
             ID_GRUPO = 316,
 
             // OPERADORA (ADQUIRENTE)
+            IDOPERADORA = 400,
             NMOPERADORA = 401,
 
             // BANDEIRA
@@ -163,6 +164,10 @@ namespace api.Negocios.Pos
                         entity = entity.Where(e => e.Recebimento.empresa.nu_cnpj.Equals(nu_cnpj));
                         break;
 
+                    case CAMPOS.IDOPERADORA:
+                        Int32 idOperadora = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.Recebimento.BandeiraPos.Operadora.id == idOperadora).AsQueryable();
+                        break;
                     case CAMPOS.NMOPERADORA:
                         string nmOperadora = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.Recebimento.BandeiraPos.Operadora.nmOperadora.Equals(nmOperadora));

@@ -183,14 +183,17 @@ namespace api.Negocios.Cliente
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
-            String RoleName = Permissoes.GetRoleName(token).ToUpper();
-            if (!FiltroNome && RoleName.Equals("COMERCIAL"))
+            
+            if (!FiltroNome)
             {
                 // Restringe consulta pelo perfil do usuário logado
-                Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-                // Perfil Comercial tem uma carteira de clientes específica
-                List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
-                query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<grupo_empresa>();
+                //String RoleName = Permissoes.GetRoleName(token).ToUpper();
+                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))//RoleName.Equals("COMERCIAL"))
+                {
+                    // Perfil Comercial tem uma carteira de clientes específica
+                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                    query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<grupo_empresa>();
+                }
             }
 
             var queryTotal = query;
@@ -254,7 +257,8 @@ namespace api.Negocios.Cliente
                     fl_proinfo = e.fl_proinfo,
                     vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
                     login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
-                    dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault()
+                    dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
+                    podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).Count() == 0
                 }
                     
                 ).ToList<dynamic>();
@@ -286,7 +290,7 @@ namespace api.Negocios.Cliente
                 param.token = "null";
                 param.fl_ativo = true;
                 // Verificar se usuário logado é de perfil comercial
-                if (Permissoes.isAtosRole(token) && Permissoes.GetRoleName(token).ToUpper().Equals("COMERCIAL"))
+                if (Permissoes.isAtosRoleVendedor(token))//Permissoes.isAtosRole(token) && Permissoes.GetRoleName(token).ToUpper().Equals("COMERCIAL"))
                     // Perfil Comercial tem uma carteira de clientes específica
                     param.id_vendedor = Permissoes.GetIdUser(token);
 

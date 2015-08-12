@@ -182,10 +182,37 @@ namespace api.Bibliotecas
         /**
          * Retorna true se o privilégio do usuário logado é de alguém da ATOS
          */
-        public static Boolean isAtosRole(string token)
+        public static bool isAtosRole(string token)
         {
             Int32 RoleLevel = GetRoleLevel(token);
             return RoleLevel >= 0 && RoleLevel <= 2;
+        }
+
+        /**
+         * Retorna true se o privilégio é de alguém da ATOS
+         */
+        public static bool isAtosRole(webpages_Roles role)
+        {
+            if (role == null) return false;
+            return role.RoleLevel >= 0 && role.RoleLevel <= 2;
+        }
+
+        /**
+         * Retorna true se o privilégio do usuário logado é de vendedor da ATOS
+         */
+        public static bool isAtosRoleVendedor(string token)
+        {
+            string RoleName = GetRoleName(token);
+            return isAtosRole(token) && RoleName.ToUpper().Equals("COMERCIAL");
+        }
+
+        /**
+         * Retorna true se o privilégio é de vendedor da ATOS
+         */
+        public static bool isAtosRoleVendedor(webpages_Roles role)
+        {
+            if (role == null) return false;
+            return isAtosRole(role) && role.RoleName.ToUpper().Equals("COMERCIAL");
         }
 
         public static List<Int32> GetIdsGruposEmpresasVendedor(string token)

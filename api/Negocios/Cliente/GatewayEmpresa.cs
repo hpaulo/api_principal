@@ -300,9 +300,9 @@ namespace api.Negocios.Cliente
             // Se não for uma consulta de CNPJ na coleção 0, restringe consulta pelo perfil Comercial que não estiver "amarrado" a um grupo
             if (!FiltroCNPJ)
             {
-                Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-                String RoleName = Permissoes.GetRoleName(token).ToUpper();
-                if (IdGrupo == 0 && RoleName.Equals("COMERCIAL"))
+                // Restringe consulta pelo perfil do usuário logado
+                //String RoleName = Permissoes.GetRoleName(token).ToUpper();
+                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))//RoleName.Equals("COMERCIAL"))
                 {
                     // Perfil Comercial tem uma carteira de clientes específica
                     List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
@@ -385,7 +385,8 @@ namespace api.Negocios.Cliente
                     filial = e.filial,
                     nu_inscEstadual = e.nu_inscEstadual,
                     login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
-                    dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault()
+                    dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
+                    podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).Count() == 0
                 }).ToList<dynamic>();
             }
 

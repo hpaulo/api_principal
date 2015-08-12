@@ -279,15 +279,16 @@ namespace api.Negocios.Administracao
                 {
                     // Restringe consulta pelo perfil do usuário logado
                     Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-                    String RoleName = Permissoes.GetRoleName(token).ToUpper();
-                    if (IdGrupo == 0 && RoleName.Equals("COMERCIAL"))
+                    //String RoleName = Permissoes.GetRoleName(token).ToUpper();
+                    bool isAtosVendedor = Permissoes.isAtosRoleVendedor(token);
+                    if (IdGrupo == 0 && isAtosVendedor)//RoleName.Equals("COMERCIAL"))
                     {
                         // Perfil Comercial tem uma carteira de clientes específica
                         List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
                         query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin
                                                  && e.id_grupo != null && listaIdsGruposEmpresas.Contains(e.id_grupo ?? -1)).AsQueryable<webpages_Users>();
                     }
-                    else if (Permissoes.isAtosRole(token) && !RoleName.Equals("COMERCIAL"))
+                    else if (Permissoes.isAtosRole(token) && !isAtosVendedor)//RoleName.Equals("COMERCIAL"))
                         // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
                         query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
                     else
@@ -369,6 +370,7 @@ namespace api.Negocios.Administracao
                     webpagesusersinroles = _db.webpages_UsersInRoles.Where(r => r.UserId == e.id_users).Select(r => new { RoleId = r.RoleId, RoleName = r.webpages_Roles.RoleName, RolePrincipal = r.RolePrincipal }).ToList(),
                     grupoempresa = e.grupo_empresa.ds_nome,
                     empresa = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
+                    podeExcluir = e.LogAcesso1.Count() == 0,
                     //gruposempresasvendedor2 = _db.grupo_empresa.Where(g => g.id_vendedor == e.id_users).Select(g => new { g.id_grupo, g.ds_nome }).ToList(),
                     gruposvendedor = e.grupo_empresa_vendedor.Select(g => new { g.id_grupo, g.ds_nome }).ToList()
 
@@ -381,16 +383,27 @@ namespace api.Negocios.Administracao
 
             else if (colecao == 4)
 	        {
-                string ds_login = queryString[((int)CAMPOS.DS_LOGIN).ToString()];
-                string ds_email = queryString[((int)CAMPOS.DS_EMAIL).ToString()];
-                var o = new { 
-                            login = _db.webpages_Users.Where(e => e.ds_login.Equals(ds_login)).Count() > 0,
-                            Email = _db.webpages_Users.Where(e => e.ds_email.Equals(ds_email)).Count() > 0, 
-                };
-                CollectionWebpages_Users.Add(o);
-	        }
+                if (queryString.TryGetValue("" + (int)CAMPOS.DS_LOGIN, out outValue))
+                {
+                    string ds_login = queryString[((int)CAMPOS.DS_LOGIN).ToString()];
+                    retorno.TotalDeRegistros = _db.webpages_Users.Where(e => e.ds_login.Equals(ds_login)).Count();
+                }
+                else if (queryString.TryGetValue("" + (int)CAMPOS.DS_EMAIL, out outValue))
+                {
+                    string ds_email = queryString[((int)CAMPOS.DS_EMAIL).ToString()];
+                    retorno.TotalDeRegistros = _db.webpages_Users.Where(e => e.ds_email.Equals(ds_email)).Count();
+                }
+                else if (queryString.TryGetValue("" + (int)CAMPOS.ID_USERS, out outValue))
+                {
+                    Int32 id_users = Convert.ToInt32(queryString[((int)CAMPOS.ID_USERS).ToString()]);
+                    retorno.TotalDeRegistros = _db.LogAcesso1.Where(e => e.idUsers == id_users).Count() > 0 ? 1 : 0;
+                }
+                else
+                    retorno.TotalDeRegistros = 0;
 
-            else if (colecao == 5) // se o usuário tiver atividade no log, retorno = false
+            }
+
+            /*else if (colecao == 5) // se o usuário tiver atividade no log, retorno = false
             {
                 int idUsers = int.Parse(queryString[((int)CAMPOS.ID_USERS).ToString()]);
                 
@@ -399,7 +412,7 @@ namespace api.Negocios.Administracao
                     log = _db.LogAcesso1.Where(e => e.idUsers == idUsers).Count() == 0
                 };
                 CollectionWebpages_Users.Add(o);
-                }
+            }*/
 
             retorno.Registros = CollectionWebpages_Users;
 
