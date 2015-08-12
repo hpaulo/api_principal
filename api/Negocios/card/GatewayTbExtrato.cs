@@ -32,11 +32,12 @@ namespace api.Negocios.Card
         {
             IDEXTRATO = 100,
             CDCONTACORRENTE = 101,
-            NRDOCUMENTO = 102,
-            DTEXTRATO = 103,
+            DTEXTRATO = 102,
+            NRDOCUMENTO = 103,
             DSDOCUMENTO = 104,
             VLMOVIMENTO = 105,
-
+            DSTIPO = 106,
+            DSARQUIVO = 107,
         };
 
         /// <summary>
@@ -144,6 +145,15 @@ namespace api.Negocios.Card
                         decimal vlMovimento = Convert.ToDecimal(item.Value);
                         entity = entity.Where(e => e.vlMovimento == vlMovimento).AsQueryable<tbExtrato>();
                         break;
+                    case CAMPOS.DSTIPO:
+                        string dsTipo = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.dsTipo.Equals(dsTipo)).AsQueryable<tbExtrato>();
+                        break;
+                    case CAMPOS.DSARQUIVO:
+                        string dsArquivo = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.dsArquivo.Equals(dsArquivo)).AsQueryable<tbExtrato>();
+                        break;
+
                 }
             }
             #endregion
@@ -176,6 +186,14 @@ namespace api.Negocios.Card
                 case CAMPOS.VLMOVIMENTO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.vlMovimento).AsQueryable<tbExtrato>();
                     else entity = entity.OrderByDescending(e => e.vlMovimento).AsQueryable<tbExtrato>();
+                    break;
+                case CAMPOS.DSTIPO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsTipo).AsQueryable<tbExtrato>();
+                    else entity = entity.OrderByDescending(e => e.dsTipo).AsQueryable<tbExtrato>();
+                    break;
+                case CAMPOS.DSARQUIVO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsArquivo).AsQueryable<tbExtrato>();
+                    else entity = entity.OrderByDescending(e => e.dsArquivo).AsQueryable<tbExtrato>();
                     break;
             }
             #endregion
@@ -226,6 +244,8 @@ namespace api.Negocios.Card
                     dtExtrato = e.dtExtrato,
                     dsDocumento = e.dsDocumento,
                     vlMovimento = e.vlMovimento,
+                    dsTipo = e.dsTipo,
+                    dsArquivo = e.dsArquivo,
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -239,6 +259,8 @@ namespace api.Negocios.Card
                     dtExtrato = e.dtExtrato,
                     dsDocumento = e.dsDocumento,
                     vlMovimento = e.vlMovimento,
+                    dsTipo = e.dsTipo,
+                    dsArquivo = e.dsArquivo,
                 }).ToList<dynamic>();
             }
 
