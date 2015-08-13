@@ -32,11 +32,12 @@ namespace api.Negocios.Card
         {
             IDEXTRATO = 100,
             CDCONTACORRENTE = 101,
-            NRDOCUMENTO = 102,
-            DTEXTRATO = 103,
+            DTEXTRATO = 102,
+            NRDOCUMENTO = 103,
             DSDOCUMENTO = 104,
             VLMOVIMENTO = 105,
-
+            DSTIPO = 106,
+            DSARQUIVO = 107,
         };
 
         /// <summary>
@@ -144,6 +145,15 @@ namespace api.Negocios.Card
                         decimal vlMovimento = Convert.ToDecimal(item.Value);
                         entity = entity.Where(e => e.vlMovimento == vlMovimento).AsQueryable<tbExtrato>();
                         break;
+                    case CAMPOS.DSTIPO:
+                        string dsTipo = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.dsTipo.Equals(dsTipo)).AsQueryable<tbExtrato>();
+                        break;
+                    case CAMPOS.DSARQUIVO:
+                        string dsArquivo = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.dsArquivo.Equals(dsArquivo)).AsQueryable<tbExtrato>();
+                        break;
+
                 }
             }
             #endregion
@@ -166,8 +176,8 @@ namespace api.Negocios.Card
                     else entity = entity.OrderByDescending(e => e.nrDocumento).AsQueryable<tbExtrato>();
                     break;
                 case CAMPOS.DTEXTRATO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtExtrato).AsQueryable<tbExtrato>();
-                    else entity = entity.OrderByDescending(e => e.dtExtrato).AsQueryable<tbExtrato>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtExtrato).ThenBy(e => e.idExtrato).AsQueryable<tbExtrato>();
+                    else entity = entity.OrderByDescending(e => e.dtExtrato).ThenByDescending(e => e.idExtrato).AsQueryable<tbExtrato>();
                     break;
                 case CAMPOS.DSDOCUMENTO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsDocumento).AsQueryable<tbExtrato>();
@@ -176,6 +186,14 @@ namespace api.Negocios.Card
                 case CAMPOS.VLMOVIMENTO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.vlMovimento).AsQueryable<tbExtrato>();
                     else entity = entity.OrderByDescending(e => e.vlMovimento).AsQueryable<tbExtrato>();
+                    break;
+                case CAMPOS.DSTIPO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsTipo).AsQueryable<tbExtrato>();
+                    else entity = entity.OrderByDescending(e => e.dsTipo).AsQueryable<tbExtrato>();
+                    break;
+                case CAMPOS.DSARQUIVO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsArquivo).AsQueryable<tbExtrato>();
+                    else entity = entity.OrderByDescending(e => e.dsArquivo).AsQueryable<tbExtrato>();
                     break;
             }
             #endregion
@@ -226,6 +244,8 @@ namespace api.Negocios.Card
                     dtExtrato = e.dtExtrato,
                     dsDocumento = e.dsDocumento,
                     vlMovimento = e.vlMovimento,
+                    dsTipo = e.dsTipo,
+                    dsArquivo = e.dsArquivo,
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -239,6 +259,8 @@ namespace api.Negocios.Card
                     dtExtrato = e.dtExtrato,
                     dsDocumento = e.dsDocumento,
                     vlMovimento = e.vlMovimento,
+                    dsTipo = e.dsTipo,
+                    dsArquivo = e.dsArquivo,
                 }).ToList<dynamic>();
             }
 
@@ -405,7 +427,13 @@ namespace api.Negocios.Card
                     nrAgencia = nrConta.Substring(0, nrConta.IndexOf("/"));
                     nrConta = nrConta.Substring(nrConta.IndexOf("/") + 1);
                 }
-                if (!conta.nrConta.Equals(nrConta))
+                // Deixa os nomes com mesmo comprimento
+                string contaNrConta = conta.nrConta;
+                while (contaNrConta.Length < nrConta.Length)
+                    contaNrConta = "0" + contaNrConta; // adiciona zeros a esquerda
+                while (nrConta.Length < contaNrConta.Length)
+                    nrConta = "0" + nrConta; // adiciona zeros a esquerda
+                if (!contaNrConta.Equals(nrConta))
                 {
                     // Deleta o arquivo
                     File.Delete(filePath);
