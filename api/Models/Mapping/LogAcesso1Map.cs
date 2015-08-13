@@ -17,6 +17,8 @@ namespace api.Models.Mapping
             this.Property(t => t.idController).HasColumnName("idController");
             this.Property(t => t.idMethod).HasColumnName("idMethod");
             this.Property(t => t.dtAcesso).HasColumnName("dtAcesso");
+            this.Property(t => t.flMobile).HasColumnName("flMobile");
+            this.Property(t => t.dsUserAgent).HasColumnName("dsUserAgent");
 
             // Relationships
             this.HasOptional(t => t.webpages_Controllers)

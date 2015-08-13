@@ -32,7 +32,7 @@ namespace api.Models.Mapping
             this.Property(t => t.idUser).HasColumnName("idUser");
             this.Property(t => t.dsUrl).HasColumnName("dsUrl");
             this.Property(t => t.idController).HasColumnName("idController");
-            this.Property(t => t.idMethod).HasColumnName("idMethod");
+            
             this.Property(t => t.dsParametros).HasColumnName("dsParametros");
             this.Property(t => t.dsFiltros).HasColumnName("dsFiltros");
             this.Property(t => t.dtAcesso).HasColumnName("dtAcesso");
@@ -40,7 +40,8 @@ namespace api.Models.Mapping
             this.Property(t => t.codResposta).HasColumnName("codResposta");
             this.Property(t => t.msgErro).HasColumnName("msgErro");
             this.Property(t => t.dsJson).HasColumnName("dsJson");
-
+            this.Property(t => t.dsUserAgent).HasColumnName("dsUserAgent");
+            this.Property(t => t.dsMethod).HasColumnName("dsMethod");
             // Relationships
             this.HasRequired(t => t.webpages_Users)
                 .WithMany(t => t.tbLogAcessoUsuarios)
@@ -48,9 +49,7 @@ namespace api.Models.Mapping
             this.HasOptional(t => t.webpages_Controllers)
                 .WithMany(t => t.tbLogAcessoUsuarios)
                 .HasForeignKey(d => d.idController);
-            this.HasOptional(t => t.webpages_Methods)
-                .WithMany(t => t.tbLogAcessoUsuarios)
-                .HasForeignKey(d => d.idMethod);
+
 
         }
     }

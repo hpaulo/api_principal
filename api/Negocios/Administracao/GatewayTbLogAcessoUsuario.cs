@@ -30,14 +30,16 @@ namespace api.Negocios.Admin
             IDUSER = 101,
             DSURL = 102,
             IDCONTROLLER = 103,
-            IDMETHOD = 104,
-            DSPARAMETROS = 105,
-            DSFILTROS = 106,
-            DTACESSO = 107,
-            DSAPLICACAO = 108,
-            CODRESPOSTA = 109,
-            MSGERRO = 110,
-            DSJSON = 111,
+            //IDMETHOD = 104, /* CAMPO REMOVIDO */
+            DSPARAMETROS = 104,
+            DSFILTROS = 105,
+            DTACESSO = 106,
+            DSAPLICACAO = 107,
+            CODRESPOSTA = 108,
+            MSGERRO = 109,
+            DSJSON = 110,
+            DSUSERAGENT = 111,
+            DSMETHOD = 112,
 
             // WEBPAGESUSERS
             NU_CNPJ = 200,
@@ -94,10 +96,6 @@ namespace api.Negocios.Admin
                         Int32 idController = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.idController == idController).AsQueryable<tbLogAcessoUsuario>();
                         break;
-                    case CAMPOS.IDMETHOD:
-                        Int32 idMethod = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idMethod == idMethod).AsQueryable<tbLogAcessoUsuario>();
-                        break;
                     case CAMPOS.DSPARAMETROS:
                         string dsParametros = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.dsParametros.Equals(dsParametros)).AsQueryable<tbLogAcessoUsuario>();
@@ -125,6 +123,14 @@ namespace api.Negocios.Admin
                     case CAMPOS.DSJSON:
                         string dsJson = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.dsJson.Equals(dsJson)).AsQueryable<tbLogAcessoUsuario>();
+                        break;
+                    case CAMPOS.DSUSERAGENT:
+                        string dsUserAgent = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.dsUserAgent.Equals(dsUserAgent)).AsQueryable<tbLogAcessoUsuario>();
+                        break;
+                    case CAMPOS.DSMETHOD:
+                        string dsMethod = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.dsMethod.Equals(dsMethod)).AsQueryable<tbLogAcessoUsuario>();
                         break;
 
 
@@ -183,10 +189,6 @@ namespace api.Negocios.Admin
                     if (orderby == 0) entity = entity.OrderBy(e => e.idController).AsQueryable<tbLogAcessoUsuario>();
                     else entity = entity.OrderByDescending(e => e.idController).AsQueryable<tbLogAcessoUsuario>();
                     break;
-                case CAMPOS.IDMETHOD:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.idMethod).AsQueryable<tbLogAcessoUsuario>();
-                    else entity = entity.OrderByDescending(e => e.idMethod).AsQueryable<tbLogAcessoUsuario>();
-                    break;
                 case CAMPOS.DSPARAMETROS:
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsParametros).AsQueryable<tbLogAcessoUsuario>();
                     else entity = entity.OrderByDescending(e => e.dsParametros).AsQueryable<tbLogAcessoUsuario>();
@@ -215,6 +217,15 @@ namespace api.Negocios.Admin
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsJson).AsQueryable<tbLogAcessoUsuario>();
                     else entity = entity.OrderByDescending(e => e.dsJson).AsQueryable<tbLogAcessoUsuario>();
                     break;
+                case CAMPOS.DSUSERAGENT:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsUserAgent).AsQueryable<tbLogAcessoUsuario>();
+                    else entity = entity.OrderByDescending(e => e.dsUserAgent).AsQueryable<tbLogAcessoUsuario>();
+                    break;
+                case CAMPOS.DSMETHOD:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsMethod).AsQueryable<tbLogAcessoUsuario>();
+                    else entity = entity.OrderByDescending(e => e.dsMethod).AsQueryable<tbLogAcessoUsuario>();
+                    break;
+
 
                 // PERSONALIZADO
                 case CAMPOS.DS_LOGIN:
@@ -298,7 +309,6 @@ namespace api.Negocios.Admin
                     idUser = e.idUser,
                     dsUrl = e.dsUrl,
                     idController = e.idController,
-                    idMethod = e.idMethod,
                     dsParametros = e.dsParametros,
                     dsFiltros = e.dsFiltros,
                     dtAcesso = e.dtAcesso,
@@ -306,6 +316,8 @@ namespace api.Negocios.Admin
                     codResposta = e.codResposta,
                     msgErro = e.msgErro,
                     dsJson = e.dsJson,
+                    dsUserAgent = e.dsUserAgent,
+                    dsMethod = e.dsMethod,
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -317,7 +329,6 @@ namespace api.Negocios.Admin
                     idUser = e.idUser,
                     dsUrl = e.dsUrl,
                     idController = e.idController,
-                    idMethod = e.idMethod,
                     dsParametros = e.dsParametros,
                     dsFiltros = e.dsFiltros,
                     dtAcesso = e.dtAcesso,
@@ -325,6 +336,9 @@ namespace api.Negocios.Admin
                     codResposta = e.codResposta,
                     msgErro = e.msgErro,
                     dsJson = e.dsJson,
+                    dsUserAgent = e.dsUserAgent,
+                    dsMethod = e.dsMethod,
+
                 }).ToList<dynamic>();
             }
             else if (colecao == 2) // [Portal] Acesso de usuários => POST, PUT e DELETE (desenvolvedor)
@@ -336,9 +350,6 @@ namespace api.Negocios.Admin
                     user = new { idUser = e.idUser,
                                  ds_login = e.webpages_Users.ds_login
                                },
-                    method = new { idMethod = e.idMethod,
-                                   ds_method = e.webpages_Methods.ds_method
-                                 },
                     dsUrl = e.dsUrl,
                     dsParametros = e.dsParametros,
                     dsFiltros = e.dsFiltros,
@@ -348,6 +359,8 @@ namespace api.Negocios.Admin
                     codResposta = e.codResposta,
                     msgErro = e.msgErro,
                     dsJson = e.dsJson,
+                    dsMethod = e.dsMethod,
+
                 }).ToList<dynamic>();
             }
             else if (colecao == 3) // [Portal] Acesso de usuários => Acesso aos controllers (usuário)
@@ -428,8 +441,6 @@ namespace api.Negocios.Admin
                 value.dsUrl = param.dsUrl;
             if (param.idController != null && param.idController != value.idController)
                 value.idController = param.idController;
-            if (param.idMethod != null && param.idMethod != value.idMethod)
-                value.idMethod = param.idMethod;
             if (param.dsParametros != null && param.dsParametros != value.dsParametros)
                 value.dsParametros = param.dsParametros;
             if (param.dsFiltros != null && param.dsFiltros != value.dsFiltros)
@@ -444,6 +455,8 @@ namespace api.Negocios.Admin
                 value.msgErro = param.msgErro;
             if (param.dsJson != null && param.dsJson != value.dsJson)
                 value.dsJson = param.dsJson;
+            if (param.dsMethod != null && param.dsMethod != value.dsMethod)
+                value.dsMethod = param.dsMethod;
             _db.SaveChanges();
 
         }

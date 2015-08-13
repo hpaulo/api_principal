@@ -30,6 +30,8 @@ namespace api.Negocios.Administracao
                 IDCONTROLLER = 101,
                 IDMETHOD = 102,
                 DTACESSO = 103,
+                FLMOBILE = 104,
+                DSUSERAGENT = 105,
 
        };
 
@@ -71,10 +73,18 @@ namespace api.Negocios.Administracao
 									Int32 idMethod = Convert.ToInt32(item.Value);
 									entity = entity.Where(e => e.idMethod.Equals(idMethod)).AsQueryable<LogAcesso1>();
 								break;
-								case CAMPOS.DTACESSO:
-									DateTime dtAcesso = Convert.ToDateTime(item.Value);
-									entity = entity.Where(e => e.dtAcesso.Equals(dtAcesso)).AsQueryable<LogAcesso1>();
-								break;
+                                case CAMPOS.DTACESSO:
+                                DateTime dtAcesso = Convert.ToDateTime(item.Value);
+                                entity = entity.Where(e => e.dtAcesso.Equals(dtAcesso)).AsQueryable<LogAcesso1>();
+                                break;
+                                case CAMPOS.FLMOBILE:
+                                bool flMobile = Convert.ToBoolean(item.Value);
+                                entity = entity.Where(e => e.flMobile.Equals(flMobile)).AsQueryable<LogAcesso1>();
+                                break;
+                                case CAMPOS.DSUSERAGENT:
+                                string dsUserAgent = Convert.ToString(item.Value);
+                                entity = entity.Where(e => e.dsUserAgent.Equals(dsUserAgent)).AsQueryable<LogAcesso1>();
+                                break;
 
                     }
                 }
@@ -102,6 +112,14 @@ namespace api.Negocios.Administracao
 							if (orderby == 0)  entity = entity.OrderBy(e => e.dtAcesso).AsQueryable<LogAcesso1>();
 							else entity = entity.OrderByDescending(e =>  e.dtAcesso).AsQueryable<LogAcesso1>();
 						break;
+                        case CAMPOS.FLMOBILE:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.flMobile).AsQueryable<LogAcesso1>();
+                            else entity = entity.OrderByDescending(e => e.flMobile).AsQueryable<LogAcesso1>();
+                        break;
+                        case CAMPOS.DSUSERAGENT:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.dsUserAgent).AsQueryable<LogAcesso1>();
+                            else entity = entity.OrderByDescending(e => e.dsUserAgent).AsQueryable<LogAcesso1>();
+                        break;
 
                 }
             #endregion
@@ -182,6 +200,25 @@ namespace api.Negocios.Administracao
             _db.SaveChanges();
             return (Int32)param.idUsers;
         }
+
+        /// <summary>
+        /// Adiciona nova LogAcesso
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static void Add(string token, Int32 idController)
+        {
+            LogAcesso1 log = new LogAcesso1();
+            log.idUsers = Bibliotecas.Permissoes.GetIdUser(token);
+            log.idController = idController;
+            log.dtAcesso = DateTime.Now;
+            log.dsUserAgent = HttpContext.Current.Request.UserAgent;
+            log.flMobile = Bibliotecas.Device.IsMobile();
+
+            _db.LogAcesso1.Add(log);
+            _db.SaveChanges();
+        }
+
 
 
         /// <summary>

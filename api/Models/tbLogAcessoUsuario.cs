@@ -9,7 +9,6 @@ namespace api.Models
         public int idUser { get; set; }
         public string dsUrl { get; set; }
         public Nullable<int> idController { get; set; }
-        public Nullable<int> idMethod { get; set; }
         public string dsParametros { get; set; }
         public string dsFiltros { get; set; }
         public System.DateTime dtAcesso { get; set; }
@@ -17,6 +16,8 @@ namespace api.Models
         public int codResposta { get; set; }
         public string msgErro { get; set; }
         public string dsJson { get; set; }
+        public string dsUserAgent { get; set; }
+        public string dsMethod { get; set; }
         public virtual webpages_Users webpages_Users { get; set; }
         public virtual webpages_Controllers webpages_Controllers { get; set; }
         public virtual webpages_Methods webpages_Methods { get; set; }

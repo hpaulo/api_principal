@@ -33,13 +33,16 @@ namespace api.Controllers.Log
         }
 
         // POST /LogAcesso/token/
-        public HttpResponseMessage Post(string token, [FromBody]LogAcesso1 param)
+        public HttpResponseMessage Post(string token, LogAcesso1 param)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, GatewayLogAcesso.Add(token, param));
+                {
+                    GatewayLogAcesso.Add(token, (int)param.idController);
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
@@ -47,8 +50,6 @@ namespace api.Controllers.Log
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-
-
         }
 
         // PUT /LogAcesso/token/
