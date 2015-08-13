@@ -217,6 +217,7 @@
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
     <Compile Include="Bibliotecas\CodigoCompensacaoBancos.cs" />
     <Compile Include="Bibliotecas\Device.cs" />
+    <Compile Include="Bibliotecas\LogAcaoUsuario.cs" />
     <Compile Include="Bibliotecas\LogAcesso.cs" />
     <Compile Include="Bibliotecas\Permissoes.cs" />
     <Compile Include="Bibliotecas\Token.cs" />
