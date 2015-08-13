@@ -176,8 +176,8 @@ namespace api.Negocios.Card
                     else entity = entity.OrderByDescending(e => e.nrDocumento).AsQueryable<tbExtrato>();
                     break;
                 case CAMPOS.DTEXTRATO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtExtrato).AsQueryable<tbExtrato>();
-                    else entity = entity.OrderByDescending(e => e.dtExtrato).AsQueryable<tbExtrato>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtExtrato).ThenBy(e => e.idExtrato).AsQueryable<tbExtrato>();
+                    else entity = entity.OrderByDescending(e => e.dtExtrato).ThenByDescending(e => e.idExtrato).AsQueryable<tbExtrato>();
                     break;
                 case CAMPOS.DSDOCUMENTO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsDocumento).AsQueryable<tbExtrato>();
@@ -427,7 +427,13 @@ namespace api.Negocios.Card
                     nrAgencia = nrConta.Substring(0, nrConta.IndexOf("/"));
                     nrConta = nrConta.Substring(nrConta.IndexOf("/") + 1);
                 }
-                if (!conta.nrConta.Equals(nrConta))
+                // Deixa os nomes com mesmo comprimento
+                string contaNrConta = conta.nrConta;
+                while (contaNrConta.Length < nrConta.Length)
+                    contaNrConta = "0" + contaNrConta; // adiciona zeros a esquerda
+                while (nrConta.Length < contaNrConta.Length)
+                    nrConta = "0" + nrConta; // adiciona zeros a esquerda
+                if (!contaNrConta.Equals(nrConta))
                 {
                     // Deleta o arquivo
                     File.Delete(filePath);
