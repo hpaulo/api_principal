@@ -383,7 +383,17 @@ namespace api.Negocios.Card
                 postedFile.SaveAs(filePath);
                 // Obtém o objeto associado ao extrato
                 var parser = new OFXDocumentParser();
-                OFXDocument ofxDocument = parser.Import(new FileStream(filePath, FileMode.Open));
+
+                OFXDocument ofxDocument = null;
+
+                try {
+                    ofxDocument = parser.Import(new FileStream(filePath, FileMode.Open));
+                }catch(Exception e)
+                {
+                    // Deleta o arquivo
+                    File.Delete(filePath);
+                    throw new Exception("Arquivo não é um .ofx válido");
+                }
 
                 /* 
                     CONTA
