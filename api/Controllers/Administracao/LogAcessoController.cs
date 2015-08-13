@@ -52,7 +52,7 @@ namespace api.Controllers.Log
             }
         }
 
-        // PUT /LogAcesso/token/
+        /* PUT /LogAcesso/token/
         public HttpResponseMessage Put(string token, [FromBody]LogAcesso1 param)
         {
             try
@@ -90,6 +90,6 @@ namespace api.Controllers.Log
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-        }
+        }*/
     }
 }

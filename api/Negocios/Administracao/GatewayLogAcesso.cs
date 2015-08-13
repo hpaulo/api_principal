@@ -36,6 +36,7 @@ namespace api.Negocios.Administracao
             // RELACIONAMENTOS
             DS_LOGIN = 201,
             ID_GRUPO = 203,
+            NU_CNPJEMPRESA = 204,
 
             DS_CONTROLLER = 301,
 
@@ -172,6 +173,24 @@ namespace api.Negocios.Administracao
             //DECLARAÇÕES
             List<dynamic> CollectionLogAcesso = new List<dynamic>();
             Retorno retorno = new Retorno();
+            string outValue = null;
+
+            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+            if (IdGrupo != 0)
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                else
+                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+            }
+            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+            if (CnpjEmpresa != "")
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJEMPRESA, out outValue))
+                    queryString["" + (int)CAMPOS.NU_CNPJEMPRESA] = CnpjEmpresa;
+                else
+                    queryString.Add("" + (int)CAMPOS.NU_CNPJEMPRESA, CnpjEmpresa);
+            }
 
             // GET QUERY
             var query = getQuery( colecao, campo, orderBy, pageSize, pageNumber, queryString);
