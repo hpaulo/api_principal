@@ -26,14 +26,20 @@ namespace api.Negocios.Administracao
         /// </summary>
         public enum CAMPOS
         {
-                IDUSERS = 100,
-                IDCONTROLLER = 101,
-                IDMETHOD = 102,
-                DTACESSO = 103,
-                FLMOBILE = 104,
-                DSUSERAGENT = 105,
+            IDUSERS = 100,
+            IDCONTROLLER = 101,
+            IDMETHOD = 102,
+            DTACESSO = 103,
+            FLMOBILE = 104,
+            DSUSERAGENT = 105,
 
-       };
+            // RELACIONAMENTOS
+            DS_LOGIN = 201,
+            ID_GRUPO = 203,
+
+            DS_CONTROLLER = 301,
+
+        };
 
         /// <summary>
         /// Get LogAcesso/LogAcesso
@@ -59,34 +65,46 @@ namespace api.Negocios.Administracao
                     CAMPOS filtroEnum = (CAMPOS)key;
                     switch (filtroEnum)
                     {
-				
+						case CAMPOS.IDUSERS:
+							Int32 idUsers = Convert.ToInt32(item.Value);
+							entity = entity.Where(e => e.idUsers.Equals(idUsers)).AsQueryable<LogAcesso1>();
+						    break;
+						case CAMPOS.IDCONTROLLER:
+							Int32 idController = Convert.ToInt32(item.Value);
+							entity = entity.Where(e => e.idController.Equals(idController)).AsQueryable<LogAcesso1>();
+						    break;
+						case CAMPOS.IDMETHOD:
+							Int32 idMethod = Convert.ToInt32(item.Value);
+							entity = entity.Where(e => e.idMethod.Equals(idMethod)).AsQueryable<LogAcesso1>();
+						    break;
+                        case CAMPOS.DTACESSO:
+                            DateTime dtAcesso = Convert.ToDateTime(item.Value);
+                            entity = entity.Where(e => e.dtAcesso.Equals(dtAcesso)).AsQueryable<LogAcesso1>();
+                            break;
+                        case CAMPOS.FLMOBILE:
+                            bool flMobile = Convert.ToBoolean(item.Value);
+                            entity = entity.Where(e => e.flMobile.Equals(flMobile)).AsQueryable<LogAcesso1>();
+                            break;
+                        case CAMPOS.DSUSERAGENT:
+                            string dsUserAgent = Convert.ToString(item.Value);
+                            entity = entity.Where(e => e.dsUserAgent.Equals(dsUserAgent)).AsQueryable<LogAcesso1>();
+                            break;
 
-								case CAMPOS.IDUSERS:
-									Int32 idUsers = Convert.ToInt32(item.Value);
-									entity = entity.Where(e => e.idUsers.Equals(idUsers)).AsQueryable<LogAcesso1>();
-								break;
-								case CAMPOS.IDCONTROLLER:
-									Int32 idController = Convert.ToInt32(item.Value);
-									entity = entity.Where(e => e.idController.Equals(idController)).AsQueryable<LogAcesso1>();
-								break;
-								case CAMPOS.IDMETHOD:
-									Int32 idMethod = Convert.ToInt32(item.Value);
-									entity = entity.Where(e => e.idMethod.Equals(idMethod)).AsQueryable<LogAcesso1>();
-								break;
-                                case CAMPOS.DTACESSO:
-                                DateTime dtAcesso = Convert.ToDateTime(item.Value);
-                                entity = entity.Where(e => e.dtAcesso.Equals(dtAcesso)).AsQueryable<LogAcesso1>();
-                                break;
-                                case CAMPOS.FLMOBILE:
-                                bool flMobile = Convert.ToBoolean(item.Value);
-                                entity = entity.Where(e => e.flMobile.Equals(flMobile)).AsQueryable<LogAcesso1>();
-                                break;
-                                case CAMPOS.DSUSERAGENT:
-                                string dsUserAgent = Convert.ToString(item.Value);
-                                entity = entity.Where(e => e.dsUserAgent.Equals(dsUserAgent)).AsQueryable<LogAcesso1>();
-                                break;
+                        // PERSONALIZADO
+                        case CAMPOS.DS_LOGIN:
+                            string ds_login = Convert.ToString(item.Value);
+                            entity = entity.Where(e => e.webpages_Users.ds_login.Equals(ds_login)).AsQueryable<LogAcesso1>();
+                            break;
+                        case CAMPOS.ID_GRUPO:
+                            Int32 id_grupo = Convert.ToInt32(item.Value);
+							entity = entity.Where(e => e.webpages_Users.id_grupo == id_grupo).AsQueryable<LogAcesso1>();
+						    break;
 
-                    }
+                        case CAMPOS.DS_CONTROLLER:
+                            string ds_controller = Convert.ToString(item.Value);
+                            entity = entity.Where(e => e.webpages_Controllers.ds_controller.Equals(ds_controller)).AsQueryable<LogAcesso1>();
+                            break;
+                }
                 }
             #endregion
 
@@ -99,27 +117,42 @@ namespace api.Negocios.Administracao
 						case CAMPOS.IDUSERS: 
 							if (orderby == 0)  entity = entity.OrderBy(e => e.idUsers).AsQueryable<LogAcesso1>();
 							else entity = entity.OrderByDescending(e =>  e.idUsers).AsQueryable<LogAcesso1>();
-						break;
+						    break;
 						case CAMPOS.IDCONTROLLER: 
 							if (orderby == 0)  entity = entity.OrderBy(e => e.idController).AsQueryable<LogAcesso1>();
 							else entity = entity.OrderByDescending(e =>  e.idController).AsQueryable<LogAcesso1>();
-						break;
+						    break;
 						case CAMPOS.IDMETHOD: 
 							if (orderby == 0)  entity = entity.OrderBy(e => e.idMethod).AsQueryable<LogAcesso1>();
 							else entity = entity.OrderByDescending(e =>  e.idMethod).AsQueryable<LogAcesso1>();
-						break;
+						    break;
 						case CAMPOS.DTACESSO: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.dtAcesso).AsQueryable<LogAcesso1>();
-							else entity = entity.OrderByDescending(e =>  e.dtAcesso).AsQueryable<LogAcesso1>();
-						break;
+							if (orderby == 0)  entity = entity.OrderBy(e => e.dtAcesso).ThenBy(e => e.webpages_Users.ds_login).AsQueryable<LogAcesso1>();
+							else entity = entity.OrderByDescending(e =>  e.dtAcesso).ThenBy(e => e.webpages_Users.ds_login).AsQueryable<LogAcesso1>();
+						    break;
                         case CAMPOS.FLMOBILE:
                             if (orderby == 0) entity = entity.OrderBy(e => e.flMobile).AsQueryable<LogAcesso1>();
                             else entity = entity.OrderByDescending(e => e.flMobile).AsQueryable<LogAcesso1>();
-                        break;
+                         break;
                         case CAMPOS.DSUSERAGENT:
                             if (orderby == 0) entity = entity.OrderBy(e => e.dsUserAgent).AsQueryable<LogAcesso1>();
                             else entity = entity.OrderByDescending(e => e.dsUserAgent).AsQueryable<LogAcesso1>();
-                        break;
+                            break;
+
+                        // PERSONALIZADO
+                        case CAMPOS.DS_LOGIN:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.webpages_Users.ds_login).ThenByDescending(e => e.dtAcesso).AsQueryable<LogAcesso1>();
+                            else entity = entity.OrderByDescending(e => e.webpages_Users.ds_login).ThenBy(e => e.dtAcesso).AsQueryable<LogAcesso1>();
+                            break;
+                        case CAMPOS.ID_GRUPO:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.webpages_Users.id_grupo).ThenByDescending(e => e.dtAcesso).AsQueryable<LogAcesso1>();
+                            else entity = entity.OrderByDescending(e => e.webpages_Users.id_grupo).ThenBy(e => e.dtAcesso).AsQueryable<LogAcesso1>();
+                            break;
+
+                        case CAMPOS.DS_CONTROLLER:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.webpages_Controllers.ds_controller).ThenByDescending(e => e.dtAcesso).AsQueryable<LogAcesso1>();
+                            else entity = entity.OrderByDescending(e => e.webpages_Controllers.ds_controller).ThenBy(e => e.dtAcesso).AsQueryable<LogAcesso1>();
+                            break;
 
                 }
             #endregion
