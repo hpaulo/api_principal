@@ -190,8 +190,18 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, pessoa param)
         {
-            _db.pessoas.Add(param);
-            _db.SaveChanges();
+            try {
+                _db.pessoas.Add(param);
+                _db.SaveChanges();
+            }catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao adicionar pessoa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
             return param.id_pesssoa;
         }
 
@@ -223,6 +233,7 @@ namespace api.Negocios.Administracao
             pessoa value = _db.pessoas
                         .Where(e => e.id_pesssoa == param.id_pesssoa)
                         .First<pessoa>();
+            
 
             if (value == null) throw new Exception("Pessoa inexistente");
 
