@@ -168,6 +168,8 @@ namespace api.Negocios.Administracao
 					idController = e.idController,
 					idMethod = e.idMethod,
 					dtAcesso = e.dtAcesso,
+                    flMobile = e.flMobile,
+                    dsUserAgent = e.dsUserAgent
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -179,6 +181,30 @@ namespace api.Negocios.Administracao
 					idController = e.idController,
 					idMethod = e.idMethod,
 					dtAcesso = e.dtAcesso,
+                    flMobile = e.flMobile,
+                    dsUserAgent = e.dsUserAgent
+                }).ToList<dynamic>();
+            }
+            else if (colecao == 2)
+            {
+                CollectionLogAcesso = query.Select(e => new
+                {
+
+                    webpagesusers = new { id_users = e.idUsers,
+                                          ds_login = e.webpages_Users.ds_login
+                                        },
+                    controller = new { id_controller = e.idController,
+                                       ds_controller = e.webpages_Controllers != null && e.idController > 50 ?
+                                                       (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
+                                                       e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
+                                                       (e.webpages_Controllers.id_subController != null ?
+                                                       e.webpages_Methods.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
+                                                       e.webpages_Controllers.ds_controller : 
+                                                       "LOGIN",
+                    },
+                    dtAcesso = e.dtAcesso,
+                    flMobile = e.flMobile,
+                    dsUserAgent = e.dsUserAgent
                 }).ToList<dynamic>();
             }
 
