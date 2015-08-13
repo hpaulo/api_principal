@@ -20,6 +20,5 @@ namespace api.Models
         public string dsMethod { get; set; }
         public virtual webpages_Users webpages_Users { get; set; }
         public virtual webpages_Controllers webpages_Controllers { get; set; }
-        public virtual webpages_Methods webpages_Methods { get; set; }
     }
 }

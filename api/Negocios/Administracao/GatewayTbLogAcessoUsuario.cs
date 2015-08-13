@@ -377,12 +377,12 @@ namespace api.Negocios.Admin
                     controller = new
                     {
                         idController = e.idController,
-                        path = e.idController == null ? "" :
+                        /*path = e.idController == null ? "" :
                                              (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
                                                 e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
                                               (e.webpages_Controllers.id_subController != null ?
                                                 e.webpages_Methods.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
-                                              e.webpages_Controllers.ds_controller
+                                              e.webpages_Controllers.ds_controller*/
                     },
                     dtAcesso = e.dtAcesso,
                     dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" :

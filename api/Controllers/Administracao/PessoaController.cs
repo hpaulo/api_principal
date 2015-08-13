@@ -9,6 +9,7 @@ using api.Negocios.Administracao;
 using api.Bibliotecas;
 using api.Models.Object;
 using Newtonsoft.Json;
+using System.Data.Entity.Validation;
 
 namespace api.Controllers.Dbo
 {
@@ -73,9 +74,10 @@ namespace api.Controllers.Dbo
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
-            catch
+            catch(Exception e)
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
                 Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
@@ -106,9 +108,10 @@ namespace api.Controllers.Dbo
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
-            catch
+            catch (Exception e)
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
                 Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
@@ -137,9 +140,10 @@ namespace api.Controllers.Dbo
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
-            catch
+            catch(Exception e)
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
                 Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }

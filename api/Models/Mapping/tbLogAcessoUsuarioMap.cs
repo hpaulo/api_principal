@@ -13,13 +13,17 @@ namespace api.Models.Mapping
             // Properties
             this.Property(t => t.dsUrl)
                 .IsRequired()
-                .HasMaxLength(1);
+                .HasMaxLength(255);
 
             this.Property(t => t.dsParametros)
                 .HasMaxLength(255);
 
             this.Property(t => t.dsFiltros)
                 .HasMaxLength(255);
+
+            this.Property(t => t.dsMethod)
+                .IsRequired()
+                .HasMaxLength(10);
 
             this.Property(t => t.dsAplicacao)
                 .IsRequired()

@@ -10,6 +10,7 @@ namespace api.Models
             this.LogAcesso1 = new List<LogAcesso1>();
             this.webpages_Methods = new List<webpages_Methods>();
             this.webpages_Controllers1 = new List<webpages_Controllers>();
+            this.tbLogAcessoUsuarios = new List<tbLogAcessoUsuario>();
         }
 
         public int id_controller { get; set; }

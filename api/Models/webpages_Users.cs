@@ -10,6 +10,8 @@ namespace api.Models
             this.ConciliacaoRecebimentoes = new List<ConciliacaoRecebimento>();
             this.LogAcesso1 = new List<LogAcesso1>();
             this.LoginAutenticacaos = new List<LoginAutenticacao>();
+            this.tbLogAcessoUsuarios = new List<tbLogAcessoUsuario>();
+            this.grupo_empresa_vendedor = new List<grupo_empresa>();
         }
 
         public int id_users { get; set; }

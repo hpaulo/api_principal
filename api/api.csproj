@@ -219,6 +219,7 @@
     <Compile Include="Bibliotecas\Device.cs" />
     <Compile Include="Bibliotecas\LogAcaoUsuario.cs" />
     <Compile Include="Bibliotecas\LogAcesso.cs" />
+    <Compile Include="Bibliotecas\MensagemErro.cs" />
     <Compile Include="Bibliotecas\Permissoes.cs" />
     <Compile Include="Bibliotecas\Token.cs" />
     <Compile Include="Controllers\Administracao\TbLogManifestoController.cs" />

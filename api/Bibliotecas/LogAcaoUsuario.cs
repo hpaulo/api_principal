@@ -1,6 +1,7 @@
 ﻿using api.Models;
 using System;
 using System.Collections.Generic;
+using System.Data.Entity.Validation;
 using System.Linq;
 using System.Net.Http;
 using System.Web;
@@ -13,15 +14,37 @@ namespace api.Bibliotecas
         {
             try
             {
+                    var _db = new painel_taxservices_dbContext();
+
+                    bool Mobile = Bibliotecas.Device.IsMobile();
 
                     tbLogAcessoUsuario log = new tbLogAcessoUsuario();
                     log.idUser = Bibliotecas.Permissoes.GetIdUser(token);
                     log.dsUrl = HttpContext.Current.Request.Url.Segments[1] + HttpContext.Current.Request.Url.Segments[2];
-                    log.dsParametros = HttpContext.Current.Request.RawUrl.Replace( (HttpContext.Current.Request.Url.Segments[0] + HttpContext.Current.Request.Url.Segments[1] + HttpContext.Current.Request.Url.Segments[2] ) ,"");
-                    log.dsFiltros = HttpContext.Current.Request.RawUrl.LastIndexOf('?') > 0 ? HttpContext.Current.Request.RawUrl.Remove(0, HttpContext.Current.Request.RawUrl.LastIndexOf('?')) : String.Empty;
+                    
+                    string afterUrl = HttpContext.Current.Request.RawUrl.Replace((HttpContext.Current.Request.Url.Segments[0] + HttpContext.Current.Request.Url.Segments[1] + HttpContext.Current.Request.Url.Segments[2]), "");
+
+                    if (afterUrl.LastIndexOf('?') > -1) {
+                    // tem filtros
+                        log.dsFiltros = afterUrl.Substring(afterUrl.LastIndexOf('?'));
+                        log.dsParametros = afterUrl.Substring(0, afterUrl.LastIndexOf('?'));
+                    }
+                    else
+                    {
+                        // Não tem filtros
+                        log.dsFiltros = String.Empty;
+                        log.dsParametros = afterUrl;
+                    }
+                    //log.dsFiltros = HttpContext.Current.Request.RawUrl.LastIndexOf('?') > 0 ? HttpContext.Current.Request.RawUrl.Remove(0, HttpContext.Current.Request.RawUrl.LastIndexOf('?')) : String.Empty;
+                    
                     log.dtAcesso = DateTime.Now;
-                    log.dsAplicacao = Bibliotecas.Device.IsMobile() ? "M" : "P";
+                    log.dsAplicacao = Mobile ? "M" : "P";
                     log.dsMethod = HttpContext.Current.Request.HttpMethod;
+                    log.idController = _db.LogAcesso1.Where(l => l.idUsers == log.idUser)
+                                                     .Where(l => l.flMobile == Mobile)
+                                                     .OrderByDescending(l => l.dtAcesso)
+                                                     .Select(l => l.idController)
+                                                     .FirstOrDefault();
                     /* Campos alimentados no controller*/
                         //log.codResposta = data.codResposta; 
                         //log.msgErro = data.msgErro;
@@ -49,7 +72,12 @@ namespace api.Bibliotecas
             }
             catch (Exception e)
             {
-                throw new Exception("Mensagem: " + e.Message);
+                if(e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException) e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar log" : erro);
+                } 
+                throw new Exception(e.Message);
             }
         }
     }

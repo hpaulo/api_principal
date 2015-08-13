@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Administracao
 {
@@ -202,7 +203,11 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Delete(string token, Int32 id_pesssoa)
         {
-            _db.pessoas.RemoveRange(_db.pessoas.Where(e => e.id_pesssoa == id_pesssoa));
+            pessoa pessoa = _db.pessoas.Where(e => e.id_pesssoa == id_pesssoa).FirstOrDefault();
+
+            if (pessoa == null) throw new Exception("Pessoa inexistente");
+
+            _db.pessoas.Remove(pessoa);
             _db.SaveChanges();
         }
 
@@ -216,8 +221,10 @@ namespace api.Negocios.Administracao
         public static void Update(string token, pessoa param)
         {
             pessoa value = _db.pessoas
-                    .Where(e => e.id_pesssoa.Equals(param.id_pesssoa))
-                    .First<pessoa>();
+                        .Where(e => e.id_pesssoa == param.id_pesssoa)
+                        .First<pessoa>();
+
+            if (value == null) throw new Exception("Pessoa inexistente");
 
             if (param.nm_pessoa != null && param.nm_pessoa != value.nm_pessoa)
                 value.nm_pessoa = param.nm_pessoa;
