@@ -296,7 +296,9 @@
     </Compile>
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
+    <Compile Include="Models\Mapping\tbBancoParametroMap.cs" />
     <Compile Include="Models\Mapping\tbManifestoMap.cs" />
+    <Compile Include="Models\tbBancoParametro.cs" />
     <Compile Include="Models\tbManifesto.cs" />
     <Compile Include="Models\Mapping\tbLogManifestoMap.cs" />
     <Compile Include="Models\tbLogManifesto.cs" />

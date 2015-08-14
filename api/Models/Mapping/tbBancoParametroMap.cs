@@ -31,7 +31,7 @@ namespace api.Models.Mapping
 
 
             // Table & Column Mappings
-            this.ToTable("tbContaCorrente", "card");
+            this.ToTable("tbBancoParametro", "card");
             this.Property(t => t.cdBanco).HasColumnName("cdBanco");
             this.Property(t => t.dsMemo).HasColumnName("dsMemo");
             this.Property(t => t.cdAdquirente).HasColumnName("cdAdquirente");
