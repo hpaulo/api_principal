@@ -8,7 +8,7 @@ namespace api.Models.Mapping
         public tbContaCorrenteMap()
         {
             // Primary Key
-            this.HasKey(t => t.idContaCorrente);
+            this.HasKey(t => t.cdContaCorrente);
 
             // Properties
             this.Property(t => t.nrCnpj)
@@ -31,7 +31,7 @@ namespace api.Models.Mapping
 
             // Table & Column Mappings
             this.ToTable("tbContaCorrente", "card");
-            this.Property(t => t.idContaCorrente).HasColumnName("idContaCorrente");
+            this.Property(t => t.cdContaCorrente).HasColumnName("cdContaCorrente");
             this.Property(t => t.cdGrupo).HasColumnName("cdGrupo");
             this.Property(t => t.nrCnpj).HasColumnName("nrCnpj");
             this.Property(t => t.cdBanco).HasColumnName("cdBanco");

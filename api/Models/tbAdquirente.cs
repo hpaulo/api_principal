@@ -1,4 +1,5 @@
-﻿using System;
+﻿using api.Models.Object;
+using System;
 using System.Collections.Generic;
 
 namespace api.Models
@@ -9,6 +10,7 @@ namespace api.Models
         {
             //this.tbRecebimento = new List<tbRecebimento>();
             this.tbLoginAdquirenteEmpresas = new List<tbLoginAdquirenteEmpresa>();
+            this.tbBancoParametros = new List<tbBancoParametro>();
         }
 
         public int cdAdquirente { get; set; }
@@ -19,5 +21,6 @@ namespace api.Models
 
         //public virtual ICollection<tbRecebimento> tbRecebimento { get; set; }
         public virtual ICollection<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
+        public virtual ICollection<tbBancoParametro> tbBancoParametros { get; set; }
     }
 }

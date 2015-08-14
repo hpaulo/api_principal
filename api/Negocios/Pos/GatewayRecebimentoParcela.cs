@@ -36,6 +36,7 @@ namespace api.Negocios.Pos
 
             // EMPRESA
             NU_CNPJ = 300,
+            DS_FANTASIA = 304,
             ID_GRUPO = 316,
 
             // OPERADORA (ADQUIRENTE)
@@ -163,6 +164,10 @@ namespace api.Negocios.Pos
                         string nu_cnpj = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.Recebimento.empresa.nu_cnpj.Equals(nu_cnpj));
                         break;
+                    case CAMPOS.DS_FANTASIA:
+                        string ds_fantasia = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.Recebimento.empresa.ds_fantasia.Equals(ds_fantasia));
+                        break;
 
                     case CAMPOS.IDOPERADORA:
                         Int32 idOperadora = Convert.ToInt32(item.Value);
@@ -273,8 +278,8 @@ namespace api.Negocios.Pos
                     else entity = entity.OrderByDescending(e => e.valorParcelaLiquida);
                     break;
                 case CAMPOS.DTARECEBIMENTO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
-                    else entity = entity.OrderByDescending(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
+                    else entity = entity.OrderByDescending(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
                     break;
                 case CAMPOS.VALORDESCONTADO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.valorDescontado);
@@ -284,8 +289,12 @@ namespace api.Negocios.Pos
 
                 // PERSONALIZADO
                 case CAMPOS.DTAVENDA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
-                    else entity = entity.OrderByDescending(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
+                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
+                    else entity = entity.OrderByDescending(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
+                    break;
+                case CAMPOS.DS_FANTASIA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira);
+                    else entity = entity.OrderByDescending(e => e.Recebimento.empresa.ds_fantasia).ThenByDescending(e => e.Recebimento.empresa.filial).ThenByDescending(e => e.Recebimento.BandeiraPos.desBandeira); ;
                     break;
                 case CAMPOS.DESBANDEIRA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.BandeiraPos.desBandeira);
@@ -343,7 +352,7 @@ namespace api.Negocios.Pos
 
             if (colecao != 9) // relatório sintético
             {
-                retorno.Totais.Add("valorBruto", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.Recebimento.valorVendaBruta)) : 0);
+                retorno.Totais.Add("valorBruto", query.Count() > 0 ? Convert.ToDecimal(query.GroupBy(r => r.Recebimento).Sum(r => r.Key.valorVendaBruta)) : 0);
                 retorno.Totais.Add("valorDescontado", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorDescontado)) : 0);
                 retorno.Totais.Add("valorParcelaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaBruta)) : 0);
                 retorno.Totais.Add("valorParcelaLiquida", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaLiquida)) : 0);
@@ -635,6 +644,7 @@ namespace api.Negocios.Pos
                 {
 
                     cnpj = e.Recebimento.cnpj,
+                    dsFantasia = e.Recebimento.empresa.ds_fantasia + (e.Recebimento.empresa.filial != null ? e.Recebimento.empresa.filial : ""),
                     desBandeira = e.Recebimento.BandeiraPos.desBandeira,
                     dtaVenda = e.Recebimento.dtaVenda,
                     dtaRecebimento = e.dtaRecebimento,
@@ -650,16 +660,22 @@ namespace api.Negocios.Pos
             else if (colecao == 9) // [web]/cashflow/Sintético
             {
                 var subQuery = query
-                    .GroupBy(x => new { x.Recebimento.BandeiraPos })
-                    .OrderBy(e => e.Key.BandeiraPos.desBandeira)
+                    .GroupBy(x => new { x.Recebimento.empresa, x.Recebimento.BandeiraPos })
+                    .OrderBy(e => e.Key.empresa.ds_fantasia)
+                    .ThenBy(e => e.Key.empresa.filial)
+                    .ThenBy(e => e.Key.BandeiraPos.desBandeira)
                     .Select(e => new
                     {
+                        empresa = new  { nu_cnpj = e.Key.empresa.nu_cnpj,
+                                         ds_fantasia = e.Key.empresa.ds_fantasia,
+                                         filial = e.Key.empresa.filial
+                                       },
                         bandeira = new {
                                             desBandeira = e.Key.BandeiraPos.desBandeira,
                                             id = e.Key.BandeiraPos.id,
                                             idOperadora = e.Key.BandeiraPos.idOperadora
                         },
-                        valorBruto = e.Sum(p => p.Recebimento.valorVendaBruta),
+                        valorBruto = e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta),
                         valorParcela = e.Sum(p => p.valorParcelaBruta),
                         valorLiquida = e.Sum(p => p.valorParcelaLiquida),
                         valorDescontado = e.Sum(p => p.valorDescontado),

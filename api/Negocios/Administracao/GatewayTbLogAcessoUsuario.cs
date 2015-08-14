@@ -259,147 +259,129 @@ namespace api.Negocios.Admin
         {
             try
             {
-                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-                string outValue = null;
-                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-                if (IdGrupo != 0)
-                {
-                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
-                    else
-                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
-                }
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-                if (CnpjEmpresa != "")
-                {
-                    if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
-                        queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
-                    else
-                        queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
-                }
-
-
-                //DECLARAÇÕES
-                List<dynamic> CollectionTbLogAcessoUsuario = new List<dynamic>();
-                Retorno retorno = new Retorno();
-
-                // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                var queryTotal = query;
-
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
-
-
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
+            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+            string outValue = null;
+            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+            if (IdGrupo != 0)
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
                 else
-                    pageNumber = 1;
-
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                // COLEÇÃO DE RETORNO
-                if (colecao == 1)
-                {
-                    CollectionTbLogAcessoUsuario = query.Select(e => new
-                    {
-
-                        idLogAcessoUsuario = e.idLogAcessoUsuario,
-                        idUser = e.idUser,
-                        dsUrl = e.dsUrl,
-                        idController = e.idController,
-                        dsParametros = e.dsParametros,
-                        dsFiltros = e.dsFiltros,
-                        dtAcesso = e.dtAcesso,
-                        dsAplicacao = e.dsAplicacao,
-                        codResposta = e.codResposta,
-                        msgErro = e.msgErro,
-                        dsJson = e.dsJson,
-                        dsUserAgent = e.dsUserAgent,
-                        dsMethod = e.dsMethod,
-                    }).ToList<dynamic>();
-                }
-                else if (colecao == 0)
-                {
-                    CollectionTbLogAcessoUsuario = query.Select(e => new
-                    {
-
-                        idLogAcessoUsuario = e.idLogAcessoUsuario,
-                        idUser = e.idUser,
-                        dsUrl = e.dsUrl,
-                        idController = e.idController,
-                        dsParametros = e.dsParametros,
-                        dsFiltros = e.dsFiltros,
-                        dtAcesso = e.dtAcesso,
-                        dsAplicacao = e.dsAplicacao,
-                        codResposta = e.codResposta,
-                        msgErro = e.msgErro,
-                        dsJson = e.dsJson,
-                        dsUserAgent = e.dsUserAgent,
-                        dsMethod = e.dsMethod,
-
-                    }).ToList<dynamic>();
-                }
-                else if (colecao == 2) // [Portal] Acesso de usuários => POST, PUT e DELETE (desenvolvedor)
-                {
-                    CollectionTbLogAcessoUsuario = query.Select(e => new
-                    {
-
-                        idLogAcessoUsuario = e.idLogAcessoUsuario,
-                        user = new
-                        {
-                            idUser = e.idUser,
-                            ds_login = e.webpages_Users.ds_login
-                        },
-                        dsUrl = e.dsUrl,
-                        dsParametros = e.dsParametros,
-                        dsFiltros = e.dsFiltros,
-                        dtAcesso = e.dtAcesso,
-                        dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" :
-                                      e.dsAplicacao.ToUpper() == "P" ? "Portal" : e.dsAplicacao,
-                        codResposta = e.codResposta,
-                        msgErro = e.msgErro,
-                        dsJson = e.dsJson,
-                        dsMethod = e.dsMethod,
-
-                    }).ToList<dynamic>();
-                }
-                else if (colecao == 3) // [Portal] Acesso de usuários => Acesso aos controllers (usuário)
-                {
-                    CollectionTbLogAcessoUsuario = query.Select(e => new
-                    {
-
-                        idLogAcessoUsuario = e.idLogAcessoUsuario,
-                        user = new
-                        {
-                            idUser = e.idUser,
-                            ds_login = e.webpages_Users.ds_login
-                        },
-                        controller = new
-                        {
-                            idController = e.idController,
-                            /*path = e.idController == null ? "" :
-                                                 (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
-                                                    e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
-                                                  (e.webpages_Controllers.id_subController != null ?
-                                                    e.webpages_Methods.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
-                                                  e.webpages_Controllers.ds_controller*/
-                        },
-                        dtAcesso = e.dtAcesso,
-                        dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" :
-                                      e.dsAplicacao.ToUpper() == "P" ? "Portal" : e.dsAplicacao,
-                        codResposta = e.codResposta,
-                        msgErro = e.msgErro,
-                    }).ToList<dynamic>();
-                }
-
-                retorno.Registros = CollectionTbLogAcessoUsuario;
-
-                return retorno;
+                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
             }
+            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+            if (CnpjEmpresa != "")
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                    queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                else
+                    queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
+            }
+
+
+            //DECLARAÇÕES
+            List<dynamic> CollectionTbLogAcessoUsuario = new List<dynamic>();
+            Retorno retorno = new Retorno();
+
+            // GET QUERY
+            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+            var queryTotal = query;
+
+            // TOTAL DE REGISTROS
+            retorno.TotalDeRegistros = queryTotal.Count();
+
+
+            // PAGINAÇÃO
+            int skipRows = (pageNumber - 1) * pageSize;
+            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                query = query.Skip(skipRows).Take(pageSize);
+            else
+                pageNumber = 1;
+
+            retorno.PaginaAtual = pageNumber;
+            retorno.ItensPorPagina = pageSize;
+
+            // COLEÇÃO DE RETORNO
+            if (colecao == 1)
+            {
+                CollectionTbLogAcessoUsuario = query.Select(e => new
+                {
+
+                    idLogAcessoUsuario = e.idLogAcessoUsuario,
+                    idUser = e.idUser,
+                    dsUrl = e.dsUrl,
+                    idController = e.idController,
+                    dsParametros = e.dsParametros,
+                    dsFiltros = e.dsFiltros,
+                    dtAcesso = e.dtAcesso,
+                    dsAplicacao = e.dsAplicacao,
+                    codResposta = e.codResposta,
+                    msgErro = e.msgErro,
+                    dsJson = e.dsJson,
+                    dsUserAgent = e.dsUserAgent,
+                    dsMethod = e.dsMethod,
+                }).ToList<dynamic>();
+            }
+            else if (colecao == 0)
+            {
+                CollectionTbLogAcessoUsuario = query.Select(e => new
+                {
+
+                    idLogAcessoUsuario = e.idLogAcessoUsuario,
+                    idUser = e.idUser,
+                    dsUrl = e.dsUrl,
+                    idController = e.idController,
+                    dsParametros = e.dsParametros,
+                    dsFiltros = e.dsFiltros,
+                    dtAcesso = e.dtAcesso,
+                    dsAplicacao = e.dsAplicacao,
+                    codResposta = e.codResposta,
+                    msgErro = e.msgErro,
+                    dsJson = e.dsJson,
+                    dsUserAgent = e.dsUserAgent,
+                    dsMethod = e.dsMethod,
+
+                }).ToList<dynamic>();
+            }
+            else if (colecao == 2) // [Portal] Acesso de usuários => POST, PUT e DELETE (desenvolvedor)
+            {
+                CollectionTbLogAcessoUsuario = query.Select(e => new
+                {
+
+                    idLogAcessoUsuario = e.idLogAcessoUsuario,
+                    user = new { idUser = e.idUser,
+                                 ds_login = e.webpages_Users.ds_login
+                               },
+                    dsUrl = e.dsUrl,
+                    dsParametros = e.dsParametros,
+                    dsFiltros = e.dsFiltros,
+                    dtAcesso = e.dtAcesso,
+                    dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" : 
+                                  e.dsAplicacao.ToUpper() == "P" ? "Portal" : e.dsAplicacao,
+                    codResposta = e.codResposta,
+                    msgErro = e.msgErro,
+                    dsJson = e.dsJson,
+                    dsMethod = e.dsMethod,
+                    controller = new
+                    {
+                        id_controller = e.idController,
+                        ds_controller = e.webpages_Controllers != null && e.idController > 50 ?
+                                             (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
+                                                e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
+                                              (e.webpages_Controllers.id_subController != null ?
+                                                       e.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
+                                                       e.webpages_Controllers.ds_controller :
+                                                       "Login",
+
+                    },
+                    dsUserAgent = e.dsUserAgent,
+                }).ToList<dynamic>();
+            }
+
+            retorno.Registros = CollectionTbLogAcessoUsuario;
+
+            return retorno;
+        }
             catch (Exception e)
             {
                 if (e is DbEntityValidationException)
@@ -419,10 +401,10 @@ namespace api.Negocios.Admin
         {
             try
             {
-                _db.tbLogAcessoUsuarios.Add(param);
-                _db.SaveChanges();
-                return param.idLogAcessoUsuario;
-            }
+            _db.tbLogAcessoUsuarios.Add(param);
+            _db.SaveChanges();
+            return param.idLogAcessoUsuario;
+        }
             catch (Exception e)
             {
                 if (e is DbEntityValidationException)
@@ -444,9 +426,9 @@ namespace api.Negocios.Admin
         {
             try
             {
-                _db.tbLogAcessoUsuarios.Remove(_db.tbLogAcessoUsuarios.Where(e => e.idLogAcessoUsuario == idLogAcessoUsuario).First());
-                _db.SaveChanges();
-            }
+            _db.tbLogAcessoUsuarios.Remove(_db.tbLogAcessoUsuarios.Where(e => e.idLogAcessoUsuario == idLogAcessoUsuario).First());
+            _db.SaveChanges();
+        }
             catch (Exception e)
             {
                 if (e is DbEntityValidationException)
@@ -466,38 +448,38 @@ namespace api.Negocios.Admin
         {
             try
             {
-                tbLogAcessoUsuario value = _db.tbLogAcessoUsuarios
-                        .Where(e => e.idLogAcessoUsuario == param.idLogAcessoUsuario)
-                        .First<tbLogAcessoUsuario>();
+            tbLogAcessoUsuario value = _db.tbLogAcessoUsuarios
+                    .Where(e => e.idLogAcessoUsuario == param.idLogAcessoUsuario)
+                    .First<tbLogAcessoUsuario>();
 
-                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-                //if (param.idLogAcessoUsuario != null && param.idLogAcessoUsuario != value.idLogAcessoUsuario)
-                //    value.idLogAcessoUsuario = param.idLogAcessoUsuario;
-                //if (param.idUser != null && param.idUser != value.idUser)
-                //    value.idUser = param.idUser;
-                if (param.dsUrl != null && param.dsUrl != value.dsUrl)
-                    value.dsUrl = param.dsUrl;
-                if (param.idController != null && param.idController != value.idController)
-                    value.idController = param.idController;
-                if (param.dsParametros != null && param.dsParametros != value.dsParametros)
-                    value.dsParametros = param.dsParametros;
-                if (param.dsFiltros != null && param.dsFiltros != value.dsFiltros)
-                    value.dsFiltros = param.dsFiltros;
-                if (param.dtAcesso != null && param.dtAcesso != value.dtAcesso)
-                    value.dtAcesso = param.dtAcesso;
-                if (param.dsAplicacao != null && param.dsAplicacao != value.dsAplicacao)
-                    value.dsAplicacao = param.dsAplicacao;
-                if (param.codResposta != value.codResposta)
-                    value.codResposta = param.codResposta;
-                if (param.msgErro != null && param.msgErro != value.msgErro)
-                    value.msgErro = param.msgErro;
-                if (param.dsJson != null && param.dsJson != value.dsJson)
-                    value.dsJson = param.dsJson;
-                if (param.dsMethod != null && param.dsMethod != value.dsMethod)
-                    value.dsMethod = param.dsMethod;
-                _db.SaveChanges();
+            //if (param.idLogAcessoUsuario != null && param.idLogAcessoUsuario != value.idLogAcessoUsuario)
+            //    value.idLogAcessoUsuario = param.idLogAcessoUsuario;
+            //if (param.idUser != null && param.idUser != value.idUser)
+            //    value.idUser = param.idUser;
+            if (param.dsUrl != null && param.dsUrl != value.dsUrl)
+                value.dsUrl = param.dsUrl;
+            if (param.idController != null && param.idController != value.idController)
+                value.idController = param.idController;
+            if (param.dsParametros != null && param.dsParametros != value.dsParametros)
+                value.dsParametros = param.dsParametros;
+            if (param.dsFiltros != null && param.dsFiltros != value.dsFiltros)
+                value.dsFiltros = param.dsFiltros;
+            if (param.dtAcesso != null && param.dtAcesso != value.dtAcesso)
+                value.dtAcesso = param.dtAcesso;
+            if (param.dsAplicacao != null && param.dsAplicacao != value.dsAplicacao)
+                value.dsAplicacao = param.dsAplicacao;
+            if (param.codResposta != value.codResposta)
+                value.codResposta = param.codResposta;
+            if (param.msgErro != null && param.msgErro != value.msgErro)
+                value.msgErro = param.msgErro;
+            if (param.dsJson != null && param.dsJson != value.dsJson)
+                value.dsJson = param.dsJson;
+            if (param.dsMethod != null && param.dsMethod != value.dsMethod)
+                value.dsMethod = param.dsMethod;
+            _db.SaveChanges();
             }
             catch (Exception e)
             {

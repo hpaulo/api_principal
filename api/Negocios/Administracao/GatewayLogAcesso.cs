@@ -36,6 +36,7 @@ namespace api.Negocios.Administracao
             // RELACIONAMENTOS
             DS_LOGIN = 201,
             ID_GRUPO = 203,
+            NU_CNPJEMPRESA = 204,
 
             DS_CONTROLLER = 301,
 
@@ -93,6 +94,12 @@ namespace api.Negocios.Administracao
                         // PERSONALIZADO
                         case CAMPOS.DS_LOGIN:
                             string ds_login = Convert.ToString(item.Value);
+                            if (ds_login.Contains("%")) // usa LIKE
+                            {
+                                string busca = ds_login.Replace("%", "").ToString();
+                                entity = entity.Where(e => e.webpages_Users.ds_login.Contains(busca)).AsQueryable<LogAcesso1>();
+                            }
+                            else
                             entity = entity.Where(e => e.webpages_Users.ds_login.Equals(ds_login)).AsQueryable<LogAcesso1>();
                             break;
                         case CAMPOS.ID_GRUPO:
@@ -102,8 +109,20 @@ namespace api.Negocios.Administracao
 
                         case CAMPOS.DS_CONTROLLER:
                             string ds_controller = Convert.ToString(item.Value);
-                            entity = entity.Where(e => e.webpages_Controllers.ds_controller.Equals(ds_controller)).AsQueryable<LogAcesso1>();
-                            break;
+                            if (ds_controller.Contains("%")) // usa LIKE
+                            {
+                                string busca = ds_controller.Replace("%", "").ToString();
+                                entity = entity.Where(e => e.webpages_Controllers.ds_controller.Contains(busca) || 
+                                                      (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.ds_controller.Contains(busca)) ||
+                                                      (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null && e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller.Contains(busca)))
+                                               .AsQueryable<LogAcesso1>();
+                            }
+                            else
+                                entity = entity.Where(e => e.webpages_Controllers.ds_controller.Equals(ds_controller) ||
+                                                      (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.ds_controller.Equals(ds_controller)) ||
+                                                      (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null && e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller.Equals(ds_controller)))
+                                               .AsQueryable<LogAcesso1>();
+                        break;
                 }
                 }
             #endregion
@@ -172,6 +191,24 @@ namespace api.Negocios.Administracao
             //DECLARAÇÕES
             List<dynamic> CollectionLogAcesso = new List<dynamic>();
             Retorno retorno = new Retorno();
+            string outValue = null;
+
+            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+            if (IdGrupo != 0)
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                else
+                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+            }
+            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+            if (CnpjEmpresa != "")
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJEMPRESA, out outValue))
+                    queryString["" + (int)CAMPOS.NU_CNPJEMPRESA] = CnpjEmpresa;
+                else
+                    queryString.Add("" + (int)CAMPOS.NU_CNPJEMPRESA, CnpjEmpresa);
+            }
 
             // GET QUERY
             var query = getQuery( colecao, campo, orderBy, pageSize, pageNumber, queryString);
@@ -231,12 +268,12 @@ namespace api.Negocios.Administracao
                                                        (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
                                                        e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
                                                        (e.webpages_Controllers.id_subController != null ?
-                                                       e.webpages_Methods.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
+                                                       e.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
                                                        e.webpages_Controllers.ds_controller : 
-                                                       "LOGIN",
+                                                       "Login",
                     },
                     dtAcesso = e.dtAcesso,
-                    flMobile = e.flMobile,
+                    dsAplicacao = e.flMobile ? "Mobile" : "Portal",
                     dsUserAgent = e.dsUserAgent
                 }).ToList<dynamic>();
             }

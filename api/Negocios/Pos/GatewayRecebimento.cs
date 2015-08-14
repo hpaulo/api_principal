@@ -279,8 +279,8 @@ namespace api.Negocios.Pos
                     else entity = entity.OrderByDescending(e => e.cdAutorizador).AsQueryable();
                     break;
                 case CAMPOS.DTAVENDA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtaVenda).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dtaVenda).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtaVenda).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).ThenBy(e => e.BandeiraPos.desBandeira).ThenBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.dtaVenda).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).ThenBy(e => e.BandeiraPos.desBandeira).ThenBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
                     break;
                 case CAMPOS.VALORVENDABRUTA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.valorVendaBruta).AsQueryable();
@@ -484,10 +484,19 @@ namespace api.Negocios.Pos
             else if (colecao == 3) // Portal/RelatorioTerminalLogico
             {
                 var subQuery = query
-                .GroupBy(e => new { e.TerminalLogico, e.BandeiraPos })
-                .OrderBy(e => e.Key.TerminalLogico.dsTerminalLogico).ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                .GroupBy(e => new { e.empresa, e.TerminalLogico, e.BandeiraPos })
+                .OrderBy(e => e.Key.empresa.ds_fantasia)
+                .ThenBy(e => e.Key.empresa.filial)
+                .ThenBy(e => e.Key.TerminalLogico.dsTerminalLogico)
+                .ThenBy(e => e.Key.BandeiraPos.desBandeira)
                 .Select(e => new
                 {
+                    empresa = new
+                    {
+                        nu_cnpj = e.Key.empresa.nu_cnpj,
+                        ds_fantasia = e.Key.empresa.ds_fantasia,
+                        filial = e.Key.empresa.filial
+                    },
                     terminal = new
                     {
                         idTerminalLogico = e.Key.TerminalLogico.idTerminalLogico,
@@ -521,16 +530,24 @@ namespace api.Negocios.Pos
             else if (colecao == 4) // Portal/RelatorioSintetico
             {
                 var subQuery = query
-                 .GroupBy(e => new { e.BandeiraPos } )
-                 .OrderBy(e => e.Key.BandeiraPos.desBandeira)
+                 .GroupBy(e => new { e.empresa, e.BandeiraPos } )
+                 .OrderBy(e => e.Key.empresa.ds_fantasia)
+                 .ThenBy(e => e.Key.empresa.filial)
+                 .ThenBy(e => e.Key.BandeiraPos.desBandeira)
                  .Select(e => new
                  {
+                     empresa = new
+                     {
+                         nu_cnpj = e.Key.empresa.nu_cnpj,
+                         ds_fantasia = e.Key.empresa.ds_fantasia,
+                         filial = e.Key.empresa.filial
+                     },
                      bandeira = new
                      {
                          e.Key.BandeiraPos.id,
                          e.Key.BandeiraPos.desBandeira
                      },
-                     idOperadora =e.Key.BandeiraPos.idOperadora,
+                     idOperadora = e.Key.BandeiraPos.idOperadora,
                      totalTransacoes = e.Count(),
                      valorBruto = e.Sum(p => p.valorVendaBruta)
 
@@ -558,6 +575,7 @@ namespace api.Negocios.Pos
                  {
                          e.cnpj,
                          e.dtaVenda,
+                         dsFantasia = e.empresa.ds_fantasia + (e.empresa.filial != null ? e.empresa.filial : ""),
                          dsTerminalLogico = e.TerminalLogico.dsTerminalLogico.Equals("0") ? "-" : e.TerminalLogico.dsTerminalLogico,
                          e.BandeiraPos.desBandeira,
                          e.nsu,

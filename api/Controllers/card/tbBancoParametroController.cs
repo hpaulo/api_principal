@@ -5,16 +5,16 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using api.Models;
-using api.Negocios.Administracao;
+using api.Negocios.Card;
 using api.Bibliotecas;
 using api.Models.Object;
 
-namespace api.Controllers.Log
+namespace api.Controllers.Card
 {
-    public class LogAcessoController : ApiController
+    public class TbBancoParametroController : ApiController
     {
-    
-        // GET /LogAcesso/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
+
+        // GET /tbBancoParametro/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             try
@@ -22,7 +22,7 @@ namespace api.Controllers.Log
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayLogAcesso.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayTbBancoParametro.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
@@ -32,35 +32,34 @@ namespace api.Controllers.Log
             }
         }
 
-        // POST /LogAcesso/token/
-        public HttpResponseMessage Post(string token, LogAcesso1 param)
+        // POST /tbBancoParametro/token/
+        public HttpResponseMessage Post(string token, [FromBody]tbBancoParametro param)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                {
-                    GatewayLogAcesso.Add(token, (int)param.idController);
-                    return Request.CreateResponse(HttpStatusCode.OK);
-                }
+                    return Request.CreateResponse<string>(HttpStatusCode.OK, GatewayTbBancoParametro.Add(token, param));
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
-            catch(Exception e)
+            catch
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
+
+
         }
 
-        /* PUT /LogAcesso/token/
-        public HttpResponseMessage Put(string token, [FromBody]LogAcesso1 param)
+        // PUT /tbBancoParametro/token/
+        public HttpResponseMessage Put(string token, [FromBody]tbBancoParametro param)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayLogAcesso.Update(token, param);
+                    GatewayTbBancoParametro.Update(token, param);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
@@ -72,15 +71,15 @@ namespace api.Controllers.Log
             }
         }
 
-        // DELETE /LogAcesso/token/
-        public HttpResponseMessage Delete(string token, Int32 idUsers, Int32 idController, Int32 idMethod  )
+        // DELETE /tbBancoParametro/token/cdBanco
+        public HttpResponseMessage Delete(string token, string cdBanco)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayLogAcesso.Delete(token, idUsers, idController, idMethod );
+                    GatewayTbBancoParametro.Delete(token, cdBanco);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
@@ -90,6 +89,7 @@ namespace api.Controllers.Log
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-        }*/
+        }
     }
 }
+
