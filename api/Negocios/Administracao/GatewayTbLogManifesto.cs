@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Xml;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Admin
 {
@@ -142,61 +143,73 @@ namespace api.Negocios.Admin
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbLogManifesto = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTbLogManifesto = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbLogManifesto = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    idLog = e.idLog,
-                    dtLog = e.dtLog,
-                    dsComando = e.dsComando,
-                    cdRetorno = e.cdRetorno,
-                    dsRetorno = e.dsRetorno,
-                    dsMetodo = e.dsMetodo,
-                    tpLog = e.tpLog,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbLogManifesto = query.Select(e => new
+                    {
+
+                        idLog = e.idLog,
+                        dtLog = e.dtLog,
+                        dsComando = e.dsComando,
+                        cdRetorno = e.cdRetorno,
+                        dsRetorno = e.dsRetorno,
+                        dsMetodo = e.dsMetodo,
+                        tpLog = e.tpLog,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbLogManifesto = query.Select(e => new
+                    {
+
+                        idLog = e.idLog,
+                        dtLog = e.dtLog,
+                        dsComando = e.dsComando,
+                        cdRetorno = e.cdRetorno,
+                        dsRetorno = e.dsRetorno,
+                        dsMetodo = e.dsMetodo,
+                        tpLog = e.tpLog,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbLogManifesto;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionTbLogManifesto = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    idLog = e.idLog,
-                    dtLog = e.dtLog,
-                    dsComando = e.dsComando,
-                    cdRetorno = e.cdRetorno,
-                    dsRetorno = e.dsRetorno,
-                    dsMetodo = e.dsMetodo,
-                    tpLog = e.tpLog,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar log manifesto" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionTbLogManifesto;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova TbLogManifesto
@@ -205,9 +218,21 @@ namespace api.Negocios.Admin
         /// <returns></returns>
         public static Int32 Add(string token, tbLogManifesto param)
         {
-            _db.tbLogManifestos.Add(param);
-            _db.SaveChanges();
-            return param.idLog;
+            try
+            {
+                _db.tbLogManifestos.Add(param);
+                _db.SaveChanges();
+                return param.idLog;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar log manifesto" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -218,8 +243,20 @@ namespace api.Negocios.Admin
         /// <returns></returns>
         public static void Delete(string token, Int32 idLog)
         {
-            _db.tbLogManifestos.Remove(_db.tbLogManifestos.Where(e => e.idLog.Equals(idLog)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.tbLogManifestos.Remove(_db.tbLogManifestos.Where(e => e.idLog.Equals(idLog)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar log manifesto" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera tbLogManifesto
@@ -228,29 +265,40 @@ namespace api.Negocios.Admin
         /// <returns></returns>
         public static void Update(string token, tbLogManifesto param)
         {
-            tbLogManifesto value = _db.tbLogManifestos
-                    .Where(e => e.idLog.Equals(param.idLog))
-                    .First<tbLogManifesto>();
+            try
+            {
+                tbLogManifesto value = _db.tbLogManifestos
+                        .Where(e => e.idLog.Equals(param.idLog))
+                        .First<tbLogManifesto>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.idLog != null && param.idLog != value.idLog)
-                value.idLog = param.idLog;
-            if (param.dtLog != null && param.dtLog != value.dtLog)
-                value.dtLog = param.dtLog;
-            if (param.dsComando != null && param.dsComando != value.dsComando)
-                value.dsComando = param.dsComando;
-            if (param.cdRetorno != null && param.cdRetorno != value.cdRetorno)
-                value.cdRetorno = param.cdRetorno;
-            if (param.dsRetorno != null && param.dsRetorno != value.dsRetorno)
-                value.dsRetorno = param.dsRetorno;
-            if (param.dsMetodo != null && param.dsMetodo != value.dsMetodo)
-                value.dsMetodo = param.dsMetodo;
-            if (param.tpLog != null && param.tpLog != value.tpLog)
-                value.tpLog = param.tpLog;
-            _db.SaveChanges();
-
+                if (param.idLog != null && param.idLog != value.idLog)
+                    value.idLog = param.idLog;
+                if (param.dtLog != null && param.dtLog != value.dtLog)
+                    value.dtLog = param.dtLog;
+                if (param.dsComando != null && param.dsComando != value.dsComando)
+                    value.dsComando = param.dsComando;
+                if (param.cdRetorno != null && param.cdRetorno != value.cdRetorno)
+                    value.cdRetorno = param.cdRetorno;
+                if (param.dsRetorno != null && param.dsRetorno != value.dsRetorno)
+                    value.dsRetorno = param.dsRetorno;
+                if (param.dsMetodo != null && param.dsMetodo != value.dsMetodo)
+                    value.dsMetodo = param.dsMetodo;
+                if (param.tpLog != null && param.tpLog != value.tpLog)
+                    value.tpLog = param.tpLog;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar log manifesto" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Admin
 {
@@ -256,7 +257,8 @@ namespace api.Negocios.Admin
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-
+            try
+            {
             // Implementar o filtro por Grupo apartir do TOKEN do Usuário
             string outValue = null;
             Int32 IdGrupo = Permissoes.GetIdGrupo(token);
@@ -347,16 +349,14 @@ namespace api.Negocios.Admin
                 {
 
                     idLogAcessoUsuario = e.idLogAcessoUsuario,
-                    webpagesusers = new
-                    {
-                        id_users = e.idUser,
-                        ds_login = e.webpages_Users.ds_login
-                    },
+                    user = new { idUser = e.idUser,
+                                 ds_login = e.webpages_Users.ds_login
+                               },
                     dsUrl = e.dsUrl,
                     dsParametros = e.dsParametros,
                     dsFiltros = e.dsFiltros,
                     dtAcesso = e.dtAcesso,
-                    dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" :
+                    dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" : 
                                   e.dsAplicacao.ToUpper() == "P" ? "Portal" : e.dsAplicacao,
                     codResposta = e.codResposta,
                     msgErro = e.msgErro,
@@ -366,9 +366,9 @@ namespace api.Negocios.Admin
                     {
                         id_controller = e.idController,
                         ds_controller = e.webpages_Controllers != null && e.idController > 50 ?
-                                                       (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
-                                                       e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
-                                                       (e.webpages_Controllers.id_subController != null ?
+                                             (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
+                                                e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
+                                              (e.webpages_Controllers.id_subController != null ?
                                                        e.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
                                                        e.webpages_Controllers.ds_controller :
                                                        "Login",
@@ -382,6 +382,16 @@ namespace api.Negocios.Admin
 
             return retorno;
         }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar Log de Acesso de Usuário " : erro);
+                }
+                throw new Exception(e.Message);
+            }
+        }
         /// <summary>
         /// Adiciona nova TbLogAcessoUsuario
         /// </summary>
@@ -389,9 +399,21 @@ namespace api.Negocios.Admin
         /// <returns></returns>
         public static Int32 Add(string token, tbLogAcessoUsuario param)
         {
+            try
+            {
             _db.tbLogAcessoUsuarios.Add(param);
             _db.SaveChanges();
             return param.idLogAcessoUsuario;
+        }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar Log de Acesso de Usuário " : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -402,8 +424,20 @@ namespace api.Negocios.Admin
         /// <returns></returns>
         public static void Delete(string token, Int32 idLogAcessoUsuario)
         {
+            try
+            {
             _db.tbLogAcessoUsuarios.Remove(_db.tbLogAcessoUsuarios.Where(e => e.idLogAcessoUsuario == idLogAcessoUsuario).First());
             _db.SaveChanges();
+        }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar Log de Acesso de Usuário " : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera tbLogAcessoUsuario
@@ -412,6 +446,8 @@ namespace api.Negocios.Admin
         /// <returns></returns>
         public static void Update(string token, tbLogAcessoUsuario param)
         {
+            try
+            {
             tbLogAcessoUsuario value = _db.tbLogAcessoUsuarios
                     .Where(e => e.idLogAcessoUsuario == param.idLogAcessoUsuario)
                     .First<tbLogAcessoUsuario>();
@@ -444,7 +480,16 @@ namespace api.Negocios.Admin
             if (param.dsMethod != null && param.dsMethod != value.dsMethod)
                 value.dsMethod = param.dsMethod;
             _db.SaveChanges();
-
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar Log de Acesso de Usuário " : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

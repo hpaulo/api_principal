@@ -128,57 +128,69 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionPessoa = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionPessoa = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionPessoa = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    id_pesssoa = e.id_pesssoa,
-                    nm_pessoa = e.nm_pessoa,
-                    dt_nascimento = e.dt_nascimento,
-                    nu_telefone = e.nu_telefone,
-                    nu_ramal = e.nu_ramal,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionPessoa = query.Select(e => new
+                    {
+
+                        id_pesssoa = e.id_pesssoa,
+                        nm_pessoa = e.nm_pessoa,
+                        dt_nascimento = e.dt_nascimento,
+                        nu_telefone = e.nu_telefone,
+                        nu_ramal = e.nu_ramal,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionPessoa = query.Select(e => new
+                    {
+
+                        id_pesssoa = e.id_pesssoa,
+                        nm_pessoa = e.nm_pessoa,
+                        dt_nascimento = e.dt_nascimento,
+                        nu_telefone = e.nu_telefone,
+                        nu_ramal = e.nu_ramal,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionPessoa;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionPessoa = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    id_pesssoa = e.id_pesssoa,
-                    nm_pessoa = e.nm_pessoa,
-                    dt_nascimento = e.dt_nascimento,
-                    nu_telefone = e.nu_telefone,
-                    nu_ramal = e.nu_ramal,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar pessoa" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionPessoa;
-
-            return retorno;
         }
 
 
@@ -193,6 +205,7 @@ namespace api.Negocios.Administracao
             try {
                 _db.pessoas.Add(param);
                 _db.SaveChanges();
+                return param.id_pesssoa;
             }catch (Exception e)
             {
                 if (e is DbEntityValidationException)
@@ -202,7 +215,6 @@ namespace api.Negocios.Administracao
                 }
                 throw new Exception(e.Message);
             }
-            return param.id_pesssoa;
         }
 
 
@@ -213,12 +225,24 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Delete(string token, Int32 id_pesssoa)
         {
-            pessoa pessoa = _db.pessoas.Where(e => e.id_pesssoa == id_pesssoa).FirstOrDefault();
+            try
+            {
+                pessoa pessoa = _db.pessoas.Where(e => e.id_pesssoa == id_pesssoa).FirstOrDefault();
 
-            if (pessoa == null) throw new Exception("Pessoa inexistente");
+                if (pessoa == null) throw new Exception("Pessoa inexistente");
 
-            _db.pessoas.Remove(pessoa);
-            _db.SaveChanges();
+                _db.pessoas.Remove(pessoa);
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar pessoa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -230,33 +254,44 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Update(string token, pessoa param)
         {
-            pessoa value = _db.pessoas
-                        .Where(e => e.id_pesssoa == param.id_pesssoa)
-                        .First<pessoa>();
-            
-
-            if (value == null) throw new Exception("Pessoa inexistente");
-
-            if (param.nm_pessoa != null && param.nm_pessoa != value.nm_pessoa)
-                value.nm_pessoa = param.nm_pessoa;
-            if (param.dt_nascimento != null && param.dt_nascimento != value.dt_nascimento)
-                value.dt_nascimento = param.dt_nascimento;
-            if (param.nu_telefone != null && param.nu_telefone != value.nu_telefone)
+            try
             {
-                if (param.nu_telefone == "")
-                    value.nu_telefone = null;
-                else
-                    value.nu_telefone = param.nu_telefone;
-            }
-            if (param.nu_ramal != null && param.nu_ramal != value.nu_ramal)
-            {
-                if( param.nu_ramal == "")
-                    value.nu_ramal = null;
-                else
-                    value.nu_ramal = param.nu_ramal;
-            }
-            _db.SaveChanges();
+                pessoa value = _db.pessoas
+                            .Where(e => e.id_pesssoa == param.id_pesssoa)
+                            .First<pessoa>();
 
+
+                if (value == null) throw new Exception("Pessoa inexistente");
+
+                if (param.nm_pessoa != null && param.nm_pessoa != value.nm_pessoa)
+                    value.nm_pessoa = param.nm_pessoa;
+                if (param.dt_nascimento != null && param.dt_nascimento != value.dt_nascimento)
+                    value.dt_nascimento = param.dt_nascimento;
+                if (param.nu_telefone != null && param.nu_telefone != value.nu_telefone)
+                {
+                    if (param.nu_telefone == "")
+                        value.nu_telefone = null;
+                    else
+                        value.nu_telefone = param.nu_telefone;
+                }
+                if (param.nu_ramal != null && param.nu_ramal != value.nu_ramal)
+                {
+                    if (param.nu_ramal == "")
+                        value.nu_ramal = null;
+                    else
+                        value.nu_ramal = param.nu_ramal;
+                }
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar pessoa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

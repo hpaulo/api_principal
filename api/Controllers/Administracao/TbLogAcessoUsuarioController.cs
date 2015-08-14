@@ -8,6 +8,7 @@ using api.Models;
 using api.Negocios.Admin;
 using api.Bibliotecas;
 using api.Models.Object;
+using Newtonsoft.Json;
 
 namespace api.Controllers.Admin
 {
@@ -17,17 +18,34 @@ namespace api.Controllers.Admin
         // GET /tbLogAcessoUsuario/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
+
+                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayTbLogAcessoUsuario.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
+                {
+                    Retorno dados = GatewayTbLogAcessoUsuario.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+                }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.msgErro = "Unauthorized";
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
@@ -35,16 +53,32 @@ namespace api.Controllers.Admin
         /* POST /tbLogAcessoUsuario/token/
         public HttpResponseMessage Post(string token, [FromBody]tbLogAcessoUsuario param)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, GatewayTbLogAcessoUsuario.Add(token, param));
+                {
+                    Int32 dados = GatewayTbLogAcessoUsuario.Add(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
+                }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.msgErro = "Unauthorized";
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
 
@@ -72,7 +106,7 @@ namespace api.Controllers.Admin
         }
 
         // DELETE /tbLogAcessoUsuario/token/idLogAcessoUsuario
-        public HttpResponseMessage Delete(string token, Int32 idLogAcessoUsuario)
+        /*public HttpResponseMessage Delete(string token, Int32 idLogAcessoUsuario)
         {
             try
             {

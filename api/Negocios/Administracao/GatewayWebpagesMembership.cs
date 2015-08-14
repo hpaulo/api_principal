@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using WebMatrix.WebData;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Administracao
 {
@@ -182,69 +183,81 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionWebpages_Membership = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionWebpages_Membership = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionWebpages_Membership = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    UserId = e.UserId,
-                    CreateDate = e.CreateDate,
-                    ConfirmationToken = e.ConfirmationToken,
-                    IsConfirmed = e.IsConfirmed,
-                    LastPasswordFailureDate = e.LastPasswordFailureDate,
-                    PasswordFailuresSinceLastSuccess = e.PasswordFailuresSinceLastSuccess,
-                    Password = e.Password,
-                    PasswordChangedDate = e.PasswordChangedDate,
-                    PasswordSalt = e.PasswordSalt,
-                    PasswordVerificationToken = e.PasswordVerificationToken,
-                    PasswordVerificationTokenExpirationDate = e.PasswordVerificationTokenExpirationDate,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionWebpages_Membership = query.Select(e => new
+                    {
+
+                        UserId = e.UserId,
+                        CreateDate = e.CreateDate,
+                        ConfirmationToken = e.ConfirmationToken,
+                        IsConfirmed = e.IsConfirmed,
+                        LastPasswordFailureDate = e.LastPasswordFailureDate,
+                        PasswordFailuresSinceLastSuccess = e.PasswordFailuresSinceLastSuccess,
+                        Password = e.Password,
+                        PasswordChangedDate = e.PasswordChangedDate,
+                        PasswordSalt = e.PasswordSalt,
+                        PasswordVerificationToken = e.PasswordVerificationToken,
+                        PasswordVerificationTokenExpirationDate = e.PasswordVerificationTokenExpirationDate,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionWebpages_Membership = query.Select(e => new
+                    {
+
+                        UserId = e.UserId,
+                        CreateDate = e.CreateDate,
+                        ConfirmationToken = e.ConfirmationToken,
+                        IsConfirmed = e.IsConfirmed,
+                        LastPasswordFailureDate = e.LastPasswordFailureDate,
+                        PasswordFailuresSinceLastSuccess = e.PasswordFailuresSinceLastSuccess,
+                        Password = e.Password,
+                        PasswordChangedDate = e.PasswordChangedDate,
+                        PasswordSalt = e.PasswordSalt,
+                        PasswordVerificationToken = e.PasswordVerificationToken,
+                        PasswordVerificationTokenExpirationDate = e.PasswordVerificationTokenExpirationDate,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionWebpages_Membership;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionWebpages_Membership = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    UserId = e.UserId,
-                    CreateDate = e.CreateDate,
-                    ConfirmationToken = e.ConfirmationToken,
-                    IsConfirmed = e.IsConfirmed,
-                    LastPasswordFailureDate = e.LastPasswordFailureDate,
-                    PasswordFailuresSinceLastSuccess = e.PasswordFailuresSinceLastSuccess,
-                    Password = e.Password,
-                    PasswordChangedDate = e.PasswordChangedDate,
-                    PasswordSalt = e.PasswordSalt,
-                    PasswordVerificationToken = e.PasswordVerificationToken,
-                    PasswordVerificationTokenExpirationDate = e.PasswordVerificationTokenExpirationDate,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar membership" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionWebpages_Membership;
-
-            return retorno;
         }
 
 
@@ -256,9 +269,21 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, webpages_Membership param)
         {
-            _db.webpages_Membership.Add(param);
-            _db.SaveChanges();
-            return param.UserId;
+            try
+            {
+                _db.webpages_Membership.Add(param);
+                _db.SaveChanges();
+                return param.UserId;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao adicionar membership" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -269,8 +294,20 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Delete(string token, Int32 UserId)
         {
-            _db.webpages_Membership.RemoveRange(_db.webpages_Membership.Where(e => e.UserId == UserId));
-            _db.SaveChanges();
+            try
+            {
+                _db.webpages_Membership.RemoveRange(_db.webpages_Membership.Where(e => e.UserId == UserId));
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar membership" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -284,16 +321,28 @@ namespace api.Negocios.Administracao
         /// 
         public static void Update(string token, webpages_Membership param)
         {
-            var value = _db.webpages_Users
-                    .Where(e => e.id_users.Equals(param.UserId))
-                    .FirstOrDefault();
+            try
+            {
+                var value = _db.webpages_Users
+                        .Where(e => e.id_users.Equals(param.UserId))
+                        .FirstOrDefault();
 
 
-            string resetToken = WebSecurity.GeneratePasswordResetToken(value.ds_login, 2);
-            if(param.Password == "" )
-                WebSecurity.ResetPassword(resetToken,"atos123");
-            else
-                WebSecurity.ResetPassword(resetToken, param.Password);
+                string resetToken = WebSecurity.GeneratePasswordResetToken(value.ds_login, 2);
+                if (param.Password == "")
+                    WebSecurity.ResetPassword(resetToken, "atos123");
+                else
+                    WebSecurity.ResetPassword(resetToken, param.Password);
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar membership" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -307,34 +356,46 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Update(string token, Models.Object.AlterarSenha param)
         {
-            Int32 idUser = 0;
-
-            if (param.UserId == -1)
-                idUser = Permissoes.GetIdUser(token);
-            else
-                idUser = param.UserId;
-
-            var value = _db.webpages_Users
-                    .Where(e => e.id_users.Equals(idUser))
-                    .FirstOrDefault();
-
-            if (value != null)
+            try
             {
-                string resetToken = WebSecurity.GeneratePasswordResetToken(value.ds_login, 2);
-                if (param.NovaSenha == "")
-                    WebSecurity.ResetPassword(resetToken, "atos123");
-                else if (param.SenhaAtual != null)
+                Int32 idUser = 0;
+
+                if (param.UserId == -1)
+                    idUser = Permissoes.GetIdUser(token);
+                else
+                    idUser = param.UserId;
+
+                var value = _db.webpages_Users
+                        .Where(e => e.id_users.Equals(idUser))
+                        .FirstOrDefault();
+
+                if (value != null)
                 {
-                    if (WebSecurity.Login(value.ds_login, param.SenhaAtual, persistCookie: false))
-                        WebSecurity.ResetPassword(resetToken, param.NovaSenha);
+                    string resetToken = WebSecurity.GeneratePasswordResetToken(value.ds_login, 2);
+                    if (param.NovaSenha == "")
+                        WebSecurity.ResetPassword(resetToken, "atos123");
+                    else if (param.SenhaAtual != null)
+                    {
+                        if (WebSecurity.Login(value.ds_login, param.SenhaAtual, persistCookie: false))
+                            WebSecurity.ResetPassword(resetToken, param.NovaSenha);
+                        else
+                            throw new Exception("Senha inválida!");
+                    }
                     else
-                        throw new Exception("Senha inválida!");
+                        throw new Exception("Operação inválida!");
                 }
                 else
-                    throw new Exception("Operação inválida!");
+                    throw new Exception("Usuário inválido!");
             }
-            else
-                throw new Exception("Usuário inválido!");
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar membership" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 

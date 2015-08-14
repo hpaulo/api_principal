@@ -54,7 +54,12 @@ namespace api.Bibliotecas
             }
             catch (Exception e)
             {
-                throw new Exception("Mensagem: " + e.Message);
+                if(e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException) e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar log" : erro);
+                } 
+                throw new Exception(e.Message);
             }
         }
 

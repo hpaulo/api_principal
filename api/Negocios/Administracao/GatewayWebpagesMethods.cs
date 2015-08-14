@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Administracao
 {
@@ -127,57 +128,69 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionWebpages_Methods = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionWebpages_Methods = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionWebpages_Methods = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    id_method = e.id_method,
-                    ds_method = e.ds_method,
-                    nm_method = e.nm_method,
-                    fl_menu = e.fl_menu,
-                    id_controller = e.id_controller,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionWebpages_Methods = query.Select(e => new
+                    {
+
+                        id_method = e.id_method,
+                        ds_method = e.ds_method,
+                        nm_method = e.nm_method,
+                        fl_menu = e.fl_menu,
+                        id_controller = e.id_controller,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionWebpages_Methods = query.Select(e => new
+                    {
+
+                        id_method = e.id_method,
+                        ds_method = e.ds_method,
+                        nm_method = e.nm_method,
+                        fl_menu = e.fl_menu,
+                        id_controller = e.id_controller,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionWebpages_Methods;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionWebpages_Methods = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    id_method = e.id_method,
-                    ds_method = e.ds_method,
-                    nm_method = e.nm_method,
-                    fl_menu = e.fl_menu,
-                    id_controller = e.id_controller,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar method" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionWebpages_Methods;
-
-            return retorno;
         }
 
 
@@ -189,13 +202,25 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, webpages_Methods param)
         {
-            if (param.nm_method == null)
-                param.nm_method = param.ds_method;
+            try
+            {
+                if (param.nm_method == null)
+                    param.nm_method = param.ds_method;
 
-            param.fl_menu = false;
-            _db.webpages_Methods.Add(param);
-            _db.SaveChanges();
-            return param.id_method;
+                param.fl_menu = false;
+                _db.webpages_Methods.Add(param);
+                _db.SaveChanges();
+                return param.id_method;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar method" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -206,10 +231,21 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Delete(string token, Int32 id_method)
         {
-            GatewayWebpagesPermissions.DeleteMethod(token, id_method);
-
-            _db.webpages_Methods.RemoveRange(_db.webpages_Methods.Where(e => e.id_method.Equals(id_method)));
-            _db.SaveChanges();
+            try
+            {
+                GatewayWebpagesPermissions.DeleteMethod(token, id_method);
+                _db.webpages_Methods.RemoveRange(_db.webpages_Methods.Where(e => e.id_method.Equals(id_method)));
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar method" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -220,19 +256,31 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void DeleteControllerMethods(string token, Int32 id_controller)
         {
-            List<Int32> Methods = _db.webpages_Methods
-                    .Where(e => e.id_controller == id_controller)
-                    .Select(e => e.id_method )
-                    .ToList<Int32>();
-
-            foreach (var item in Methods)
+            try
             {
-                Delete(token, item);
-            }
+                List<Int32> Methods = _db.webpages_Methods
+                        .Where(e => e.id_controller == id_controller)
+                        .Select(e => e.id_method)
+                        .ToList<Int32>();
 
-            //GatewayWebpagesPermissions.DeleteMethod(token, id_method);
-            //_db.webpages_Methods.RemoveRange( _db.webpages_Methods.Where(e => e.id_controller == id_controller ));
-            //_db.SaveChanges();
+                foreach (var item in Methods)
+                {
+                    Delete(token, item);
+                }
+
+                //GatewayWebpagesPermissions.DeleteMethod(token, id_method);
+                //_db.webpages_Methods.RemoveRange( _db.webpages_Methods.Where(e => e.id_controller == id_controller ));
+                //_db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar method" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -244,20 +292,31 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Update(string token, webpages_Methods param)
         {
-            webpages_Methods value = _db.webpages_Methods
-                    .Where(e => e.id_method.Equals(param.id_method))
-                    .First<webpages_Methods>();
-
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
-
-            if (param.ds_method != null && param.ds_method != value.ds_method)
+            try
             {
-                value.ds_method = param.ds_method;
-                value.nm_method = param.ds_method;
+                webpages_Methods value = _db.webpages_Methods
+                        .Where(e => e.id_method.Equals(param.id_method))
+                        .First<webpages_Methods>();
+
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+
+                if (param.ds_method != null && param.ds_method != value.ds_method)
+                {
+                    value.ds_method = param.ds_method;
+                    value.nm_method = param.ds_method;
+                }
+
+                _db.SaveChanges();
             }
-
-            _db.SaveChanges();
-
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar method" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }
