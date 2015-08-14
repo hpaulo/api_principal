@@ -71,15 +71,15 @@ namespace api.Controllers.Card
             }
         }
 
-        // DELETE /tbContaCorrente/token/idContaCorrente
-        public HttpResponseMessage Delete(string token, Int32 idContaCorrente)
+        // DELETE /tbContaCorrente/token/cdContaCorrente
+        public HttpResponseMessage Delete(string token, Int32 cdContaCorrente)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbContaCorrente.Delete(token, idContaCorrente);
+                    GatewayTbContaCorrente.Delete(token, cdContaCorrente);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else

@@ -278,8 +278,8 @@ namespace api.Negocios.Pos
                     else entity = entity.OrderByDescending(e => e.valorParcelaLiquida);
                     break;
                 case CAMPOS.DTARECEBIMENTO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
-                    else entity = entity.OrderByDescending(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
+                    else entity = entity.OrderByDescending(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
                     break;
                 case CAMPOS.VALORDESCONTADO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.valorDescontado);
@@ -289,12 +289,12 @@ namespace api.Negocios.Pos
 
                 // PERSONALIZADO
                 case CAMPOS.DTAVENDA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
-                    else entity = entity.OrderByDescending(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
+                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
+                    else entity = entity.OrderByDescending(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
                     break;
                 case CAMPOS.DS_FANTASIA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira);
-                    else entity = entity.OrderByDescending(e => e.Recebimento.empresa.ds_fantasia).ThenByDescending(e => e.Recebimento.BandeiraPos.desBandeira); ;
+                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira);
+                    else entity = entity.OrderByDescending(e => e.Recebimento.empresa.ds_fantasia).ThenByDescending(e => e.Recebimento.empresa.filial).ThenByDescending(e => e.Recebimento.BandeiraPos.desBandeira); ;
                     break;
                 case CAMPOS.DESBANDEIRA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.BandeiraPos.desBandeira);
@@ -644,7 +644,7 @@ namespace api.Negocios.Pos
                 {
 
                     cnpj = e.Recebimento.cnpj,
-                    dsFantasia = e.Recebimento.empresa.ds_fantasia,
+                    dsFantasia = e.Recebimento.empresa.ds_fantasia + (e.Recebimento.empresa.filial != null ? e.Recebimento.empresa.filial : ""),
                     desBandeira = e.Recebimento.BandeiraPos.desBandeira,
                     dtaVenda = e.Recebimento.dtaVenda,
                     dtaRecebimento = e.dtaRecebimento,
@@ -662,11 +662,13 @@ namespace api.Negocios.Pos
                 var subQuery = query
                     .GroupBy(x => new { x.Recebimento.empresa, x.Recebimento.BandeiraPos })
                     .OrderBy(e => e.Key.empresa.ds_fantasia)
+                    .ThenBy(e => e.Key.empresa.filial)
                     .ThenBy(e => e.Key.BandeiraPos.desBandeira)
                     .Select(e => new
                     {
                         empresa = new  { nu_cnpj = e.Key.empresa.nu_cnpj,
                                          ds_fantasia = e.Key.empresa.ds_fantasia,
+                                         filial = e.Key.empresa.filial
                                        },
                         bandeira = new {
                                             desBandeira = e.Key.BandeiraPos.desBandeira,

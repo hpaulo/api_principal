@@ -46,7 +46,7 @@ namespace api.Controllers.Log
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
-            catch
+            catch(Exception e)
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }

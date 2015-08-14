@@ -12,7 +12,7 @@ namespace api.Models
             this.tbExtratos = new List<tbExtrato>();
         }
 
-        public int idContaCorrente { get; set; }
+        public int cdContaCorrente { get; set; }
         public int cdGrupo { get; set; }
         public string nrCnpj { get; set; }
         public string cdBanco { get; set; }

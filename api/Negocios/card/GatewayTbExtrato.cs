@@ -348,8 +348,8 @@ namespace api.Negocios.Card
                 throw new Exception("Conta corrente não informada");
 
             // Conta
-            Int32 idContaCorrente = Convert.ToInt32(queryString["" + (int)CAMPOS.CDCONTACORRENTE]);
-            tbContaCorrente conta = _db.tbContaCorrentes.Where(e => e.idContaCorrente == idContaCorrente).FirstOrDefault();
+            Int32 cdContaCorrente = Convert.ToInt32(queryString["" + (int)CAMPOS.CDCONTACORRENTE]);
+            tbContaCorrente conta = _db.tbContaCorrentes.Where(e => e.cdContaCorrente == cdContaCorrente).FirstOrDefault();
             if (conta == null) throw new Exception("Conta corrente inexistente");
             if (!conta.flAtivo) throw new Exception("Conta corrente está inativada");
 
@@ -357,7 +357,7 @@ namespace api.Negocios.Card
             if (!Directory.Exists(pastaExtratos)) Directory.CreateDirectory(pastaExtratos);
             if (!Directory.Exists(pastaExtratos + idGrupo + "\\")) Directory.CreateDirectory(pastaExtratos + idGrupo + "/");
             // Diretório específico da conta
-            string diretorio = pastaExtratos + idGrupo + "\\" + idContaCorrente + "\\";
+            string diretorio = pastaExtratos + idGrupo + "\\" + cdContaCorrente + "\\";
             if (!Directory.Exists(diretorio)) Directory.CreateDirectory(diretorio);
 
             var httpRequest = HttpContext.Current.Request;
@@ -464,7 +464,7 @@ namespace api.Negocios.Card
                 {
                     // Obtém a nova movimentação
                     tbExtrato extrato = new tbExtrato();
-                    extrato.cdContaCorrente = idContaCorrente;
+                    extrato.cdContaCorrente = cdContaCorrente;
                     extrato.dtExtrato = new DateTime(transacao.Date.Year, transacao.Date.Month, transacao.Date.Day);
                     extrato.vlMovimento = transacao.Amount;
                     extrato.nrDocumento = transacao.CheckNum;

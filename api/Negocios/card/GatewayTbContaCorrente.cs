@@ -27,7 +27,7 @@ namespace api.Negocios.Card
         /// </summary>
         public enum CAMPOS
         {
-            IDCONTACORRENTE = 100,
+            CDCONTACORRENTE = 100,
             CDGRUPO = 101,
             NRCNPJ = 102,
             CDBANCO = 103,
@@ -60,9 +60,9 @@ namespace api.Negocios.Card
                 CAMPOS filtroEnum = (CAMPOS)key;
                 switch (filtroEnum)
                 {
-                    case CAMPOS.IDCONTACORRENTE:
-                        Int32 idContaCorrente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idContaCorrente.Equals(idContaCorrente)).AsQueryable<tbContaCorrente>();
+                    case CAMPOS.CDCONTACORRENTE:
+                        Int32 cdContaCorrente = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.cdContaCorrente.Equals(cdContaCorrente)).AsQueryable<tbContaCorrente>();
                         break;
                     case CAMPOS.CDGRUPO:
                         Int32 cdGrupo = Convert.ToInt32(item.Value);
@@ -93,9 +93,9 @@ namespace api.Negocios.Card
             CAMPOS filtro = (CAMPOS)campo;
             switch (filtro)
             {
-                case CAMPOS.IDCONTACORRENTE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.idContaCorrente).AsQueryable<tbContaCorrente>();
-                    else entity = entity.OrderByDescending(e => e.idContaCorrente).AsQueryable<tbContaCorrente>();
+                case CAMPOS.CDCONTACORRENTE:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdContaCorrente).AsQueryable<tbContaCorrente>();
+                    else entity = entity.OrderByDescending(e => e.cdContaCorrente).AsQueryable<tbContaCorrente>();
                     break;
                 case CAMPOS.CDGRUPO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.cdGrupo).ThenBy(e => e.nrAgencia).ThenBy(e => e.nrConta).ThenBy(e => e.nrCnpj).AsQueryable<tbContaCorrente>();
@@ -180,7 +180,7 @@ namespace api.Negocios.Card
                 CollectionTbContaCorrente = query.Select(e => new
                 {
 
-                    idContaCorrente = e.idContaCorrente,
+                    cdContaCorrente = e.cdContaCorrente,
                     cdGrupo = e.cdGrupo,
                     nrCnpj = e.nrCnpj,
                     cdBanco = e.cdBanco,
@@ -194,7 +194,7 @@ namespace api.Negocios.Card
                 CollectionTbContaCorrente = query.Select(e => new
                 {
 
-                    idContaCorrente = e.idContaCorrente,
+                    cdContaCorrente = e.cdContaCorrente,
                     cdGrupo = e.cdGrupo,
                     nrCnpj = e.nrCnpj,
                     cdBanco = e.cdBanco,
@@ -207,7 +207,7 @@ namespace api.Negocios.Card
             {
                 List<dynamic> contas = query.Select(e => new
                 {
-                    idContaCorrente = e.idContaCorrente,
+                    cdContaCorrente = e.cdContaCorrente,
                     cdGrupo = e.cdGrupo,
                     empresa = new { nu_cnpj = e.nrCnpj,
                         ds_fantasia = e.empresa.ds_fantasia,
@@ -224,7 +224,7 @@ namespace api.Negocios.Card
                 {
                     CollectionTbContaCorrente.Add(new
                     {
-                        idContaCorrente = conta.idContaCorrente,
+                        cdContaCorrente = conta.cdContaCorrente,
                         cdGrupo = conta.cdGrupo,
                         empresa = conta.empresa,
                         banco = new { Codigo = conta.banco.Codigo, NomeExtenso = GatewayBancos.Get(conta.banco.Codigo) },
@@ -260,7 +260,7 @@ namespace api.Negocios.Card
                 param.flAtivo = true;
                 _db.tbContaCorrentes.Add(param);
                 _db.SaveChanges();
-                return param.idContaCorrente;
+                return param.cdContaCorrente;
             }
                
             throw new Exception("Conta já cadastrada!");
@@ -272,14 +272,14 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 idContaCorrente)
+        public static void Delete(string token, Int32 cdContaCorrente)
         {
-            tbContaCorrente conta = _db.tbContaCorrentes.Where(e => e.idContaCorrente == idContaCorrente).FirstOrDefault();
+            tbContaCorrente conta = _db.tbContaCorrentes.Where(e => e.cdContaCorrente == cdContaCorrente).FirstOrDefault();
             if(conta == null) throw new Exception("Conta inexistente!");
             // Remove as vigências
-            /*GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.Delete(token, conta.idContaCorrente);
+            /*GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.Delete(token, conta.cdContaCorrente);
             // Remove os extratos e os arquivos associados
-            List<tbExtrato> extratos = _db.tbExtratos.Where(e => e.cdContaCorrente == conta.idContaCorrente).ToList<tbExtrato>();
+            List<tbExtrato> extratos = _db.tbExtratos.Where(e => e.cdContaCorrente == conta.cdContaCorrente).ToList<tbExtrato>();
             foreach (var extrato in extratos) GatewayTbExtrato.Delete(token, extrato.idExtrato);*/
             // Remove a conta
             _db.tbContaCorrentes.Remove(conta);
@@ -293,7 +293,7 @@ namespace api.Negocios.Card
         public static void Update(string token, tbContaCorrente param)
         {
             tbContaCorrente value = _db.tbContaCorrentes
-                    .Where(e => e.idContaCorrente == param.idContaCorrente)
+                    .Where(e => e.cdContaCorrente == param.cdContaCorrente)
                     .First<tbContaCorrente>();
 
             if (value == null) throw new Exception("Conta inexistente!");

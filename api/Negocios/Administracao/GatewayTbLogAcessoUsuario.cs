@@ -347,48 +347,34 @@ namespace api.Negocios.Admin
                 {
 
                     idLogAcessoUsuario = e.idLogAcessoUsuario,
-                    user = new { idUser = e.idUser,
-                                 ds_login = e.webpages_Users.ds_login
-                               },
+                    webpagesusers = new
+                    {
+                        id_users = e.idUser,
+                        ds_login = e.webpages_Users.ds_login
+                    },
                     dsUrl = e.dsUrl,
                     dsParametros = e.dsParametros,
                     dsFiltros = e.dsFiltros,
-                    dtAcesso = e.dtAcesso,
-                    dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" : 
-                                  e.dsAplicacao.ToUpper() == "P" ? "Portal" : e.dsAplicacao,
-                    codResposta = e.codResposta,
-                    msgErro = e.msgErro,
-                    dsJson = e.dsJson,
-                    dsMethod = e.dsMethod,
-
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 3) // [Portal] Acesso de usuários => Acesso aos controllers (usuário)
-            {
-                CollectionTbLogAcessoUsuario = query.Select(e => new
-                {
-
-                    idLogAcessoUsuario = e.idLogAcessoUsuario,
-                    user = new
-                    {
-                        idUser = e.idUser,
-                        ds_login = e.webpages_Users.ds_login
-                    },
-                    controller = new
-                    {
-                        idController = e.idController,
-                        /*path = e.idController == null ? "" :
-                                             (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
-                                                e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
-                                              (e.webpages_Controllers.id_subController != null ?
-                                                e.webpages_Methods.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
-                                              e.webpages_Controllers.ds_controller*/
-                    },
                     dtAcesso = e.dtAcesso,
                     dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" :
                                   e.dsAplicacao.ToUpper() == "P" ? "Portal" : e.dsAplicacao,
                     codResposta = e.codResposta,
                     msgErro = e.msgErro,
+                    dsJson = e.dsJson,
+                    dsMethod = e.dsMethod,
+                    controller = new
+                    {
+                        id_controller = e.idController,
+                        ds_controller = e.webpages_Controllers != null && e.idController > 50 ?
+                                                       (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
+                                                       e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
+                                                       (e.webpages_Controllers.id_subController != null ?
+                                                       e.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
+                                                       e.webpages_Controllers.ds_controller :
+                                                       "Login",
+
+                    },
+                    dsUserAgent = e.dsUserAgent,
                 }).ToList<dynamic>();
             }
 

@@ -1,6 +1,7 @@
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using api.Models.Mapping;
+using api.Models.Object;
 
 namespace api.Models
 {
@@ -218,7 +219,7 @@ namespace api.Models
         public DbSet<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
         public DbSet<tbManifesto> tbManifestos { get; set; }
         public DbSet<tbLogManifesto> tbLogManifestos { get; set; }
-
+        public DbSet<tbBancoParametro> tbBancoParametro { get; set; }
 
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -425,6 +426,7 @@ namespace api.Models
             modelBuilder.Configurations.Add(new tbLoginAdquirenteEmpresaMap());
             modelBuilder.Configurations.Add(new tbManifestoMap());
             modelBuilder.Configurations.Add(new tbLogManifestoMap());
+            modelBuilder.Configurations.Add(new tbBancoParametroMap());
         }
     }
 }

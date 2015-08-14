@@ -5,16 +5,16 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using api.Models;
-using api.Negocios.Admin;
+using api.Negocios.Card;
 using api.Bibliotecas;
 using api.Models.Object;
 
-namespace api.Controllers.Admin
+namespace api.Controllers.Card
 {
-    public class TbLogAcessoUsuarioController : ApiController
+    public class TbBancoParametroController : ApiController
     {
 
-        // GET /tbLogAcessoUsuario/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
+        // GET /tbBancoParametro/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             try
@@ -22,7 +22,7 @@ namespace api.Controllers.Admin
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayTbLogAcessoUsuario.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayTbBancoParametro.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
@@ -32,14 +32,14 @@ namespace api.Controllers.Admin
             }
         }
 
-        /* POST /tbLogAcessoUsuario/token/
-        public HttpResponseMessage Post(string token, [FromBody]tbLogAcessoUsuario param)
+        // POST /tbBancoParametro/token/
+        public HttpResponseMessage Post(string token, [FromBody]tbBancoParametro param)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, GatewayTbLogAcessoUsuario.Add(token, param));
+                    return Request.CreateResponse<string>(HttpStatusCode.OK, GatewayTbBancoParametro.Add(token, param));
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
@@ -51,15 +51,15 @@ namespace api.Controllers.Admin
 
         }
 
-        // PUT /tbLogAcessoUsuario/token/
-        public HttpResponseMessage Put(string token, [FromBody]tbLogAcessoUsuario param)
+        // PUT /tbBancoParametro/token/
+        public HttpResponseMessage Put(string token, [FromBody]tbBancoParametro param)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbLogAcessoUsuario.Update(token, param);
+                    GatewayTbBancoParametro.Update(token, param);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
@@ -71,15 +71,15 @@ namespace api.Controllers.Admin
             }
         }
 
-        // DELETE /tbLogAcessoUsuario/token/idLogAcessoUsuario
-        public HttpResponseMessage Delete(string token, Int32 idLogAcessoUsuario)
+        // DELETE /tbBancoParametro/token/cdBanco
+        public HttpResponseMessage Delete(string token, string cdBanco)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbLogAcessoUsuario.Delete(token, idLogAcessoUsuario);
+                    GatewayTbBancoParametro.Delete(token, cdBanco);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
@@ -89,6 +89,7 @@ namespace api.Controllers.Admin
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-        }*/
+        }
     }
 }
+
