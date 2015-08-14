@@ -62,11 +62,11 @@ namespace api.Negocios.Card
                 {
                     case CAMPOS.CDCONTACORRENTE:
                         Int32 cdContaCorrente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdContaCorrente.Equals(cdContaCorrente)).AsQueryable<tbContaCorrente>();
+                        entity = entity.Where(e => e.cdContaCorrente == cdContaCorrente).AsQueryable<tbContaCorrente>();
                         break;
                     case CAMPOS.CDGRUPO:
                         Int32 cdGrupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdGrupo.Equals(cdGrupo)).AsQueryable<tbContaCorrente>();
+                        entity = entity.Where(e => e.cdGrupo == cdGrupo).AsQueryable<tbContaCorrente>();
                         break;
                     case CAMPOS.NRCNPJ:
                         string nrCnpj = Convert.ToString(item.Value);

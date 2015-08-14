@@ -285,10 +285,26 @@ namespace api.Negocios.Admin
 
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
+
+            // Restringe consulta pelo perfil do usuário logado
+            Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+            bool isAtosVendedor = Permissoes.isAtosRoleVendedor(token);
+            if (IdGrupo == 0 && isAtosVendedor)
+            {
+                // Perfil Comercial tem uma carteira de clientes específica
+                List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                query = query.Where(e => e.webpages_Users.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin
+                                            && e.webpages_Users.id_grupo != null && listaIdsGruposEmpresas.Contains(e.webpages_Users.id_grupo ?? -1)).AsQueryable<tbLogAcessoUsuario>();
+            }
+            else if (Permissoes.isAtosRole(token) && !isAtosVendedor)
+                // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
+                query = query.Where(e => e.webpages_Users.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Users.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<tbLogAcessoUsuario>();
+            else
+                // Só exibe os usuários de RoleLevelMin
+                query = query.Where(e => e.webpages_Users.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<tbLogAcessoUsuario>();
 
             // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
+            retorno.TotalDeRegistros = query.Count();
 
 
             // PAGINAÇÃO
@@ -349,9 +365,9 @@ namespace api.Negocios.Admin
                 {
 
                     idLogAcessoUsuario = e.idLogAcessoUsuario,
-                    user = new { idUser = e.idUser,
-                                 ds_login = e.webpages_Users.ds_login
-                               },
+                    webpagesusers = new { id_users = e.idUser,
+                                          ds_login = e.webpages_Users.ds_login
+                                        },
                     dsUrl = e.dsUrl,
                     dsParametros = e.dsParametros,
                     dsFiltros = e.dsFiltros,
