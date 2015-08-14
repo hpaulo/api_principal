@@ -26,7 +26,7 @@ namespace api.Controllers.Card
                 else
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
             }
-            catch
+            catch(Exception e)
             {
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
@@ -72,14 +72,14 @@ namespace api.Controllers.Card
         }
 
         // DELETE /tbBancoParametro/token/cdBanco
-        public HttpResponseMessage Delete(string token, string cdBanco)
+        public HttpResponseMessage Delete(string token, string cdBanco, string dsMemo)
         {
             try
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbBancoParametro.Delete(token, cdBanco);
+                    GatewayTbBancoParametro.Delete(token, cdBanco, dsMemo);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
