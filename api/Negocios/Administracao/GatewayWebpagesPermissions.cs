@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Administracao
 {
@@ -112,84 +113,98 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionWebpages_Permissions = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery( colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionWebpages_Permissions = query.Select(e => new
+                //DECLARAÇÕES
+                List<dynamic> CollectionWebpages_Permissions = new List<dynamic>();
+                Retorno retorno = new Retorno();
+
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
                 {
+                    CollectionWebpages_Permissions = query.Select(e => new
+                    {
 
-					id_roles = e.id_roles,
-					id_method = e.id_method,
-					fl_principal = e.fl_principal,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionWebpages_Permissions = query.Select(e => new
+                        id_roles = e.id_roles,
+                        id_method = e.id_method,
+                        fl_principal = e.fl_principal,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
                 {
+                    CollectionWebpages_Permissions = query.Select(e => new
+                    {
 
-					id_roles = e.id_roles,
-					id_method = e.id_method,
-					fl_principal = e.fl_principal,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2)
-            {
-                // Retorna os métodos permitidos para o usuário logado em relação ao controller informado
-                Int32 userId = Permissoes.GetIdUser(token);
-                Int32 controllerId = Convert.ToInt32(queryString[((int)CAMPOS.ID_CONTROLLER).ToString()]);
-
-
-                var permissoes = _db.webpages_UsersInRoles
-                                            .Where(r => r.UserId == userId)
-                                            .Where(r => r.RoleId > 50)
-                                            .Select(r => new
-                                                    {
-                                                        metodos = _db.webpages_Permissions
-                                                                            .Where(p => p.id_roles == r.RoleId)
-                                                                            .Where(p => p.webpages_Methods.webpages_Controllers.id_controller == controllerId)
-                                                                            .Select(p => new { id_method = p.webpages_Methods.id_method,
-                                                                                               ds_method = p.webpages_Methods.ds_method,
-                                                                                               nm_method = p.webpages_Methods.nm_method,
-                                                                                               id_controller = p.webpages_Methods.id_controller
-                                                                                            }
-                                                                            ).ToList<dynamic>(),
-                                                    }
-                                                ).FirstOrDefault();
-
-                if (permissoes != null)
+                        id_roles = e.id_roles,
+                        id_method = e.id_method,
+                        fl_principal = e.fl_principal,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2)
                 {
-                    CollectionWebpages_Permissions = permissoes.metodos;
+                    // Retorna os métodos permitidos para o usuário logado em relação ao controller informado
+                    Int32 userId = Permissoes.GetIdUser(token);
+                    Int32 controllerId = Convert.ToInt32(queryString[((int)CAMPOS.ID_CONTROLLER).ToString()]);
+
+
+                    var permissoes = _db.webpages_UsersInRoles
+                                                .Where(r => r.UserId == userId)
+                                                .Where(r => r.RoleId > 50)
+                                                .Select(r => new
+                                                        {
+                                                            metodos = _db.webpages_Permissions
+                                                                                .Where(p => p.id_roles == r.RoleId)
+                                                                                .Where(p => p.webpages_Methods.webpages_Controllers.id_controller == controllerId)
+                                                                                .Select(p => new
+                                                                                {
+                                                                                    id_method = p.webpages_Methods.id_method,
+                                                                                    ds_method = p.webpages_Methods.ds_method,
+                                                                                    nm_method = p.webpages_Methods.nm_method,
+                                                                                    id_controller = p.webpages_Methods.id_controller
+                                                                                }
+                                                                                ).ToList<dynamic>(),
+                                                        }
+                                                    ).FirstOrDefault();
+
+                    if (permissoes != null)
+                    {
+                        CollectionWebpages_Permissions = permissoes.metodos;
+                    }
+
+                    retorno.TotalDeRegistros = CollectionWebpages_Permissions.Count;
                 }
 
-                retorno.TotalDeRegistros = CollectionWebpages_Permissions.Count;
+                retorno.Registros = CollectionWebpages_Permissions;
+
+                return retorno;
             }
-
-            retorno.Registros = CollectionWebpages_Permissions;
-
-            return retorno;
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar permissões" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -201,9 +216,21 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, webpages_Permissions param)
         {
-            _db.webpages_Permissions.Add(param);
-            _db.SaveChanges();
-            return param.id_roles;
+            try
+            {
+                _db.webpages_Permissions.Add(param);
+                _db.SaveChanges();
+                return param.id_roles;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar permissões" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -214,10 +241,22 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Delete(string token, Int32 id_roles)
         {
-            _db.webpages_Permissions.RemoveRange(
-                                                _db.webpages_Permissions.Where(e => e.id_roles == id_roles)
-                                            );
-            _db.SaveChanges();
+            try
+            {
+                _db.webpages_Permissions.RemoveRange(
+                                                    _db.webpages_Permissions.Where(e => e.id_roles == id_roles)
+                                                );
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar permissões" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
         /// <summary>
@@ -227,10 +266,22 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Delete(string token, Int32 id_roles, Int32 id_method)
         {
-            _db.webpages_Permissions.RemoveRange(
-                                                    _db.webpages_Permissions.Where(e => e.id_roles.Equals(id_roles)).Where(e => e.id_method.Equals(id_method))
-                                                );
-            _db.SaveChanges();
+            try
+            {
+                _db.webpages_Permissions.RemoveRange(
+                                                        _db.webpages_Permissions.Where(e => e.id_roles.Equals(id_roles)).Where(e => e.id_method.Equals(id_method))
+                                                    );
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar permissões" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -241,8 +292,20 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void DeleteMethod(string token, Int32 id_method)
         {
-            _db.webpages_Permissions.RemoveRange(_db.webpages_Permissions.Where(e => e.id_method == id_method) );
-            _db.SaveChanges();
+            try
+            {
+                _db.webpages_Permissions.RemoveRange(_db.webpages_Permissions.Where(e => e.id_method == id_method));
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar permissões" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -253,6 +316,8 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Update(string token, webpages_Permissions param)
         {
+            try
+            {
             webpages_Permissions value = _db.webpages_Permissions
                     .Where(e => e.id_roles.Equals(param.id_roles))
                     .Where(e => e.id_method.Equals(param.id_method))
@@ -265,7 +330,16 @@ namespace api.Negocios.Administracao
             if (param.fl_principal != value.fl_principal)
                 value.fl_principal = param.fl_principal;
             _db.SaveChanges();
-
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar permissões" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -277,74 +351,86 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Update(string token, Models.Object.RolesPermissions param)
         {
-            if ((param.Inserir != null) && (param.Inserir.Count > 0))
+            try
             {
-                foreach (var item in param.Inserir)
+                if ((param.Inserir != null) && (param.Inserir.Count > 0))
                 {
-                    _db.webpages_Permissions.Add(new webpages_Permissions { id_roles = param.Id_roles, id_method = (int)item });
+                    foreach (var item in param.Inserir)
+                    {
+                        _db.webpages_Permissions.Add(new webpages_Permissions { id_roles = param.Id_roles, id_method = (int)item });
+                    }
+                }
+
+                if ((param.Deletar != null) && (param.Deletar.Count > 0))
+                {
+                    foreach (var item in param.Deletar)
+                    {
+                        _db.webpages_Permissions.Remove(
+                                                            _db.webpages_Permissions
+                                                            .Where(e => e.id_roles == param.Id_roles)
+                                                            .Where(e => e.id_method == item).First()
+                                                );
+                    }
+                }
+                _db.SaveChanges();
+                // set o controller principal
+                if (param.Id_controller_principal != null)
+                {
+                    // procura por um possível controller principal
+                    List<webpages_Permissions> permissoes = _db.webpages_Permissions
+                        .Where(p => p.id_roles == param.Id_roles)
+                        .Where(p => p.fl_principal == true).ToList<webpages_Permissions>();
+                    foreach (var permissao in permissoes)
+                    {
+                        permissao.fl_principal = false;
+                        Update(token, permissao);
+                    }
+
+                    // set os metodos do controller para ser o principal
+                    permissoes = _db.webpages_Permissions
+                        .Where(p => p.id_roles == param.Id_roles)
+                        .Where(p => p.webpages_Methods.id_controller == param.Id_controller_principal).ToList<webpages_Permissions>();
+                    foreach (var permissao in permissoes)
+                    {
+                        permissao.fl_principal = true;
+                        Update(token, permissao);
+                    }
+                }
+
+
+                // set o controller principal
+                if (param.Id_controller_principal != null)
+                {
+                    // procura por um possível controller principal
+                    List<webpages_Permissions> permissoes = _db.webpages_Permissions
+                        .Where(p => p.id_roles == param.Id_roles)
+                        .Where(p => p.fl_principal == true).ToList<webpages_Permissions>();
+                    foreach (var permissao in permissoes)
+                    {
+                        permissao.fl_principal = false;
+                        Update(token, permissao);
+                    }
+
+                    // set os metodos do controller para ser o principal
+                    permissoes = _db.webpages_Permissions
+                        .Where(p => p.id_roles == param.Id_roles)
+                        .Where(p => p.webpages_Methods.id_controller == param.Id_controller_principal).ToList<webpages_Permissions>();
+                    foreach (var permissao in permissoes)
+                    {
+                        permissao.fl_principal = true;
+                        Update(token, permissao);
+                    }
                 }
             }
-
-            if ((param.Deletar != null) && (param.Deletar.Count > 0))
+            catch (Exception e)
             {
-                foreach (var item in param.Deletar)
+                if (e is DbEntityValidationException)
                 {
-                    _db.webpages_Permissions.Remove(
-                                                        _db.webpages_Permissions
-                                                        .Where(e => e.id_roles == param.Id_roles)
-                                                        .Where(e => e.id_method == item).First()
-                                            );
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar pessoa" : erro);
                 }
-            }
-            _db.SaveChanges();
-            // set o controller principal
-            if (param.Id_controller_principal != null){
-                // procura por um possível controller principal
-                List<webpages_Permissions> permissoes = _db.webpages_Permissions
-                    .Where(p => p.id_roles == param.Id_roles)
-                    .Where(p => p.fl_principal == true).ToList<webpages_Permissions>();
-                foreach (var permissao in permissoes)
-                {
-                    permissao.fl_principal = false;
-                    Update(token, permissao);
-                }
-
-                // set os metodos do controller para ser o principal
-                permissoes = _db.webpages_Permissions
-                    .Where(p => p.id_roles == param.Id_roles)
-                    .Where(p => p.webpages_Methods.id_controller == param.Id_controller_principal).ToList<webpages_Permissions>();
-                foreach (var permissao in permissoes)
-                {
-                    permissao.fl_principal = true;
-                    Update(token, permissao);
-                }
-            }
-            
-
-            // set o controller principal
-            if (param.Id_controller_principal != null)
-            {
-                // procura por um possível controller principal
-                List<webpages_Permissions> permissoes = _db.webpages_Permissions
-                    .Where(p => p.id_roles == param.Id_roles)
-                    .Where(p => p.fl_principal == true).ToList<webpages_Permissions>();
-                foreach (var permissao in permissoes)
-                {
-                    permissao.fl_principal = false;
-                    Update(token, permissao);
-                }
-
-                // set os metodos do controller para ser o principal
-                permissoes = _db.webpages_Permissions
-                    .Where(p => p.id_roles == param.Id_roles)
-                    .Where(p => p.webpages_Methods.id_controller == param.Id_controller_principal).ToList<webpages_Permissions>();
-                foreach (var permissao in permissoes)
-                {
-                    permissao.fl_principal = true;
-                    Update(token, permissao);
-                }
+                throw new Exception(e.Message);
             }
         }
-
     }
 }
