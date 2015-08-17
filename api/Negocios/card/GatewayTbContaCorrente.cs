@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using api.Negocios.Util;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -132,113 +133,128 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-            string outValue = null;
-            Int32 IdGrupo = 0;
-            IdGrupo = Permissoes.GetIdGrupo(token);
-            if (IdGrupo != 0)
+            try
             {
-                if (queryString.TryGetValue("" + (int)CAMPOS.CDGRUPO, out outValue))
-                    queryString["" + (int)CAMPOS.CDGRUPO] = IdGrupo.ToString();
-                else
-                    queryString.Add("" + (int)CAMPOS.CDGRUPO, IdGrupo.ToString());
-            }
-            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-            if (CnpjEmpresa != "")
-            {
-                if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
-                    queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
-                else
-                    queryString.Add("" + (int)CAMPOS.NRCNPJ, CnpjEmpresa);
-            }
-
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbContaCorrente = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
-            {
-                CollectionTbContaCorrente = query.Select(e => new
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+                string outValue = null;
+                Int32 IdGrupo = 0;
+                IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
                 {
-
-                    cdContaCorrente = e.cdContaCorrente,
-                    cdGrupo = e.cdGrupo,
-                    nrCnpj = e.nrCnpj,
-                    cdBanco = e.cdBanco,
-                    nrAgencia = e.nrAgencia,
-                    nrConta = e.nrConta,
-                    flAtivo = e.flAtivo
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionTbContaCorrente = query.Select(e => new
-                {
-
-                    cdContaCorrente = e.cdContaCorrente,
-                    cdGrupo = e.cdGrupo,
-                    nrCnpj = e.nrCnpj,
-                    cdBanco = e.cdBanco,
-                    nrAgencia = e.nrAgencia,
-                    nrConta = e.nrConta,
-                    flAtivo = e.flAtivo
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2) // [WEB] 
-            {
-                List<dynamic> contas = query.Select(e => new
-                {
-                    cdContaCorrente = e.cdContaCorrente,
-                    cdGrupo = e.cdGrupo,
-                    empresa = new { nu_cnpj = e.nrCnpj,
-                        ds_fantasia = e.empresa.ds_fantasia,
-                        filial = e.empresa.filial },
-                    banco = new { Codigo = e.cdBanco, NomeExtenso = "" }, // Não dá para chamar a função direto daqui pois esse código é convertido em SQL e não acessa os dados de um objeto em memória
-                    nrAgencia = e.nrAgencia,
-                    nrConta = e.nrConta,
-                    flAtivo = e.flAtivo,
-                    podeAtualizar = e.tbContaCorrente_tbLoginAdquirenteEmpresas.Count() == 0 && e.tbExtratos.Count() == 0
-                }).ToList<dynamic>();
-
-                // Após transformar em lista (isto é, trazer para a memória), atualiza o valor do NomeExtenso associado ao banco
-                foreach( var conta in contas )
-                {
-                    CollectionTbContaCorrente.Add(new
-                    {
-                        cdContaCorrente = conta.cdContaCorrente,
-                        cdGrupo = conta.cdGrupo,
-                        empresa = conta.empresa,
-                        banco = new { Codigo = conta.banco.Codigo, NomeExtenso = GatewayBancos.Get(conta.banco.Codigo) },
-                        nrAgencia = conta.nrAgencia,
-                        nrConta = conta.nrConta,
-                        flAtivo = conta.flAtivo,
-                        podeAtualizar = conta.podeAtualizar
-                    });
+                    if (queryString.TryGetValue("" + (int)CAMPOS.CDGRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.CDGRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.CDGRUPO, IdGrupo.ToString());
                 }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (CnpjEmpresa != "")
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NRCNPJ, CnpjEmpresa);
+                }
+
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbContaCorrente = new List<dynamic>();
+                Retorno retorno = new Retorno();
+
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbContaCorrente = query.Select(e => new
+                    {
+
+                        cdContaCorrente = e.cdContaCorrente,
+                        cdGrupo = e.cdGrupo,
+                        nrCnpj = e.nrCnpj,
+                        cdBanco = e.cdBanco,
+                        nrAgencia = e.nrAgencia,
+                        nrConta = e.nrConta,
+                        flAtivo = e.flAtivo
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbContaCorrente = query.Select(e => new
+                    {
+
+                        cdContaCorrente = e.cdContaCorrente,
+                        cdGrupo = e.cdGrupo,
+                        nrCnpj = e.nrCnpj,
+                        cdBanco = e.cdBanco,
+                        nrAgencia = e.nrAgencia,
+                        nrConta = e.nrConta,
+                        flAtivo = e.flAtivo
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2) // [WEB] 
+                {
+                    List<dynamic> contas = query.Select(e => new
+                    {
+                        cdContaCorrente = e.cdContaCorrente,
+                        cdGrupo = e.cdGrupo,
+                        empresa = new
+                        {
+                            nu_cnpj = e.nrCnpj,
+                            ds_fantasia = e.empresa.ds_fantasia,
+                            filial = e.empresa.filial
+                        },
+                        banco = new { Codigo = e.cdBanco, NomeExtenso = "" }, // Não dá para chamar a função direto daqui pois esse código é convertido em SQL e não acessa os dados de um objeto em memória
+                        nrAgencia = e.nrAgencia,
+                        nrConta = e.nrConta,
+                        flAtivo = e.flAtivo,
+                        podeAtualizar = e.tbContaCorrente_tbLoginAdquirenteEmpresas.Count() == 0 && e.tbExtratos.Count() == 0
+                    }).ToList<dynamic>();
+
+                    // Após transformar em lista (isto é, trazer para a memória), atualiza o valor do NomeExtenso associado ao banco
+                    foreach (var conta in contas)
+                    {
+                        CollectionTbContaCorrente.Add(new
+                        {
+                            cdContaCorrente = conta.cdContaCorrente,
+                            cdGrupo = conta.cdGrupo,
+                            empresa = conta.empresa,
+                            banco = new { Codigo = conta.banco.Codigo, NomeExtenso = GatewayBancos.Get(conta.banco.Codigo) },
+                            nrAgencia = conta.nrAgencia,
+                            nrConta = conta.nrConta,
+                            flAtivo = conta.flAtivo,
+                            podeAtualizar = conta.podeAtualizar
+                        });
+                    }
+                }
+
+                retorno.Registros = CollectionTbContaCorrente;
+
+                return retorno;
             }
-
-            retorno.Registros = CollectionTbContaCorrente;
-
-            return retorno;
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar conta corrente" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Adiciona nova TbContaCorrente
@@ -247,23 +263,35 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Int32 Add(string token, tbContaCorrente param)
         {
-            var verify = _db.tbContaCorrentes
-                            .Where(e => e.cdGrupo == param.cdGrupo)
-                            .Where(e => e.nrCnpj.Equals(param.nrCnpj))
-                            .Where(e => e.cdBanco.Equals(param.cdBanco))
-                            .Where(e => e.nrAgencia.Equals(param.nrAgencia))
-                            .Where(e => e.nrConta.Equals(param.nrConta))
-                            .FirstOrDefault();
-
-            if (verify == null)
+            try
             {
-                param.flAtivo = true;
-                _db.tbContaCorrentes.Add(param);
-                _db.SaveChanges();
-                return param.cdContaCorrente;
+                var verify = _db.tbContaCorrentes
+                                .Where(e => e.cdGrupo == param.cdGrupo)
+                                .Where(e => e.nrCnpj.Equals(param.nrCnpj))
+                                .Where(e => e.cdBanco.Equals(param.cdBanco))
+                                .Where(e => e.nrAgencia.Equals(param.nrAgencia))
+                                .Where(e => e.nrConta.Equals(param.nrConta))
+                                .FirstOrDefault();
+
+                if (verify == null)
+                {
+                    param.flAtivo = true;
+                    _db.tbContaCorrentes.Add(param);
+                    _db.SaveChanges();
+                    return param.cdContaCorrente;
+                }
+
+                throw new Exception("Conta já cadastrada!");
             }
-               
-            throw new Exception("Conta já cadastrada!");
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar conta corrente" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -274,16 +302,28 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 cdContaCorrente)
         {
-            tbContaCorrente conta = _db.tbContaCorrentes.Where(e => e.cdContaCorrente == cdContaCorrente).FirstOrDefault();
-            if(conta == null) throw new Exception("Conta inexistente!");
-            // Remove as vigências
-            /*GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.Delete(token, conta.cdContaCorrente);
-            // Remove os extratos e os arquivos associados
-            List<tbExtrato> extratos = _db.tbExtratos.Where(e => e.cdContaCorrente == conta.cdContaCorrente).ToList<tbExtrato>();
-            foreach (var extrato in extratos) GatewayTbExtrato.Delete(token, extrato.idExtrato);*/
-            // Remove a conta
-            _db.tbContaCorrentes.Remove(conta);
-            _db.SaveChanges();
+            try
+            {
+                tbContaCorrente conta = _db.tbContaCorrentes.Where(e => e.cdContaCorrente == cdContaCorrente).FirstOrDefault();
+                if (conta == null) throw new Exception("Conta inexistente!");
+                // Remove as vigências
+                /*GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.Delete(token, conta.cdContaCorrente);
+                // Remove os extratos e os arquivos associados
+                List<tbExtrato> extratos = _db.tbExtratos.Where(e => e.cdContaCorrente == conta.cdContaCorrente).ToList<tbExtrato>();
+                foreach (var extrato in extratos) GatewayTbExtrato.Delete(token, extrato.idExtrato);*/
+                // Remove a conta
+                _db.tbContaCorrentes.Remove(conta);
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar conta corrente" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera tbContaCorrente
@@ -292,24 +332,35 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbContaCorrente param)
         {
-            tbContaCorrente value = _db.tbContaCorrentes
-                    .Where(e => e.cdContaCorrente == param.cdContaCorrente)
-                    .First<tbContaCorrente>();
+            try
+            {
+                tbContaCorrente value = _db.tbContaCorrentes
+                        .Where(e => e.cdContaCorrente == param.cdContaCorrente)
+                        .First<tbContaCorrente>();
 
-            if (value == null) throw new Exception("Conta inexistente!");
+                if (value == null) throw new Exception("Conta inexistente!");
 
-            if (param.nrCnpj != null && param.nrCnpj != value.nrCnpj)
-                value.nrCnpj = param.nrCnpj;
-            if (param.cdBanco != null && param.cdBanco != value.cdBanco)
-                value.cdBanco = param.cdBanco;
-            if (param.nrAgencia != null && param.nrAgencia != value.nrAgencia)
-                value.nrAgencia = param.nrAgencia;
-            if (param.nrConta != null && param.nrConta != value.nrConta)
-                value.nrConta = param.nrConta;
-            if (param.flAtivo != value.flAtivo)
-                value.flAtivo = param.flAtivo;
-            _db.SaveChanges();
-
+                if (param.nrCnpj != null && param.nrCnpj != value.nrCnpj)
+                    value.nrCnpj = param.nrCnpj;
+                if (param.cdBanco != null && param.cdBanco != value.cdBanco)
+                    value.cdBanco = param.cdBanco;
+                if (param.nrAgencia != null && param.nrAgencia != value.nrAgencia)
+                    value.nrAgencia = param.nrAgencia;
+                if (param.nrConta != null && param.nrConta != value.nrConta)
+                    value.nrConta = param.nrConta;
+                if (param.flAtivo != value.flAtivo)
+                    value.flAtivo = param.flAtivo;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar conta corrente" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

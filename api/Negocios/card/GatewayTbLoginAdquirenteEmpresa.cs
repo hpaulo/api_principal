@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -199,89 +200,107 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbLoginAdquirenteEmpresas = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTbLoginAdquirenteEmpresas = query.Select(e => new
-                {
-                    cdLoginAdquirenteEmpresa = e.cdLoginAdquirenteEmpresa,
-                    cdAdquirente = e.cdAdquirente,
-                    cdGrupo = e.cdGrupo,
-                    nrCnpj = e.nrCnpj,
-                    dsLogin = e.dsLogin,
-                    dsSenha = e.dsSenha,
-                    cdEstabelecimento = e.cdEstabelecimento,
-                    dtAlteracao = e.dtAlteracao,
-                    stLoginAdquirente = e.stLoginAdquirente,
-                    //stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa // controle de bruno
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionTbLoginAdquirenteEmpresas = query.Select(e => new
-                {
-                    cdLoginAdquirenteEmpresa = e.cdLoginAdquirenteEmpresa,
-                    cdAdquirente = e.cdAdquirente,
-                    cdGrupo = e.cdGrupo,
-                    nrCnpj = e.nrCnpj,
-                    dsLogin = e.dsLogin,
-                    dsSenha = e.dsSenha,
-                    cdEstabelecimento = e.cdEstabelecimento,
-                    dtAlteracao = e.dtAlteracao,
-                    stLoginAdquirente = e.stLoginAdquirente,
-                    //stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa  // controle de bruno
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2) // [WEB] 
-            {
-                CollectionTbLoginAdquirenteEmpresas = query.Select(e => new
-                {
-                    cdLoginAdquirenteEmpresa = e.cdLoginAdquirenteEmpresa,
-                    adquirente = new { cdAdquirente = e.tbAdquirente.cdAdquirente,
-                                       nmAdquirente = e.tbAdquirente.nmAdquirente,
-                                       dsAdquirente = e.tbAdquirente.dsAdquirente,
-                                       stAdquirente = e.tbAdquirente.stAdquirente,
-                                    },
-                    grupo_empresa = new { id_grupo = e.grupo_empresa.id_grupo,
-                                          ds_nome = e.grupo_empresa.ds_nome
-                                        },
-                    empresa = new { nu_cnpj = e.empresa.nu_cnpj,
-                                    ds_fantasia = e.empresa.ds_fantasia
-                                  } ,
-                    //dsLogin = e.dsLogin,
-                    //dsSenha = e.dsSenha,
-                    //cdEstabelecimento = e.cdEstabelecimento,
-                    //dtAlteracao = e.dtAlteracao,
-                    stLoginAdquirente = e.stLoginAdquirente,
-                    //stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa  // controle de bruno
-                }).ToList<dynamic>();
-            }
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbLoginAdquirenteEmpresas = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-            retorno.Registros = CollectionTbLoginAdquirenteEmpresas;
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
 
-            return retorno;
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbLoginAdquirenteEmpresas = query.Select(e => new
+                    {
+                        cdLoginAdquirenteEmpresa = e.cdLoginAdquirenteEmpresa,
+                        cdAdquirente = e.cdAdquirente,
+                        cdGrupo = e.cdGrupo,
+                        nrCnpj = e.nrCnpj,
+                        dsLogin = e.dsLogin,
+                        dsSenha = e.dsSenha,
+                        cdEstabelecimento = e.cdEstabelecimento,
+                        dtAlteracao = e.dtAlteracao,
+                        stLoginAdquirente = e.stLoginAdquirente,
+                        //stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa // controle de bruno
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbLoginAdquirenteEmpresas = query.Select(e => new
+                    {
+                        cdLoginAdquirenteEmpresa = e.cdLoginAdquirenteEmpresa,
+                        cdAdquirente = e.cdAdquirente,
+                        cdGrupo = e.cdGrupo,
+                        nrCnpj = e.nrCnpj,
+                        dsLogin = e.dsLogin,
+                        dsSenha = e.dsSenha,
+                        cdEstabelecimento = e.cdEstabelecimento,
+                        dtAlteracao = e.dtAlteracao,
+                        stLoginAdquirente = e.stLoginAdquirente,
+                        //stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa  // controle de bruno
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2) // [WEB] 
+                {
+                    CollectionTbLoginAdquirenteEmpresas = query.Select(e => new
+                    {
+                        cdLoginAdquirenteEmpresa = e.cdLoginAdquirenteEmpresa,
+                        adquirente = new
+                        {
+                            cdAdquirente = e.tbAdquirente.cdAdquirente,
+                            nmAdquirente = e.tbAdquirente.nmAdquirente,
+                            dsAdquirente = e.tbAdquirente.dsAdquirente,
+                            stAdquirente = e.tbAdquirente.stAdquirente,
+                        },
+                        grupo_empresa = new
+                        {
+                            id_grupo = e.grupo_empresa.id_grupo,
+                            ds_nome = e.grupo_empresa.ds_nome
+                        },
+                        empresa = new
+                        {
+                            nu_cnpj = e.empresa.nu_cnpj,
+                            ds_fantasia = e.empresa.ds_fantasia
+                        },
+                        //dsLogin = e.dsLogin,
+                        //dsSenha = e.dsSenha,
+                        //cdEstabelecimento = e.cdEstabelecimento,
+                        //dtAlteracao = e.dtAlteracao,
+                        stLoginAdquirente = e.stLoginAdquirente,
+                        //stLoginAdquirenteEmpresa = e.stLoginAdquirenteEmpresa  // controle de bruno
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbLoginAdquirenteEmpresas;
+
+                return retorno;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar login aquirente empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Adiciona nova TbLoginAdquirenteEmpresa
@@ -290,9 +309,21 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Int32 Add(string token, tbLoginAdquirenteEmpresa param)
         {
-            _db.tbLoginAdquirenteEmpresas.Add(param);
-            _db.SaveChanges();
-            return param.cdLoginAdquirenteEmpresa;
+            try
+            {
+                _db.tbLoginAdquirenteEmpresas.Add(param);
+                _db.SaveChanges();
+                return param.cdLoginAdquirenteEmpresa;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao dalvar login aquirente empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -303,13 +334,25 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 cdLoginAdquirenteEmpresa)
         {
-            tbLoginAdquirenteEmpresa value = _db.tbLoginAdquirenteEmpresas
-                                                    .Where(e => e.cdLoginAdquirenteEmpresa == cdLoginAdquirenteEmpresa)
-                                                    .FirstOrDefault();
-            if (value == null) throw new Exception("Registro inexistente");
+            try
+            {
+                tbLoginAdquirenteEmpresa value = _db.tbLoginAdquirenteEmpresas
+                                                        .Where(e => e.cdLoginAdquirenteEmpresa == cdLoginAdquirenteEmpresa)
+                                                        .FirstOrDefault();
+                if (value == null) throw new Exception("Registro inexistente");
 
-            _db.tbLoginAdquirenteEmpresas.Remove(value);
-            _db.SaveChanges();
+                _db.tbLoginAdquirenteEmpresas.Remove(value);
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar login aquirente empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera TbLoginAdquirenteEmpresa
@@ -318,27 +361,38 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbLoginAdquirenteEmpresa param)
         {
-            tbLoginAdquirenteEmpresa value = _db.tbLoginAdquirenteEmpresas
-                    .Where(e => e.cdLoginAdquirenteEmpresa == param.cdLoginAdquirenteEmpresa)
-                    .FirstOrDefault();
+            try
+            {
+                tbLoginAdquirenteEmpresa value = _db.tbLoginAdquirenteEmpresas
+                        .Where(e => e.cdLoginAdquirenteEmpresa == param.cdLoginAdquirenteEmpresa)
+                        .FirstOrDefault();
 
-            if (value == null) throw new Exception("Registro inexistente");
+                if (value == null) throw new Exception("Registro inexistente");
 
-            // OBSERVAÇÂO: NÃO ALTERA GRUPO, CNPJ E ADQUIRENTE
+                // OBSERVAÇÂO: NÃO ALTERA GRUPO, CNPJ E ADQUIRENTE
 
-            if (param.dsLogin != null && param.dsLogin != value.dsLogin)
-                value.dsLogin = param.dsLogin;
-            if (param.dsSenha != null && param.dsSenha != value.dsSenha)
-                value.dsSenha = param.dsSenha;
-            if (param.cdEstabelecimento != null && param.cdEstabelecimento != value.cdEstabelecimento)
-                value.cdEstabelecimento = param.cdEstabelecimento;
-            if (param.stLoginAdquirente != value.stLoginAdquirente)
-                value.stLoginAdquirente = param.stLoginAdquirente;
-            if (param.stLoginAdquirenteEmpresa != value.stLoginAdquirenteEmpresa)
-                value.stLoginAdquirenteEmpresa = param.stLoginAdquirenteEmpresa;
-            value.dtAlteracao = DateTime.Now;
-            _db.SaveChanges();
-
+                if (param.dsLogin != null && param.dsLogin != value.dsLogin)
+                    value.dsLogin = param.dsLogin;
+                if (param.dsSenha != null && param.dsSenha != value.dsSenha)
+                    value.dsSenha = param.dsSenha;
+                if (param.cdEstabelecimento != null && param.cdEstabelecimento != value.cdEstabelecimento)
+                    value.cdEstabelecimento = param.cdEstabelecimento;
+                if (param.stLoginAdquirente != value.stLoginAdquirente)
+                    value.stLoginAdquirente = param.stLoginAdquirente;
+                if (param.stLoginAdquirenteEmpresa != value.stLoginAdquirenteEmpresa)
+                    value.stLoginAdquirenteEmpresa = param.stLoginAdquirenteEmpresa;
+                value.dtAlteracao = DateTime.Now;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar login aquirente empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

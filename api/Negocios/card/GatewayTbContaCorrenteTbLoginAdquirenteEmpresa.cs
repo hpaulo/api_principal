@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Globalization;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -152,80 +153,92 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    cdContaCorrente = e.cdContaCorrente,
-                    cdLoginAdquirenteEmpresa = e.cdLoginAdquirenteEmpresa,
-                    dtInicio = e.dtInicio,
-                    dtFim = e.dtFim,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = query.Select(e => new
-                {
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
 
-                    cdContaCorrente = e.cdContaCorrente,
-                    cdLoginAdquirenteEmpresa = e.cdLoginAdquirenteEmpresa,
-                    dtInicio = e.dtInicio,
-                    dtFim = e.dtFim,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2) // [WEB] Vigência da Conta Corrente
-            {
-                CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = query.Select(e => new
-                {
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
 
-                    dtInicio = e.dtInicio,
-                    dtFim = e.dtFim,
-                    cdLoginAdquirenteEmpresa = e.tbLoginAdquirenteEmpresa.cdLoginAdquirenteEmpresa,
-                    adquirente = new
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = query.Select(e => new
                     {
-                        cdAdquirente = e.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente,
-                        nmAdquirente = e.tbLoginAdquirenteEmpresa.tbAdquirente.nmAdquirente,
-                        dsAdquirente = e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente,
-                        stAdquirente = e.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente,
-                    },
-                    empresa = new
+
+                        cdContaCorrente = e.cdContaCorrente,
+                        cdLoginAdquirenteEmpresa = e.cdLoginAdquirenteEmpresa,
+                        dtInicio = e.dtInicio,
+                        dtFim = e.dtFim,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = query.Select(e => new
                     {
-                        nu_cnpj = e.tbLoginAdquirenteEmpresa.empresa.nu_cnpj,
-                        ds_fantasia = e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia,
-                        filial = e.tbLoginAdquirenteEmpresa.empresa.filial
-                    },
-                    stLoginAdquirente = e.tbLoginAdquirenteEmpresa.stLoginAdquirente,
-                    //stLoginAdquirenteEmpresa = l.tbLoginAdquirenteEmpresa.stLoginAdquirenteEmpresa // controle de bruno
-                }).ToList<dynamic>();
+
+                        cdContaCorrente = e.cdContaCorrente,
+                        cdLoginAdquirenteEmpresa = e.cdLoginAdquirenteEmpresa,
+                        dtInicio = e.dtInicio,
+                        dtFim = e.dtFim,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2) // [WEB] Vigência da Conta Corrente
+                {
+                    CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = query.Select(e => new
+                    {
+
+                        dtInicio = e.dtInicio,
+                        dtFim = e.dtFim,
+                        cdLoginAdquirenteEmpresa = e.tbLoginAdquirenteEmpresa.cdLoginAdquirenteEmpresa,
+                        adquirente = new
+                        {
+                            cdAdquirente = e.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente,
+                            nmAdquirente = e.tbLoginAdquirenteEmpresa.tbAdquirente.nmAdquirente,
+                            dsAdquirente = e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente,
+                            stAdquirente = e.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente,
+                        },
+                        empresa = new
+                        {
+                            nu_cnpj = e.tbLoginAdquirenteEmpresa.empresa.nu_cnpj,
+                            ds_fantasia = e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia,
+                            filial = e.tbLoginAdquirenteEmpresa.empresa.filial
+                        },
+                        stLoginAdquirente = e.tbLoginAdquirenteEmpresa.stLoginAdquirente,
+                        //stLoginAdquirenteEmpresa = l.tbLoginAdquirenteEmpresa.stLoginAdquirenteEmpresa // controle de bruno
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbContaCorrente_tbLoginAdquirenteEmpresa;
+
+                return retorno;
             }
-
-            retorno.Registros = CollectionTbContaCorrente_tbLoginAdquirenteEmpresa;
-
-            return retorno;
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar adquirente empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -235,75 +248,87 @@ namespace api.Negocios.Card
           */
         private static tbContaCorrente_tbLoginAdquirenteEmpresa conflitoPeriodoVigencia(tbContaCorrente_tbLoginAdquirenteEmpresa param)
         {
-            // Avalia se, para o mesmo cdContaCorrente e cdLoginAdquirenteEmpresa
-            // o período informado já consta
-            List<tbContaCorrente_tbLoginAdquirenteEmpresa>  values = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
-                                                                            .Where(e => e.cdContaCorrente == param.cdContaCorrente)
-                                                                            .Where(e => e.cdLoginAdquirenteEmpresa == param.cdLoginAdquirenteEmpresa)
-                                                                            .ToList<tbContaCorrente_tbLoginAdquirenteEmpresa>();
-
-            foreach (var value in values)
+            try
             {
-                // Não avalia o período se o parâmetro for mesmo elemento "value" corrente
-                if(value.cdContaCorrente == param.cdContaCorrente &&
-                   value.cdLoginAdquirenteEmpresa == param.cdLoginAdquirenteEmpresa &&
-                   value.dtInicio.Equals(param.dtInicio))
-                    continue;
+                // Avalia se, para o mesmo cdContaCorrente e cdLoginAdquirenteEmpresa
+                // o período informado já consta
+                List<tbContaCorrente_tbLoginAdquirenteEmpresa> values = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                                .Where(e => e.cdContaCorrente == param.cdContaCorrente)
+                                                                                .Where(e => e.cdLoginAdquirenteEmpresa == param.cdLoginAdquirenteEmpresa)
+                                                                                .ToList<tbContaCorrente_tbLoginAdquirenteEmpresa>();
 
-                if (value.dtFim != null)
+                foreach (var value in values)
                 {
-                    // Não é o vigente de dtFim nulo
+                    // Não avalia o período se o parâmetro for mesmo elemento "value" corrente
+                    if (value.cdContaCorrente == param.cdContaCorrente &&
+                       value.cdLoginAdquirenteEmpresa == param.cdLoginAdquirenteEmpresa &&
+                       value.dtInicio.Equals(param.dtInicio))
+                        continue;
 
-                    if (param.dtFim == null)
+                    if (value.dtFim != null)
                     {
-                        // Data início do parâmetro deve ser superior a dtFim do encontrado na base
-                        if (param.dtInicio.Year < Convert.ToDateTime(value.dtFim).Year ||
-                           (param.dtInicio.Year == Convert.ToDateTime(value.dtFim).Year && param.dtInicio.Month < Convert.ToDateTime(value.dtFim).Month) ||
-                           (param.dtInicio.Year == Convert.ToDateTime(value.dtFim).Year && param.dtInicio.Month == Convert.ToDateTime(value.dtFim).Month && param.dtInicio.Day <= Convert.ToDateTime(value.dtFim).Day))
-                            return value;
+                        // Não é o vigente de dtFim nulo
+
+                        if (param.dtFim == null)
+                        {
+                            // Data início do parâmetro deve ser superior a dtFim do encontrado na base
+                            if (param.dtInicio.Year < Convert.ToDateTime(value.dtFim).Year ||
+                               (param.dtInicio.Year == Convert.ToDateTime(value.dtFim).Year && param.dtInicio.Month < Convert.ToDateTime(value.dtFim).Month) ||
+                               (param.dtInicio.Year == Convert.ToDateTime(value.dtFim).Year && param.dtInicio.Month == Convert.ToDateTime(value.dtFim).Month && param.dtInicio.Day <= Convert.ToDateTime(value.dtFim).Day))
+                                return value;
+                        }
+                        else
+                        {
+                            // Avalia intervalos por completo => compara desconsiderando os horários
+                            DateTime paramInicio = new DateTime(param.dtInicio.Year, param.dtInicio.Month, param.dtInicio.Day);
+                            DateTime paramFim = new DateTime(Convert.ToDateTime(param.dtInicio).Year, Convert.ToDateTime(param.dtFim).Month, Convert.ToDateTime(param.dtFim).Day);
+                            DateTime valueInicio = new DateTime(value.dtInicio.Year, value.dtInicio.Month, value.dtInicio.Day);
+                            DateTime valueFim = new DateTime(Convert.ToDateTime(value.dtInicio).Year, Convert.ToDateTime(value.dtFim).Month, Convert.ToDateTime(value.dtFim).Day);
+
+                            // Início de um não pode estar dentro do intervalo do outro
+                            if (paramInicio.Ticks >= valueInicio.Ticks && paramInicio.Ticks <= valueFim.Ticks)
+                                return value;
+                            if (valueInicio.Ticks >= paramInicio.Ticks && valueInicio.Ticks <= paramFim.Ticks)
+                                return value;
+
+                            // Fim de um não pode estar dentro do intervalo do outro
+                            if (paramFim.Ticks >= valueInicio.Ticks && paramFim.Ticks <= valueFim.Ticks)
+                                return value;
+                            if (valueFim.Ticks >= paramInicio.Ticks && valueFim.Ticks <= paramFim.Ticks)
+                                return value;
+                        }
+
                     }
                     else
                     {
-                        // Avalia intervalos por completo => compara desconsiderando os horários
-                        DateTime paramInicio = new DateTime(param.dtInicio.Year, param.dtInicio.Month, param.dtInicio.Day);
-                        DateTime paramFim = new DateTime(Convert.ToDateTime(param.dtInicio).Year, Convert.ToDateTime(param.dtFim).Month, Convert.ToDateTime(param.dtFim).Day);
-                        DateTime valueInicio = new DateTime(value.dtInicio.Year, value.dtInicio.Month, value.dtInicio.Day);
-                        DateTime valueFim = new DateTime(Convert.ToDateTime(value.dtInicio).Year, Convert.ToDateTime(value.dtFim).Month, Convert.ToDateTime(value.dtFim).Day);
+                        // Já existe um vigente com dtFim nulo => período de dtInicio até oo
 
-                        // Início de um não pode estar dentro do intervalo do outro
-                        if (paramInicio.Ticks >= valueInicio.Ticks && paramInicio.Ticks <= valueFim.Ticks)
-                            return value;
-                        if (valueInicio.Ticks >= paramInicio.Ticks && valueInicio.Ticks <= paramFim.Ticks)
-                            return value;
+                        if (param.dtFim == null)
+                            return value; // Só pode existir um com dtFim nulo
 
-                        // Fim de um não pode estar dentro do intervalo do outro
-                        if (paramFim.Ticks >= valueInicio.Ticks && paramFim.Ticks <= valueFim.Ticks)
-                            return value;
-                        if (valueFim.Ticks >= paramInicio.Ticks && valueFim.Ticks <= paramFim.Ticks)
+                        // Data início do parâmetro deve ser inferior a do encontrado na base
+                        if (param.dtInicio.Year > value.dtInicio.Year ||
+                           (param.dtInicio.Year == value.dtInicio.Year && param.dtInicio.Month > value.dtInicio.Month) ||
+                           (param.dtInicio.Year == value.dtInicio.Year && param.dtInicio.Month == value.dtInicio.Month && param.dtInicio.Day >= value.dtInicio.Day) ||
+                            // Data fim do parâmetro deve ser inferior a dtInício do encontrado na base
+                           Convert.ToDateTime(param.dtFim).Year > value.dtInicio.Year ||
+                           (Convert.ToDateTime(param.dtFim).Year == value.dtInicio.Year && Convert.ToDateTime(param.dtFim).Month > value.dtInicio.Month) ||
+                           (Convert.ToDateTime(param.dtFim).Year == value.dtInicio.Year && Convert.ToDateTime(param.dtFim).Month == value.dtInicio.Month && Convert.ToDateTime(param.dtFim).Day >= value.dtInicio.Day))
                             return value;
                     }
-
                 }
-                else
-                {
-                    // Já existe um vigente com dtFim nulo => período de dtInicio até oo
-                    
-                    if (param.dtFim == null)
-                        return value; // Só pode existir um com dtFim nulo
-
-                    // Data início do parâmetro deve ser inferior a do encontrado na base
-                    if (param.dtInicio.Year > value.dtInicio.Year ||
-                       (param.dtInicio.Year == value.dtInicio.Year && param.dtInicio.Month > value.dtInicio.Month) ||
-                       (param.dtInicio.Year == value.dtInicio.Year && param.dtInicio.Month == value.dtInicio.Month && param.dtInicio.Day >= value.dtInicio.Day) ||
-                       // Data fim do parâmetro deve ser inferior a dtInício do encontrado na base
-                       Convert.ToDateTime(param.dtFim).Year > value.dtInicio.Year ||
-                       (Convert.ToDateTime(param.dtFim).Year == value.dtInicio.Year && Convert.ToDateTime(param.dtFim).Month > value.dtInicio.Month) ||
-                       (Convert.ToDateTime(param.dtFim).Year == value.dtInicio.Year && Convert.ToDateTime(param.dtFim).Month == value.dtInicio.Month && Convert.ToDateTime(param.dtFim).Day >= value.dtInicio.Day))
-                        return value;
-                }
+                // Não teve conflito de período de vigência
+                return null;
             }
-            // Não teve conflito de período de vigência
-            return null;
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao verificar conflito em adquirente empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -315,16 +340,28 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Int32 Add(string token, tbContaCorrente_tbLoginAdquirenteEmpresa param)
         {
-            tbContaCorrente_tbLoginAdquirenteEmpresa value = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
-                                                                    .Where(e => e.cdContaCorrente == param.cdContaCorrente)
-                                                                    .Where(e => e.cdLoginAdquirenteEmpresa == param.cdLoginAdquirenteEmpresa)
-                                                                    .Where(e => e.dtInicio.Equals(param.dtInicio))
-                                                                    .FirstOrDefault();
-            if (value != null) throw new Exception("Vigência já existe!");
-            if (conflitoPeriodoVigencia(param) != null) throw new Exception("Conflito de período de vigência");
-            _db.tbContaCorrente_tbLoginAdquirenteEmpresas.Add(param);
-            _db.SaveChanges();
-            return param.cdContaCorrente;
+            try
+            {
+                tbContaCorrente_tbLoginAdquirenteEmpresa value = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                        .Where(e => e.cdContaCorrente == param.cdContaCorrente)
+                                                                        .Where(e => e.cdLoginAdquirenteEmpresa == param.cdLoginAdquirenteEmpresa)
+                                                                        .Where(e => e.dtInicio.Equals(param.dtInicio))
+                                                                        .FirstOrDefault();
+                if (value != null) throw new Exception("Vigência já existe!");
+                if (conflitoPeriodoVigencia(param) != null) throw new Exception("Conflito de período de vigência");
+                _db.tbContaCorrente_tbLoginAdquirenteEmpresas.Add(param);
+                _db.SaveChanges();
+                return param.cdContaCorrente;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar adquirente empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -335,8 +372,20 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 cdContaCorrente)
         {
-            _db.tbContaCorrente_tbLoginAdquirenteEmpresas.RemoveRange(_db.tbContaCorrente_tbLoginAdquirenteEmpresas.Where(e => e.cdContaCorrente == cdContaCorrente));
-            _db.SaveChanges();
+            try
+            {
+                _db.tbContaCorrente_tbLoginAdquirenteEmpresas.RemoveRange(_db.tbContaCorrente_tbLoginAdquirenteEmpresas.Where(e => e.cdContaCorrente == cdContaCorrente));
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar adquirente empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -347,14 +396,26 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 cdContaCorrente, Int32 cdLoginAdquirenteEmpresa, DateTime dtInicio)
         {
-            tbContaCorrente_tbLoginAdquirenteEmpresa value = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
-                                                                    .Where(e => e.cdContaCorrente == cdContaCorrente)
-                                                                    .Where(e => e.cdLoginAdquirenteEmpresa == cdLoginAdquirenteEmpresa)
-                                                                    .Where(e => e.dtInicio.Equals(dtInicio))
-                                                                    .FirstOrDefault();
-            if (value == null) throw new Exception("Vigência inválida!");
-            _db.tbContaCorrente_tbLoginAdquirenteEmpresas.Remove(value);
-            _db.SaveChanges();
+            try
+            {
+                tbContaCorrente_tbLoginAdquirenteEmpresa value = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                        .Where(e => e.cdContaCorrente == cdContaCorrente)
+                                                                        .Where(e => e.cdLoginAdquirenteEmpresa == cdLoginAdquirenteEmpresa)
+                                                                        .Where(e => e.dtInicio.Equals(dtInicio))
+                                                                        .FirstOrDefault();
+                if (value == null) throw new Exception("Vigência inválida!");
+                _db.tbContaCorrente_tbLoginAdquirenteEmpresas.Remove(value);
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar adquirente empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
         /// <summary>
@@ -364,20 +425,32 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbContaCorrente_tbLoginAdquirenteEmpresa param)
         {
-            tbContaCorrente_tbLoginAdquirenteEmpresa value = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
-                                                                   .Where(e => e.cdContaCorrente == param.cdContaCorrente)
-                                                                   .Where(e => e.cdLoginAdquirenteEmpresa == param.cdLoginAdquirenteEmpresa)
-                                                                   .Where(e => e.dtInicio.Equals(param.dtInicio))
-                                                                   .FirstOrDefault();
-            if (value == null) throw new Exception("Vigência inválida!");
-
-            if (conflitoPeriodoVigencia(param) != null) throw new Exception("Conflito de período de vigência");
-
-            // Só altera a data fim => SEMPRE TEM QUE SER ENVIADO A DATA FIM, POIS ESTÁ PODE SER SETADA PARA NULL
-            if (!param.dtFim.Equals(value.dtFim))
+            try
             {
-                value.dtFim = param.dtFim;
-                _db.SaveChanges();
+                tbContaCorrente_tbLoginAdquirenteEmpresa value = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                       .Where(e => e.cdContaCorrente == param.cdContaCorrente)
+                                                                       .Where(e => e.cdLoginAdquirenteEmpresa == param.cdLoginAdquirenteEmpresa)
+                                                                       .Where(e => e.dtInicio.Equals(param.dtInicio))
+                                                                       .FirstOrDefault();
+                if (value == null) throw new Exception("Vigência inválida!");
+
+                if (conflitoPeriodoVigencia(param) != null) throw new Exception("Conflito de período de vigência");
+
+                // Só altera a data fim => SEMPRE TEM QUE SER ENVIADO A DATA FIM, POIS ESTÁ PODE SER SETADA PARA NULL
+                if (!param.dtFim.Equals(value.dtFim))
+                {
+                    value.dtFim = param.dtFim;
+                    _db.SaveChanges();
+                }
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar adquirente empresa" : erro);
+                }
+                throw new Exception(e.Message);
             }
         }
 

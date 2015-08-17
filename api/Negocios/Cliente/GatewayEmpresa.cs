@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Cliente
 {
@@ -259,140 +260,152 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            // Se for uma consulta por um cnpj específico na coleção 0, não força filtro por empresa, filial e rolelevel
-            string outValue = null;
-            Boolean FiltroCNPJ = false;
-
-            if (colecao == 0 && queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
-                FiltroCNPJ = !queryString["" + (int)CAMPOS.NU_CNPJ].Contains("%");
-            
-
-            //DECLARAÇÕES
-            List<dynamic> CollectionEmpresa = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-            Int32 IdGrupo = 0;
-            if (!FiltroCNPJ)
+            try
             {
-                IdGrupo = Permissoes.GetIdGrupo(token);
-                if (IdGrupo != 0)
+                // Se for uma consulta por um cnpj específico na coleção 0, não força filtro por empresa, filial e rolelevel
+                string outValue = null;
+                Boolean FiltroCNPJ = false;
+
+                if (colecao == 0 && queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                    FiltroCNPJ = !queryString["" + (int)CAMPOS.NU_CNPJ].Contains("%");
+
+
+                //DECLARAÇÕES
+                List<dynamic> CollectionEmpresa = new List<dynamic>();
+                Retorno retorno = new Retorno();
+
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+                Int32 IdGrupo = 0;
+                if (!FiltroCNPJ)
                 {
-                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
-                    else
-                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                    IdGrupo = Permissoes.GetIdGrupo(token);
+                    if (IdGrupo != 0)
+                    {
+                        if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                            queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                        else
+                            queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                    }
+                    string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                    if (CnpjEmpresa != "")
+                    {
+                        if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                            queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                        else
+                            queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
+                    }
                 }
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-                if (CnpjEmpresa != "")
+
+
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+
+                // Se não for uma consulta de CNPJ na coleção 0, restringe consulta pelo perfil Comercial que não estiver "amarrado" a um grupo
+                if (!FiltroCNPJ)
                 {
-                    if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
-                        queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
-                    else
-                        queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
+                    // Restringe consulta pelo perfil do usuário logado
+                    //String RoleName = Permissoes.GetRoleName(token).ToUpper();
+                    if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))//RoleName.Equals("COMERCIAL"))
+                    {
+                        // Perfil Comercial tem uma carteira de clientes específica
+                        List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                        query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<empresa>();
+                    }
                 }
-            }
-            
 
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
-            // Se não for uma consulta de CNPJ na coleção 0, restringe consulta pelo perfil Comercial que não estiver "amarrado" a um grupo
-            if (!FiltroCNPJ)
-            {
-                // Restringe consulta pelo perfil do usuário logado
-                //String RoleName = Permissoes.GetRoleName(token).ToUpper();
-                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))//RoleName.Equals("COMERCIAL"))
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
                 {
-                    // Perfil Comercial tem uma carteira de clientes específica
-                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
-                    query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<empresa>();
+                    CollectionEmpresa = query.Select(e => new
+                    {
+
+                        nu_cnpj = e.nu_cnpj,
+                        nu_BaseCnpj = e.nu_BaseCnpj,
+                        nu_SequenciaCnpj = e.nu_SequenciaCnpj,
+                        nu_DigitoCnpj = e.nu_DigitoCnpj,
+                        ds_fantasia = e.ds_fantasia,
+                        ds_razaoSocial = e.ds_razaoSocial,
+                        ds_endereco = e.ds_endereco,
+                        ds_cidade = e.ds_cidade,
+                        sg_uf = e.sg_uf,
+                        nu_cep = e.nu_cep,
+                        nu_telefone = e.nu_telefone,
+                        ds_bairro = e.ds_bairro,
+                        ds_email = e.ds_email,
+                        dt_cadastro = e.dt_cadastro,
+                        fl_ativo = e.fl_ativo,
+                        token = e.token,
+                        id_grupo = e.id_grupo,
+                        filial = e.filial,
+                        nu_inscEstadual = e.nu_inscEstadual,
+                    }).ToList<dynamic>();
                 }
-            }
-
-
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
-            {
-                CollectionEmpresa = query.Select(e => new
+                else if (colecao == 0)
                 {
-
-                    nu_cnpj = e.nu_cnpj,
-                    nu_BaseCnpj = e.nu_BaseCnpj,
-                    nu_SequenciaCnpj = e.nu_SequenciaCnpj,
-                    nu_DigitoCnpj = e.nu_DigitoCnpj,
-                    ds_fantasia = e.ds_fantasia,
-                    ds_razaoSocial = e.ds_razaoSocial,
-                    ds_endereco = e.ds_endereco,
-                    ds_cidade = e.ds_cidade,
-                    sg_uf = e.sg_uf,
-                    nu_cep = e.nu_cep,
-                    nu_telefone = e.nu_telefone,
-                    ds_bairro = e.ds_bairro,
-                    ds_email = e.ds_email,
-                    dt_cadastro = e.dt_cadastro,
-                    fl_ativo = e.fl_ativo,
-                    token = e.token,
-                    id_grupo = e.id_grupo,
-                    filial = e.filial,
-                    nu_inscEstadual = e.nu_inscEstadual,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionEmpresa = query.Select(e => new
+                    CollectionEmpresa = query.Select(e => new
+                    {
+                        nu_cnpj = e.nu_cnpj,
+                        ds_fantasia = e.ds_fantasia,
+                        id_grupo = e.id_grupo,
+                        filial = e.filial,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2)
                 {
-                    nu_cnpj = e.nu_cnpj,
-                    ds_fantasia = e.ds_fantasia,
-                    id_grupo = e.id_grupo,
-                    filial = e.filial,
-                }).ToList<dynamic>();
+                    CollectionEmpresa = query.Select(e => new
+                    {
+
+                        nu_cnpj = e.nu_cnpj,
+                        ds_fantasia = e.ds_fantasia,
+                        ds_razaoSocial = e.ds_razaoSocial,
+                        ds_endereco = e.ds_endereco,
+                        ds_cidade = e.ds_cidade,
+                        sg_uf = e.sg_uf,
+                        nu_cep = e.nu_cep,
+                        nu_telefone = e.nu_telefone,
+                        ds_bairro = e.ds_bairro,
+                        ds_email = e.ds_email,
+                        dt_cadastro = e.dt_cadastro,
+                        fl_ativo = e.fl_ativo,
+                        id_grupo = e.id_grupo,
+                        filial = e.filial,
+                        nu_inscEstadual = e.nu_inscEstadual,
+                        login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
+                        dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
+                        podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).Count() == 0
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionEmpresa;
+
+                return retorno;
             }
-            else if (colecao == 2)
+            catch (Exception e)
             {
-                CollectionEmpresa = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    nu_cnpj = e.nu_cnpj,
-                    ds_fantasia = e.ds_fantasia,
-                    ds_razaoSocial = e.ds_razaoSocial,
-                    ds_endereco = e.ds_endereco,
-                    ds_cidade = e.ds_cidade,
-                    sg_uf = e.sg_uf,
-                    nu_cep = e.nu_cep,
-                    nu_telefone = e.nu_telefone,
-                    ds_bairro = e.ds_bairro,
-                    ds_email = e.ds_email,
-                    dt_cadastro = e.dt_cadastro,
-                    fl_ativo = e.fl_ativo,
-                    id_grupo = e.id_grupo,
-                    filial = e.filial,
-                    nu_inscEstadual = e.nu_inscEstadual,
-                    login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
-                    dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
-                    podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).Count() == 0
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar empresa" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionEmpresa;
-
-            return retorno;
         }
 
 
@@ -404,19 +417,31 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static string Add(string token, empresa param)
         {
-            param.dt_cadastro = DateTime.Now;
-            param.fl_ativo = 1;
-            param.token = DateTime.Now.ToLongDateString() + DateTime.Now.ToLongTimeString();
-            param.nu_BaseCnpj = param.nu_cnpj.Substring(0,8);
-            param.nu_SequenciaCnpj = param.nu_cnpj.Substring(8,4);
-            param.nu_DigitoCnpj = param.nu_cnpj.Substring(12,2);
-            if (param.filial == null)
-                param.filial = " ";            
+            try
+            {
+                param.dt_cadastro = DateTime.Now;
+                param.fl_ativo = 1;
+                param.token = DateTime.Now.ToLongDateString() + DateTime.Now.ToLongTimeString();
+                param.nu_BaseCnpj = param.nu_cnpj.Substring(0, 8);
+                param.nu_SequenciaCnpj = param.nu_cnpj.Substring(8, 4);
+                param.nu_DigitoCnpj = param.nu_cnpj.Substring(12, 2);
+                if (param.filial == null)
+                    param.filial = " ";
 
 
-            _db.empresas.Add(param);
-            _db.SaveChanges();
-            return param.nu_cnpj;
+                _db.empresas.Add(param);
+                _db.SaveChanges();
+                return param.nu_cnpj;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -427,13 +452,25 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static void Delete(string token, string nu_cnpj)
         {
-            if (_db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa == nu_cnpj).ToList().Count == 0)
+            try
             {
-                _db.empresas.Remove(_db.empresas.Where(e => e.nu_cnpj.Equals(nu_cnpj)).First());
-                _db.SaveChanges();
+                if (_db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa == nu_cnpj).ToList().Count == 0)
+                {
+                    _db.empresas.Remove(_db.empresas.Where(e => e.nu_cnpj.Equals(nu_cnpj)).First());
+                    _db.SaveChanges();
+                }
+                else
+                    throw new Exception("Empresa não pode ser deletada!");
             }
-            else
-                throw new Exception("Empresa não pode ser deletada!");
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -445,46 +482,57 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static void Update(string token, empresa param)
         {
-            empresa filial = _db.empresas
-                    .Where(e => e.nu_cnpj.Equals(param.nu_cnpj))
-                    .First<empresa>();
+            try
+            {
+                empresa filial = _db.empresas
+                        .Where(e => e.nu_cnpj.Equals(param.nu_cnpj))
+                        .First<empresa>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
 
-            if (param.ds_fantasia != null && param.ds_fantasia != filial.ds_fantasia)
-                filial.ds_fantasia = param.ds_fantasia;
-            if (param.ds_razaoSocial != null && param.ds_razaoSocial != filial.ds_razaoSocial)
-                filial.ds_razaoSocial = param.ds_razaoSocial;
-            if (param.ds_endereco != null && param.ds_endereco != filial.ds_endereco)
-                filial.ds_endereco = param.ds_endereco;
-            if (param.ds_cidade != null && param.ds_cidade != filial.ds_cidade)
-                filial.ds_cidade = param.ds_cidade;
-            if (param.sg_uf != null && param.sg_uf != filial.sg_uf)
-                filial.sg_uf = param.sg_uf;
-            if (param.nu_cep != null && param.nu_cep != filial.nu_cep)
-                filial.nu_cep = param.nu_cep;
-            if (param.nu_telefone != null && param.nu_telefone != filial.nu_telefone)
-                filial.nu_telefone = param.nu_telefone;
-            if (param.ds_bairro != null && param.ds_bairro != filial.ds_bairro)
-                filial.ds_bairro = param.ds_bairro;
-            if (param.ds_email != null && param.ds_email != filial.ds_email)
-                filial.ds_email = param.ds_email;
-            //if (param.dt_cadastro != null && param.dt_cadastro != filial.dt_cadastro)
-            //    filial.dt_cadastro = param.dt_cadastro;
-            if (param.fl_ativo != null && param.fl_ativo != filial.fl_ativo)
-                filial.fl_ativo = param.fl_ativo;
-            //if (param.token != null && param.token != filial.token)
-            //    filial.token = param.token;
-            //if (param.id_grupo != null && param.id_grupo != filial.id_grupo)
-            //    filial.id_grupo = param.id_grupo;
-            if (param.filial != null && param.filial != filial.filial)
-                filial.filial = param.filial;
-            if (param.nu_inscEstadual != null && param.nu_inscEstadual != filial.nu_inscEstadual)
-                filial.nu_inscEstadual = param.nu_inscEstadual;
-            _db.SaveChanges();
-
+                if (param.ds_fantasia != null && param.ds_fantasia != filial.ds_fantasia)
+                    filial.ds_fantasia = param.ds_fantasia;
+                if (param.ds_razaoSocial != null && param.ds_razaoSocial != filial.ds_razaoSocial)
+                    filial.ds_razaoSocial = param.ds_razaoSocial;
+                if (param.ds_endereco != null && param.ds_endereco != filial.ds_endereco)
+                    filial.ds_endereco = param.ds_endereco;
+                if (param.ds_cidade != null && param.ds_cidade != filial.ds_cidade)
+                    filial.ds_cidade = param.ds_cidade;
+                if (param.sg_uf != null && param.sg_uf != filial.sg_uf)
+                    filial.sg_uf = param.sg_uf;
+                if (param.nu_cep != null && param.nu_cep != filial.nu_cep)
+                    filial.nu_cep = param.nu_cep;
+                if (param.nu_telefone != null && param.nu_telefone != filial.nu_telefone)
+                    filial.nu_telefone = param.nu_telefone;
+                if (param.ds_bairro != null && param.ds_bairro != filial.ds_bairro)
+                    filial.ds_bairro = param.ds_bairro;
+                if (param.ds_email != null && param.ds_email != filial.ds_email)
+                    filial.ds_email = param.ds_email;
+                //if (param.dt_cadastro != null && param.dt_cadastro != filial.dt_cadastro)
+                //    filial.dt_cadastro = param.dt_cadastro;
+                if (param.fl_ativo != null && param.fl_ativo != filial.fl_ativo)
+                    filial.fl_ativo = param.fl_ativo;
+                //if (param.token != null && param.token != filial.token)
+                //    filial.token = param.token;
+                //if (param.id_grupo != null && param.id_grupo != filial.id_grupo)
+                //    filial.id_grupo = param.id_grupo;
+                if (param.filial != null && param.filial != filial.filial)
+                    filial.filial = param.filial;
+                if (param.nu_inscEstadual != null && param.nu_inscEstadual != filial.nu_inscEstadual)
+                    filial.nu_inscEstadual = param.nu_inscEstadual;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

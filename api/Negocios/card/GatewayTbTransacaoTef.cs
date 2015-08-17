@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -104,53 +105,65 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbTransacaoTef = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTbTransacaoTef = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbTransacaoTef = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    cdTransacaoTef = e.cdTransacaoTef,
-                    dsTransacaoTef = e.dsTransacaoTef,
-                    dsAbreviadaTransacaoTef = e.dsAbreviadaTransacaoTef,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbTransacaoTef = query.Select(e => new
+                    {
+
+                        cdTransacaoTef = e.cdTransacaoTef,
+                        dsTransacaoTef = e.dsTransacaoTef,
+                        dsAbreviadaTransacaoTef = e.dsAbreviadaTransacaoTef,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbTransacaoTef = query.Select(e => new
+                    {
+
+                        cdTransacaoTef = e.cdTransacaoTef,
+                        dsTransacaoTef = e.dsTransacaoTef,
+                        dsAbreviadaTransacaoTef = e.dsAbreviadaTransacaoTef,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbTransacaoTef;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionTbTransacaoTef = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    cdTransacaoTef = e.cdTransacaoTef,
-                    dsTransacaoTef = e.dsTransacaoTef,
-                    dsAbreviadaTransacaoTef = e.dsAbreviadaTransacaoTef,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar transacao tef" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionTbTransacaoTef;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova TbTransacaoTef
@@ -159,9 +172,21 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Int32 Add(string token, tbTransacaoTef param)
         {
-            _db.tbTransacaoTefs.Add(param);
-            _db.SaveChanges();
-            return param.cdTransacaoTef;
+            try
+            {
+                _db.tbTransacaoTefs.Add(param);
+                _db.SaveChanges();
+                return param.cdTransacaoTef;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar transacao tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -172,8 +197,20 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 cdTransacaoTef)
         {
-            _db.tbTransacaoTefs.Remove(_db.tbTransacaoTefs.Where(e => e.cdTransacaoTef.Equals(cdTransacaoTef)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.tbTransacaoTefs.Remove(_db.tbTransacaoTefs.Where(e => e.cdTransacaoTef.Equals(cdTransacaoTef)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar transacao tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera tbTransacaoTef
@@ -182,21 +219,32 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbTransacaoTef param)
         {
-            tbTransacaoTef value = _db.tbTransacaoTefs
-                    .Where(e => e.cdTransacaoTef.Equals(param.cdTransacaoTef))
-                    .First<tbTransacaoTef>();
+            try
+            {
+                tbTransacaoTef value = _db.tbTransacaoTefs
+                        .Where(e => e.cdTransacaoTef.Equals(param.cdTransacaoTef))
+                        .First<tbTransacaoTef>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.cdTransacaoTef != null && param.cdTransacaoTef != value.cdTransacaoTef)
-                value.cdTransacaoTef = param.cdTransacaoTef;
-            if (param.dsTransacaoTef != null && param.dsTransacaoTef != value.dsTransacaoTef)
-                value.dsTransacaoTef = param.dsTransacaoTef;
-            if (param.dsAbreviadaTransacaoTef != null && param.dsAbreviadaTransacaoTef != value.dsAbreviadaTransacaoTef)
-                value.dsAbreviadaTransacaoTef = param.dsAbreviadaTransacaoTef;
-            _db.SaveChanges();
-
+                if (param.cdTransacaoTef != null && param.cdTransacaoTef != value.cdTransacaoTef)
+                    value.cdTransacaoTef = param.cdTransacaoTef;
+                if (param.dsTransacaoTef != null && param.dsTransacaoTef != value.dsTransacaoTef)
+                    value.dsTransacaoTef = param.dsTransacaoTef;
+                if (param.dsAbreviadaTransacaoTef != null && param.dsAbreviadaTransacaoTef != value.dsAbreviadaTransacaoTef)
+                    value.dsAbreviadaTransacaoTef = param.dsAbreviadaTransacaoTef;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar transacao tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

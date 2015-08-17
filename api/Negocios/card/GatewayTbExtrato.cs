@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Net.Http;
 using OFXSharp;
 using System.IO;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -210,6 +211,8 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
+            try
+            {
             //DECLARAÇÕES
             List<dynamic> CollectionTbExtrato = new List<dynamic>();
             Retorno retorno = new Retorno();
@@ -268,6 +271,16 @@ namespace api.Negocios.Card
 
             return retorno;
         }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar extrato" : erro);
+                }
+                throw new Exception(e.Message);
+            }
+        }
         /// <summary>
         /// Adiciona nova TbExtrato
         /// </summary>
@@ -275,6 +288,8 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Int32 Add(string token, tbExtrato param)
         {
+            try
+            {
             // Valida param para não adicionar duplicidades
             tbExtrato extrato = _db.tbExtratos.Where(e => e.cdContaCorrente == param.cdContaCorrente)
                                               .Where(e => e.dtExtrato.Equals(param.dtExtrato))
@@ -289,6 +304,16 @@ namespace api.Negocios.Card
             _db.SaveChanges();
             return param.idExtrato;
         }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar extrato" : erro);
+                }
+                throw new Exception(e.Message);
+            }
+        }
 
 
         /// <summary>
@@ -298,6 +323,8 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 idExtrato)
         {
+            try
+            {
             tbExtrato extrato = _db.tbExtratos.Where(e => e.idExtrato == idExtrato).FirstOrDefault();
             if (extrato == null) throw new Exception("Extrato inexistente");
             // Remove o arquivo associado do disco, caso não tenha mais nenhum registro referenciando esse arquivo
@@ -306,6 +333,16 @@ namespace api.Negocios.Card
             // Remove o extrato da base
             _db.tbExtratos.Remove(extrato);
             _db.SaveChanges();
+        }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar estrato" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /*/// <summary>
         /// Altera tbExtrato
@@ -338,6 +375,8 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Patch(string token, Dictionary<string, string> queryString)
         {
+            try
+            {
             string pastaExtratos = HttpContext.Current.Server.MapPath("~/App_Data/Extratos/");
 
             Int32 idGrupo = Permissoes.GetIdGrupo(token);
@@ -386,9 +425,11 @@ namespace api.Negocios.Card
 
                 OFXDocument ofxDocument = null;
 
-                try {
+                    try
+                    {
                     ofxDocument = parser.Import(new FileStream(filePath, FileMode.Open));
-                }catch(Exception e)
+                    }
+                    catch (Exception e)
                 {
                     // Deleta o arquivo
                     File.Delete(filePath);
@@ -422,7 +463,7 @@ namespace api.Negocios.Card
                 else
                 {
                     // Adiciona zeros a esquerda, caso tenha menos de 3 dígitos
-                    while(banco.Length < 3) banco = "0" + banco;
+                        while (banco.Length < 3) banco = "0" + banco;
                 }
                 if (!conta.cdBanco.Equals(banco))
                 {
@@ -498,7 +539,7 @@ namespace api.Negocios.Card
                     {
                         // Salva uma nova movimentação
                         _db.tbExtratos.Add(extrato);
-                        _db.SaveChanges(); 
+                        _db.SaveChanges();
                     }
 
                     if (transacao.TransType.Equals(OFXTransactionType.CREDIT) ||
@@ -519,6 +560,16 @@ namespace api.Negocios.Card
 
             }
             else throw new Exception("400"); // Bad Request
+        }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao enviar extrato" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

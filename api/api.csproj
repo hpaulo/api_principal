@@ -245,7 +245,6 @@
     <Compile Include="Controllers\Card\TbTipoProdutoTefController.cs" />
     <Compile Include="Controllers\Card\TbSituacaoRedeTefController.cs" />
     <Compile Include="Controllers\Card\TbRedeTefController.cs" />
-    <Compile Include="Controllers\Card\TesteUploadController.cs" />
     <Compile Include="Controllers\Cliente\EmpresaController.cs" />
     <Compile Include="Controllers\Cliente\GrupoEmpresaController.cs" />
     <Compile Include="Controllers\HomeController.cs" />

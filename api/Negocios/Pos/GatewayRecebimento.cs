@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Globalization;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Pos
 {
@@ -357,222 +358,224 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-
-            string outValue = null;
-            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-            if (IdGrupo != 0)
+            try
             {
-                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
-                else
-                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
-            }
-            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-            if (CnpjEmpresa != "")
-            {
-                if (queryString.TryGetValue("" + (int)CAMPOS.CNPJ, out outValue))
-                    queryString["" + (int)CAMPOS.CNPJ] = CnpjEmpresa;
-                else
-                    queryString.Add("" + (int)CAMPOS.CNPJ, CnpjEmpresa);
-            }
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
 
-
-            //DECLARAÇÕES
-            List<dynamic> CollectionRecebimento = new List<dynamic>();
-            Retorno retorno = new Retorno();
-            retorno.Totais = new Dictionary<string, object>();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-
-            // PAGINAÇÃO
-            if (colecao != 3 && colecao != 4 && // relatório terminal lógico e relatório sintético => Por causa do GroupBy
-                colecao != 11 && colecao != 12) // NSUS e Cod Autorizador de todo o filtro (sem paginação)
-            {
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
-
-                retorno.Totais.Add("valorVendaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorVendaBruta)) : 0);
-
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
-            }
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
-            {
-                CollectionRecebimento = query.Select(e => new
+                string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
                 {
-
-                    id = e.id,
-                    idBandeira = e.idBandeira,
-                    cnpj = e.cnpj,
-                    nsu = e.nsu,
-                    cdAutorizador = e.cdAutorizador,
-                    dtaVenda = e.dtaVenda,
-                    valorVendaBruta = e.valorVendaBruta,
-                    valorVendaLiquida = e.valorVendaLiquida,
-                    loteImportacao = e.loteImportacao,
-                    dtaRecebimento = e.dtaRecebimento,
-                    idLogicoTerminal = e.idLogicoTerminal,
-                    codTituloERP = e.codTituloERP,
-                    codVendaERP = e.codVendaERP,
-                    codResumoVenda = e.codResumoVenda,
-                    numParcelaTotal = e.numParcelaTotal,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionRecebimento = query.Select(e => new
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (CnpjEmpresa != "")
                 {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.CNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.CNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.CNPJ, CnpjEmpresa);
+                }
 
-                    id = e.id,
-                    idBandeira = e.idBandeira,
-                    cnpj = e.cnpj,
-                    nsu = e.nsu,
-                    cdAutorizador = e.cdAutorizador,
-                    dtaVenda = e.dtaVenda,
-                    valorVendaBruta = e.valorVendaBruta,
-                    valorVendaLiquida = e.valorVendaLiquida,
-                    loteImportacao = e.loteImportacao,
-                    dtaRecebimento = e.dtaRecebimento,
-                    idLogicoTerminal = e.idLogicoTerminal,
-                    codTituloERP = e.codTituloERP,
-                    codVendaERP = e.codVendaERP,
-                    codResumoVenda = e.codResumoVenda,
-                    numParcelaTotal = e.numParcelaTotal,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2)
-            {
-                var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda.Year, x.dtaVenda.Month, x.empresa.id_grupo })
-                    .Select(e => new
-                    {
 
-                        nrAno = e.Key.Year,
-                        nmMes = ((MES)e.Key.Month).ToString(),
-                        nrMes = e.Key.Month,
-                        cdGrupo = e.Key.id_grupo,
-                        vlVenda = e.Sum(l => l.valorVendaBruta)
-                    });
+                //DECLARAÇÕES
+                List<dynamic> CollectionRecebimento = new List<dynamic>();
+                Retorno retorno = new Retorno();
+                retorno.Totais = new Dictionary<string, object>();
 
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
 
                 // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
+                if (colecao != 3 && colecao != 4 && // relatório terminal lógico e relatório sintético => Por causa do GroupBy
+                    colecao != 11 && colecao != 12) // NSUS e Cod Autorizador de todo o filtro (sem paginação)
+                {
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = queryTotal.Count();
 
+                    retorno.Totais.Add("valorVendaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorVendaBruta)) : 0);
+
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+                }
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
 
-                CollectionRecebimento = subQuery.OrderByDescending(o => new { o.nrAno, o.nrMes }).ToList<dynamic>();
-
-            }
-            else if (colecao == 3) // Portal/RelatorioTerminalLogico
-            {
-                var subQuery = query
-                .GroupBy(e => new { e.empresa, e.TerminalLogico, e.BandeiraPos })
-                .OrderBy(e => e.Key.empresa.ds_fantasia)
-                .ThenBy(e => e.Key.empresa.filial)
-                .ThenBy(e => e.Key.TerminalLogico.dsTerminalLogico)
-                .ThenBy(e => e.Key.BandeiraPos.desBandeira)
-                .Select(e => new
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
                 {
-                    empresa = new
+                    CollectionRecebimento = query.Select(e => new
                     {
-                        nu_cnpj = e.Key.empresa.nu_cnpj,
-                        ds_fantasia = e.Key.empresa.ds_fantasia,
-                        filial = e.Key.empresa.filial
-                    },
-                    terminal = new
+
+                        id = e.id,
+                        idBandeira = e.idBandeira,
+                        cnpj = e.cnpj,
+                        nsu = e.nsu,
+                        cdAutorizador = e.cdAutorizador,
+                        dtaVenda = e.dtaVenda,
+                        valorVendaBruta = e.valorVendaBruta,
+                        valorVendaLiquida = e.valorVendaLiquida,
+                        loteImportacao = e.loteImportacao,
+                        dtaRecebimento = e.dtaRecebimento,
+                        idLogicoTerminal = e.idLogicoTerminal,
+                        codTituloERP = e.codTituloERP,
+                        codVendaERP = e.codVendaERP,
+                        codResumoVenda = e.codResumoVenda,
+                        numParcelaTotal = e.numParcelaTotal,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionRecebimento = query.Select(e => new
                     {
-                        idTerminalLogico = e.Key.TerminalLogico.idTerminalLogico,
-                        dsTerminalLogico = e.Key.TerminalLogico.dsTerminalLogico.Equals("0") ? "-" : e.Key.TerminalLogico.dsTerminalLogico,
-                    },
-                    idOperadora = e.Key.TerminalLogico.idOperadora,
-                    bandeira = new
+
+                        id = e.id,
+                        idBandeira = e.idBandeira,
+                        cnpj = e.cnpj,
+                        nsu = e.nsu,
+                        cdAutorizador = e.cdAutorizador,
+                        dtaVenda = e.dtaVenda,
+                        valorVendaBruta = e.valorVendaBruta,
+                        valorVendaLiquida = e.valorVendaLiquida,
+                        loteImportacao = e.loteImportacao,
+                        dtaRecebimento = e.dtaRecebimento,
+                        idLogicoTerminal = e.idLogicoTerminal,
+                        codTituloERP = e.codTituloERP,
+                        codVendaERP = e.codVendaERP,
+                        codResumoVenda = e.codResumoVenda,
+                        numParcelaTotal = e.numParcelaTotal,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2)
+                {
+                    var subQuery = query
+                        .GroupBy(x => new { x.dtaVenda.Year, x.dtaVenda.Month, x.empresa.id_grupo })
+                        .Select(e => new
+                        {
+
+                            nrAno = e.Key.Year,
+                            nmMes = ((MES)e.Key.Month).ToString(),
+                            nrMes = e.Key.Month,
+                            cdGrupo = e.Key.id_grupo,
+                            vlVenda = e.Sum(l => l.valorVendaBruta)
+                        });
+
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = queryTotal.Count();
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
+
+                    CollectionRecebimento = subQuery.OrderByDescending(o => new { o.nrAno, o.nrMes }).ToList<dynamic>();
+
+                }
+                else if (colecao == 3) // Portal/RelatorioTerminalLogico
+                {
+                    var subQuery = query
+                    .GroupBy(e => new { e.empresa, e.TerminalLogico, e.BandeiraPos })
+                    .OrderBy(e => e.Key.empresa.ds_fantasia)
+                    .ThenBy(e => e.Key.empresa.filial)
+                    .ThenBy(e => e.Key.TerminalLogico.dsTerminalLogico)
+                    .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                    .Select(e => new
                     {
-                        e.Key.BandeiraPos.id,
-                        e.Key.BandeiraPos.desBandeira
-                    },
-                    totalTransacoes = e.Count(),
-                    valorBruto = e.Sum(p => p.valorVendaBruta)
+                        empresa = new
+                        {
+                            nu_cnpj = e.Key.empresa.nu_cnpj,
+                            ds_fantasia = e.Key.empresa.ds_fantasia,
+                            filial = e.Key.empresa.filial
+                        },
+                        terminal = new
+                        {
+                            idTerminalLogico = e.Key.TerminalLogico.idTerminalLogico,
+                            dsTerminalLogico = e.Key.TerminalLogico.dsTerminalLogico.Equals("0") ? "-" : e.Key.TerminalLogico.dsTerminalLogico,
+                        },
+                        idOperadora = e.Key.TerminalLogico.idOperadora,
+                        bandeira = new
+                        {
+                            e.Key.BandeiraPos.id,
+                            e.Key.BandeiraPos.desBandeira
+                        },
+                        totalTransacoes = e.Count(),
+                        valorBruto = e.Sum(p => p.valorVendaBruta)
 
-                });
+                    });
 
-                retorno.TotalDeRegistros = subQuery.Count();
+                    retorno.TotalDeRegistros = subQuery.Count();
 
-                retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToInt32(subQuery.Sum(r => r.totalTransacoes)) : 0);
-                retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
+                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToInt32(subQuery.Sum(r => r.totalTransacoes)) : 0);
+                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
 
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        subQuery = subQuery.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
 
-                CollectionRecebimento = subQuery.ToList<dynamic>();
-            }
-            else if (colecao == 4) // Portal/RelatorioSintetico
-            {
-                var subQuery = query
-                 .GroupBy(e => new { e.empresa, e.BandeiraPos } )
-                 .OrderBy(e => e.Key.empresa.ds_fantasia)
-                 .ThenBy(e => e.Key.empresa.filial)
-                 .ThenBy(e => e.Key.BandeiraPos.desBandeira)
-                 .Select(e => new
-                 {
-                     empresa = new
+                    CollectionRecebimento = subQuery.ToList<dynamic>();
+                }
+                else if (colecao == 4) // Portal/RelatorioSintetico
+                {
+                    var subQuery = query
+                     .GroupBy(e => new { e.empresa, e.BandeiraPos })
+                     .OrderBy(e => e.Key.empresa.ds_fantasia)
+                     .ThenBy(e => e.Key.empresa.filial)
+                     .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                     .Select(e => new
                      {
-                         nu_cnpj = e.Key.empresa.nu_cnpj,
-                         ds_fantasia = e.Key.empresa.ds_fantasia,
-                         filial = e.Key.empresa.filial
-                     },
-                     bandeira = new
+                         empresa = new
+                         {
+                             nu_cnpj = e.Key.empresa.nu_cnpj,
+                             ds_fantasia = e.Key.empresa.ds_fantasia,
+                             filial = e.Key.empresa.filial
+                         },
+                         bandeira = new
+                         {
+                             e.Key.BandeiraPos.id,
+                             e.Key.BandeiraPos.desBandeira
+                         },
+                         idOperadora = e.Key.BandeiraPos.idOperadora,
+                         totalTransacoes = e.Count(),
+                         valorBruto = e.Sum(p => p.valorVendaBruta)
+
+                     });
+
+                    retorno.TotalDeRegistros = subQuery.Count();
+
+                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToInt32(subQuery.Sum(r => r.totalTransacoes)) : 0);
+                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        subQuery = subQuery.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    CollectionRecebimento = subQuery.ToList<dynamic>();
+                }
+                else if (colecao == 5) // Portal/RelatorioAnalitico
+                {
+                    CollectionRecebimento = query
+
+                     .Select(e => new
                      {
-                         e.Key.BandeiraPos.id,
-                         e.Key.BandeiraPos.desBandeira
-                     },
-                     idOperadora = e.Key.BandeiraPos.idOperadora,
-                     totalTransacoes = e.Count(),
-                     valorBruto = e.Sum(p => p.valorVendaBruta)
-
-                 });
-
-                retorno.TotalDeRegistros = subQuery.Count();
-
-                retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToInt32(subQuery.Sum(r => r.totalTransacoes)) : 0);
-                retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
-
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
-
-                CollectionRecebimento = subQuery.ToList<dynamic>();
-            }
-            else if (colecao == 5) // Portal/RelatorioAnalitico
-            {
-                CollectionRecebimento = query
-
-                 .Select(e => new
-                 {
                          e.cnpj,
                          e.dtaVenda,
                          dsFantasia = e.empresa.ds_fantasia + (e.empresa.filial != null ? e.empresa.filial : ""),
@@ -581,184 +584,194 @@ namespace api.Negocios.Pos
                          e.nsu,
                          e.cdAutorizador,
                          e.valorVendaBruta
-                 }).ToList<dynamic>();
+                     }).ToList<dynamic>();
 
 
+                }
+                else if (colecao == 6) // [mobile]/Vendas/Tempo
+                {
+                    var subQuery = query
+                        .GroupBy(x => new { x.dtaVenda.Day, x.empresa.id_grupo })
+                        .Select(e => new
+                        {
+
+                            nrDia = e.Key.Day,
+                            cdGrupo = e.Key.id_grupo,
+                            //nrCNPJ = e.Key.cnpj,
+                            vlVenda = e.Sum(l => l.valorVendaBruta)
+                        });
+
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = subQuery.Count();
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
+
+                    CollectionRecebimento = subQuery.OrderBy(o => o.nrDia).ToList<dynamic>();
+
+                }
+                else if (colecao == 7) // [mobile]/Vendas/Adquirente
+                {
+                    var subQuery = query
+                        .GroupBy(x => new { x.empresa.id_grupo, x.BandeiraPos.Operadora.nmOperadora })
+                        .Select(e => new
+                        {
+
+                            cdGrupo = e.Key.id_grupo,
+                            //nrCNPJ = e.Key.cnpj,
+                            //idAdquirente = e.Key.id,
+                            dsAdquirente = e.Key.nmOperadora,
+                            vlVenda = e.Sum(l => l.valorVendaBruta)
+                        });
+
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = subQuery.Count();
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
+
+                    CollectionRecebimento = subQuery.ToList<dynamic>();
+
+                }
+                else if (colecao == 8) // [mobile]/Vendas/Adquirente/tempo
+                {
+                    var subQuery = query
+                        .GroupBy(x => new { x.dtaVenda.Day, x.BandeiraPos.Operadora.nmOperadora })
+                        .Select(e => new
+                        {
+
+                            nrDia = e.Key.Day,
+                            //cdGrupo = e.Key.id_grupo,
+                            //nrCNPJ = e.Key.cnpj,
+                            //idAdquirente = e.Key.id,
+                            dsAdquirente = e.Key.nmOperadora,
+                            vlVenda = e.Sum(l => l.valorVendaBruta)
+                        });
+
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = subQuery.Count();
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
+
+                    CollectionRecebimento = subQuery.OrderBy(o => o.nrDia).ToList<dynamic>();
+
+                }
+                else if (colecao == 9) // [mobile]/Filial/Tempo
+                {
+                    var subQuery = query
+                        .GroupBy(x => new { x.empresa.id_grupo, x.empresa })
+                        .OrderBy(e => e.Key.empresa.ds_fantasia)
+                        .Select(e => new
+                        {
+
+                            nmNome = e.Key.empresa.ds_fantasia,
+                            cdGrupo = e.Key.id_grupo,
+                            nrCNPJ = e.Key.empresa.nu_cnpj,
+                            vlVenda = e.Sum(l => l.valorVendaBruta)
+                        });
+
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = subQuery.Count();
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
+
+                    CollectionRecebimento = subQuery.ToList<dynamic>();
+
+                }
+                else if (colecao == 10) // [mobile]/Filial/Tempo
+                {
+                    var subQuery = query
+                        .GroupBy(x => new { x.dtaVenda.Day, x.empresa.id_grupo })
+                        .Select(e => new
+                        {
+
+                            nrDia = e.Key.Day,
+                            cdGrupo = e.Key.id_grupo,
+                            //nrCNPJ = e.Key.cnpj,
+                            vlVenda = e.Sum(l => l.valorVendaBruta)
+                        });
+
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = subQuery.Count();
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
+
+                    CollectionRecebimento = subQuery.OrderBy(o => o.nrDia).ToList<dynamic>();
+
+                }
+                else if (colecao == 11) // Portal/RelatorioAnalitico => Listagem dos NSUs
+                {
+                    CollectionRecebimento = query
+                     .OrderBy(e => e.nsu)
+                     .Select(e => e.nsu)
+                     .ToList<dynamic>();
+
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = CollectionRecebimento.Count;
+                }
+                else if (colecao == 12) // Portal/RelatorioAnalitico => Listagem dos cod. autorizador
+                {
+                    CollectionRecebimento = query
+                     .OrderBy(e => e.cdAutorizador)
+                     .Select(e => e.cdAutorizador)
+                     .ToList<dynamic>();
+
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = CollectionRecebimento.Count;
+                }
+
+
+                retorno.Registros = CollectionRecebimento;
+
+                return retorno;
             }
-            else if (colecao == 6) // [mobile]/Vendas/Tempo
+            catch (Exception e)
             {
-                var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda.Day, x.empresa.id_grupo })
-                    .Select(e => new
-                    {
-
-                        nrDia = e.Key.Day,
-                        cdGrupo = e.Key.id_grupo,
-                        //nrCNPJ = e.Key.cnpj,
-                        vlVenda = e.Sum(l => l.valorVendaBruta)
-                    });
-
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = subQuery.Count();
-
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
-
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimento = subQuery.OrderBy(o => o.nrDia).ToList<dynamic>();
-
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar recebimento" : erro);
+                }
+                throw new Exception(e.Message);
             }
-            else if (colecao == 7) // [mobile]/Vendas/Adquirente
-            {
-                var subQuery = query
-                    .GroupBy(x => new { x.empresa.id_grupo, x.BandeiraPos.Operadora.nmOperadora })
-                    .Select(e => new
-                    {
-
-                        cdGrupo = e.Key.id_grupo,
-                        //nrCNPJ = e.Key.cnpj,
-                        //idAdquirente = e.Key.id,
-                        dsAdquirente = e.Key.nmOperadora,
-                        vlVenda = e.Sum(l => l.valorVendaBruta)
-                    });
-
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = subQuery.Count();
-
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
-
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimento = subQuery.ToList<dynamic>();
-
-            }
-            else if (colecao == 8) // [mobile]/Vendas/Adquirente/tempo
-            {
-                var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda.Day, x.BandeiraPos.Operadora.nmOperadora })
-                    .Select(e => new
-                    {
-
-                        nrDia = e.Key.Day,
-                        //cdGrupo = e.Key.id_grupo,
-                        //nrCNPJ = e.Key.cnpj,
-                        //idAdquirente = e.Key.id,
-                        dsAdquirente = e.Key.nmOperadora,
-                        vlVenda = e.Sum(l => l.valorVendaBruta)
-                    });
-
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = subQuery.Count();
-
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
-
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimento = subQuery.OrderBy(o => o.nrDia).ToList<dynamic>();
-
-            }
-            else if (colecao == 9) // [mobile]/Filial/Tempo
-            {
-                var subQuery = query
-                    .GroupBy(x => new { x.empresa.id_grupo, x.empresa })
-                    .OrderBy(e => e.Key.empresa.ds_fantasia)
-                    .Select(e => new
-                    {
-
-                        nmNome = e.Key.empresa.ds_fantasia,
-                        cdGrupo = e.Key.id_grupo,
-                        nrCNPJ = e.Key.empresa.nu_cnpj,
-                        vlVenda = e.Sum(l => l.valorVendaBruta)
-                    });
-
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = subQuery.Count();
-
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
-
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimento = subQuery.ToList<dynamic>();
-
-            }
-            else if (colecao == 10) // [mobile]/Filial/Tempo
-            {
-                var subQuery = query
-                    .GroupBy(x => new { x.dtaVenda.Day, x.empresa.id_grupo })
-                    .Select(e => new
-                    {
-
-                        nrDia = e.Key.Day,
-                        cdGrupo = e.Key.id_grupo,
-                        //nrCNPJ = e.Key.cnpj,
-                        vlVenda = e.Sum(l => l.valorVendaBruta)
-                    });
-
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = subQuery.Count();
-
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
-
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
-
-                CollectionRecebimento = subQuery.OrderBy(o => o.nrDia).ToList<dynamic>();
-
-            }
-            else if (colecao == 11) // Portal/RelatorioAnalitico => Listagem dos NSUs
-            {
-                CollectionRecebimento = query
-                 .OrderBy(e => e.nsu)
-                 .Select(e => e.nsu)
-                 .ToList<dynamic>();
-
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = CollectionRecebimento.Count;
-            }
-            else if (colecao == 12) // Portal/RelatorioAnalitico => Listagem dos cod. autorizador
-            {
-                CollectionRecebimento = query
-                 .OrderBy(e => e.cdAutorizador)
-                 .Select(e => e.cdAutorizador)
-                 .ToList<dynamic>();
-
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = CollectionRecebimento.Count;
-            }
-
-
-            retorno.Registros = CollectionRecebimento;
-
-            return retorno;
         }
 
 
@@ -770,9 +783,21 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Int32 Add(string token, Recebimento param)
         {
-            _db.Recebimentoes.Add(param);
-            _db.SaveChanges();
-            return param.id;
+            try
+            {
+                _db.Recebimentoes.Add(param);
+                _db.SaveChanges();
+                return param.id;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar recebimento" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -783,8 +808,20 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Delete(string token, Int32 id)
         {
-            _db.Recebimentoes.Remove(_db.Recebimentoes.Where(e => e.id.Equals(id)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.Recebimentoes.Remove(_db.Recebimentoes.Where(e => e.id.Equals(id)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar recebimento" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -796,45 +833,56 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Update(string token, Recebimento param)
         {
-            Recebimento value = _db.Recebimentoes
-                    .Where(e => e.id.Equals(param.id))
-                    .First<Recebimento>();
+            try
+            {
+                Recebimento value = _db.Recebimentoes
+                        .Where(e => e.id.Equals(param.id))
+                        .First<Recebimento>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.id != null && param.id != value.id)
-                value.id = param.id;
-            if (param.idBandeira != null && param.idBandeira != value.idBandeira)
-                value.idBandeira = param.idBandeira;
-            if (param.cnpj != null && param.cnpj != value.cnpj)
-                value.cnpj = param.cnpj;
-            if (param.nsu != null && param.nsu != value.nsu)
-                value.nsu = param.nsu;
-            if (param.cdAutorizador != null && param.cdAutorizador != value.cdAutorizador)
-                value.cdAutorizador = param.cdAutorizador;
-            if (param.dtaVenda != null && param.dtaVenda != value.dtaVenda)
-                value.dtaVenda = param.dtaVenda;
-            if (param.valorVendaBruta != null && param.valorVendaBruta != value.valorVendaBruta)
-                value.valorVendaBruta = param.valorVendaBruta;
-            if (param.valorVendaLiquida != null && param.valorVendaLiquida != value.valorVendaLiquida)
-                value.valorVendaLiquida = param.valorVendaLiquida;
-            if (param.loteImportacao != null && param.loteImportacao != value.loteImportacao)
-                value.loteImportacao = param.loteImportacao;
-            if (param.dtaRecebimento != null && param.dtaRecebimento != value.dtaRecebimento)
-                value.dtaRecebimento = param.dtaRecebimento;
-            if (param.idLogicoTerminal != null && param.idLogicoTerminal != value.idLogicoTerminal)
-                value.idLogicoTerminal = param.idLogicoTerminal;
-            if (param.codTituloERP != null && param.codTituloERP != value.codTituloERP)
-                value.codTituloERP = param.codTituloERP;
-            if (param.codVendaERP != null && param.codVendaERP != value.codVendaERP)
-                value.codVendaERP = param.codVendaERP;
-            if (param.codResumoVenda != null && param.codResumoVenda != value.codResumoVenda)
-                value.codResumoVenda = param.codResumoVenda;
-            if (param.numParcelaTotal != null && param.numParcelaTotal != value.numParcelaTotal)
-                value.numParcelaTotal = param.numParcelaTotal;
-            _db.SaveChanges();
-
+                if (param.id != null && param.id != value.id)
+                    value.id = param.id;
+                if (param.idBandeira != null && param.idBandeira != value.idBandeira)
+                    value.idBandeira = param.idBandeira;
+                if (param.cnpj != null && param.cnpj != value.cnpj)
+                    value.cnpj = param.cnpj;
+                if (param.nsu != null && param.nsu != value.nsu)
+                    value.nsu = param.nsu;
+                if (param.cdAutorizador != null && param.cdAutorizador != value.cdAutorizador)
+                    value.cdAutorizador = param.cdAutorizador;
+                if (param.dtaVenda != null && param.dtaVenda != value.dtaVenda)
+                    value.dtaVenda = param.dtaVenda;
+                if (param.valorVendaBruta != null && param.valorVendaBruta != value.valorVendaBruta)
+                    value.valorVendaBruta = param.valorVendaBruta;
+                if (param.valorVendaLiquida != null && param.valorVendaLiquida != value.valorVendaLiquida)
+                    value.valorVendaLiquida = param.valorVendaLiquida;
+                if (param.loteImportacao != null && param.loteImportacao != value.loteImportacao)
+                    value.loteImportacao = param.loteImportacao;
+                if (param.dtaRecebimento != null && param.dtaRecebimento != value.dtaRecebimento)
+                    value.dtaRecebimento = param.dtaRecebimento;
+                if (param.idLogicoTerminal != null && param.idLogicoTerminal != value.idLogicoTerminal)
+                    value.idLogicoTerminal = param.idLogicoTerminal;
+                if (param.codTituloERP != null && param.codTituloERP != value.codTituloERP)
+                    value.codTituloERP = param.codTituloERP;
+                if (param.codVendaERP != null && param.codVendaERP != value.codVendaERP)
+                    value.codVendaERP = param.codVendaERP;
+                if (param.codResumoVenda != null && param.codResumoVenda != value.codResumoVenda)
+                    value.codResumoVenda = param.codResumoVenda;
+                if (param.numParcelaTotal != null && param.numParcelaTotal != value.numParcelaTotal)
+                    value.numParcelaTotal = param.numParcelaTotal;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

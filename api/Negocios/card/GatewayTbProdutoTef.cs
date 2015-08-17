@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -104,53 +105,65 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbProdutoTef = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTbProdutoTef = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbProdutoTef = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    cdProdutoTef = e.cdProdutoTef,
-                    cdTipoProdutoTef = e.cdTipoProdutoTef,
-                    dsProdutoTef = e.dsProdutoTef,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbProdutoTef = query.Select(e => new
+                    {
+
+                        cdProdutoTef = e.cdProdutoTef,
+                        cdTipoProdutoTef = e.cdTipoProdutoTef,
+                        dsProdutoTef = e.dsProdutoTef,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbProdutoTef = query.Select(e => new
+                    {
+
+                        cdProdutoTef = e.cdProdutoTef,
+                        cdTipoProdutoTef = e.cdTipoProdutoTef,
+                        dsProdutoTef = e.dsProdutoTef,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbProdutoTef;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionTbProdutoTef = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    cdProdutoTef = e.cdProdutoTef,
-                    cdTipoProdutoTef = e.cdTipoProdutoTef,
-                    dsProdutoTef = e.dsProdutoTef,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar produto tef" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionTbProdutoTef;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova TbProdutoTef
@@ -159,9 +172,21 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static short Add(string token, tbProdutoTef param)
         {
-            _db.tbProdutoTefs.Add(param);
-            _db.SaveChanges();
-            return param.cdProdutoTef;
+            try
+            {
+                _db.tbProdutoTefs.Add(param);
+                _db.SaveChanges();
+                return param.cdProdutoTef;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar produto tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -172,8 +197,20 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, short cdProdutoTef)
         {
-            _db.tbProdutoTefs.Remove(_db.tbProdutoTefs.Where(e => e.cdProdutoTef.Equals(cdProdutoTef)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.tbProdutoTefs.Remove(_db.tbProdutoTefs.Where(e => e.cdProdutoTef.Equals(cdProdutoTef)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar produto tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera tbProdutoTef
@@ -182,21 +219,32 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbProdutoTef param)
         {
-            tbProdutoTef value = _db.tbProdutoTefs
-                    .Where(e => e.cdProdutoTef.Equals(param.cdProdutoTef))
-                    .First<tbProdutoTef>();
+            try
+            {
+                tbProdutoTef value = _db.tbProdutoTefs
+                        .Where(e => e.cdProdutoTef.Equals(param.cdProdutoTef))
+                        .First<tbProdutoTef>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.cdProdutoTef != null && param.cdProdutoTef != value.cdProdutoTef)
-                value.cdProdutoTef = param.cdProdutoTef;
-            if (param.cdTipoProdutoTef != null && param.cdTipoProdutoTef != value.cdTipoProdutoTef)
-                value.cdTipoProdutoTef = param.cdTipoProdutoTef;
-            if (param.dsProdutoTef != null && param.dsProdutoTef != value.dsProdutoTef)
-                value.dsProdutoTef = param.dsProdutoTef;
-            _db.SaveChanges();
-
+                if (param.cdProdutoTef != null && param.cdProdutoTef != value.cdProdutoTef)
+                    value.cdProdutoTef = param.cdProdutoTef;
+                if (param.cdTipoProdutoTef != null && param.cdTipoProdutoTef != value.cdTipoProdutoTef)
+                    value.cdTipoProdutoTef = param.cdTipoProdutoTef;
+                if (param.dsProdutoTef != null && param.dsProdutoTef != value.dsProdutoTef)
+                    value.dsProdutoTef = param.dsProdutoTef;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar produto tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

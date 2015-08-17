@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -95,51 +96,63 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbModoEntradaTef = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTbModoEntradaTef = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbModoEntradaTef = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    cdModoEntradaTef = e.cdModoEntradaTef,
-                    dsModoEntradaTef = e.dsModoEntradaTef,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbModoEntradaTef = query.Select(e => new
+                    {
+
+                        cdModoEntradaTef = e.cdModoEntradaTef,
+                        dsModoEntradaTef = e.dsModoEntradaTef,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbModoEntradaTef = query.Select(e => new
+                    {
+
+                        cdModoEntradaTef = e.cdModoEntradaTef,
+                        dsModoEntradaTef = e.dsModoEntradaTef,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbModoEntradaTef;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionTbModoEntradaTef = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    cdModoEntradaTef = e.cdModoEntradaTef,
-                    dsModoEntradaTef = e.dsModoEntradaTef,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar modo entrada tef" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionTbModoEntradaTef;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova TbModoEntradaTef
@@ -148,9 +161,21 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static short Add(string token, tbModoEntradaTef param)
         {
-            _db.tbModoEntradaTefs.Add(param);
-            _db.SaveChanges();
-            return param.cdModoEntradaTef;
+            try
+            {
+                _db.tbModoEntradaTefs.Add(param);
+                _db.SaveChanges();
+                return param.cdModoEntradaTef;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar modo entrada tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -161,8 +186,20 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, short cdModoEntradaTef)
         {
-            _db.tbModoEntradaTefs.Remove(_db.tbModoEntradaTefs.Where(e => e.cdModoEntradaTef.Equals(cdModoEntradaTef)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.tbModoEntradaTefs.Remove(_db.tbModoEntradaTefs.Where(e => e.cdModoEntradaTef.Equals(cdModoEntradaTef)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar modo entrada tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera tbModoEntradaTef
@@ -171,19 +208,30 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbModoEntradaTef param)
         {
-            tbModoEntradaTef value = _db.tbModoEntradaTefs
-                    .Where(e => e.cdModoEntradaTef.Equals(param.cdModoEntradaTef))
-                    .First<tbModoEntradaTef>();
+            try
+            {
+                tbModoEntradaTef value = _db.tbModoEntradaTefs
+                        .Where(e => e.cdModoEntradaTef.Equals(param.cdModoEntradaTef))
+                        .First<tbModoEntradaTef>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.cdModoEntradaTef != null && param.cdModoEntradaTef != value.cdModoEntradaTef)
-                value.cdModoEntradaTef = param.cdModoEntradaTef;
-            if (param.dsModoEntradaTef != null && param.dsModoEntradaTef != value.dsModoEntradaTef)
-                value.dsModoEntradaTef = param.dsModoEntradaTef;
-            _db.SaveChanges();
-
+                if (param.cdModoEntradaTef != null && param.cdModoEntradaTef != value.cdModoEntradaTef)
+                    value.cdModoEntradaTef = param.cdModoEntradaTef;
+                if (param.dsModoEntradaTef != null && param.dsModoEntradaTef != value.dsModoEntradaTef)
+                    value.dsModoEntradaTef = param.dsModoEntradaTef;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar modo entrada tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

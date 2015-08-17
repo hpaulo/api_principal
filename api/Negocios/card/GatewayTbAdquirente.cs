@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -122,57 +123,69 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbAdquirente = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTbAdquirente = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbAdquirente = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    cdAdquirente = e.cdAdquirente,
-                    nmAdquirente = e.nmAdquirente,
-                    dsAdquirente = e.dsAdquirente,
-                    stAdquirente = e.stAdquirente,
-                    hrExecucao = e.hrExecucao,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbAdquirente = query.Select(e => new
+                    {
+
+                        cdAdquirente = e.cdAdquirente,
+                        nmAdquirente = e.nmAdquirente,
+                        dsAdquirente = e.dsAdquirente,
+                        stAdquirente = e.stAdquirente,
+                        hrExecucao = e.hrExecucao,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbAdquirente = query.Select(e => new
+                    {
+
+                        cdAdquirente = e.cdAdquirente,
+                        nmAdquirente = e.nmAdquirente,
+                        dsAdquirente = e.dsAdquirente,
+                        stAdquirente = e.stAdquirente,
+                        hrExecucao = e.hrExecucao,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbAdquirente;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionTbAdquirente = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    cdAdquirente = e.cdAdquirente,
-                    nmAdquirente = e.nmAdquirente,
-                    dsAdquirente = e.dsAdquirente,
-                    stAdquirente = e.stAdquirente,
-                    hrExecucao = e.hrExecucao,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar adquirente" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionTbAdquirente;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova TbAdquirente
@@ -181,9 +194,21 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Int32 Add(string token, tbAdquirente param)
         {
-            _db.tbAdquirentes.Add(param);
-            _db.SaveChanges();
-            return param.cdAdquirente;
+            try
+            {
+                _db.tbAdquirentes.Add(param);
+                _db.SaveChanges();
+                return param.cdAdquirente;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar adquirente" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -194,8 +219,20 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 cdAdquirente)
         {
-            _db.tbAdquirentes.Remove(_db.tbAdquirentes.Where(e => e.cdAdquirente == cdAdquirente).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.tbAdquirentes.Remove(_db.tbAdquirentes.Where(e => e.cdAdquirente == cdAdquirente).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar adquirente" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera tbAdquirente
@@ -204,22 +241,33 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbAdquirente param)
         {
-            tbAdquirente value = _db.tbAdquirentes
-                    .Where(e => e.cdAdquirente == param.cdAdquirente)
-                    .First<tbAdquirente>();
+            try
+            {
+                tbAdquirente value = _db.tbAdquirentes
+                        .Where(e => e.cdAdquirente == param.cdAdquirente)
+                        .First<tbAdquirente>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
-            if (param.nmAdquirente != null && param.nmAdquirente != value.nmAdquirente)
-                value.nmAdquirente = param.nmAdquirente;
-            if (param.dsAdquirente != null && param.dsAdquirente != value.dsAdquirente)
-                value.dsAdquirente = param.dsAdquirente;
-            if (param.stAdquirente != value.stAdquirente)
-                value.stAdquirente = param.stAdquirente;
-            if (param.hrExecucao != null && param.hrExecucao != value.hrExecucao)
-                value.hrExecucao = param.hrExecucao;
-            _db.SaveChanges();
-
+                if (param.nmAdquirente != null && param.nmAdquirente != value.nmAdquirente)
+                    value.nmAdquirente = param.nmAdquirente;
+                if (param.dsAdquirente != null && param.dsAdquirente != value.dsAdquirente)
+                    value.dsAdquirente = param.dsAdquirente;
+                if (param.stAdquirente != value.stAdquirente)
+                    value.stAdquirente = param.stAdquirente;
+                if (param.hrExecucao != null && param.hrExecucao != value.hrExecucao)
+                    value.hrExecucao = param.hrExecucao;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar adquirente" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }
