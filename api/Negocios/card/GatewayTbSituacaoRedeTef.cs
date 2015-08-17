@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -113,55 +114,67 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbSituacaoRedeTef = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTbSituacaoRedeTef = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbSituacaoRedeTef = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    cdSituacaoRedeTef = e.cdSituacaoRedeTef,
-                    cdRedeTef = e.cdRedeTef,
-                    dsSituacao = e.dsSituacao,
-                    cdTipoSituacao = e.cdTipoSituacao,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbSituacaoRedeTef = query.Select(e => new
+                    {
+
+                        cdSituacaoRedeTef = e.cdSituacaoRedeTef,
+                        cdRedeTef = e.cdRedeTef,
+                        dsSituacao = e.dsSituacao,
+                        cdTipoSituacao = e.cdTipoSituacao,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbSituacaoRedeTef = query.Select(e => new
+                    {
+
+                        cdSituacaoRedeTef = e.cdSituacaoRedeTef,
+                        cdRedeTef = e.cdRedeTef,
+                        dsSituacao = e.dsSituacao,
+                        cdTipoSituacao = e.cdTipoSituacao,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbSituacaoRedeTef;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionTbSituacaoRedeTef = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    cdSituacaoRedeTef = e.cdSituacaoRedeTef,
-                    cdRedeTef = e.cdRedeTef,
-                    dsSituacao = e.dsSituacao,
-                    cdTipoSituacao = e.cdTipoSituacao,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar situação rede tef" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionTbSituacaoRedeTef;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova TbSituacaoRedeTef
@@ -170,9 +183,21 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static short Add(string token, tbSituacaoRedeTef param)
         {
-            _db.tbSituacaoRedeTefs.Add(param);
-            _db.SaveChanges();
-            return param.cdSituacaoRedeTef;
+            try
+            {
+                _db.tbSituacaoRedeTefs.Add(param);
+                _db.SaveChanges();
+                return param.cdSituacaoRedeTef;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar situação rede tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -183,8 +208,20 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, short cdSituacaoRedeTef)
         {
-            _db.tbSituacaoRedeTefs.Remove(_db.tbSituacaoRedeTefs.Where(e => e.cdSituacaoRedeTef.Equals(cdSituacaoRedeTef)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.tbSituacaoRedeTefs.Remove(_db.tbSituacaoRedeTefs.Where(e => e.cdSituacaoRedeTef.Equals(cdSituacaoRedeTef)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar situação rede tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera tbSituacaoRedeTef
@@ -193,23 +230,34 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbSituacaoRedeTef param)
         {
-            tbSituacaoRedeTef value = _db.tbSituacaoRedeTefs
-                    .Where(e => e.cdSituacaoRedeTef.Equals(param.cdSituacaoRedeTef))
-                    .First<tbSituacaoRedeTef>();
+            try
+            {
+                tbSituacaoRedeTef value = _db.tbSituacaoRedeTefs
+                        .Where(e => e.cdSituacaoRedeTef.Equals(param.cdSituacaoRedeTef))
+                        .First<tbSituacaoRedeTef>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.cdSituacaoRedeTef != null && param.cdSituacaoRedeTef != value.cdSituacaoRedeTef)
-                value.cdSituacaoRedeTef = param.cdSituacaoRedeTef;
-            if (param.cdRedeTef != null && param.cdRedeTef != value.cdRedeTef)
-                value.cdRedeTef = param.cdRedeTef;
-            if (param.dsSituacao != null && param.dsSituacao != value.dsSituacao)
-                value.dsSituacao = param.dsSituacao;
-            if (param.cdTipoSituacao != null && param.cdTipoSituacao != value.cdTipoSituacao)
-                value.cdTipoSituacao = param.cdTipoSituacao;
-            _db.SaveChanges();
-
+                if (param.cdSituacaoRedeTef != null && param.cdSituacaoRedeTef != value.cdSituacaoRedeTef)
+                    value.cdSituacaoRedeTef = param.cdSituacaoRedeTef;
+                if (param.cdRedeTef != null && param.cdRedeTef != value.cdRedeTef)
+                    value.cdRedeTef = param.cdRedeTef;
+                if (param.dsSituacao != null && param.dsSituacao != value.dsSituacao)
+                    value.dsSituacao = param.dsSituacao;
+                if (param.cdTipoSituacao != null && param.cdTipoSituacao != value.cdTipoSituacao)
+                    value.cdTipoSituacao = param.cdTipoSituacao;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar situação rede tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

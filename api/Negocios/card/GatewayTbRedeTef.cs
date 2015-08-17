@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -95,51 +96,63 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbRedeTef = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTbRedeTef = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbRedeTef = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    cdRedeTef = e.cdRedeTef,
-                    dsRedeTef = e.dsRedeTef,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbRedeTef = query.Select(e => new
+                    {
+
+                        cdRedeTef = e.cdRedeTef,
+                        dsRedeTef = e.dsRedeTef,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbRedeTef = query.Select(e => new
+                    {
+
+                        cdRedeTef = e.cdRedeTef,
+                        dsRedeTef = e.dsRedeTef,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbRedeTef;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionTbRedeTef = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    cdRedeTef = e.cdRedeTef,
-                    dsRedeTef = e.dsRedeTef,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar rede tef" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionTbRedeTef;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova TbRedeTef
@@ -148,9 +161,21 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static short Add(string token, tbRedeTef param)
         {
-            _db.tbRedeTefs.Add(param);
-            _db.SaveChanges();
-            return param.cdRedeTef;
+            try
+            {
+                _db.tbRedeTefs.Add(param);
+                _db.SaveChanges();
+                return param.cdRedeTef;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar rede tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -161,8 +186,20 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, short cdRedeTef)
         {
-            _db.tbRedeTefs.Remove(_db.tbRedeTefs.Where(e => e.cdRedeTef.Equals(cdRedeTef)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.tbRedeTefs.Remove(_db.tbRedeTefs.Where(e => e.cdRedeTef.Equals(cdRedeTef)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar rede tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera tbRedeTef
@@ -171,19 +208,30 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbRedeTef param)
         {
-            tbRedeTef value = _db.tbRedeTefs
-                    .Where(e => e.cdRedeTef.Equals(param.cdRedeTef))
-                    .First<tbRedeTef>();
+            try
+            {
+                tbRedeTef value = _db.tbRedeTefs
+                        .Where(e => e.cdRedeTef.Equals(param.cdRedeTef))
+                        .First<tbRedeTef>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.cdRedeTef != null && param.cdRedeTef != value.cdRedeTef)
-                value.cdRedeTef = param.cdRedeTef;
-            if (param.dsRedeTef != null && param.dsRedeTef != value.dsRedeTef)
-                value.dsRedeTef = param.dsRedeTef;
-            _db.SaveChanges();
-
+                if (param.cdRedeTef != null && param.cdRedeTef != value.cdRedeTef)
+                    value.cdRedeTef = param.cdRedeTef;
+                if (param.dsRedeTef != null && param.dsRedeTef != value.dsRedeTef)
+                    value.dsRedeTef = param.dsRedeTef;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar rede tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

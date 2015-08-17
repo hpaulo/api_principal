@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Pos
 {
@@ -111,72 +112,84 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-            string outValue = null;
-            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-            if (IdGrupo != 0)
+            try
             {
-                if (queryString.TryGetValue("" + (int)CAMPOS.IDGRUPOEMPRESA, out outValue))
-                    queryString["" + (int)CAMPOS.IDGRUPOEMPRESA] = IdGrupo.ToString();
-                else
-                    queryString.Add("" + (int)CAMPOS.IDGRUPOEMPRESA, IdGrupo.ToString());
-            }
-            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-            if (CnpjEmpresa != "")
-            {
-                if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
-                    queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
-                else
-                    queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
-            }
-
-            //DECLARAÇÕES
-            List<dynamic> CollectionOperadora = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
-            {
-                CollectionOperadora = query.Select(e => new
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+                string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
                 {
-
-                    id = e.id,
-                    nmOperadora = e.nmOperadora,
-                    idGrupoEmpresa = e.idGrupoEmpresa,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionOperadora = query.Select(e => new
+                    if (queryString.TryGetValue("" + (int)CAMPOS.IDGRUPOEMPRESA, out outValue))
+                        queryString["" + (int)CAMPOS.IDGRUPOEMPRESA] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.IDGRUPOEMPRESA, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (CnpjEmpresa != "")
                 {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
+                }
 
-                    id = e.id,
-                    nmOperadora = e.nmOperadora,
-                    idGrupoEmpresa = e.idGrupoEmpresa,
-                }).ToList<dynamic>();
+                //DECLARAÇÕES
+                List<dynamic> CollectionOperadora = new List<dynamic>();
+                Retorno retorno = new Retorno();
+
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionOperadora = query.Select(e => new
+                    {
+
+                        id = e.id,
+                        nmOperadora = e.nmOperadora,
+                        idGrupoEmpresa = e.idGrupoEmpresa,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionOperadora = query.Select(e => new
+                    {
+
+                        id = e.id,
+                        nmOperadora = e.nmOperadora,
+                        idGrupoEmpresa = e.idGrupoEmpresa,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionOperadora;
+
+                return retorno;
             }
-
-            retorno.Registros = CollectionOperadora;
-
-            return retorno;
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar operadora" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Adiciona nova Operadora
@@ -185,9 +198,21 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Int32 Add(string token, Operadora param)
         {
-            _db.Operadoras.Add(param);
-            _db.SaveChanges();
-            return param.id;
+            try
+            {
+                _db.Operadoras.Add(param);
+                _db.SaveChanges();
+                return param.id;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar operadora" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -198,10 +223,22 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Delete(string token, Int32 id)
         {
-            Operadora op = _db.Operadoras.Where(e => e.id == id).FirstOrDefault();
-            if (op == null) throw new Exception("Operadora inexistente");
-            _db.Operadoras.Remove(op);
-            _db.SaveChanges();
+            try
+            {
+                Operadora op = _db.Operadoras.Where(e => e.id == id).FirstOrDefault();
+                if (op == null) throw new Exception("Operadora inexistente");
+                _db.Operadoras.Remove(op);
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar operadora" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera Operadora
@@ -210,23 +247,34 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Update(string token, Operadora param)
         {
-            Operadora value = _db.Operadoras
-                    .Where(e => e.id == param.id)
-                    .First<Operadora>();
+            try
+            {
+                Operadora value = _db.Operadoras
+                        .Where(e => e.id == param.id)
+                        .First<Operadora>();
 
-            if (value == null) throw new Exception("Operadora inexistente");
+                if (value == null) throw new Exception("Operadora inexistente");
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.id != null && param.id != value.id)
-                value.id = param.id;
-            if (param.nmOperadora != null && param.nmOperadora != value.nmOperadora)
-                value.nmOperadora = param.nmOperadora;
-            if (param.idGrupoEmpresa != null && param.idGrupoEmpresa != value.idGrupoEmpresa)
-                value.idGrupoEmpresa = param.idGrupoEmpresa;
-            _db.SaveChanges();
-
+                if (param.id != null && param.id != value.id)
+                    value.id = param.id;
+                if (param.nmOperadora != null && param.nmOperadora != value.nmOperadora)
+                    value.nmOperadora = param.nmOperadora;
+                if (param.idGrupoEmpresa != null && param.idGrupoEmpresa != value.idGrupoEmpresa)
+                    value.idGrupoEmpresa = param.idGrupoEmpresa;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar operadora" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

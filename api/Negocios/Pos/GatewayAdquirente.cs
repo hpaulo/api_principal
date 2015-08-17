@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Pos
 {
@@ -122,57 +123,69 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionAdquirente = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionAdquirente = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionAdquirente = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    id = e.id,
-                    nome = e.nome,
-                    descricao = e.descricao,
-                    status = e.status,
-                    hraExecucao = e.hraExecucao,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionAdquirente = query.Select(e => new
+                    {
+
+                        id = e.id,
+                        nome = e.nome,
+                        descricao = e.descricao,
+                        status = e.status,
+                        hraExecucao = e.hraExecucao,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0) // [web]
+                {
+                    CollectionAdquirente = query.Select(e => new
+                    {
+
+                        id = e.id,
+                        nome = e.nome,
+                        descricao = e.descricao,
+                        status = e.status,
+                        hraExecucao = e.hraExecucao,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionAdquirente;
+
+                return retorno;
             }
-            else if (colecao == 0) // [web]
+            catch (Exception e)
             {
-                CollectionAdquirente = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    id = e.id,
-                    nome = e.nome,
-                    descricao = e.descricao,
-                    status = e.status,
-                    hraExecucao = e.hraExecucao,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar adquirente" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionAdquirente;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova Adquirente
@@ -181,9 +194,21 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Int32 Add(string token, api.Models.Adquirente param)
         {
-            _db.Adquirentes.Add(param);
-            _db.SaveChanges();
-            return param.id;
+            try
+            {
+                _db.Adquirentes.Add(param);
+                _db.SaveChanges();
+                return param.id;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar adquirente" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -194,8 +219,20 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Delete(string token, Int32 id)
         {
-            _db.Adquirentes.Remove(_db.Adquirentes.Where(e => e.id.Equals(id)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.Adquirentes.Remove(_db.Adquirentes.Where(e => e.id.Equals(id)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar adquirente" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera Adquirente
@@ -204,25 +241,36 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Update(string token, api.Models.Adquirente param)
         {
-            api.Models.Adquirente value = _db.Adquirentes
-                    .Where(e => e.id.Equals(param.id))
-                    .First<api.Models.Adquirente>();
+            try
+            {
+                api.Models.Adquirente value = _db.Adquirentes
+                        .Where(e => e.id.Equals(param.id))
+                        .First<api.Models.Adquirente>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.id != null && param.id != value.id)
-                value.id = param.id;
-            if (param.nome != null && param.nome != value.nome)
-                value.nome = param.nome;
-            if (param.descricao != null && param.descricao != value.descricao)
-                value.descricao = param.descricao;
-            if (param.status != null && param.status != value.status)
-                value.status = param.status;
-            if (param.hraExecucao != null && param.hraExecucao != value.hraExecucao)
-                value.hraExecucao = param.hraExecucao;
-            _db.SaveChanges();
-
+                if (param.id != null && param.id != value.id)
+                    value.id = param.id;
+                if (param.nome != null && param.nome != value.nome)
+                    value.nome = param.nome;
+                if (param.descricao != null && param.descricao != value.descricao)
+                    value.descricao = param.descricao;
+                if (param.status != null && param.status != value.status)
+                    value.status = param.status;
+                if (param.hraExecucao != null && param.hraExecucao != value.hraExecucao)
+                    value.hraExecucao = param.hraExecucao;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar adquirente" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

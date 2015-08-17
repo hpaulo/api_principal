@@ -177,7 +177,7 @@ namespace api.Negocios.Dbo
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao salvar pessoa" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar role levels" : erro);
                 }
                 throw new Exception(e.Message);
             }

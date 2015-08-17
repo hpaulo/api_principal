@@ -8,6 +8,7 @@ using api.Models;
 using api.Negocios.Card;
 using api.Bibliotecas;
 using api.Models.Object;
+using Newtonsoft.Json;
 
 namespace api.Controllers.Card
 {
@@ -17,17 +18,32 @@ namespace api.Controllers.Card
         // GET /tbExtrato/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayTbExtrato.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
+                {
+                    Retorno dados = GatewayTbExtrato.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+                }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
@@ -35,16 +51,31 @@ namespace api.Controllers.Card
         // POST /tbExtrato/token/
         public HttpResponseMessage Post(string token, [FromBody]tbExtrato param)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, GatewayTbExtrato.Add(token, param));
+                {
+                    Int32 dados = GatewayTbExtrato.Add(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
+                }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
 
@@ -74,19 +105,31 @@ namespace api.Controllers.Card
         // DELETE /tbExtrato/token/idExtrato
         public HttpResponseMessage Delete(string token, Int32 idExtrato)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("idExtrato : " + idExtrato));
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
                     GatewayTbExtrato.Delete(token, idExtrato);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
@@ -94,20 +137,32 @@ namespace api.Controllers.Card
         // PATCH: /tbExtrato/token/ => upload de um arquivo ofx
         public HttpResponseMessage Patch(string token)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
                     Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                     GatewayTbExtrato.Patch(token, queryString);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }

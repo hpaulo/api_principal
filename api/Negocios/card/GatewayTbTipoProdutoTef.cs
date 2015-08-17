@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -95,51 +96,63 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbTipoProdutoTef = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTbTipoProdutoTef = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbTipoProdutoTef = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    cdTipoProdutoTef = e.cdTipoProdutoTef,
-                    dsTipoProdutoTef = e.dsTipoProdutoTef,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbTipoProdutoTef = query.Select(e => new
+                    {
+
+                        cdTipoProdutoTef = e.cdTipoProdutoTef,
+                        dsTipoProdutoTef = e.dsTipoProdutoTef,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbTipoProdutoTef = query.Select(e => new
+                    {
+
+                        cdTipoProdutoTef = e.cdTipoProdutoTef,
+                        dsTipoProdutoTef = e.dsTipoProdutoTef,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbTipoProdutoTef;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionTbTipoProdutoTef = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    cdTipoProdutoTef = e.cdTipoProdutoTef,
-                    dsTipoProdutoTef = e.dsTipoProdutoTef,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar tipo produto tef" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionTbTipoProdutoTef;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova TbTipoProdutoTef
@@ -148,9 +161,21 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static short Add(string token, tbTipoProdutoTef param)
         {
-            _db.tbTipoProdutoTefs.Add(param);
-            _db.SaveChanges();
-            return param.cdTipoProdutoTef;
+            try
+            {
+                _db.tbTipoProdutoTefs.Add(param);
+                _db.SaveChanges();
+                return param.cdTipoProdutoTef;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar tipo produto tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -161,8 +186,20 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, short cdTipoProdutoTef)
         {
-            _db.tbTipoProdutoTefs.Remove(_db.tbTipoProdutoTefs.Where(e => e.cdTipoProdutoTef.Equals(cdTipoProdutoTef)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.tbTipoProdutoTefs.Remove(_db.tbTipoProdutoTefs.Where(e => e.cdTipoProdutoTef.Equals(cdTipoProdutoTef)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar tipo produto tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera tbTipoProdutoTef
@@ -171,19 +208,30 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbTipoProdutoTef param)
         {
-            tbTipoProdutoTef value = _db.tbTipoProdutoTefs
-                    .Where(e => e.cdTipoProdutoTef.Equals(param.cdTipoProdutoTef))
-                    .First<tbTipoProdutoTef>();
+            try
+            {
+                tbTipoProdutoTef value = _db.tbTipoProdutoTefs
+                        .Where(e => e.cdTipoProdutoTef.Equals(param.cdTipoProdutoTef))
+                        .First<tbTipoProdutoTef>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.cdTipoProdutoTef != null && param.cdTipoProdutoTef != value.cdTipoProdutoTef)
-                value.cdTipoProdutoTef = param.cdTipoProdutoTef;
-            if (param.dsTipoProdutoTef != null && param.dsTipoProdutoTef != value.dsTipoProdutoTef)
-                value.dsTipoProdutoTef = param.dsTipoProdutoTef;
-            _db.SaveChanges();
-
+                if (param.cdTipoProdutoTef != null && param.cdTipoProdutoTef != value.cdTipoProdutoTef)
+                    value.cdTipoProdutoTef = param.cdTipoProdutoTef;
+                if (param.dsTipoProdutoTef != null && param.dsTipoProdutoTef != value.dsTipoProdutoTef)
+                    value.dsTipoProdutoTef = param.dsTipoProdutoTef;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar tipo produto tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

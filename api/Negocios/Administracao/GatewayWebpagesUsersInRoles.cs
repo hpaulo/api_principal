@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Administracao
 {
@@ -100,53 +101,65 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionWebpages_UsersInRoles = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionWebpages_UsersInRoles = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionWebpages_UsersInRoles = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    UserId = e.UserId,
-                    RoleId = e.RoleId,
-                    RolePrincipal = e.RolePrincipal
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionWebpages_UsersInRoles = query.Select(e => new
+                    {
+
+                        UserId = e.UserId,
+                        RoleId = e.RoleId,
+                        RolePrincipal = e.RolePrincipal
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionWebpages_UsersInRoles = query.Select(e => new
+                    {
+
+                        UserId = e.UserId,
+                        RoleId = e.RoleId,
+                        RolePrincipal = e.RolePrincipal
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionWebpages_UsersInRoles;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionWebpages_UsersInRoles = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    UserId = e.UserId,
-                    RoleId = e.RoleId,
-                    RolePrincipal = e.RolePrincipal
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar userinrole" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionWebpages_UsersInRoles;
-
-            return retorno;
         }
 
 
@@ -158,9 +171,21 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, webpages_UsersInRoles param)
         {
-            _db.webpages_UsersInRoles.Add(param);
-            _db.SaveChanges();
-            return param.UserId;
+            try
+            {
+                _db.webpages_UsersInRoles.Add(param);
+                _db.SaveChanges();
+                return param.UserId;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar userinrole" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -172,9 +197,21 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Delete(string token, Int32 id, Boolean isRole)
         {
-            if (isRole) _db.webpages_UsersInRoles.RemoveRange(_db.webpages_UsersInRoles.Where(e => e.RoleId == id));
-            else _db.webpages_UsersInRoles.RemoveRange(_db.webpages_UsersInRoles.Where(e => e.UserId == id));
-            _db.SaveChanges();
+            try
+            {
+                if (isRole) _db.webpages_UsersInRoles.RemoveRange(_db.webpages_UsersInRoles.Where(e => e.RoleId == id));
+                else _db.webpages_UsersInRoles.RemoveRange(_db.webpages_UsersInRoles.Where(e => e.UserId == id));
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar userinroles" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
         /// <summary>
@@ -184,8 +221,20 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Delete(string token, webpages_UsersInRoles param)
         {
-            _db.webpages_UsersInRoles.RemoveRange(_db.webpages_UsersInRoles.Where(e => e.UserId == param.UserId && e.RoleId == param.RoleId));
-            _db.SaveChanges();
+            try
+            {
+                _db.webpages_UsersInRoles.RemoveRange(_db.webpages_UsersInRoles.Where(e => e.UserId == param.UserId && e.RoleId == param.RoleId));
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar userinroles" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -197,19 +246,30 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Update(string token, webpages_UsersInRoles param)
         {
-            webpages_UsersInRoles value = _db.webpages_UsersInRoles
-                    .Where(e => e.UserId.Equals(param.UserId))
-                    .First<webpages_UsersInRoles>();
+            try
+            {
+                webpages_UsersInRoles value = _db.webpages_UsersInRoles
+                        .Where(e => e.UserId.Equals(param.UserId))
+                        .First<webpages_UsersInRoles>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.UserId != null && param.UserId != value.UserId)
-                value.UserId = param.UserId;
-            if (param.RoleId != null && param.RoleId != value.RoleId)
-                value.RoleId = param.RoleId;
-            _db.SaveChanges();
-
+                if (param.UserId != null && param.UserId != value.UserId)
+                    value.UserId = param.UserId;
+                if (param.RoleId != null && param.RoleId != value.RoleId)
+                    value.RoleId = param.RoleId;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar userinroles" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

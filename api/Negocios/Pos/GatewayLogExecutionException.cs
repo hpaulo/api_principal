@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Pos
 {
@@ -104,53 +105,65 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionLogExecutionException = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionLogExecutionException = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionLogExecutionException = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    id = e.id,
-                    idLogExecution = e.idLogExecution,
-                    textError = e.textError,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionLogExecutionException = query.Select(e => new
+                    {
+
+                        id = e.id,
+                        idLogExecution = e.idLogExecution,
+                        textError = e.textError,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionLogExecutionException = query.Select(e => new
+                    {
+
+                        id = e.id,
+                        idLogExecution = e.idLogExecution,
+                        textError = e.textError,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionLogExecutionException;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionLogExecutionException = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    id = e.id,
-                    idLogExecution = e.idLogExecution,
-                    textError = e.textError,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar logexecutionexception" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionLogExecutionException;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova LogExecutionException
@@ -159,9 +172,21 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Int32 Add(string token, LogExecutionException param)
         {
-            _db.LogExecutionExceptions.Add(param);
-            _db.SaveChanges();
-            return param.id;
+            try
+            {
+                _db.LogExecutionExceptions.Add(param);
+                _db.SaveChanges();
+                return param.id;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar logexecutionexception" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -172,8 +197,20 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Delete(string token, Int32 id)
         {
-            _db.LogExecutionExceptions.Remove(_db.LogExecutionExceptions.Where(e => e.id.Equals(id)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.LogExecutionExceptions.Remove(_db.LogExecutionExceptions.Where(e => e.id.Equals(id)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar logexecutionexception" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera LogExecutionException
@@ -182,21 +219,32 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Update(string token, LogExecutionException param)
         {
-            LogExecutionException value = _db.LogExecutionExceptions
-                    .Where(e => e.id.Equals(param.id))
-                    .First<LogExecutionException>();
+            try
+            {
+                LogExecutionException value = _db.LogExecutionExceptions
+                        .Where(e => e.id.Equals(param.id))
+                        .First<LogExecutionException>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.id != null && param.id != value.id)
-                value.id = param.id;
-            if (param.idLogExecution != null && param.idLogExecution != value.idLogExecution)
-                value.idLogExecution = param.idLogExecution;
-            if (param.textError != null && param.textError != value.textError)
-                value.textError = param.textError;
-            _db.SaveChanges();
-
+                if (param.id != null && param.id != value.id)
+                    value.id = param.id;
+                if (param.idLogExecution != null && param.idLogExecution != value.idLogExecution)
+                    value.idLogExecution = param.idLogExecution;
+                if (param.textError != null && param.textError != value.textError)
+                    value.textError = param.textError;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar logexecutionexception" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

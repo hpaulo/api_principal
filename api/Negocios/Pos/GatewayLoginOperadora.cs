@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Pos
 {
@@ -170,151 +171,164 @@ namespace api.Negocios.Pos
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
 
-            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-
-            string outValue = null;
-            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-            if (IdGrupo != 0)
+            try
             {
-                if (queryString.TryGetValue("" + (int)CAMPOS.IDGRUPO, out outValue))
-                    queryString["" + (int)CAMPOS.IDGRUPO] = IdGrupo.ToString();
-                else
-                    queryString.Add("" + (int)CAMPOS.IDGRUPO, IdGrupo.ToString());
-            }
-            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-            if (CnpjEmpresa != "")
-            {
-                if (queryString.TryGetValue("" + (int)CAMPOS.CNPJ, out outValue))
-                    queryString["" + (int)CAMPOS.CNPJ] = CnpjEmpresa;
-                else
-                    queryString.Add("" + (int)CAMPOS.CNPJ, CnpjEmpresa);
-            }
 
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
 
-            //DECLARAÇÕES
-            List<dynamic> CollectionLoginOperadora = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-
-            // PAGINAÇÃO
-            if (colecao != 4) // senhas inválidas
-            {
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
-
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
-            }
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
-            {
-                CollectionLoginOperadora = query.Select(e => new
+                string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
                 {
-
-                    id = e.id,
-                    login = e.login,
-                    senha = e.senha,
-                    data_alteracao = e.data_alteracao,
-                    status = e.status,
-                    cnpj = e.cnpj,
-                    idOperadora = e.idOperadora,
-                    idGrupo = e.idGrupo,
-                    estabelecimento = e.estabelecimento,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionLoginOperadora = query.Select(e => new
+                    if (queryString.TryGetValue("" + (int)CAMPOS.IDGRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.IDGRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.IDGRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (CnpjEmpresa != "")
                 {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.CNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.CNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.CNPJ, CnpjEmpresa);
+                }
 
-                    id = e.id,
-                    login = e.login,
-                    senha = e.senha,
-                    data_alteracao = e.data_alteracao,
-                    status = e.status,
-                    cnpj = e.cnpj,
-                    idOperadora = e.idOperadora,
-                    idGrupo = e.idGrupo,
-                    estabelecimento = e.estabelecimento,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2) // [mobile]
-            {
-                CollectionLoginOperadora = query.Select(e => new
+
+                //DECLARAÇÕES
+                List<dynamic> CollectionLoginOperadora = new List<dynamic>();
+                Retorno retorno = new Retorno();
+
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+
+                // PAGINAÇÃO
+                if (colecao != 4) // senhas inválidas
                 {
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = queryTotal.Count();
 
-                    id = e.id,
-                    login = e.login,
-                    senha = e.senha,
-                    status = e.status,
-                    estabelecimento = e.estabelecimento,
-                    operadora = e.Operadora.nmOperadora,
-                    idOperadora = e.idOperadora
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 3) // [web]/Dados de Acesso/Grid
-            {
-                CollectionLoginOperadora = query.Select(e => new
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+                }
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
                 {
+                    CollectionLoginOperadora = query.Select(e => new
+                    {
 
-                    id = e.id,
-                    login = e.login,
-                    senha = e.senha,
-                    status = e.status,
-                    //empresa = new { cnpj = e.empresa.nu_cnpj, ds_fantasia = e.empresa.ds_fantasia },
-                    //operadora = new { id = e.Operadora.id ,desOperadora = e.Operadora.nmOperadora },
-                    operadora = new { id = e.Operadora.id, desOperadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault() },
-                    estabelecimento = e.estabelecimento
-                }).ToList<dynamic>();
+                        id = e.id,
+                        login = e.login,
+                        senha = e.senha,
+                        data_alteracao = e.data_alteracao,
+                        status = e.status,
+                        cnpj = e.cnpj,
+                        idOperadora = e.idOperadora,
+                        idGrupo = e.idGrupo,
+                        estabelecimento = e.estabelecimento,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionLoginOperadora = query.Select(e => new
+                    {
 
-                CollectionLoginOperadora = CollectionLoginOperadora.OrderBy(l => l.operadora.desOperadora).ToList();
+                        id = e.id,
+                        login = e.login,
+                        senha = e.senha,
+                        data_alteracao = e.data_alteracao,
+                        status = e.status,
+                        cnpj = e.cnpj,
+                        idOperadora = e.idOperadora,
+                        idGrupo = e.idGrupo,
+                        estabelecimento = e.estabelecimento,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2) // [mobile]
+                {
+                    CollectionLoginOperadora = query.Select(e => new
+                    {
+
+                        id = e.id,
+                        login = e.login,
+                        senha = e.senha,
+                        status = e.status,
+                        estabelecimento = e.estabelecimento,
+                        operadora = e.Operadora.nmOperadora,
+                        idOperadora = e.idOperadora
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 3) // [web]/Dados de Acesso/Grid
+                {
+                    CollectionLoginOperadora = query.Select(e => new
+                    {
+
+                        id = e.id,
+                        login = e.login,
+                        senha = e.senha,
+                        status = e.status,
+                        //empresa = new { cnpj = e.empresa.nu_cnpj, ds_fantasia = e.empresa.ds_fantasia },
+                        //operadora = new { id = e.Operadora.id ,desOperadora = e.Operadora.nmOperadora },
+                        operadora = new { id = e.Operadora.id, desOperadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault() },
+                        estabelecimento = e.estabelecimento
+                    }).ToList<dynamic>();
+
+                    CollectionLoginOperadora = CollectionLoginOperadora.OrderBy(l => l.operadora.desOperadora).ToList();
+                }
+                else if (colecao == 4) // [web]/Senhas Inválidas/Grid
+                {
+                    var subQuery = query
+                        .OrderBy(e => e.grupo_empresa.ds_nome).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.Operadora.nmOperadora)
+                        .Where(e => e.status == false)
+                        .Select(e => new
+                                    {
+
+                                        id = e.id,
+                                        login = e.login,
+                                        senha = e.senha,
+                                        status = e.status,
+                                        empresa = e.empresa.ds_fantasia,
+                                        grupoempresa = e.grupo_empresa.ds_nome,
+                                        //operadora = e.Operadora.nmOperadora,
+                                        operadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault(),
+                                        estabelecimento = e.estabelecimento
+                                    });
+
+                    retorno.TotalDeRegistros = subQuery.Count();
+
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        subQuery = subQuery.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    CollectionLoginOperadora = subQuery.ToList<dynamic>();
+                }
+
+
+
+                retorno.Registros = CollectionLoginOperadora;
+
+                return retorno;
             }
-            else if (colecao == 4) // [web]/Senhas Inválidas/Grid
+            catch (Exception e)
             {
-                var subQuery = query
-                    .OrderBy(e => e.grupo_empresa.ds_nome).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.Operadora.nmOperadora)
-                    .Where(e => e.status == false)
-                    .Select(e => new
-                                {
-
-                                    id = e.id,
-                                    login = e.login,
-                                    senha = e.senha,
-                                    status = e.status,
-                                    empresa = e.empresa.ds_fantasia,
-                                    grupoempresa = e.grupo_empresa.ds_nome,
-                                    //operadora = e.Operadora.nmOperadora,
-                                    operadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault(),
-                                    estabelecimento = e.estabelecimento
-                                });
-
-                retorno.TotalDeRegistros = subQuery.Count();
-
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    subQuery = subQuery.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
-
-                CollectionLoginOperadora = subQuery.ToList<dynamic>();
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar login operadora" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-
-            
-            retorno.Registros = CollectionLoginOperadora;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova LoginOperadora
@@ -323,109 +337,124 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Int32 Add(string token, LoginOperadora param)
         {
-            // Avalia adquirente
-            if (param.Operadora.nmOperadora == null) throw new Exception("Adquirente inválida");
-            Models.Adquirente op = _db.Adquirentes.Where(o => o.nome.Equals(param.Operadora.nmOperadora)).FirstOrDefault(); // o que é enviado é o nome e não a descrição
-            if (op == null) throw new Exception("Adquirente inválida");
-
-            // Busca possível registro da adquirente para a filial
-            LoginOperadora loginOperadora = _db.LoginOperadoras
-                                                    .Where(l => l.cnpj.Equals(param.cnpj))
-                                                    .Where(l => l.Operadora.nmOperadora.Equals(param.Operadora.nmOperadora))
-                                                    .FirstOrDefault();
-
-            if (loginOperadora == null)
+            try
             {
-                // Cria um novo registro de loginoperadora para a filial
+                // Avalia adquirente
+                if (param.Operadora.nmOperadora == null) throw new Exception("Adquirente inválida");
+                Models.Adquirente op = _db.Adquirentes.Where(o => o.nome.Equals(param.Operadora.nmOperadora)).FirstOrDefault(); // o que é enviado é o nome e não a descrição
+                if (op == null) throw new Exception("Adquirente inválida");
 
-                // Procura pela operadora
-                Operadora operadora = _db.Operadoras
-                                            .Where(e => _db.LoginOperadoras
-                                                                .Where(l => l.cnpj.Equals(param.cnpj))
-                                                                .Select(l => l.idOperadora)
-                                                                .ToList().Contains(e.id)
-                                                  )
-                                            .Where(e => e.nmOperadora.Equals(param.Operadora.nmOperadora))
-                                            .FirstOrDefault();
+                // Busca possível registro da adquirente para a filial
+                LoginOperadora loginOperadora = _db.LoginOperadoras
+                                                        .Where(l => l.cnpj.Equals(param.cnpj))
+                                                        .Where(l => l.Operadora.nmOperadora.Equals(param.Operadora.nmOperadora))
+                                                        .FirstOrDefault();
 
-                if (operadora == null)
+                if (loginOperadora == null)
                 {
-                    // Cria um novo registro de operadora para a filial
-                    Operadora newOperadora = new Operadora();
-                    newOperadora.nmOperadora = param.Operadora.nmOperadora;
-                    newOperadora.idGrupoEmpresa = param.idGrupo;
-                    _db.Operadoras.Add(newOperadora);
-                    _db.SaveChanges();
-                    // Obtém o id da nova operadora
-                    param.idOperadora = newOperadora.id;
-                }
-                else
-                    // Já existe operadora com nmOperadora para a filial
-                    param.idOperadora = operadora.id;
+                    // Cria um novo registro de loginoperadora para a filial
 
-                // Salva na base
-                param.Operadora.idGrupoEmpresa = param.idGrupo;
-                param.status = true;
-                try {
-                    _db.LoginOperadoras.Add(param);
-                    _db.SaveChanges();
-                }
-                catch
-                {
-                    // Remove a operadora criada
-                    GatewayOperadora.Delete(token, param.idOperadora);
-                    // Reporta a falha
-                    throw new Exception("500");
-                }
-            }
-            else
-            {
-                // Já existe uma operadora registrada (nmOperadora) para aquela filial
-                param.idOperadora = loginOperadora.idOperadora;
-                param.id = loginOperadora.id;
-                // Atualiza o status para true
-                if (!loginOperadora.status)
-                {
-                    loginOperadora.status = true;
-                    _db.SaveChanges();
-                }
-            }
-
-            // Verifica se já existe logExecution para o registro corrente
-            LogExecution logExecution = _db.LogExecutions
-                                                .Where(l => l.idLoginOperadora == param.id)
-                                                .Where(l => l.idOperadora == param.idOperadora)
+                    // Procura pela operadora
+                    Operadora operadora = _db.Operadoras
+                                                .Where(e => _db.LoginOperadoras
+                                                                    .Where(l => l.cnpj.Equals(param.cnpj))
+                                                                    .Select(l => l.idOperadora)
+                                                                    .ToList().Contains(e.id)
+                                                      )
+                                                .Where(e => e.nmOperadora.Equals(param.Operadora.nmOperadora))
                                                 .FirstOrDefault();
 
-            if (logExecution == null)
-            {
-                DateTime hrExec = (DateTime)op.hraExecucao;
+                    if (operadora == null)
+                    {
+                        // Cria um novo registro de operadora para a filial
+                        Operadora newOperadora = new Operadora();
+                        newOperadora.nmOperadora = param.Operadora.nmOperadora;
+                        newOperadora.idGrupoEmpresa = param.idGrupo;
+                        _db.Operadoras.Add(newOperadora);
+                        _db.SaveChanges();
+                        // Obtém o id da nova operadora
+                        param.idOperadora = newOperadora.id;
+                    }
+                    else
+                        // Já existe operadora com nmOperadora para a filial
+                        param.idOperadora = operadora.id;
 
-                LogExecution newLogExecution = new LogExecution();
-                newLogExecution.idLoginOperadora = param.id;
-                newLogExecution.idOperadora = param.idOperadora;
-                newLogExecution.statusExecution = "7"; //0 = Em execução; 1 = Executado com Sucesso; 2 = Erro na Execução; 3 = Re-Executar; 7 = Elegivel
-                //newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
-                //newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
-                newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
-                newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
-                newLogExecution.dtaExecucaoProxima = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 2, hrExec.Hour, hrExec.Minute, hrExec.Second);
-                newLogExecution.qtdTransacoes = 0;
-                newLogExecution.vlTotalTransacoes = new decimal(0.0);
-
-                try {
-                    _db.LogExecutions.Add(newLogExecution);
-                    _db.SaveChanges();
-                }catch
-                {
-                    // Remove LoginOperadora e Operadora possivelmente criados
-                    Delete(token, param.id);
-                    // Reporta a falha
-                    throw new Exception("500");
+                    // Salva na base
+                    param.Operadora.idGrupoEmpresa = param.idGrupo;
+                    param.status = true;
+                    try
+                    {
+                        _db.LoginOperadoras.Add(param);
+                        _db.SaveChanges();
+                    }
+                    catch
+                    {
+                        // Remove a operadora criada
+                        GatewayOperadora.Delete(token, param.idOperadora);
+                        // Reporta a falha
+                        throw new Exception("500");
+                    }
                 }
-            }
+                else
+                {
+                    // Já existe uma operadora registrada (nmOperadora) para aquela filial
+                    param.idOperadora = loginOperadora.idOperadora;
+                    param.id = loginOperadora.id;
+                    // Atualiza o status para true
+                    if (!loginOperadora.status)
+                    {
+                        loginOperadora.status = true;
+                        _db.SaveChanges();
+                    }
+                }
 
-            return param.id;
+                // Verifica se já existe logExecution para o registro corrente
+                LogExecution logExecution = _db.LogExecutions
+                                                    .Where(l => l.idLoginOperadora == param.id)
+                                                    .Where(l => l.idOperadora == param.idOperadora)
+                                                    .FirstOrDefault();
+
+                if (logExecution == null)
+                {
+                    DateTime hrExec = (DateTime)op.hraExecucao;
+
+                    LogExecution newLogExecution = new LogExecution();
+                    newLogExecution.idLoginOperadora = param.id;
+                    newLogExecution.idOperadora = param.idOperadora;
+                    newLogExecution.statusExecution = "7"; //0 = Em execução; 1 = Executado com Sucesso; 2 = Erro na Execução; 3 = Re-Executar; 7 = Elegivel
+                    //newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
+                    //newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
+                    newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
+                    newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
+                    newLogExecution.dtaExecucaoProxima = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 2, hrExec.Hour, hrExec.Minute, hrExec.Second);
+                    newLogExecution.qtdTransacoes = 0;
+                    newLogExecution.vlTotalTransacoes = new decimal(0.0);
+
+                    try
+                    {
+                        _db.LogExecutions.Add(newLogExecution);
+                        _db.SaveChanges();
+                    }
+                    catch
+                    {
+                        // Remove LoginOperadora e Operadora possivelmente criados
+                        Delete(token, param.id);
+                        // Reporta a falha
+                        throw new Exception("500");
+                    }
+                }
+
+                return param.id;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar login operadora" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -436,18 +465,30 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Delete(string token, Int32 id)
         {
-            LoginOperadora loginOperadora = _db.LoginOperadoras.Where(e => e.id == id).FirstOrDefault();
-            if (loginOperadora == null) throw new Exception("Login Operadora inexistente");
+            try
+            {
+                LoginOperadora loginOperadora = _db.LoginOperadoras.Where(e => e.id == id).FirstOrDefault();
+                if (loginOperadora == null) throw new Exception("Login Operadora inexistente");
 
-            // Remove logexecutions
-            _db.LogExecutions.RemoveRange(_db.LogExecutions.Where(l => l.idLoginOperadora == loginOperadora.id));
+                // Remove logexecutions
+                _db.LogExecutions.RemoveRange(_db.LogExecutions.Where(l => l.idLoginOperadora == loginOperadora.id));
 
-            // Remove operadora
-            _db.Operadoras.RemoveRange(_db.Operadoras.Where(o => o.id == loginOperadora.idOperadora));
-                
-            // Por fim, remove login operadora
-            _db.LoginOperadoras.Remove(loginOperadora);
-            _db.SaveChanges();
+                // Remove operadora
+                _db.Operadoras.RemoveRange(_db.Operadoras.Where(o => o.id == loginOperadora.idOperadora));
+
+                // Por fim, remove login operadora
+                _db.LoginOperadoras.Remove(loginOperadora);
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar login operadora" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera LoginOperadora
@@ -456,23 +497,34 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Update(string token, LoginOperadora param)
         {
-            LoginOperadora value = _db.LoginOperadoras
-                    .Where(e => e.id == param.id)
-                    .First<LoginOperadora>();
-
-
-            if (param.login != null && param.login != value.login)
-                value.login = param.login;
-            if (param.senha != null && param.senha != value.senha)
+            try
             {
-                value.senha = param.senha;
-                value.status = true;
-                value.data_alteracao = DateTime.Now;
-            }
-            if (param.estabelecimento != null && param.estabelecimento != value.estabelecimento)
-                value.estabelecimento = param.estabelecimento;
-            _db.SaveChanges();
+                LoginOperadora value = _db.LoginOperadoras
+                        .Where(e => e.id == param.id)
+                        .First<LoginOperadora>();
 
+
+                if (param.login != null && param.login != value.login)
+                    value.login = param.login;
+                if (param.senha != null && param.senha != value.senha)
+                {
+                    value.senha = param.senha;
+                    value.status = true;
+                    value.data_alteracao = DateTime.Now;
+                }
+                if (param.estabelecimento != null && param.estabelecimento != value.estabelecimento)
+                    value.estabelecimento = param.estabelecimento;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar login operadora" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

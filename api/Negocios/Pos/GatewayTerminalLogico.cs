@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Pos
 {
@@ -104,63 +105,76 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTerminalLogico = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTerminalLogico = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTerminalLogico = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    idTerminalLogico = e.idTerminalLogico,
-                    dsTerminalLogico = e.dsTerminalLogico,
-                    idOperadora = e.idOperadora,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTerminalLogico = query.Select(e => new
+                    {
+
+                        idTerminalLogico = e.idTerminalLogico,
+                        dsTerminalLogico = e.dsTerminalLogico,
+                        idOperadora = e.idOperadora,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTerminalLogico = query.Select(e => new
+                    {
+
+                        idTerminalLogico = e.idTerminalLogico,
+                        dsTerminalLogico = e.dsTerminalLogico,
+                        idOperadora = e.idOperadora,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2)
+                {
+                    CollectionTerminalLogico = query.Select(e => new
+                    {
+
+                        idTerminalLogico = e.idTerminalLogico,
+                        dsTerminalLogico = e.dsTerminalLogico.Equals("0") ? "-" : e.dsTerminalLogico,
+                        idOperadora = e.idOperadora,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTerminalLogico;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionTerminalLogico = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    idTerminalLogico = e.idTerminalLogico,
-                    dsTerminalLogico = e.dsTerminalLogico,
-                    idOperadora = e.idOperadora,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2)
-            {
-                CollectionTerminalLogico = query.Select(e => new
-                {
-
-                    idTerminalLogico = e.idTerminalLogico,
-                    dsTerminalLogico = e.dsTerminalLogico.Equals("0") ? "-" : e.dsTerminalLogico,
-                    idOperadora = e.idOperadora,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar terminal logico" : erro);
+                }
+                throw new Exception(e.Message);
             }
 
-            retorno.Registros = CollectionTerminalLogico;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova TerminalLogico
@@ -169,9 +183,21 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Int32 Add(string token, TerminalLogico param)
         {
-            _db.TerminalLogicoes.Add(param);
-            _db.SaveChanges();
-            return param.idTerminalLogico;
+            try
+            {
+                _db.TerminalLogicoes.Add(param);
+                _db.SaveChanges();
+                return param.idTerminalLogico;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar terminal logico" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -182,8 +208,20 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Delete(string token, Int32 idTerminalLogico)
         {
-            _db.TerminalLogicoes.Remove(_db.TerminalLogicoes.Where(e => e.idTerminalLogico.Equals(idTerminalLogico)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.TerminalLogicoes.Remove(_db.TerminalLogicoes.Where(e => e.idTerminalLogico.Equals(idTerminalLogico)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar terminal logico" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera TerminalLogico
@@ -192,21 +230,32 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Update(string token, TerminalLogico param)
         {
-            TerminalLogico value = _db.TerminalLogicoes
-                    .Where(e => e.idTerminalLogico.Equals(param.idTerminalLogico))
-                    .First<TerminalLogico>();
+            try
+            {
+                TerminalLogico value = _db.TerminalLogicoes
+                        .Where(e => e.idTerminalLogico.Equals(param.idTerminalLogico))
+                        .First<TerminalLogico>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.idTerminalLogico != null && param.idTerminalLogico != value.idTerminalLogico)
-                value.idTerminalLogico = param.idTerminalLogico;
-            if (param.dsTerminalLogico != null && param.dsTerminalLogico != value.dsTerminalLogico)
-                value.dsTerminalLogico = param.dsTerminalLogico;
-            if (param.idOperadora != null && param.idOperadora != value.idOperadora)
-                value.idOperadora = param.idOperadora;
-            _db.SaveChanges();
-
+                if (param.idTerminalLogico != null && param.idTerminalLogico != value.idTerminalLogico)
+                    value.idTerminalLogico = param.idTerminalLogico;
+                if (param.dsTerminalLogico != null && param.dsTerminalLogico != value.dsTerminalLogico)
+                    value.dsTerminalLogico = param.dsTerminalLogico;
+                if (param.idOperadora != null && param.idOperadora != value.idOperadora)
+                    value.idOperadora = param.idOperadora;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar terminal logico" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

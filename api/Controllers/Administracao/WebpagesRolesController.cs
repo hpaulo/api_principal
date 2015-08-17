@@ -27,12 +27,25 @@ namespace api.Controllers.Administracao
                 log = Bibliotecas.LogAcaoUsuario.New(token, null);
 
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayWebpagesRoles.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
+                {
+                    Retorno dados = GatewayWebpagesRoles.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+                }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.msgErro = "Unauthorized";
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
@@ -55,12 +68,29 @@ namespace api.Controllers.Administracao
                     return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.msgErro = "Unauthorized";
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
             catch (Exception e)
             {
-                if (e.Message.Equals("401")) throw new HttpResponseException(HttpStatusCode.Unauthorized);
-                else throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                if (e.Message.Equals("401"))
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.msgErro = "Unauthorized";
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
+                else
+                {
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
+                    log.msgErro = e.Message;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                }
             }
 
 
@@ -84,12 +114,29 @@ namespace api.Controllers.Administracao
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.msgErro = "Unauthorized";
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
             catch (Exception e)
             {
-                if (e.Message.Equals("401")) throw new HttpResponseException(HttpStatusCode.Unauthorized);
-                else throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                if (e.Message.Equals("401"))
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.msgErro = "Unauthorized";
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
+                else
+                {
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
+                    log.msgErro = e.Message;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                }
             }
         }
 
@@ -111,10 +158,18 @@ namespace api.Controllers.Administracao
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.msgErro = "Unauthorized";
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }

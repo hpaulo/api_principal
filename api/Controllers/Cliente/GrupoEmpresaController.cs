@@ -9,6 +9,7 @@ using api.Negocios.Cliente;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
+using Newtonsoft.Json;
 
 namespace api.Controllers.cliente
 {
@@ -18,17 +19,32 @@ namespace api.Controllers.cliente
         // GET /grupo_empresa/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayGrupoEmpresa.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
+                {
+                    Retorno dados = GatewayGrupoEmpresa.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+                }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
@@ -36,50 +52,63 @@ namespace api.Controllers.cliente
         // POST /grupo_empresa/token/
         public HttpResponseMessage Post(string token, [FromBody]grupo_empresa param)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, GatewayGrupoEmpresa.Add(token, param));
-                else
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
-            }
-            catch (DbEntityValidationException dbEx)
-            {
-                foreach (var validationErrors in dbEx.EntityValidationErrors)
                 {
-                    foreach (var validationError in validationErrors.ValidationErrors)
-                    {
-                        Console.WriteLine("Property: {0} Error: {1}", validationError.PropertyName, validationError.ErrorMessage);
-                    }
+                    Int32 dados = GatewayGrupoEmpresa.Add(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
                 }
-
+                else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
+            }
+            catch (Exception e)
+            {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-            //catch(Exception e)
-            //{
-            //    throw new HttpResponseException(HttpStatusCode.InternalServerError);
-            //}
-
-
         }
 
         // PUT /grupo_empresa/token/
         public HttpResponseMessage Put(string token, [FromBody]grupo_empresa param)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
                     GatewayGrupoEmpresa.Update(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
@@ -87,19 +116,31 @@ namespace api.Controllers.cliente
         // DELETE /grupo_empresa/token/id_grupo
         public HttpResponseMessage Delete(string token, Int32 id_grupo)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("id_grupo : " + id_grupo));
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
                     GatewayGrupoEmpresa.Delete(token, id_grupo);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }

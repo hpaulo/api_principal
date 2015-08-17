@@ -154,124 +154,136 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            // Se for uma consulta por um nome de grupo específico na coleção 0, não força filtro por empresa
-            string outValue = null;
-            Boolean FiltroNome = false; 
-
-            // Esse filtro só acontecerá para perfis que tem a funcionalidade FILTRO EMPRESA
-            /*if (colecao == 0 && queryString.TryGetValue("" + (int)CAMPOS.DS_NOME, out outValue))
-                FiltroNome = !queryString["" + (int)CAMPOS.DS_NOME].Contains("%");*/ 
-
-            // Só filtra o grupo do usuário logado se não for um filtro de nome
-            Int32 IdGrupo = 0;
-            if (!FiltroNome)
+            try
             {
-                IdGrupo = Permissoes.GetIdGrupo(token);
-                if (IdGrupo != 0)
+                // Se for uma consulta por um nome de grupo específico na coleção 0, não força filtro por empresa
+                string outValue = null;
+                Boolean FiltroNome = false;
+
+                // Esse filtro só acontecerá para perfis que tem a funcionalidade FILTRO EMPRESA
+                /*if (colecao == 0 && queryString.TryGetValue("" + (int)CAMPOS.DS_NOME, out outValue))
+                    FiltroNome = !queryString["" + (int)CAMPOS.DS_NOME].Contains("%");*/
+
+                // Só filtra o grupo do usuário logado se não for um filtro de nome
+                Int32 IdGrupo = 0;
+                if (!FiltroNome)
                 {
-                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
-                    else
-                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                    IdGrupo = Permissoes.GetIdGrupo(token);
+                    if (IdGrupo != 0)
+                    {
+                        if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                            queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                        else
+                            queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                    }
                 }
-            }
 
-            //DECLARAÇÕES
-            List<dynamic> CollectionGrupo_empresa = new List<dynamic>();
-            Retorno retorno = new Retorno();
+                //DECLARAÇÕES
+                List<dynamic> CollectionGrupo_empresa = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
-            
-            if (!FiltroNome)
-            {
-                // Restringe consulta pelo perfil do usuário logado
-                //String RoleName = Permissoes.GetRoleName(token).ToUpper();
-                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))//RoleName.Equals("COMERCIAL"))
+
+                if (!FiltroNome)
                 {
-                    // Perfil Comercial tem uma carteira de clientes específica
-                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
-                    query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<grupo_empresa>();
+                    // Restringe consulta pelo perfil do usuário logado
+                    //String RoleName = Permissoes.GetRoleName(token).ToUpper();
+                    if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))//RoleName.Equals("COMERCIAL"))
+                    {
+                        // Perfil Comercial tem uma carteira de clientes específica
+                        List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                        query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<grupo_empresa>();
+                    }
                 }
-            }
 
-            var queryTotal = query;
+                var queryTotal = query;
 
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
 
 
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
 
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
 
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
-            {
-                CollectionGrupo_empresa = query.Select(e => new
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
                 {
-                    id_grupo = e.id_grupo,
-                    ds_nome = e.ds_nome,
-                    dt_cadastro = e.dt_cadastro,
-                    token = e.token,
-                    fl_ativo = e.fl_ativo,
-                    fl_cardservices = e.fl_cardservices,
-                    fl_taxservices = e.fl_taxservices,
-                    fl_proinfo = e.fl_proinfo,
-                    vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa} : null,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionGrupo_empresa = query.Select(e => new
-                {
-                    id_grupo = e.id_grupo,
-                    ds_nome = e.ds_nome,
-                    dt_cadastro = e.dt_cadastro,
-                    token = e.token,
-                    fl_ativo = e.fl_ativo,
-                    fl_cardservices = e.fl_cardservices,
-                    fl_taxservices = e.fl_taxservices,
-                    fl_proinfo = e.fl_proinfo,
-                    id_vendedor = e.id_vendedor,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2 || colecao == 3)
-            {
-                CollectionGrupo_empresa = query.Select(e => new
-                {
-                    id_grupo = e.id_grupo,
-                    ds_nome = e.ds_nome,
-                    dt_cadastro = e.dt_cadastro,
-                    token = e.token,
-                    fl_ativo = e.fl_ativo,
-                    fl_cardservices = e.fl_cardservices,
-                    fl_taxservices = e.fl_taxservices,
-                    fl_proinfo = e.fl_proinfo,
-                    vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
-                    login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
-                    dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
-                    podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).Count() == 0
+                    CollectionGrupo_empresa = query.Select(e => new
+                    {
+                        id_grupo = e.id_grupo,
+                        ds_nome = e.ds_nome,
+                        dt_cadastro = e.dt_cadastro,
+                        token = e.token,
+                        fl_ativo = e.fl_ativo,
+                        fl_cardservices = e.fl_cardservices,
+                        fl_taxservices = e.fl_taxservices,
+                        fl_proinfo = e.fl_proinfo,
+                        vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
+                    }).ToList<dynamic>();
                 }
-                    
-                ).ToList<dynamic>();
+                else if (colecao == 0)
+                {
+                    CollectionGrupo_empresa = query.Select(e => new
+                    {
+                        id_grupo = e.id_grupo,
+                        ds_nome = e.ds_nome,
+                        dt_cadastro = e.dt_cadastro,
+                        token = e.token,
+                        fl_ativo = e.fl_ativo,
+                        fl_cardservices = e.fl_cardservices,
+                        fl_taxservices = e.fl_taxservices,
+                        fl_proinfo = e.fl_proinfo,
+                        id_vendedor = e.id_vendedor,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2 || colecao == 3)
+                {
+                    CollectionGrupo_empresa = query.Select(e => new
+                    {
+                        id_grupo = e.id_grupo,
+                        ds_nome = e.ds_nome,
+                        dt_cadastro = e.dt_cadastro,
+                        token = e.token,
+                        fl_ativo = e.fl_ativo,
+                        fl_cardservices = e.fl_cardservices,
+                        fl_taxservices = e.fl_taxservices,
+                        fl_proinfo = e.fl_proinfo,
+                        vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
+                        login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
+                        dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
+                        podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).Count() == 0
+                    }
 
-                // a diferença entre a colecao 2 e a 3 é que a 2 sempre ordena decrescente por dt ultimo acesso
-                // A coleção 2 é usada no mobile, já a 3 é usada no portal web
-                if(colecao == 2) CollectionGrupo_empresa = CollectionGrupo_empresa.OrderByDescending(d => d.dt_ultimoAcesso).ToList();
+                    ).ToList<dynamic>();
 
+                    // a diferença entre a colecao 2 e a 3 é que a 2 sempre ordena decrescente por dt ultimo acesso
+                    // A coleção 2 é usada no mobile, já a 3 é usada no portal web
+                    if (colecao == 2) CollectionGrupo_empresa = CollectionGrupo_empresa.OrderByDescending(d => d.dt_ultimoAcesso).ToList();
+
+                }
+
+                retorno.Registros = CollectionGrupo_empresa;
+
+                return retorno;
             }
-
-            retorno.Registros = CollectionGrupo_empresa;
-            
-            return retorno;
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar grupo empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -296,19 +308,17 @@ namespace api.Negocios.Cliente
 
                 _db.grupo_empresa.Add(param);
                 _db.SaveChanges();
-
+                return param.id_grupo;
             }
-            catch (DbEntityValidationException dbEx)
+            catch (Exception e)
             {
-                foreach (var validationErrors in dbEx.EntityValidationErrors)
+                if (e is DbEntityValidationException)
                 {
-                    foreach (var validationError in validationErrors.ValidationErrors)
-                    {
-                        Console.WriteLine("Property: {0} Error: {1}", validationError.PropertyName, validationError.ErrorMessage);
-                    }
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar grupo empresa" : erro);
                 }
+                throw new Exception(e.Message);
             }
-            return param.id_grupo;
         }
 
 
@@ -319,14 +329,25 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static void Delete(string token, Int32 id_grupo)
         {
-            if (_db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == id_grupo).ToList().Count == 0)
+            try
             {
-                _db.grupo_empresa.Remove(_db.grupo_empresa.Where(e => e.id_grupo.Equals(id_grupo)).First());
-                _db.SaveChanges();
+                if (_db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == id_grupo).ToList().Count == 0)
+                {
+                    _db.grupo_empresa.Remove(_db.grupo_empresa.Where(e => e.id_grupo.Equals(id_grupo)).First());
+                    _db.SaveChanges();
+                }
+                else
+                    throw new Exception("Grupo empresa não pode ser deletado!");
             }
-            else
-                throw new Exception("Grupo empresa não pode ser deletado!");
-
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar grupo empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -338,31 +359,42 @@ namespace api.Negocios.Cliente
         /// <returns></returns>
         public static void Update(string token, grupo_empresa param)
         {
-            grupo_empresa value = _db.grupo_empresa
-                    .Where(e => e.id_grupo.Equals(param.id_grupo))
-                    .First<grupo_empresa>();
-
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
-
-
-            //if (param.id_grupo != null && param.id_grupo != value.id_grupo)
-            //    value.id_grupo = param.id_grupo;
-            if (param.ds_nome != null && param.ds_nome != value.ds_nome)
-                value.ds_nome = param.ds_nome;
-            //if (param.token != null && param.token != value.token)
-            //    value.token = param.token;
-            if (param.fl_ativo != value.fl_ativo)
+            try
             {
-                value.fl_ativo = param.fl_ativo;
-            }
-            if (param.fl_cardservices != value.fl_cardservices)
-                value.fl_cardservices = param.fl_cardservices;
-            if (param.fl_taxservices != value.fl_taxservices)
-                value.fl_taxservices = param.fl_taxservices;
-            if (param.fl_proinfo != value.fl_proinfo)
-                value.fl_proinfo = param.fl_proinfo;
-            _db.SaveChanges();
+                grupo_empresa value = _db.grupo_empresa
+                        .Where(e => e.id_grupo.Equals(param.id_grupo))
+                        .First<grupo_empresa>();
 
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+
+
+                //if (param.id_grupo != null && param.id_grupo != value.id_grupo)
+                //    value.id_grupo = param.id_grupo;
+                if (param.ds_nome != null && param.ds_nome != value.ds_nome)
+                    value.ds_nome = param.ds_nome;
+                //if (param.token != null && param.token != value.token)
+                //    value.token = param.token;
+                if (param.fl_ativo != value.fl_ativo)
+                {
+                    value.fl_ativo = param.fl_ativo;
+                }
+                if (param.fl_cardservices != value.fl_cardservices)
+                    value.fl_cardservices = param.fl_cardservices;
+                if (param.fl_taxservices != value.fl_taxservices)
+                    value.fl_taxservices = param.fl_taxservices;
+                if (param.fl_proinfo != value.fl_proinfo)
+                    value.fl_proinfo = param.fl_proinfo;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar grupo empresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

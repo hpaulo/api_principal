@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using WebMatrix.WebData;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Administracao
 {
@@ -213,144 +214,114 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionWebpages_Users = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // Se for uma consulta por um login ou e-mail específico na coleção 0, não força filtro por empresa, filial e rolelevel
-            string outValue = null;
-            Boolean FiltroForcado = true;
-
-            if (colecao == 0)
+            try
             {
-                Boolean filtroLogin = queryString.TryGetValue("" + (int)CAMPOS.DS_LOGIN, out outValue);
-                Boolean filtroEmail = queryString.TryGetValue("" + (int)CAMPOS.DS_EMAIL, out outValue);
+                //DECLARAÇÕES
+                List<dynamic> CollectionWebpages_Users = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                if (filtroLogin && filtroEmail)
-                    FiltroForcado = queryString["" + (int)CAMPOS.DS_LOGIN].Contains("%") || queryString["" + (int)CAMPOS.DS_EMAIL].Contains("%");
-                else if (filtroLogin)
-                    FiltroForcado = queryString["" + (int)CAMPOS.DS_LOGIN].Contains("%");
-                else if (filtroEmail)
-                    FiltroForcado = queryString["" + (int)CAMPOS.DS_EMAIL].Contains("%");
-            }
+                // Se for uma consulta por um login ou e-mail específico na coleção 0, não força filtro por empresa, filial e rolelevel
+                string outValue = null;
+                Boolean FiltroForcado = true;
 
-            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-            Int32 IdGrupo = 0;
-            if (FiltroForcado)
-            {
-                IdGrupo = Permissoes.GetIdGrupo(token);
-                if (IdGrupo != 0)
+                if (colecao == 0)
                 {
-                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
-                    else
-                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                    Boolean filtroLogin = queryString.TryGetValue("" + (int)CAMPOS.DS_LOGIN, out outValue);
+                    Boolean filtroEmail = queryString.TryGetValue("" + (int)CAMPOS.DS_EMAIL, out outValue);
+
+                    if (filtroLogin && filtroEmail)
+                        FiltroForcado = queryString["" + (int)CAMPOS.DS_LOGIN].Contains("%") || queryString["" + (int)CAMPOS.DS_EMAIL].Contains("%");
+                    else if (filtroLogin)
+                        FiltroForcado = queryString["" + (int)CAMPOS.DS_LOGIN].Contains("%");
+                    else if (filtroEmail)
+                        FiltroForcado = queryString["" + (int)CAMPOS.DS_EMAIL].Contains("%");
                 }
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-                if (CnpjEmpresa != "")
-                {
-                    if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJEMPRESA, out outValue))
-                        queryString["" + (int)CAMPOS.NU_CNPJEMPRESA] = CnpjEmpresa;
-                    else
-                        queryString.Add("" + (int)CAMPOS.NU_CNPJEMPRESA, CnpjEmpresa);
-                }
-            }
 
-            if (colecao == 3)
-            {
-                int IdUsers = Permissoes.GetIdUser(token);
-                if (IdUsers != 0)
-                {
-                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_USERS, out outValue))
-                        queryString["" + (int)CAMPOS.ID_USERS] = IdUsers.ToString();
-                    else
-                        queryString.Add("" + (int)CAMPOS.ID_USERS, IdUsers.ToString());
-                }
-            }
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-
-
-            if (colecao != 3) // [WEB] A coleção 3 permite que o usuário de qualquer perfil obtenha os seus próprios dados
-            {
-
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+                Int32 IdGrupo = 0;
                 if (FiltroForcado)
                 {
-                    // Restringe consulta pelo perfil do usuário logado
-                    Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-                    //String RoleName = Permissoes.GetRoleName(token).ToUpper();
-                    bool isAtosVendedor = Permissoes.isAtosRoleVendedor(token);
-                    if (IdGrupo == 0 && isAtosVendedor)//RoleName.Equals("COMERCIAL"))
+                    IdGrupo = Permissoes.GetIdGrupo(token);
+                    if (IdGrupo != 0)
                     {
-                        // Perfil Comercial tem uma carteira de clientes específica
-                        List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
-                        query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin
-                                                 && e.id_grupo != null && listaIdsGruposEmpresas.Contains(e.id_grupo ?? -1)).AsQueryable<webpages_Users>();
+                        if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                            queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                        else
+                            queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
                     }
-                    else if (Permissoes.isAtosRole(token) && !isAtosVendedor)//RoleName.Equals("COMERCIAL"))
-                        // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
-                        query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
-                    else
-                        // Só exibe os usuários de RoleLevelMin
-                        query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
-                }
-            }
-
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
-            {
-                CollectionWebpages_Users = query.Select(e => new
-                {
-
-                    id_users = e.id_users,
-                    ds_login = e.ds_login,
-                    ds_email = e.ds_email,
-                    id_grupo = e.id_grupo,
-                    fl_ativo = e.fl_ativo,
-                    nu_cnpjEmpresa = e.nu_cnpjEmpresa,
-                    nu_cnpjBaseEmpresa = e.nu_cnpjBaseEmpresa,
-                    id_pessoa = e.id_pessoa,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionWebpages_Users = query.Select(e => new
-                {
-
-                    id_users = e.id_users,
-                    ds_login = e.ds_login,
-                    ds_email = e.ds_email,
-                    id_grupo = e.id_grupo,
-                    fl_ativo = e.fl_ativo,
-                    nu_cnpjEmpresa = e.nu_cnpjEmpresa,
-                    nu_cnpjBaseEmpresa = e.nu_cnpjBaseEmpresa,
-                    id_pessoa = e.id_pessoa,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2 || colecao == 3) // [WEB] Dados do Usuário Logado COLEÇÃO 3
-            {
-                CollectionWebpages_Users = query.Select(
-                e => new
-                {
-                    webpagesusers = new
+                    string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                    if (CnpjEmpresa != "")
                     {
+                        if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJEMPRESA, out outValue))
+                            queryString["" + (int)CAMPOS.NU_CNPJEMPRESA] = CnpjEmpresa;
+                        else
+                            queryString.Add("" + (int)CAMPOS.NU_CNPJEMPRESA, CnpjEmpresa);
+                    }
+                }
+
+                if (colecao == 3)
+                {
+                    int IdUsers = Permissoes.GetIdUser(token);
+                    if (IdUsers != 0)
+                    {
+                        if (queryString.TryGetValue("" + (int)CAMPOS.ID_USERS, out outValue))
+                            queryString["" + (int)CAMPOS.ID_USERS] = IdUsers.ToString();
+                        else
+                            queryString.Add("" + (int)CAMPOS.ID_USERS, IdUsers.ToString());
+                    }
+                }
+
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+
+
+                if (colecao != 3) // [WEB] A coleção 3 permite que o usuário de qualquer perfil obtenha os seus próprios dados
+                {
+
+                    if (FiltroForcado)
+                    {
+                        // Restringe consulta pelo perfil do usuário logado
+                        Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+                        //String RoleName = Permissoes.GetRoleName(token).ToUpper();
+                        bool isAtosVendedor = Permissoes.isAtosRoleVendedor(token);
+                        if (IdGrupo == 0 && isAtosVendedor)//RoleName.Equals("COMERCIAL"))
+                        {
+                            // Perfil Comercial tem uma carteira de clientes específica
+                            List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                            query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin
+                                                     && e.id_grupo != null && listaIdsGruposEmpresas.Contains(e.id_grupo ?? -1)).AsQueryable<webpages_Users>();
+                        }
+                        else if (Permissoes.isAtosRole(token) && !isAtosVendedor)//RoleName.Equals("COMERCIAL"))
+                            // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
+                            query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
+                        else
+                            // Só exibe os usuários de RoleLevelMin
+                            query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
+                    }
+                }
+
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionWebpages_Users = query.Select(e => new
+                    {
+
                         id_users = e.id_users,
                         ds_login = e.ds_login,
                         ds_email = e.ds_email,
@@ -358,65 +329,107 @@ namespace api.Negocios.Administracao
                         fl_ativo = e.fl_ativo,
                         nu_cnpjEmpresa = e.nu_cnpjEmpresa,
                         nu_cnpjBaseEmpresa = e.nu_cnpjBaseEmpresa,
-                        id_pessoa = e.id_pessoa
-                    },
-                    pessoa = new
+                        id_pessoa = e.id_pessoa,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionWebpages_Users = query.Select(e => new
                     {
-                        nm_pessoa = e.pessoa.nm_pessoa,
-                        dt_nascimento = e.pessoa.dt_nascimento,
-                        nu_telefone = e.pessoa.nu_telefone,
-                        nu_ramal = e.pessoa.nu_ramal
-                    },
-                    webpagesusersinroles = _db.webpages_UsersInRoles.Where(r => r.UserId == e.id_users).Select(r => new { RoleId = r.RoleId, RoleName = r.webpages_Roles.RoleName, RolePrincipal = r.RolePrincipal }).ToList(),
-                    grupoempresa = e.grupo_empresa.ds_nome,
-                    empresa = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
-                    podeExcluir = e.LogAcesso1.Count() == 0,
-                    //gruposempresasvendedor2 = _db.grupo_empresa.Where(g => g.id_vendedor == e.id_users).Select(g => new { g.id_grupo, g.ds_nome }).ToList(),
-                    gruposvendedor = e.grupo_empresa_vendedor.Select(g => new { g.id_grupo, g.ds_nome }).ToList()
 
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 3) // [WEB] Dados do Usuário Logado
-            {
-                // OBS: UTILIZADO EM CONJUNTO COM A COLEÇÃO 2
-            }
-
-            else if (colecao == 4)
-	        {
-                if (queryString.TryGetValue("" + (int)CAMPOS.DS_LOGIN, out outValue))
-                {
-                    string ds_login = queryString[((int)CAMPOS.DS_LOGIN).ToString()];
-                    retorno.TotalDeRegistros = _db.webpages_Users.Where(e => e.ds_login.Equals(ds_login)).Count();
+                        id_users = e.id_users,
+                        ds_login = e.ds_login,
+                        ds_email = e.ds_email,
+                        id_grupo = e.id_grupo,
+                        fl_ativo = e.fl_ativo,
+                        nu_cnpjEmpresa = e.nu_cnpjEmpresa,
+                        nu_cnpjBaseEmpresa = e.nu_cnpjBaseEmpresa,
+                        id_pessoa = e.id_pessoa,
+                    }).ToList<dynamic>();
                 }
-                else if (queryString.TryGetValue("" + (int)CAMPOS.DS_EMAIL, out outValue))
+                else if (colecao == 2 || colecao == 3) // [WEB] Dados do Usuário Logado COLEÇÃO 3
                 {
-                    string ds_email = queryString[((int)CAMPOS.DS_EMAIL).ToString()];
-                    retorno.TotalDeRegistros = _db.webpages_Users.Where(e => e.ds_email.Equals(ds_email)).Count();
+                    CollectionWebpages_Users = query.Select(
+                    e => new
+                    {
+                        webpagesusers = new
+                        {
+                            id_users = e.id_users,
+                            ds_login = e.ds_login,
+                            ds_email = e.ds_email,
+                            id_grupo = e.id_grupo,
+                            fl_ativo = e.fl_ativo,
+                            nu_cnpjEmpresa = e.nu_cnpjEmpresa,
+                            nu_cnpjBaseEmpresa = e.nu_cnpjBaseEmpresa,
+                            id_pessoa = e.id_pessoa
+                        },
+                        pessoa = new
+                        {
+                            nm_pessoa = e.pessoa.nm_pessoa,
+                            dt_nascimento = e.pessoa.dt_nascimento,
+                            nu_telefone = e.pessoa.nu_telefone,
+                            nu_ramal = e.pessoa.nu_ramal
+                        },
+                        webpagesusersinroles = _db.webpages_UsersInRoles.Where(r => r.UserId == e.id_users).Select(r => new { RoleId = r.RoleId, RoleName = r.webpages_Roles.RoleName, RolePrincipal = r.RolePrincipal }).ToList(),
+                        grupoempresa = e.grupo_empresa.ds_nome,
+                        empresa = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
+                        podeExcluir = e.LogAcesso1.Count() == 0,
+                        //gruposempresasvendedor2 = _db.grupo_empresa.Where(g => g.id_vendedor == e.id_users).Select(g => new { g.id_grupo, g.ds_nome }).ToList(),
+                        gruposvendedor = e.grupo_empresa_vendedor.Select(g => new { g.id_grupo, g.ds_nome }).ToList()
+
+                    }).ToList<dynamic>();
                 }
-                else if (queryString.TryGetValue("" + (int)CAMPOS.ID_USERS, out outValue))
+                else if (colecao == 3) // [WEB] Dados do Usuário Logado
                 {
-                    Int32 id_users = Convert.ToInt32(queryString[((int)CAMPOS.ID_USERS).ToString()]);
-                    retorno.TotalDeRegistros = _db.LogAcesso1.Where(e => e.idUsers == id_users).Count() > 0 ? 1 : 0;
+                    // OBS: UTILIZADO EM CONJUNTO COM A COLEÇÃO 2
                 }
-                else
-                    retorno.TotalDeRegistros = 0;
 
-            }
+                else if (colecao == 4)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.DS_LOGIN, out outValue))
+                    {
+                        string ds_login = queryString[((int)CAMPOS.DS_LOGIN).ToString()];
+                        retorno.TotalDeRegistros = _db.webpages_Users.Where(e => e.ds_login.Equals(ds_login)).Count();
+                    }
+                    else if (queryString.TryGetValue("" + (int)CAMPOS.DS_EMAIL, out outValue))
+                    {
+                        string ds_email = queryString[((int)CAMPOS.DS_EMAIL).ToString()];
+                        retorno.TotalDeRegistros = _db.webpages_Users.Where(e => e.ds_email.Equals(ds_email)).Count();
+                    }
+                    else if (queryString.TryGetValue("" + (int)CAMPOS.ID_USERS, out outValue))
+                    {
+                        Int32 id_users = Convert.ToInt32(queryString[((int)CAMPOS.ID_USERS).ToString()]);
+                        retorno.TotalDeRegistros = _db.LogAcesso1.Where(e => e.idUsers == id_users).Count() > 0 ? 1 : 0;
+                    }
+                    else
+                        retorno.TotalDeRegistros = 0;
 
-            /*else if (colecao == 5) // se o usuário tiver atividade no log, retorno = false
-            {
-                int idUsers = int.Parse(queryString[((int)CAMPOS.ID_USERS).ToString()]);
+                }
+
+                /*else if (colecao == 5) // se o usuário tiver atividade no log, retorno = false
+                {
+                    int idUsers = int.Parse(queryString[((int)CAMPOS.ID_USERS).ToString()]);
                 
-                var o = new
+                    var o = new
+                    {
+                        log = _db.LogAcesso1.Where(e => e.idUsers == idUsers).Count() == 0
+                    };
+                    CollectionWebpages_Users.Add(o);
+                }*/
+
+                retorno.Registros = CollectionWebpages_Users;
+
+                return retorno;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
                 {
-                    log = _db.LogAcesso1.Where(e => e.idUsers == idUsers).Count() == 0
-                };
-                CollectionWebpages_Users.Add(o);
-            }*/
-
-            retorno.Registros = CollectionWebpages_Users;
-
-            return retorno;
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar usuário" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -428,80 +441,99 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, Models.Object.Usuario param)
         {
-            // Adiciona os dados da pessoa
-            param.Pessoa.id_pesssoa = GatewayPessoa.Add(token, param.Pessoa);
-            //_db.pessoas.Add(param.Pessoa);
-            //_db.SaveChanges();
-
-            // Cria a conta com o login informado e a senha padrão "atos123"
-            try {
-                WebSecurity.CreateUserAndAccount(param.Webpagesusers.ds_login, "atos123", null, false);
-            }catch
+            try
             {
-                // Remove a pessoa criada
-                GatewayPessoa.Delete(token, param.Pessoa.id_pesssoa);
-                // Reporta a falha
-                throw new Exception("500");
-            }
-            param.Webpagesusers.id_users = WebSecurity.GetUserId(param.Webpagesusers.ds_login);
+                // Adiciona os dados da pessoa
+                param.Pessoa.id_pesssoa = GatewayPessoa.Add(token, param.Pessoa);
+                //_db.pessoas.Add(param.Pessoa);
+                //_db.SaveChanges();
 
-            // Cria o usuário
-            webpages_Users usr = _db.webpages_Users.Find(param.Webpagesusers.id_users);
-            usr.ds_email = param.Webpagesusers.ds_email;
-            usr.id_grupo = param.Webpagesusers.id_grupo;
-            usr.nu_cnpjBaseEmpresa = param.Webpagesusers.nu_cnpjBaseEmpresa;
-            usr.nu_cnpjEmpresa = param.Webpagesusers.nu_cnpjEmpresa;
-            usr.id_pessoa = param.Pessoa.id_pesssoa;
-            usr.fl_ativo = true;
-            try {
-                _db.SaveChanges();
-            }
-            catch
-            {
-                // Remova a pessoa e a conta criada
-                GatewayPessoa.Delete(token, param.Pessoa.id_pesssoa);
-                GatewayWebpagesMembership.Delete(token, param.Webpagesusers.id_users);
-                // Reporta a falha
-                throw new Exception("500");
-            }
-
-            foreach (var item in param.Webpagesusersinroles)
-            {
-                if (item.UserId == 0)
+                // Cria a conta com o login informado e a senha padrão "atos123"
+                try
                 {
-                    item.UserId = param.Webpagesusers.id_users;
-                    _db.webpages_UsersInRoles.Add(item);
-                    try {
-                        _db.SaveChanges();
-                    }catch
-                    {
-                        // não é porque não associou alguma role que deve retornar erro por completo
-                    }
+                    WebSecurity.CreateUserAndAccount(param.Webpagesusers.ds_login, "atos123", null, false);
                 }
-            }
-
-            // Associa grupos empresas ao vendedor
-            if (param.Addidsgrupoempresavendedor != null)
-            {
-                foreach (var idGrupo in param.Addidsgrupoempresavendedor)
+                catch
                 {
+                    // Remove a pessoa criada
+                    GatewayPessoa.Delete(token, param.Pessoa.id_pesssoa);
+                    // Reporta a falha
+                    throw new Exception("500");
+                }
+                param.Webpagesusers.id_users = WebSecurity.GetUserId(param.Webpagesusers.ds_login);
 
-                    grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == idGrupo).FirstOrDefault();
+                // Cria o usuário
+                webpages_Users usr = _db.webpages_Users.Find(param.Webpagesusers.id_users);
+                usr.ds_email = param.Webpagesusers.ds_email;
+                usr.id_grupo = param.Webpagesusers.id_grupo;
+                usr.nu_cnpjBaseEmpresa = param.Webpagesusers.nu_cnpjBaseEmpresa;
+                usr.nu_cnpjEmpresa = param.Webpagesusers.nu_cnpjEmpresa;
+                usr.id_pessoa = param.Pessoa.id_pesssoa;
+                usr.fl_ativo = true;
+                try
+                {
+                    _db.SaveChanges();
+                }
+                catch
+                {
+                    // Remova a pessoa e a conta criada
+                    GatewayPessoa.Delete(token, param.Pessoa.id_pesssoa);
+                    GatewayWebpagesMembership.Delete(token, param.Webpagesusers.id_users);
+                    // Reporta a falha
+                    throw new Exception("500");
+                }
 
-                    if (grupo != null)
+                foreach (var item in param.Webpagesusersinroles)
+                {
+                    if (item.UserId == 0)
                     {
-                        grupo.id_vendedor = param.Webpagesusers.id_users;
-                        try {
-                            _db.SaveChanges();
-                        }catch
+                        item.UserId = param.Webpagesusers.id_users;
+                        _db.webpages_UsersInRoles.Add(item);
+                        try
                         {
-                            // não é porque não associou algum grupo ao vendedor que deve retornar erro por completo
+                            _db.SaveChanges();
+                        }
+                        catch
+                        {
+                            // não é porque não associou alguma role que deve retornar erro por completo
                         }
                     }
                 }
-            }
 
-            return param.Webpagesusers.id_users;
+                // Associa grupos empresas ao vendedor
+                if (param.Addidsgrupoempresavendedor != null)
+                {
+                    foreach (var idGrupo in param.Addidsgrupoempresavendedor)
+                    {
+
+                        grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == idGrupo).FirstOrDefault();
+
+                        if (grupo != null)
+                        {
+                            grupo.id_vendedor = param.Webpagesusers.id_users;
+                            try
+                            {
+                                _db.SaveChanges();
+                            }
+                            catch
+                            {
+                                // não é porque não associou algum grupo ao vendedor que deve retornar erro por completo
+                            }
+                        }
+                    }
+                }
+
+                return param.Webpagesusers.id_users;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar usuário" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -518,27 +550,38 @@ namespace api.Negocios.Administracao
 
         public static void Delete(string token, Int32 id_users)
         {
-            if (_db.LogAcesso1.Where(e => e.idUsers == id_users).ToList().Count == 0)
+            try
             {
-                GatewayWebpagesUsersInRoles.Delete(token, id_users, false);
-                GatewayWebpagesMembership.Delete(token, id_users);
-                // Obtem o usuário com o id_users
-                webpages_Users value = _db.webpages_Users
-                                          .Where(e => e.id_users.Equals(id_users))
-                                          .First<webpages_Users>();
-
-                int id_pessoa = (value.id_pessoa != null) ? Convert.ToInt32(value.id_pessoa) : 0;
-
-                _db.webpages_Users.RemoveRange(_db.webpages_Users.Where(e => e.id_users == id_users));
-                _db.SaveChanges();
-                if (id_pessoa > 0)
+                if (_db.LogAcesso1.Where(e => e.idUsers == id_users).ToList().Count == 0)
                 {
-                    GatewayPessoa.Delete(token, id_pessoa);
-                }
-            }
-            else
-                throw new Exception("Usuário não pode ser deletado!");
+                    GatewayWebpagesUsersInRoles.Delete(token, id_users, false);
+                    GatewayWebpagesMembership.Delete(token, id_users);
+                    // Obtem o usuário com o id_users
+                    webpages_Users value = _db.webpages_Users
+                                              .Where(e => e.id_users.Equals(id_users))
+                                              .First<webpages_Users>();
 
+                    int id_pessoa = (value.id_pessoa != null) ? Convert.ToInt32(value.id_pessoa) : 0;
+
+                    _db.webpages_Users.RemoveRange(_db.webpages_Users.Where(e => e.id_users == id_users));
+                    _db.SaveChanges();
+                    if (id_pessoa > 0)
+                    {
+                        GatewayPessoa.Delete(token, id_pessoa);
+                    }
+                }
+                else
+                    throw new Exception("Usuário não pode ser deletado!");
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar usuário" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -550,168 +593,179 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static void Update(string token, Models.Object.Usuario param)
         {
-            if (param.Id_grupo != 0)
+            try
             {
-                // Altera grupo empresa do usuário logado
-                Int32 IdUser = Permissoes.GetIdUser(token);
-                webpages_Users value = _db.webpages_Users
-                        .Where(e => e.id_users == IdUser)
-                        .FirstOrDefault<webpages_Users>();
-
-                if (value != null)
+                if (param.Id_grupo != 0)
                 {
-                    // VALIDAR PERMISSÂO PARA FUNCIONALIDADE
+                    // Altera grupo empresa do usuário logado
+                    Int32 IdUser = Permissoes.GetIdUser(token);
+                    webpages_Users value = _db.webpages_Users
+                            .Where(e => e.id_users == IdUser)
+                            .FirstOrDefault<webpages_Users>();
 
-                    if (param.Id_grupo == -1)
-                        value.id_grupo = null;
+                    if (value != null)
+                    {
+                        // VALIDAR PERMISSÂO PARA FUNCIONALIDADE
+
+                        if (param.Id_grupo == -1)
+                            value.id_grupo = null;
+                        else
+                            value.id_grupo = param.Id_grupo;
+
+                        value.nu_cnpjEmpresa = null;
+                        _db.SaveChanges();
+                    }
                     else
-                        value.id_grupo = param.Id_grupo;
-
-                    value.nu_cnpjEmpresa = null;
-                    _db.SaveChanges();
+                        throw new Exception("Usuário inválido!");
                 }
                 else
-                    throw new Exception("Usuário inválido!");
-            }
-            else
-            {
-                if (param.Webpagesusers.id_users == 0) throw new Exception("Falha ao parâmetro");
-
-                // Altera um usuário que não necessiariamente é o logado
-                webpages_Users value = _db.webpages_Users
-                        .Where(e => e.id_users == param.Webpagesusers.id_users)
-                        .First<webpages_Users>();
-
-                if (value != null)
                 {
+                    if (param.Webpagesusers.id_users == 0) throw new Exception("Falha ao parâmetro");
 
+                    // Altera um usuário que não necessiariamente é o logado
+                    webpages_Users value = _db.webpages_Users
+                            .Where(e => e.id_users == param.Webpagesusers.id_users)
+                            .First<webpages_Users>();
 
-                    if (param.Pessoa != null)
+                    if (value != null)
                     {
-                        param.Pessoa.id_pesssoa = (int)value.id_pessoa;
-                        GatewayPessoa.Update(token, param.Pessoa);
-                    }
 
-                    if (param.Webpagesusersinroles != null)
-                    {
-                        foreach (var item in param.Webpagesusersinroles)
+
+                        if (param.Pessoa != null)
                         {
-                            if (item.UserId == -1)
-                            {
-                                item.UserId = param.Webpagesusers.id_users;
-                                GatewayWebpagesUsersInRoles.Delete(token, item);
-                            }
-                            else
-                            {
-                                item.UserId = param.Webpagesusers.id_users;
-                                webpages_UsersInRoles verificacao = _db.webpages_UsersInRoles.Where(p => p.UserId == item.UserId).Where(p => p.RoleId == item.RoleId).FirstOrDefault();
-                                if (verificacao != null)
-                                {
-                                    webpages_UsersInRoles principal = _db.webpages_UsersInRoles
-                                                                        .Where(p => p.UserId == item.UserId)
-                                                                        .Where(p => p.RolePrincipal == true).FirstOrDefault();
-                                    if (principal != null)
-                                        principal.RolePrincipal = false;
+                            param.Pessoa.id_pesssoa = (int)value.id_pessoa;
+                            GatewayPessoa.Update(token, param.Pessoa);
+                        }
 
-                                    verificacao.RolePrincipal = item.RolePrincipal;
-                                    _db.SaveChanges();
+                        if (param.Webpagesusersinroles != null)
+                        {
+                            foreach (var item in param.Webpagesusersinroles)
+                            {
+                                if (item.UserId == -1)
+                                {
+                                    item.UserId = param.Webpagesusers.id_users;
+                                    GatewayWebpagesUsersInRoles.Delete(token, item);
                                 }
                                 else
                                 {
-                                    GatewayWebpagesUsersInRoles.Add(token, item);
+                                    item.UserId = param.Webpagesusers.id_users;
+                                    webpages_UsersInRoles verificacao = _db.webpages_UsersInRoles.Where(p => p.UserId == item.UserId).Where(p => p.RoleId == item.RoleId).FirstOrDefault();
+                                    if (verificacao != null)
+                                    {
+                                        webpages_UsersInRoles principal = _db.webpages_UsersInRoles
+                                                                            .Where(p => p.UserId == item.UserId)
+                                                                            .Where(p => p.RolePrincipal == true).FirstOrDefault();
+                                        if (principal != null)
+                                            principal.RolePrincipal = false;
+
+                                        verificacao.RolePrincipal = item.RolePrincipal;
+                                        _db.SaveChanges();
+                                    }
+                                    else
+                                    {
+                                        GatewayWebpagesUsersInRoles.Add(token, item);
+                                    }
                                 }
                             }
                         }
-                    }
-                    // Associa grupos empresas ao vendedor
-                    if (param.Addidsgrupoempresavendedor != null)
-                    {
-                        foreach (var idGrupo in param.Addidsgrupoempresavendedor)
+                        // Associa grupos empresas ao vendedor
+                        if (param.Addidsgrupoempresavendedor != null)
                         {
-
-                            grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == idGrupo).FirstOrDefault();
-
-                            if (grupo != null)
+                            foreach (var idGrupo in param.Addidsgrupoempresavendedor)
                             {
-                                grupo.id_vendedor = param.Webpagesusers.id_users;
-                                _db.SaveChanges();
+
+                                grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == idGrupo).FirstOrDefault();
+
+                                if (grupo != null)
+                                {
+                                    grupo.id_vendedor = param.Webpagesusers.id_users;
+                                    _db.SaveChanges();
+                                }
                             }
                         }
-                    }
-                    // Desassocia grupos empresas
-                    if (param.Removeidsgrupoempresavendedor != null)
-                    {
-                        foreach (var idGrupo in param.Removeidsgrupoempresavendedor)
+                        // Desassocia grupos empresas
+                        if (param.Removeidsgrupoempresavendedor != null)
                         {
-
-                            grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == idGrupo).FirstOrDefault();
-
-                            if (grupo != null)
+                            foreach (var idGrupo in param.Removeidsgrupoempresavendedor)
                             {
-                                grupo.id_vendedor = null;
-                                _db.SaveChanges();
+
+                                grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == idGrupo).FirstOrDefault();
+
+                                if (grupo != null)
+                                {
+                                    grupo.id_vendedor = null;
+                                    _db.SaveChanges();
+                                }
                             }
                         }
-                    }
 
 
-                    if (param.Webpagesusers.ds_login != null && param.Webpagesusers.ds_login != value.ds_login)
-                    {
-                        webpages_Users old = _db.webpages_Users.Where(e => e.ds_login.ToLower().Equals(param.Webpagesusers.ds_login.ToLower()))
-                                                               .FirstOrDefault();
-                        if (old == null || old.id_users == value.id_users) value.ds_login = param.Webpagesusers.ds_login;
-                    }
-                    if (param.Webpagesusers.ds_email != null && param.Webpagesusers.ds_email != value.ds_email)
-                    {
-                        webpages_Users old = _db.webpages_Users.Where(e => e.ds_email.ToLower().Equals(param.Webpagesusers.ds_email.ToLower()))
-                                                               .FirstOrDefault();
-                        if (old == null || old.id_users == value.id_users)
-                            value.ds_email = param.Webpagesusers.ds_email;
-                    }
-                    if (param.Webpagesusers.fl_ativo != value.fl_ativo)
-                    {
-                        value.fl_ativo = param.Webpagesusers.fl_ativo;
-                    }
-
-                    Boolean grupoEmpresaAlterado = false;
-                    if (param.Webpagesusers.nu_cnpjEmpresa != null && param.Webpagesusers.nu_cnpjEmpresa != value.nu_cnpjEmpresa)
-                    {
-                        if (param.Webpagesusers.nu_cnpjEmpresa == "")
-                            value.nu_cnpjEmpresa = null;
-                        else
+                        if (param.Webpagesusers.ds_login != null && param.Webpagesusers.ds_login != value.ds_login)
                         {
-                            value.nu_cnpjEmpresa = param.Webpagesusers.nu_cnpjEmpresa;
-                            value.id_grupo = _db.empresas.Where(f => f.nu_cnpj.Equals(param.Webpagesusers.nu_cnpjEmpresa)).Select(f => f.id_grupo).FirstOrDefault();
-                            grupoEmpresaAlterado = true; // já forçou o grupo pela filial
+                            webpages_Users old = _db.webpages_Users.Where(e => e.ds_login.ToLower().Equals(param.Webpagesusers.ds_login.ToLower()))
+                                                                   .FirstOrDefault();
+                            if (old == null || old.id_users == value.id_users) value.ds_login = param.Webpagesusers.ds_login;
                         }
-                    }// só pode colocar grupo empresa ao qual a filial está ou sem nenhuma filial
-
-                    if (!grupoEmpresaAlterado && param.Webpagesusers.id_grupo != null && param.Webpagesusers.id_grupo != 0 && param.Webpagesusers.id_grupo != value.id_grupo)
-                    {
-                        if (param.Webpagesusers.id_grupo == -1)
+                        if (param.Webpagesusers.ds_email != null && param.Webpagesusers.ds_email != value.ds_email)
                         {
-                            value.id_grupo = null;
-                            value.nu_cnpjEmpresa = null; // Não pode estar associado a uma filial sem estar associado a um grupo
+                            webpages_Users old = _db.webpages_Users.Where(e => e.ds_email.ToLower().Equals(param.Webpagesusers.ds_email.ToLower()))
+                                                                   .FirstOrDefault();
+                            if (old == null || old.id_users == value.id_users)
+                                value.ds_email = param.Webpagesusers.ds_email;
                         }
-                        else
+                        if (param.Webpagesusers.fl_ativo != value.fl_ativo)
                         {
-                            value.id_grupo = param.Webpagesusers.id_grupo;
-                            // Avalia se tem empresa associado => A filial TEM QUE SER associada ao grupo
-                            if (value.nu_cnpjEmpresa != null)
+                            value.fl_ativo = param.Webpagesusers.fl_ativo;
+                        }
+
+                        Boolean grupoEmpresaAlterado = false;
+                        if (param.Webpagesusers.nu_cnpjEmpresa != null && param.Webpagesusers.nu_cnpjEmpresa != value.nu_cnpjEmpresa)
+                        {
+                            if (param.Webpagesusers.nu_cnpjEmpresa == "")
+                                value.nu_cnpjEmpresa = null;
+                            else
                             {
-                                Int32 id_grupo = _db.empresas.Where(f => f.nu_cnpj.Equals(value.nu_cnpjEmpresa)).Select(f => f.id_grupo).FirstOrDefault();
-                                if (id_grupo != value.id_grupo)
-                                    value.nu_cnpjEmpresa = null; // filial que estava associado é de um grupo diferente do grupo recém associado
+                                value.nu_cnpjEmpresa = param.Webpagesusers.nu_cnpjEmpresa;
+                                value.id_grupo = _db.empresas.Where(f => f.nu_cnpj.Equals(param.Webpagesusers.nu_cnpjEmpresa)).Select(f => f.id_grupo).FirstOrDefault();
+                                grupoEmpresaAlterado = true; // já forçou o grupo pela filial
+                            }
+                        }// só pode colocar grupo empresa ao qual a filial está ou sem nenhuma filial
+
+                        if (!grupoEmpresaAlterado && param.Webpagesusers.id_grupo != null && param.Webpagesusers.id_grupo != 0 && param.Webpagesusers.id_grupo != value.id_grupo)
+                        {
+                            if (param.Webpagesusers.id_grupo == -1)
+                            {
+                                value.id_grupo = null;
+                                value.nu_cnpjEmpresa = null; // Não pode estar associado a uma filial sem estar associado a um grupo
+                            }
+                            else
+                            {
+                                value.id_grupo = param.Webpagesusers.id_grupo;
+                                // Avalia se tem empresa associado => A filial TEM QUE SER associada ao grupo
+                                if (value.nu_cnpjEmpresa != null)
+                                {
+                                    Int32 id_grupo = _db.empresas.Where(f => f.nu_cnpj.Equals(value.nu_cnpjEmpresa)).Select(f => f.id_grupo).FirstOrDefault();
+                                    if (id_grupo != value.id_grupo)
+                                        value.nu_cnpjEmpresa = null; // filial que estava associado é de um grupo diferente do grupo recém associado
+                                }
                             }
                         }
-                    }
 
-                    _db.SaveChanges();
+                        _db.SaveChanges();
+                    }
+                    else
+                        throw new Exception("Usuário não cadastrado");
                 }
-                else
-                    throw new Exception("Usuário não cadastrado");
             }
-
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar usuário" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 

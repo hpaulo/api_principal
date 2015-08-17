@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Pos
 {
@@ -185,71 +186,83 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionLogExecution = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionLogExecution = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionLogExecution = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    id = e.id,
-                    idOperadora = e.idOperadora,
-                    dtaExecution = e.dtaExecution,
-                    dtaFiltroTransacoes = e.dtaFiltroTransacoes,
-                    qtdTransacoes = e.qtdTransacoes,
-                    vlTotalTransacoes = e.vlTotalTransacoes,
-                    statusExecution = e.statusExecution,
-                    idLoginOperadora = e.idLoginOperadora,
-                    dtaExecucaoInicio = e.dtaExecucaoInicio,
-                    dtaExecucaoFim = e.dtaExecucaoFim,
-                    dtaFiltroTransacoesFinal = e.dtaFiltroTransacoesFinal,
-                    dtaExecucaoProxima = e.dtaExecucaoProxima,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = queryTotal.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionLogExecution = query.Select(e => new
+                    {
+
+                        id = e.id,
+                        idOperadora = e.idOperadora,
+                        dtaExecution = e.dtaExecution,
+                        dtaFiltroTransacoes = e.dtaFiltroTransacoes,
+                        qtdTransacoes = e.qtdTransacoes,
+                        vlTotalTransacoes = e.vlTotalTransacoes,
+                        statusExecution = e.statusExecution,
+                        idLoginOperadora = e.idLoginOperadora,
+                        dtaExecucaoInicio = e.dtaExecucaoInicio,
+                        dtaExecucaoFim = e.dtaExecucaoFim,
+                        dtaFiltroTransacoesFinal = e.dtaFiltroTransacoesFinal,
+                        dtaExecucaoProxima = e.dtaExecucaoProxima,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionLogExecution = query.Select(e => new
+                    {
+
+                        id = e.id,
+                        idOperadora = e.idOperadora,
+                        dtaExecution = e.dtaExecution,
+                        dtaFiltroTransacoes = e.dtaFiltroTransacoes,
+                        qtdTransacoes = e.qtdTransacoes,
+                        vlTotalTransacoes = e.vlTotalTransacoes,
+                        statusExecution = e.statusExecution,
+                        idLoginOperadora = e.idLoginOperadora,
+                        dtaExecucaoInicio = e.dtaExecucaoInicio,
+                        dtaExecucaoFim = e.dtaExecucaoFim,
+                        dtaFiltroTransacoesFinal = e.dtaFiltroTransacoesFinal,
+                        dtaExecucaoProxima = e.dtaExecucaoProxima,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionLogExecution;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionLogExecution = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    id = e.id,
-                    idOperadora = e.idOperadora,
-                    dtaExecution = e.dtaExecution,
-                    dtaFiltroTransacoes = e.dtaFiltroTransacoes,
-                    qtdTransacoes = e.qtdTransacoes,
-                    vlTotalTransacoes = e.vlTotalTransacoes,
-                    statusExecution = e.statusExecution,
-                    idLoginOperadora = e.idLoginOperadora,
-                    dtaExecucaoInicio = e.dtaExecucaoInicio,
-                    dtaExecucaoFim = e.dtaExecucaoFim,
-                    dtaFiltroTransacoesFinal = e.dtaFiltroTransacoesFinal,
-                    dtaExecucaoProxima = e.dtaExecucaoProxima,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar logexecution" : erro);
+                }
+                throw new Exception(e.Message);
             }
-
-            retorno.Registros = CollectionLogExecution;
-
-            return retorno;
         }
         /// <summary>
         /// Adiciona nova LogExecution
@@ -258,9 +271,21 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static Int32 Add(string token, LogExecution param)
         {
-            _db.LogExecutions.Add(param);
-            _db.SaveChanges();
-            return param.id;
+            try
+            {
+                _db.LogExecutions.Add(param);
+                _db.SaveChanges();
+                return param.id;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar logexecution" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -271,8 +296,20 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Delete(string token, Int32 id)
         {
-            _db.LogExecutions.RemoveRange(_db.LogExecutions.Where(e => e.id == id));
-            _db.SaveChanges();
+            try
+            {
+                _db.LogExecutions.RemoveRange(_db.LogExecutions.Where(e => e.id == id));
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar logexecution" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera LogExecution
@@ -281,39 +318,50 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         public static void Update(string token, LogExecution param)
         {
-            LogExecution value = _db.LogExecutions
-                    .Where(e => e.id.Equals(param.id))
-                    .First<LogExecution>();
+            try
+            {
+                LogExecution value = _db.LogExecutions
+                        .Where(e => e.id.Equals(param.id))
+                        .First<LogExecution>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.id != null && param.id != value.id)
-                value.id = param.id;
-            if (param.idOperadora != null && param.idOperadora != value.idOperadora)
-                value.idOperadora = param.idOperadora;
-            if (param.dtaExecution != null && param.dtaExecution != value.dtaExecution)
-                value.dtaExecution = param.dtaExecution;
-            if (param.dtaFiltroTransacoes != null && param.dtaFiltroTransacoes != value.dtaFiltroTransacoes)
-                value.dtaFiltroTransacoes = param.dtaFiltroTransacoes;
-            if (param.qtdTransacoes != null && param.qtdTransacoes != value.qtdTransacoes)
-                value.qtdTransacoes = param.qtdTransacoes;
-            if (param.vlTotalTransacoes != null && param.vlTotalTransacoes != value.vlTotalTransacoes)
-                value.vlTotalTransacoes = param.vlTotalTransacoes;
-            if (param.statusExecution != null && param.statusExecution != value.statusExecution)
-                value.statusExecution = param.statusExecution;
-            if (param.idLoginOperadora != null && param.idLoginOperadora != value.idLoginOperadora)
-                value.idLoginOperadora = param.idLoginOperadora;
-            if (param.dtaExecucaoInicio != null && param.dtaExecucaoInicio != value.dtaExecucaoInicio)
-                value.dtaExecucaoInicio = param.dtaExecucaoInicio;
-            if (param.dtaExecucaoFim != null && param.dtaExecucaoFim != value.dtaExecucaoFim)
-                value.dtaExecucaoFim = param.dtaExecucaoFim;
-            if (param.dtaFiltroTransacoesFinal != null && param.dtaFiltroTransacoesFinal != value.dtaFiltroTransacoesFinal)
-                value.dtaFiltroTransacoesFinal = param.dtaFiltroTransacoesFinal;
-            if (param.dtaExecucaoProxima != null && param.dtaExecucaoProxima != value.dtaExecucaoProxima)
-                value.dtaExecucaoProxima = param.dtaExecucaoProxima;
-            _db.SaveChanges();
-
+                if (param.id != null && param.id != value.id)
+                    value.id = param.id;
+                if (param.idOperadora != null && param.idOperadora != value.idOperadora)
+                    value.idOperadora = param.idOperadora;
+                if (param.dtaExecution != null && param.dtaExecution != value.dtaExecution)
+                    value.dtaExecution = param.dtaExecution;
+                if (param.dtaFiltroTransacoes != null && param.dtaFiltroTransacoes != value.dtaFiltroTransacoes)
+                    value.dtaFiltroTransacoes = param.dtaFiltroTransacoes;
+                if (param.qtdTransacoes != null && param.qtdTransacoes != value.qtdTransacoes)
+                    value.qtdTransacoes = param.qtdTransacoes;
+                if (param.vlTotalTransacoes != null && param.vlTotalTransacoes != value.vlTotalTransacoes)
+                    value.vlTotalTransacoes = param.vlTotalTransacoes;
+                if (param.statusExecution != null && param.statusExecution != value.statusExecution)
+                    value.statusExecution = param.statusExecution;
+                if (param.idLoginOperadora != null && param.idLoginOperadora != value.idLoginOperadora)
+                    value.idLoginOperadora = param.idLoginOperadora;
+                if (param.dtaExecucaoInicio != null && param.dtaExecucaoInicio != value.dtaExecucaoInicio)
+                    value.dtaExecucaoInicio = param.dtaExecucaoInicio;
+                if (param.dtaExecucaoFim != null && param.dtaExecucaoFim != value.dtaExecucaoFim)
+                    value.dtaExecucaoFim = param.dtaExecucaoFim;
+                if (param.dtaFiltroTransacoesFinal != null && param.dtaFiltroTransacoesFinal != value.dtaFiltroTransacoesFinal)
+                    value.dtaFiltroTransacoesFinal = param.dtaFiltroTransacoesFinal;
+                if (param.dtaExecucaoProxima != null && param.dtaExecucaoProxima != value.dtaExecucaoProxima)
+                    value.dtaExecucaoProxima = param.dtaExecucaoProxima;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar logexecution" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }

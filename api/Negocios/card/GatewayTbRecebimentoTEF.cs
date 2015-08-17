@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -293,108 +294,22 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbRecebimentoTEF = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            try
             {
-                CollectionTbRecebimentoTEF = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbRecebimentoTEF = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    idRecebimentoTEF = e.idRecebimentoTEF,
-                    cdGrupo = e.cdGrupo,
-                    nrCNPJ = e.nrCNPJ,
-                    cdEmpresaTEF = e.cdEmpresaTEF,
-                    nrPDVTEF = e.nrPDVTEF,
-                    nrNSUHost = e.nrNSUHost,
-                    nrNSUTEF = e.nrNSUTEF,
-                    cdAutorizacao = e.cdAutorizacao,
-                    cdSituacaoRedeTEF = e.cdSituacaoRedeTEF,
-                    dtVenda = e.dtVenda,
-                    hrVenda = e.hrVenda,
-                    vlVenda = e.vlVenda,
-                    qtParcelas = e.qtParcelas,
-                    nrCartao = e.nrCartao,
-                    cdBandeira = e.cdBandeira,
-                    nmOperadora = e.nmOperadora,
-                    dthrVenda = e.dthrVenda,
-                    cdEstadoTransacaoTEF = e.cdEstadoTransacaoTEF,
-                    cdTrasacaoTEF = e.cdTrasacaoTEF,
-                    cdModoEntradaTEF = e.cdModoEntradaTEF,
-                    cdRedeTEF = e.cdRedeTEF,
-                    cdProdutoTEF = e.cdProdutoTEF,
-                    cdBandeiraTEF = e.cdBandeiraTEF,
-                    cdEstabelecimentoHost = e.cdEstabelecimentoHost,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionTbRecebimentoTEF = query.Select(e => new
-                {
-
-                    idRecebimentoTEF = e.idRecebimentoTEF,
-                    cdGrupo = e.cdGrupo,
-                    nrCNPJ = e.nrCNPJ,
-                    cdEmpresaTEF = e.cdEmpresaTEF,
-                    nrPDVTEF = e.nrPDVTEF,
-                    nrNSUHost = e.nrNSUHost,
-                    nrNSUTEF = e.nrNSUTEF,
-                    cdAutorizacao = e.cdAutorizacao,
-                    cdSituacaoRedeTEF = e.cdSituacaoRedeTEF,
-                    dtVenda = e.dtVenda,
-                    hrVenda = e.hrVenda,
-                    vlVenda = e.vlVenda,
-                    qtParcelas = e.qtParcelas,
-                    nrCartao = e.nrCartao,
-                    cdBandeira = e.cdBandeira,
-                    nmOperadora = e.nmOperadora,
-                    dthrVenda = e.dthrVenda,
-                    cdEstadoTransacaoTEF = e.cdEstadoTransacaoTEF,
-                    cdTrasacaoTEF = e.cdTrasacaoTEF,
-                    cdModoEntradaTEF = e.cdModoEntradaTEF,
-                    cdRedeTEF = e.cdRedeTEF,
-                    cdProdutoTEF = e.cdProdutoTEF,
-                    cdBandeiraTEF = e.cdBandeiraTEF,
-                    cdEstabelecimentoHost = e.cdEstabelecimentoHost,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2)
-            {
-                CollectionTbRecebimentoTEF = query
-                    .GroupBy(x => new { x.cdGrupo })
-                    .Select(e => new
-                    {
-                        cdGrupo = e.Key.cdGrupo,
-                        nmGrupo = _db.grupo_empresa.Where(g => g.id_grupo == e.Key.cdGrupo).Select(g => g.ds_nome).FirstOrDefault(),
-                        dtVenda = (e.Max(p => p.dthrVenda)),
-                    }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var queryTotal = query;
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = CollectionTbRecebimentoTEF.Count();
+                retorno.TotalDeRegistros = queryTotal.Count();
 
 
                 // PAGINAÇÃO
-                skipRows = (pageNumber - 1) * pageSize;
+                int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
                     query = query.Skip(skipRows).Take(pageSize);
                 else
@@ -403,11 +318,109 @@ namespace api.Negocios.Card
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
 
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbRecebimentoTEF = query.Select(e => new
+                    {
+
+                        idRecebimentoTEF = e.idRecebimentoTEF,
+                        cdGrupo = e.cdGrupo,
+                        nrCNPJ = e.nrCNPJ,
+                        cdEmpresaTEF = e.cdEmpresaTEF,
+                        nrPDVTEF = e.nrPDVTEF,
+                        nrNSUHost = e.nrNSUHost,
+                        nrNSUTEF = e.nrNSUTEF,
+                        cdAutorizacao = e.cdAutorizacao,
+                        cdSituacaoRedeTEF = e.cdSituacaoRedeTEF,
+                        dtVenda = e.dtVenda,
+                        hrVenda = e.hrVenda,
+                        vlVenda = e.vlVenda,
+                        qtParcelas = e.qtParcelas,
+                        nrCartao = e.nrCartao,
+                        cdBandeira = e.cdBandeira,
+                        nmOperadora = e.nmOperadora,
+                        dthrVenda = e.dthrVenda,
+                        cdEstadoTransacaoTEF = e.cdEstadoTransacaoTEF,
+                        cdTrasacaoTEF = e.cdTrasacaoTEF,
+                        cdModoEntradaTEF = e.cdModoEntradaTEF,
+                        cdRedeTEF = e.cdRedeTEF,
+                        cdProdutoTEF = e.cdProdutoTEF,
+                        cdBandeiraTEF = e.cdBandeiraTEF,
+                        cdEstabelecimentoHost = e.cdEstabelecimentoHost,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbRecebimentoTEF = query.Select(e => new
+                    {
+
+                        idRecebimentoTEF = e.idRecebimentoTEF,
+                        cdGrupo = e.cdGrupo,
+                        nrCNPJ = e.nrCNPJ,
+                        cdEmpresaTEF = e.cdEmpresaTEF,
+                        nrPDVTEF = e.nrPDVTEF,
+                        nrNSUHost = e.nrNSUHost,
+                        nrNSUTEF = e.nrNSUTEF,
+                        cdAutorizacao = e.cdAutorizacao,
+                        cdSituacaoRedeTEF = e.cdSituacaoRedeTEF,
+                        dtVenda = e.dtVenda,
+                        hrVenda = e.hrVenda,
+                        vlVenda = e.vlVenda,
+                        qtParcelas = e.qtParcelas,
+                        nrCartao = e.nrCartao,
+                        cdBandeira = e.cdBandeira,
+                        nmOperadora = e.nmOperadora,
+                        dthrVenda = e.dthrVenda,
+                        cdEstadoTransacaoTEF = e.cdEstadoTransacaoTEF,
+                        cdTrasacaoTEF = e.cdTrasacaoTEF,
+                        cdModoEntradaTEF = e.cdModoEntradaTEF,
+                        cdRedeTEF = e.cdRedeTEF,
+                        cdProdutoTEF = e.cdProdutoTEF,
+                        cdBandeiraTEF = e.cdBandeiraTEF,
+                        cdEstabelecimentoHost = e.cdEstabelecimentoHost,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2)
+                {
+                    CollectionTbRecebimentoTEF = query
+                        .GroupBy(x => new { x.cdGrupo })
+                        .Select(e => new
+                        {
+                            cdGrupo = e.Key.cdGrupo,
+                            nmGrupo = _db.grupo_empresa.Where(g => g.id_grupo == e.Key.cdGrupo).Select(g => g.ds_nome).FirstOrDefault(),
+                            dtVenda = (e.Max(p => p.dthrVenda)),
+                        }).ToList<dynamic>();
+
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = CollectionTbRecebimentoTEF.Count();
+
+
+                    // PAGINAÇÃO
+                    skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
+
+                }
+
+                retorno.Registros = CollectionTbRecebimentoTEF;
+
+                return retorno;
             }
-
-            retorno.Registros = CollectionTbRecebimentoTEF;
-
-            return retorno;
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar recebimento tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Adiciona nova TbRecebimentoTEF
@@ -416,9 +429,21 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Int32 Add(string token, tbRecebimentoTEF param)
         {
-            _db.tbRecebimentoTEFs.Add(param);
-            _db.SaveChanges();
-            return param.idRecebimentoTEF;
+            try
+            {
+                _db.tbRecebimentoTEFs.Add(param);
+                _db.SaveChanges();
+                return param.idRecebimentoTEF;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar recebimento tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
 
@@ -429,8 +454,20 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 idRecebimentoTEF)
         {
-            _db.tbRecebimentoTEFs.Remove(_db.tbRecebimentoTEFs.Where(e => e.idRecebimentoTEF.Equals(idRecebimentoTEF)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.tbRecebimentoTEFs.Remove(_db.tbRecebimentoTEFs.Where(e => e.idRecebimentoTEF.Equals(idRecebimentoTEF)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar recebimento tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
         /// <summary>
         /// Altera tbRecebimentoTEF
@@ -439,63 +476,74 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbRecebimentoTEF param)
         {
-            tbRecebimentoTEF value = _db.tbRecebimentoTEFs
-                    .Where(e => e.idRecebimentoTEF.Equals(param.idRecebimentoTEF))
-                    .First<tbRecebimentoTEF>();
+            try
+            {
+                tbRecebimentoTEF value = _db.tbRecebimentoTEFs
+                        .Where(e => e.idRecebimentoTEF.Equals(param.idRecebimentoTEF))
+                        .First<tbRecebimentoTEF>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            if (param.idRecebimentoTEF != null && param.idRecebimentoTEF != value.idRecebimentoTEF)
-                value.idRecebimentoTEF = param.idRecebimentoTEF;
-            if (param.cdGrupo != null && param.cdGrupo != value.cdGrupo)
-                value.cdGrupo = param.cdGrupo;
-            if (param.nrCNPJ != null && param.nrCNPJ != value.nrCNPJ)
-                value.nrCNPJ = param.nrCNPJ;
-            if (param.cdEmpresaTEF != null && param.cdEmpresaTEF != value.cdEmpresaTEF)
-                value.cdEmpresaTEF = param.cdEmpresaTEF;
-            if (param.nrPDVTEF != null && param.nrPDVTEF != value.nrPDVTEF)
-                value.nrPDVTEF = param.nrPDVTEF;
-            if (param.nrNSUHost != null && param.nrNSUHost != value.nrNSUHost)
-                value.nrNSUHost = param.nrNSUHost;
-            if (param.nrNSUTEF != null && param.nrNSUTEF != value.nrNSUTEF)
-                value.nrNSUTEF = param.nrNSUTEF;
-            if (param.cdAutorizacao != null && param.cdAutorizacao != value.cdAutorizacao)
-                value.cdAutorizacao = param.cdAutorizacao;
-            if (param.cdSituacaoRedeTEF != null && param.cdSituacaoRedeTEF != value.cdSituacaoRedeTEF)
-                value.cdSituacaoRedeTEF = param.cdSituacaoRedeTEF;
-            if (param.dtVenda != null && param.dtVenda != value.dtVenda)
-                value.dtVenda = param.dtVenda;
-            if (param.hrVenda != null && param.hrVenda != value.hrVenda)
-                value.hrVenda = param.hrVenda;
-            if (param.vlVenda != null && param.vlVenda != value.vlVenda)
-                value.vlVenda = param.vlVenda;
-            if (param.qtParcelas != null && param.qtParcelas != value.qtParcelas)
-                value.qtParcelas = param.qtParcelas;
-            if (param.nrCartao != null && param.nrCartao != value.nrCartao)
-                value.nrCartao = param.nrCartao;
-            if (param.cdBandeira != null && param.cdBandeira != value.cdBandeira)
-                value.cdBandeira = param.cdBandeira;
-            if (param.nmOperadora != null && param.nmOperadora != value.nmOperadora)
-                value.nmOperadora = param.nmOperadora;
-            if (param.dthrVenda != null && param.dthrVenda != value.dthrVenda)
-                value.dthrVenda = param.dthrVenda;
-            if (param.cdEstadoTransacaoTEF != null && param.cdEstadoTransacaoTEF != value.cdEstadoTransacaoTEF)
-                value.cdEstadoTransacaoTEF = param.cdEstadoTransacaoTEF;
-            if (param.cdTrasacaoTEF != null && param.cdTrasacaoTEF != value.cdTrasacaoTEF)
-                value.cdTrasacaoTEF = param.cdTrasacaoTEF;
-            if (param.cdModoEntradaTEF != null && param.cdModoEntradaTEF != value.cdModoEntradaTEF)
-                value.cdModoEntradaTEF = param.cdModoEntradaTEF;
-            if (param.cdRedeTEF != null && param.cdRedeTEF != value.cdRedeTEF)
-                value.cdRedeTEF = param.cdRedeTEF;
-            if (param.cdProdutoTEF != null && param.cdProdutoTEF != value.cdProdutoTEF)
-                value.cdProdutoTEF = param.cdProdutoTEF;
-            if (param.cdBandeiraTEF != null && param.cdBandeiraTEF != value.cdBandeiraTEF)
-                value.cdBandeiraTEF = param.cdBandeiraTEF;
-            if (param.cdEstabelecimentoHost != null && param.cdEstabelecimentoHost != value.cdEstabelecimentoHost)
-                value.cdEstabelecimentoHost = param.cdEstabelecimentoHost;
-            _db.SaveChanges();
-
+                if (param.idRecebimentoTEF != null && param.idRecebimentoTEF != value.idRecebimentoTEF)
+                    value.idRecebimentoTEF = param.idRecebimentoTEF;
+                if (param.cdGrupo != null && param.cdGrupo != value.cdGrupo)
+                    value.cdGrupo = param.cdGrupo;
+                if (param.nrCNPJ != null && param.nrCNPJ != value.nrCNPJ)
+                    value.nrCNPJ = param.nrCNPJ;
+                if (param.cdEmpresaTEF != null && param.cdEmpresaTEF != value.cdEmpresaTEF)
+                    value.cdEmpresaTEF = param.cdEmpresaTEF;
+                if (param.nrPDVTEF != null && param.nrPDVTEF != value.nrPDVTEF)
+                    value.nrPDVTEF = param.nrPDVTEF;
+                if (param.nrNSUHost != null && param.nrNSUHost != value.nrNSUHost)
+                    value.nrNSUHost = param.nrNSUHost;
+                if (param.nrNSUTEF != null && param.nrNSUTEF != value.nrNSUTEF)
+                    value.nrNSUTEF = param.nrNSUTEF;
+                if (param.cdAutorizacao != null && param.cdAutorizacao != value.cdAutorizacao)
+                    value.cdAutorizacao = param.cdAutorizacao;
+                if (param.cdSituacaoRedeTEF != null && param.cdSituacaoRedeTEF != value.cdSituacaoRedeTEF)
+                    value.cdSituacaoRedeTEF = param.cdSituacaoRedeTEF;
+                if (param.dtVenda != null && param.dtVenda != value.dtVenda)
+                    value.dtVenda = param.dtVenda;
+                if (param.hrVenda != null && param.hrVenda != value.hrVenda)
+                    value.hrVenda = param.hrVenda;
+                if (param.vlVenda != null && param.vlVenda != value.vlVenda)
+                    value.vlVenda = param.vlVenda;
+                if (param.qtParcelas != null && param.qtParcelas != value.qtParcelas)
+                    value.qtParcelas = param.qtParcelas;
+                if (param.nrCartao != null && param.nrCartao != value.nrCartao)
+                    value.nrCartao = param.nrCartao;
+                if (param.cdBandeira != null && param.cdBandeira != value.cdBandeira)
+                    value.cdBandeira = param.cdBandeira;
+                if (param.nmOperadora != null && param.nmOperadora != value.nmOperadora)
+                    value.nmOperadora = param.nmOperadora;
+                if (param.dthrVenda != null && param.dthrVenda != value.dthrVenda)
+                    value.dthrVenda = param.dthrVenda;
+                if (param.cdEstadoTransacaoTEF != null && param.cdEstadoTransacaoTEF != value.cdEstadoTransacaoTEF)
+                    value.cdEstadoTransacaoTEF = param.cdEstadoTransacaoTEF;
+                if (param.cdTrasacaoTEF != null && param.cdTrasacaoTEF != value.cdTrasacaoTEF)
+                    value.cdTrasacaoTEF = param.cdTrasacaoTEF;
+                if (param.cdModoEntradaTEF != null && param.cdModoEntradaTEF != value.cdModoEntradaTEF)
+                    value.cdModoEntradaTEF = param.cdModoEntradaTEF;
+                if (param.cdRedeTEF != null && param.cdRedeTEF != value.cdRedeTEF)
+                    value.cdRedeTEF = param.cdRedeTEF;
+                if (param.cdProdutoTEF != null && param.cdProdutoTEF != value.cdProdutoTEF)
+                    value.cdProdutoTEF = param.cdProdutoTEF;
+                if (param.cdBandeiraTEF != null && param.cdBandeiraTEF != value.cdBandeiraTEF)
+                    value.cdBandeiraTEF = param.cdBandeiraTEF;
+                if (param.cdEstabelecimentoHost != null && param.cdEstabelecimentoHost != value.cdEstabelecimentoHost)
+                    value.cdEstabelecimentoHost = param.cdEstabelecimentoHost;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento tef" : erro);
+                }
+                throw new Exception(e.Message);
+            }
         }
 
     }
