@@ -408,40 +408,22 @@ namespace api.Negocios.Pos
                     }
                 }
 
-                // Verifica se já existe logExecution para o registro corrente
-                LogExecution logExecution = _db.LogExecutions
-                                                    .Where(l => l.idLoginOperadora == param.id)
-                                                    .Where(l => l.idOperadora == param.idOperadora)
-                                                    .FirstOrDefault();
-
-                if (logExecution == null)
+                // Adiciona log execution
+                try
                 {
-                    DateTime hrExec = (DateTime)op.hraExecucao;
-
-                    LogExecution newLogExecution = new LogExecution();
-                    newLogExecution.idLoginOperadora = param.id;
-                    newLogExecution.idOperadora = param.idOperadora;
-                    newLogExecution.statusExecution = "7"; //0 = Em execução; 1 = Executado com Sucesso; 2 = Erro na Execução; 3 = Re-Executar; 7 = Elegivel
-                    //newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
-                    //newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
-                    newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
-                    newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
-                    newLogExecution.dtaExecucaoProxima = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 2, hrExec.Hour, hrExec.Minute, hrExec.Second);
-                    newLogExecution.qtdTransacoes = 0;
-                    newLogExecution.vlTotalTransacoes = new decimal(0.0);
-
-                    try
+                    adicionaLogExecution(param.id, param.idOperadora);
+                }
+                catch (Exception e)
+                {
+                    // Remove LoginOperadora e Operadora possivelmente criados
+                    Delete(token, param.id);
+                    // Reporta a falha
+                    if (e is DbEntityValidationException)
                     {
-                        _db.LogExecutions.Add(newLogExecution);
-                        _db.SaveChanges();
+                        string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                        throw new Exception(erro.Equals("") ? "Houve uma falha ao armazenar logexecution!" : erro);
                     }
-                    catch
-                    {
-                        // Remove LoginOperadora e Operadora possivelmente criados
-                        Delete(token, param.id);
-                        // Reporta a falha
-                        throw new Exception("500");
-                    }
+                    throw new Exception("Houve uma falha ao armazenar logexecution! " + e.Message);
                 }
 
                 return param.id;
@@ -515,6 +497,15 @@ namespace api.Negocios.Pos
                 if (param.estabelecimento != null && param.estabelecimento != value.estabelecimento)
                     value.estabelecimento = param.estabelecimento;
                 _db.SaveChanges();
+
+                try
+                {
+                    adicionaLogExecution(value.id, value.idOperadora);
+                }
+                catch
+                {
+                    // Falha! Como logar isso sem lançar excessão aqui?
+                }
             }
             catch (Exception e)
             {
@@ -525,6 +516,45 @@ namespace api.Negocios.Pos
                 }
                 throw new Exception(e.Message);
             }
+        }
+
+
+        /**
+          * Armazena o logexecution, caso não exista
+          */
+        private static void adicionaLogExecution(Int32 idLoginOperadora, Int32 idOperadora)
+        {
+            // Armazena o logexecution, caso não exista
+            // Verifica se já existe logExecution para o registro corrente
+            LogExecution logExecution = _db.LogExecutions
+                                                .Where(l => l.idLoginOperadora == idLoginOperadora)
+                                                .Where(l => l.idOperadora == idOperadora)
+                                                .FirstOrDefault();
+
+            if (logExecution == null)
+            {
+                Operadora op = _db.Operadoras.Where(o => o.id == idOperadora).FirstOrDefault(); // o que é enviado é o nome e não a descrição
+                if (op == null) return;
+                Models.Adquirente adquirente = _db.Adquirentes.Where(o => o.nome.Equals(op.nmOperadora)).FirstOrDefault();
+                if (adquirente == null) return;
+                DateTime hrExec = (DateTime)adquirente.hraExecucao;
+
+                LogExecution newLogExecution = new LogExecution();
+                newLogExecution.idLoginOperadora = idLoginOperadora;
+                newLogExecution.idOperadora = idOperadora;
+                newLogExecution.statusExecution = "7"; //0 = Em execução; 1 = Executado com Sucesso; 2 = Erro na Execução; 3 = Re-Executar; 7 = Elegivel
+                                                       //newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
+                                                       //newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, hrExec.Hour, hrExec.Minute, hrExec.Second);
+                newLogExecution.dtaFiltroTransacoes = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
+                newLogExecution.dtaFiltroTransacoesFinal = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1, 0, 0, 0);
+                newLogExecution.dtaExecucaoProxima = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 2, hrExec.Hour, hrExec.Minute, hrExec.Second);
+                newLogExecution.qtdTransacoes = 0;
+                newLogExecution.vlTotalTransacoes = new decimal(0.0);
+
+                _db.LogExecutions.Add(newLogExecution);
+                _db.SaveChanges();
+            }
+
         }
 
     }

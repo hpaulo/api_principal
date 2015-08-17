@@ -70,7 +70,7 @@ namespace api.Negocios.Pos
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<RecebimentoParcela> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        public static IQueryable<RecebimentoParcela> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.RecebimentoParcelas.AsQueryable();
