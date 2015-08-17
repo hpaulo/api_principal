@@ -498,7 +498,19 @@ namespace api.Negocios.Card
                     {
                         // Salva uma nova movimentação
                         _db.tbExtratos.Add(extrato);
-                        _db.SaveChanges();
+                        _db.SaveChanges(); 
+                    }
+
+                    if (transacao.TransType.Equals(OFXTransactionType.CREDIT) ||
+                       transacao.TransType.Equals(OFXTransactionType.DEBIT))
+                    {
+                        // Salva o parâmetro bancário
+                        tbBancoParametro parametro = new tbBancoParametro();
+                        parametro.cdAdquirente = null;
+                        parametro.cdBanco = conta.cdBanco;
+                        parametro.dsMemo = extrato.dsDocumento;
+                        parametro.dsTipo = extrato.dsTipo;
+                        try { GatewayTbBancoParametro.Add(token, parametro); } catch { }
                     }
                 }
 

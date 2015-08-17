@@ -71,7 +71,11 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdAdquirente == cdAdquirente).AsQueryable<tbBancoParametro>();
+                        if(cdAdquirente == -1)
+                            // Somente os registros sem adquirentes associados
+                            entity = entity.Where(e => e.cdAdquirente == null).AsQueryable<tbBancoParametro>();
+                        else
+                            entity = entity.Where(e => e.cdAdquirente == cdAdquirente).AsQueryable<tbBancoParametro>();
                         break;
                     case CAMPOS.DSTIPO:
                         string dsTipo = Convert.ToString(item.Value);

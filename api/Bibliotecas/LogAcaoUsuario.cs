@@ -24,10 +24,11 @@ namespace api.Bibliotecas
                     
                     string afterUrl = HttpContext.Current.Request.RawUrl.Replace((HttpContext.Current.Request.Url.Segments[0] + HttpContext.Current.Request.Url.Segments[1] + HttpContext.Current.Request.Url.Segments[2]), "");
 
-                    if (afterUrl.LastIndexOf('?') > -1) {
+                    int index = afterUrl.IndexOf('?');
+                    if (index > -1) {
                     // tem filtros
-                        log.dsFiltros = afterUrl.Substring(afterUrl.LastIndexOf('?'));
-                        log.dsParametros = afterUrl.Substring(0, afterUrl.LastIndexOf('?'));
+                        log.dsFiltros = afterUrl.Substring(index);
+                        log.dsParametros = afterUrl.Substring(0, index);
                     }
                     else
                     {
