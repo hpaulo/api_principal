@@ -185,7 +185,13 @@ namespace api.Negocios.Card
                 List<dynamic> bancoParametros = query.Select(e => new
                 {
                     dsMemo = e.dsMemo,
-                    cdAdquirente = e.cdAdquirente,
+                    adquirente = e.cdAdquirente == null ? null : new 
+                                    {
+                                        cdAdquirente = e.tbAdquirente.cdAdquirente,
+                                        nmAdquirente = e.tbAdquirente.nmAdquirente,
+                                        dsAdquirente = e.tbAdquirente.dsAdquirente,
+                                        stAdquirente = e.tbAdquirente.stAdquirente,
+                                    },
                     dsTipo = e.dsTipo,
                     banco = new { Codigo = e.cdBanco, NomeExtenso = "" }, // Não dá para chamar a função direto daqui pois esse código é convertido em SQL e não acessa os dados de um objeto em memória
                 }).ToList<dynamic>();
@@ -196,7 +202,7 @@ namespace api.Negocios.Card
                     CollectionTbBancoParametro.Add(new
                     {
                         dsMemo = bancoParametro.dsMemo,
-                        cdAdquirente = bancoParametro.cdAdquirente,
+                        adquirente = bancoParametro.adquirente,
                         dsTipo = bancoParametro.dsTipo,
                         banco = new { Codigo = bancoParametro.banco.Codigo, NomeExtenso = GatewayBancos.Get(bancoParametro.banco.Codigo) },
                     });
@@ -214,6 +220,14 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static string Add(string token, tbBancoParametro param)
         {
+            tbBancoParametro parametro = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(param.cdBanco))
+                                                             .Where(e => e.dsMemo.Equals(param.dsMemo))
+                                                             .FirstOrDefault();
+
+            if (parametro != null) throw new Exception("Parâmetro bancário já existe");
+
+            if (param.cdAdquirente == -1) param.cdAdquirente = null;
+
             _db.tbBancoParametro.Add(param);
             _db.SaveChanges();
             return param.cdBanco;
@@ -225,9 +239,15 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, string cdBanco)
+        public static void Delete(string token, string cdBanco, string dsMemo)
         {
-            _db.tbBancoParametro.Remove(_db.tbBancoParametro.Where(e => e.cdBanco.Equals(cdBanco)).First());
+            tbBancoParametro parametro = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(cdBanco))
+                                                             .Where(e => e.dsMemo.Equals(dsMemo))
+                                                             .FirstOrDefault();
+
+            if (parametro == null) throw new Exception("Parâmetro bancário inexistente");
+
+            _db.tbBancoParametro.Remove(parametro);
             _db.SaveChanges();
         }
         /// <summary>
@@ -237,11 +257,11 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbBancoParametro param)
         {
-            tbBancoParametro value = _db.tbBancoParametro
-                    .Where(e => e.cdBanco.Equals(param.cdBanco))
-                    .First<tbBancoParametro>();
+            tbBancoParametro value = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(param.cdBanco))
+                                                             .Where(e => e.dsMemo.Equals(param.dsMemo))
+                                                             .FirstOrDefault();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+            if (value == null) throw new Exception("Parâmetro bancário inexistente");
 
 
             //if (param.cdBanco != null && param.cdBanco != value.cdBanco)
@@ -253,8 +273,8 @@ namespace api.Negocios.Card
                 if (param.cdAdquirente == -1) value.cdAdquirente = null;
                 else value.cdAdquirente = param.cdAdquirente;
             }
-            //if (param.dsTipo != null && param.dsTipo != value.dsTipo)
-            //    value.dsTipo = param.dsTipo;
+            if (param.dsTipo != null && param.dsTipo != value.dsTipo)
+                value.dsTipo = param.dsTipo;
             _db.SaveChanges();
 
         }

@@ -38,7 +38,7 @@ namespace api.Models.Mapping
             this.Property(t => t.dsTipo).HasColumnName("dsTipo");
 
             // Relationships
-            this.HasRequired(t => t.tbAdquirente)
+            this.HasOptional(t => t.tbAdquirente)
                 .WithMany(t => t.tbBancoParametros)
                 .HasForeignKey(d => d.cdAdquirente);
 
