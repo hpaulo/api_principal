@@ -16,11 +16,11 @@ namespace api.Models.Object
             set { tipo = value; }
         }
 
-        private int id; // id do extrato ou do recebimento
-        public int Id
+        private List<Int32> ids; // id do extrato ou do recebimento
+        public List<Int32> Ids
         {
-            get { return id; }
-            set { id = value; }
+            get { return ids; }
+            set { ids = value; }
         }
 
         private DateTime data; // data do extrato ou do recebimento
@@ -30,11 +30,11 @@ namespace api.Models.Object
             set { data = value; }
         }
 
-        private decimal valor; // valor do Extrato ou valor liquido do recebimento parcela
-        public decimal Valor
+        private List<decimal> valores; // valor do Extrato ou valor liquido do recebimento parcela
+        public List<decimal> Valores
         {
-            get { return valor; }
-            set { valor = value; }
+            get { return valores; }
+            set { valores = value; }
         }
 
         private string adquirente; 
@@ -44,8 +44,15 @@ namespace api.Models.Object
             set { adquirente = value; }
         }
 
+        private tbContaCorrente conta; // conta bancária associada
+        public tbContaCorrente Conta
+        {
+            get { return conta; }
+            set { conta = value; }
+        }
 
-        public class Comparer : IEqualityComparer<ConciliacaoBancaria>
+
+        /*public class Comparer : IEqualityComparer<ConciliacaoBancaria>
         {
             public bool Equals(ConciliacaoBancaria c1, ConciliacaoBancaria c2)
             {
@@ -58,7 +65,7 @@ namespace api.Models.Object
             {
                 return c != null ? c.Id : 0;
             }
-        }
+        }*/
 
     }
 }
