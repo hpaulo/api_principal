@@ -6,7 +6,6 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
-using System.Xml;
 using System.Data.Entity.Validation;
 
 namespace api.Negocios.Admin
@@ -29,12 +28,13 @@ namespace api.Negocios.Admin
         public enum CAMPOS
         {
             IDLOG = 100,
-            DTLOG = 101,
-            DSCOMANDO = 102,
+            DTLOGINICIO = 101,
+            DSXMLENTRADA = 102,
             CDRETORNO = 103,
             DSRETORNO = 104,
             DSMETODO = 105,
-            TPLOG = 106,
+            DSXMLRETORNO = 106,
+            DTLOGFIM = 107,
 
         };
 
@@ -51,7 +51,7 @@ namespace api.Negocios.Admin
         private static IQueryable<tbLogManifesto> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
-            var entity = _db.tbLogManifestos.AsQueryable<tbLogManifesto>();
+            var entity = _db.tbLogManifestos.AsQueryable();
 
             #region WHERE - ADICIONA OS FILTROS A QUERY
 
@@ -62,35 +62,41 @@ namespace api.Negocios.Admin
                 CAMPOS filtroEnum = (CAMPOS)key;
                 switch (filtroEnum)
                 {
+
+
                     case CAMPOS.IDLOG:
                         Int32 idLog = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idLog.Equals(idLog)).AsQueryable<tbLogManifesto>();
+                        entity = entity.Where(e => e.idLog.Equals(idLog)).AsQueryable();
                         break;
-                    case CAMPOS.DTLOG:
-                        DateTime dtLog = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtLog.Equals(dtLog)).AsQueryable<tbLogManifesto>();
+                    case CAMPOS.DTLOGINICIO:
+                        DateTime dtLogInicio = Convert.ToDateTime(item.Value);
+                        entity = entity.Where(e => e.dtLogInicio.Equals(dtLogInicio)).AsQueryable();
                         break;
-                    case CAMPOS.DSCOMANDO:
-                        XmlDocument xmlDocument = new XmlDocument();
-                        xmlDocument.LoadXml(item.Value);
-                        entity = entity.Where(e => e.dsComando.Equals(xmlDocument)).AsQueryable<tbLogManifesto>();
+                    case CAMPOS.DSXMLENTRADA:
+                        string dsXmlEntrada = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.dsXmlEntrada.Equals(dsXmlEntrada)).AsQueryable();
                         break;
                     case CAMPOS.CDRETORNO:
-                        string cdRetorno = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.cdRetorno.Equals(cdRetorno)).AsQueryable<tbLogManifesto>();
+                        short cdRetorno = short.Parse(item.Value);
+                        entity = entity.Where(e => e.cdRetorno.Equals(cdRetorno)).AsQueryable();
                         break;
                     case CAMPOS.DSRETORNO:
                         string dsRetorno = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsRetorno.Equals(dsRetorno)).AsQueryable<tbLogManifesto>();
+                        entity = entity.Where(e => e.dsRetorno.Equals(dsRetorno)).AsQueryable();
                         break;
                     case CAMPOS.DSMETODO:
                         string dsMetodo = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsMetodo.Equals(dsMetodo)).AsQueryable<tbLogManifesto>();
+                        entity = entity.Where(e => e.dsMetodo.Equals(dsMetodo)).AsQueryable();
                         break;
-                    case CAMPOS.TPLOG:
-                        string tpLog = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.tpLog.Equals(tpLog)).AsQueryable<tbLogManifesto>();
+                    case CAMPOS.DSXMLRETORNO:
+                        string dsXmlRetorno = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.dsXmlRetorno.Equals(dsXmlRetorno)).AsQueryable();
                         break;
+                    case CAMPOS.DTLOGFIM:
+                        DateTime dtLogFim = Convert.ToDateTime(item.Value);
+                        entity = entity.Where(e => e.dtLogFim.Equals(dtLogFim)).AsQueryable();
+                        break;
+
                 }
             }
             #endregion
@@ -100,34 +106,40 @@ namespace api.Negocios.Admin
             CAMPOS filtro = (CAMPOS)campo;
             switch (filtro)
             {
+
                 case CAMPOS.IDLOG:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.idLog).AsQueryable<tbLogManifesto>();
-                    else entity = entity.OrderByDescending(e => e.idLog).AsQueryable<tbLogManifesto>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.idLog).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.idLog).AsQueryable();
                     break;
-                case CAMPOS.DTLOG:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtLog).AsQueryable<tbLogManifesto>();
-                    else entity = entity.OrderByDescending(e => e.dtLog).AsQueryable<tbLogManifesto>();
+                case CAMPOS.DTLOGINICIO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtLogInicio).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.dtLogInicio).AsQueryable();
                     break;
-                case CAMPOS.DSCOMANDO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsComando).AsQueryable<tbLogManifesto>();
-                    else entity = entity.OrderByDescending(e => e.dsComando).AsQueryable<tbLogManifesto>();
+                case CAMPOS.DSXMLENTRADA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsXmlEntrada).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.dsXmlEntrada).AsQueryable();
                     break;
                 case CAMPOS.CDRETORNO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdRetorno).AsQueryable<tbLogManifesto>();
-                    else entity = entity.OrderByDescending(e => e.cdRetorno).AsQueryable<tbLogManifesto>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdRetorno).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.cdRetorno).AsQueryable();
                     break;
                 case CAMPOS.DSRETORNO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsRetorno).AsQueryable<tbLogManifesto>();
-                    else entity = entity.OrderByDescending(e => e.dsRetorno).AsQueryable<tbLogManifesto>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsRetorno).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.dsRetorno).AsQueryable();
                     break;
                 case CAMPOS.DSMETODO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsMetodo).AsQueryable<tbLogManifesto>();
-                    else entity = entity.OrderByDescending(e => e.dsMetodo).AsQueryable<tbLogManifesto>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsMetodo).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.dsMetodo).AsQueryable();
                     break;
-                case CAMPOS.TPLOG:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.tpLog).AsQueryable<tbLogManifesto>();
-                    else entity = entity.OrderByDescending(e => e.tpLog).AsQueryable<tbLogManifesto>();
+                case CAMPOS.DSXMLRETORNO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsXmlRetorno).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.dsXmlRetorno).AsQueryable();
                     break;
+                case CAMPOS.DTLOGFIM:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtLogFim).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.dtLogFim).AsQueryable();
+                    break;
+
             }
             #endregion
 
@@ -174,12 +186,13 @@ namespace api.Negocios.Admin
                     {
 
                         idLog = e.idLog,
-                        dtLog = e.dtLog,
-                        dsComando = e.dsComando,
+                        dtLogInicio = e.dtLogInicio,
+                        dsXmlEntrada = e.dsXmlEntrada,
                         cdRetorno = e.cdRetorno,
                         dsRetorno = e.dsRetorno,
                         dsMetodo = e.dsMetodo,
-                        tpLog = e.tpLog,
+                        dsXmlRetorno = e.dsXmlRetorno,
+                        dtLogFim = e.dtLogFim,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -188,12 +201,13 @@ namespace api.Negocios.Admin
                     {
 
                         idLog = e.idLog,
-                        dtLog = e.dtLog,
-                        dsComando = e.dsComando,
+                        dtLogInicio = e.dtLogInicio,
+                        dsXmlEntrada = e.dsXmlEntrada,
                         cdRetorno = e.cdRetorno,
                         dsRetorno = e.dsRetorno,
                         dsMetodo = e.dsMetodo,
-                        tpLog = e.tpLog,
+                        dsXmlRetorno = e.dsXmlRetorno,
+                        dtLogFim = e.dtLogFim,
                     }).ToList<dynamic>();
                 }
 
@@ -206,11 +220,14 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao listar log manifesto" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar TbLogManifesto" : erro);
                 }
                 throw new Exception(e.Message);
             }
         }
+
+
+
         /// <summary>
         /// Adiciona nova TbLogManifesto
         /// </summary>
@@ -229,7 +246,7 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao salvar log manifesto" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar TbLogManifesto" : erro);
                 }
                 throw new Exception(e.Message);
             }
@@ -253,11 +270,14 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao apagar log manifesto" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar TbLogManifesto" : erro);
                 }
                 throw new Exception(e.Message);
             }
         }
+
+
+
         /// <summary>
         /// Altera tbLogManifesto
         /// </summary>
@@ -276,18 +296,20 @@ namespace api.Negocios.Admin
 
                 if (param.idLog != null && param.idLog != value.idLog)
                     value.idLog = param.idLog;
-                if (param.dtLog != null && param.dtLog != value.dtLog)
-                    value.dtLog = param.dtLog;
-                if (param.dsComando != null && param.dsComando != value.dsComando)
-                    value.dsComando = param.dsComando;
+                if (param.dtLogInicio != null && param.dtLogInicio != value.dtLogInicio)
+                    value.dtLogInicio = param.dtLogInicio;
+                if (param.dsXmlEntrada != null && param.dsXmlEntrada != value.dsXmlEntrada)
+                    value.dsXmlEntrada = param.dsXmlEntrada;
                 if (param.cdRetorno != null && param.cdRetorno != value.cdRetorno)
                     value.cdRetorno = param.cdRetorno;
                 if (param.dsRetorno != null && param.dsRetorno != value.dsRetorno)
                     value.dsRetorno = param.dsRetorno;
                 if (param.dsMetodo != null && param.dsMetodo != value.dsMetodo)
                     value.dsMetodo = param.dsMetodo;
-                if (param.tpLog != null && param.tpLog != value.tpLog)
-                    value.tpLog = param.tpLog;
+                if (param.dsXmlRetorno != null && param.dsXmlRetorno != value.dsXmlRetorno)
+                    value.dsXmlRetorno = param.dsXmlRetorno;
+                if (param.dtLogFim != null && param.dtLogFim != value.dtLogFim)
+                    value.dtLogFim = param.dtLogFim;
                 _db.SaveChanges();
             }
             catch (Exception e)
@@ -295,7 +317,7 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao alterar log manifesto" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar TbLogManifesto" : erro);
                 }
                 throw new Exception(e.Message);
             }

@@ -8,6 +8,7 @@ using api.Models;
 using api.Negocios.Tax;
 using api.Bibliotecas;
 using api.Models.Object;
+using Newtonsoft.Json;
 
 namespace api.Controllers.Tax
 {
@@ -17,17 +18,33 @@ namespace api.Controllers.Tax
         // GET /tbManifesto/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayTbManifesto.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
+                {
+                    Retorno dados = GatewayTbManifesto.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+
+                }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
@@ -35,38 +52,63 @@ namespace api.Controllers.Tax
         // POST /tbManifesto/token/
         public HttpResponseMessage Post(string token, [FromBody]tbManifesto param)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, GatewayTbManifesto.Add(token, param));
+                {
+                    Int32 dados = GatewayTbManifesto.Add(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
+                }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-
-
         }
 
         // PUT /tbManifesto/token/
         public HttpResponseMessage Put(string token, [FromBody]tbManifesto param)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
                     GatewayTbManifesto.Update(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
@@ -74,19 +116,31 @@ namespace api.Controllers.Tax
         // DELETE /tbManifesto/token/idManifesto
         public HttpResponseMessage Delete(string token, Int32 idManifesto)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("idManifesto : " + idManifesto));
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
                     GatewayTbManifesto.Delete(token, idManifesto);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }

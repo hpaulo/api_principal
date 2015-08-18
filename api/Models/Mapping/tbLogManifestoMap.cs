@@ -11,11 +11,8 @@ namespace api.Models.Mapping
             this.HasKey(t => t.idLog);
 
             // Properties
-            this.Property(t => t.dsComando)
+            this.Property(t => t.dsXmlEntrada)
                 .IsRequired();
-
-            this.Property(t => t.cdRetorno)
-                .HasMaxLength(20);
 
             this.Property(t => t.dsRetorno)
                 .HasMaxLength(50);
@@ -23,19 +20,16 @@ namespace api.Models.Mapping
             this.Property(t => t.dsMetodo)
                 .HasMaxLength(30);
 
-            this.Property(t => t.tpLog)
-                .IsFixedLength()
-                .HasMaxLength(1);
-
             // Table & Column Mappings
             this.ToTable("tbLogManifesto", "admin");
             this.Property(t => t.idLog).HasColumnName("idLog");
-            this.Property(t => t.dtLog).HasColumnName("dtLog");
-            this.Property(t => t.dsComando).HasColumnName("dsComando");
+            this.Property(t => t.dtLogInicio).HasColumnName("dtLogInicio");
+            this.Property(t => t.dsXmlEntrada).HasColumnName("dsXmlEntrada");
             this.Property(t => t.cdRetorno).HasColumnName("cdRetorno");
             this.Property(t => t.dsRetorno).HasColumnName("dsRetorno");
             this.Property(t => t.dsMetodo).HasColumnName("dsMetodo");
-            this.Property(t => t.tpLog).HasColumnName("tpLog");
+            this.Property(t => t.dsXmlRetorno).HasColumnName("dsXmlRetorno");
+            this.Property(t => t.dtLogFim).HasColumnName("dtLogFim");
         }
     }
 }
