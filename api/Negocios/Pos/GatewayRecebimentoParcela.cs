@@ -159,7 +159,7 @@ namespace api.Negocios.Pos
 
                     case CAMPOS.ID_GRUPO:
                         int id_grupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.Recebimento.empresa.id_grupo.Equals(id_grupo));
+                        entity = entity.Where(e => e.Recebimento.empresa.id_grupo == id_grupo);
                         break;
                     case CAMPOS.NU_CNPJ:
                         string nu_cnpj = Convert.ToString(item.Value);

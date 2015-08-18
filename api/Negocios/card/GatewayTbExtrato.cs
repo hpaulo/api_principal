@@ -16,7 +16,7 @@ namespace api.Negocios.Card
 {
     public class GatewayTbExtrato
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
@@ -128,7 +128,7 @@ namespace api.Negocios.Card
                     // PERSONALIZADO
                     case CAMPOS.ID_GRUPO:
                         int id_grupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.tbContaCorrente.cdGrupo.Equals(id_grupo));
+                        entity = entity.Where(e => e.tbContaCorrente.cdGrupo == id_grupo);
                         break;
                     case CAMPOS.NU_CNPJ: 
                         string nu_cnpj = Convert.ToString(item.Value);
