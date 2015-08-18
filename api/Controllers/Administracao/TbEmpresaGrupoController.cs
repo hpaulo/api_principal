@@ -12,10 +12,10 @@ using Newtonsoft.Json;
 
 namespace api.Controllers.Admin
 {
-    public class TbLogManifestoController : ApiController
+    public class TbEmpresaGrupoController : ApiController
     {
 
-        // GET /tbLogManifesto/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
+        // GET /tbEmpresaGrupo/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
@@ -27,7 +27,7 @@ namespace api.Controllers.Admin
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    Retorno dados = GatewayTbLogManifesto.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                    Retorno dados = GatewayTbEmpresaGrupo.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
@@ -49,8 +49,8 @@ namespace api.Controllers.Admin
             }
         }
 
-        // POST /tbLogManifesto/token/
-        public HttpResponseMessage Post(string token, [FromBody]tbLogManifesto param)
+        // POST /tbEmpresaGrupo/token/
+        public HttpResponseMessage Post(string token, [FromBody]tbEmpresaGrupo param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
@@ -60,7 +60,7 @@ namespace api.Controllers.Admin
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    Int32 dados = GatewayTbLogManifesto.Add(token, param);
+                    Int32 dados = GatewayTbEmpresaGrupo.Add(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
@@ -81,8 +81,8 @@ namespace api.Controllers.Admin
             }
         }
 
-        // PUT /tbLogManifesto/token/
-        public HttpResponseMessage Put(string token, [FromBody]tbLogManifesto param)
+        // PUT /tbEmpresaGrupo/token/
+        public HttpResponseMessage Put(string token, [FromBody]tbEmpresaGrupo param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
@@ -92,7 +92,7 @@ namespace api.Controllers.Admin
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbLogManifesto.Update(token, param);
+                    GatewayTbEmpresaGrupo.Update(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
@@ -113,18 +113,18 @@ namespace api.Controllers.Admin
             }
         }
 
-        // DELETE /tbLogManifesto/token/idLog
-        public HttpResponseMessage Delete(string token, Int32 idLog)
+        // DELETE /tbEmpresaGrupo/token/cdEmpresaGrupo
+        public HttpResponseMessage Delete(string token, Int32 cdEmpresaGrupo)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("idLog : " + idLog));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("cdEmpresaGrupo : " + cdEmpresaGrupo));
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbLogManifesto.Delete(token, idLog);
+                    GatewayTbEmpresaGrupo.Delete(token, cdEmpresaGrupo);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);

@@ -222,6 +222,10 @@
     <Compile Include="Bibliotecas\MensagemErro.cs" />
     <Compile Include="Bibliotecas\Permissoes.cs" />
     <Compile Include="Bibliotecas\Token.cs" />
+    <Compile Include="Controllers\Administracao\TbEmpresaController.cs" />
+    <Compile Include="Controllers\Administracao\TbEmpresaFilialController.cs" />
+    <Compile Include="Controllers\Administracao\TbEmpresaGrupoController.cs" />
+    <Compile Include="Controllers\Administracao\TbLogErroController.cs" />
     <Compile Include="Controllers\Administracao\TbLogManifestoController.cs" />
     <Compile Include="Controllers\Administracao\TbLogAcessoUsuarioController.cs" />
     <Compile Include="Controllers\Administracao\LogAcessoController.cs" />
@@ -298,9 +302,17 @@
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbBancoParametroMap.cs" />
+    <Compile Include="Models\Mapping\tbEmpresaFilialMap.cs" />
+    <Compile Include="Models\Mapping\tbEmpresaGrupoMap.cs" />
+    <Compile Include="Models\Mapping\tbEmpresaMap.cs" />
+    <Compile Include="Models\Mapping\tbLogErroMap.cs" />
     <Compile Include="Models\Mapping\tbManifestoMap.cs" />
     <Compile Include="Models\Object\ConciliacaoBancaria.cs" />
     <Compile Include="Models\tbBancoParametro.cs" />
+    <Compile Include="Models\tbEmpresa.cs" />
+    <Compile Include="Models\tbEmpresaFilial.cs" />
+    <Compile Include="Models\tbEmpresaGrupo.cs" />
+    <Compile Include="Models\tbLogErro.cs" />
     <Compile Include="Models\tbManifesto.cs" />
     <Compile Include="Models\Mapping\tbLogManifestoMap.cs" />
     <Compile Include="Models\tbLogManifesto.cs" />
@@ -713,6 +725,10 @@
     <Compile Include="Models\webpages_Roles.cs" />
     <Compile Include="Models\webpages_Users.cs" />
     <Compile Include="Models\webpages_UsersInRoles.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbEmpresa.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbEmpresaFilial.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbEmpresaGrupo.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbLogErro.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbLogManifesto.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbLogAcessoUsuario.cs" />
     <Compile Include="Negocios\Administracao\GatewayLogAcesso.cs" />
@@ -890,6 +906,10 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\TbEmpresaFilial\" />
+    <Folder Include="Views\TbEmpresaGrupo\" />
+    <Folder Include="Views\TbEmpresa\" />
+    <Folder Include="Views\TbLogErro\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />

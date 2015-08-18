@@ -10,12 +10,13 @@ using api.Bibliotecas;
 using api.Models.Object;
 using Newtonsoft.Json;
 
+
 namespace api.Controllers.Admin
 {
-    public class TbLogManifestoController : ApiController
+    public class TbLogErroController : ApiController
     {
 
-        // GET /tbLogManifesto/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
+        // GET /TbLogErro/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
@@ -27,11 +28,11 @@ namespace api.Controllers.Admin
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    Retorno dados = GatewayTbLogManifesto.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                    log.codResposta = (int)HttpStatusCode.OK;
+					Retorno dados = GatewayTbLogErro.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+					log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
-
+                
                 }
                 else
                 {
@@ -49,8 +50,8 @@ namespace api.Controllers.Admin
             }
         }
 
-        // POST /tbLogManifesto/token/
-        public HttpResponseMessage Post(string token, [FromBody]tbLogManifesto param)
+        // POST /TbLogErro/token/
+        public HttpResponseMessage Post(string token, [FromBody]tbLogErro param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
@@ -60,7 +61,7 @@ namespace api.Controllers.Admin
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    Int32 dados = GatewayTbLogManifesto.Add(token, param);
+                    Int32 dados = GatewayTbLogErro.Add(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
@@ -81,8 +82,8 @@ namespace api.Controllers.Admin
             }
         }
 
-        // PUT /tbLogManifesto/token/
-        public HttpResponseMessage Put(string token, [FromBody]tbLogManifesto param)
+        // PUT /TbLogErro/token/
+        public HttpResponseMessage Put(string token, [FromBody]tbLogErro param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
@@ -92,7 +93,7 @@ namespace api.Controllers.Admin
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbLogManifesto.Update(token, param);
+                    GatewayTbLogErro.Update(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
@@ -113,18 +114,18 @@ namespace api.Controllers.Admin
             }
         }
 
-        // DELETE /tbLogManifesto/token/idLog
-        public HttpResponseMessage Delete(string token, Int32 idLog)
+        // DELETE /TbLogErro/token/idLogErro
+        public HttpResponseMessage Delete(string token, Int32 idLogErro)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("idLog : " + idLog));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("idLogErro : " + idLogErro));
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbLogManifesto.Delete(token, idLog);
+                    GatewayTbLogErro.Delete(token, idLogErro);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);

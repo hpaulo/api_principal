@@ -6,11 +6,12 @@ namespace api.Models
     public partial class tbLogManifesto
     {
         public int idLog { get; set; }
-        public System.DateTime dtLog { get; set; }
-        public string dsComando { get; set; }
-        public string cdRetorno { get; set; }
+        public System.DateTime dtLogInicio { get; set; }
+        public string dsXmlEntrada { get; set; }
+        public Nullable<short> cdRetorno { get; set; }
         public string dsRetorno { get; set; }
         public string dsMetodo { get; set; }
-        public string tpLog { get; set; }
+        public string dsXmlRetorno { get; set; }
+        public Nullable<System.DateTime> dtLogFim { get; set; }
     }
 }
