@@ -298,9 +298,17 @@
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbBancoParametroMap.cs" />
+    <Compile Include="Models\Mapping\tbEmpresaFilialMap.cs" />
+    <Compile Include="Models\Mapping\tbEmpresaGrupoMap.cs" />
+    <Compile Include="Models\Mapping\tbEmpresaMap.cs" />
+    <Compile Include="Models\Mapping\tbLogErroMap.cs" />
     <Compile Include="Models\Mapping\tbManifestoMap.cs" />
     <Compile Include="Models\Object\ConciliacaoBancaria.cs" />
     <Compile Include="Models\tbBancoParametro.cs" />
+    <Compile Include="Models\tbEmpresa.cs" />
+    <Compile Include="Models\tbEmpresaFilial.cs" />
+    <Compile Include="Models\tbEmpresaGrupo.cs" />
+    <Compile Include="Models\tbLogErro.cs" />
     <Compile Include="Models\tbManifesto.cs" />
     <Compile Include="Models\Mapping\tbLogManifestoMap.cs" />
     <Compile Include="Models\tbLogManifesto.cs" />

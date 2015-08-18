@@ -220,6 +220,10 @@ namespace api.Models
         public DbSet<tbManifesto> tbManifestos { get; set; }
         public DbSet<tbLogManifesto> tbLogManifestos { get; set; }
         public DbSet<tbBancoParametro> tbBancoParametro { get; set; }
+        public DbSet<tbEmpresa> tbEmpresas { get; set; }
+        public DbSet<tbEmpresaFilial> tbEmpresaFiliais { get; set; }
+        public DbSet<tbEmpresaGrupo> tbEmpresaGrupos { get; set; }
+        public DbSet<tbLogErro> tbLogErros { get; set; }
 
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -427,6 +431,10 @@ namespace api.Models
             modelBuilder.Configurations.Add(new tbManifestoMap());
             modelBuilder.Configurations.Add(new tbLogManifestoMap());
             modelBuilder.Configurations.Add(new tbBancoParametroMap());
+            modelBuilder.Configurations.Add(new tbEmpresaFilialMap());
+            modelBuilder.Configurations.Add(new tbEmpresaGrupoMap());
+            modelBuilder.Configurations.Add(new tbEmpresaMap());
+            modelBuilder.Configurations.Add(new tbLogErroMap());
         }
     }
 }
