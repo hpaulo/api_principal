@@ -330,7 +330,7 @@ namespace api.Negocios.Pos
                         queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
                 }
                 string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-                if (CnpjEmpresa != "")
+                if (!CnpjEmpresa.Equals(""))
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
                         queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;

@@ -9,18 +9,12 @@ namespace api.Models.Object
 
     public class ConciliacaoBancaria
     {
+
         private string tipo; // "E" : extrato, "R" : RecebimentoParcela
         public string Tipo
         {
             get { return tipo; }
             set { tipo = value; }
-        }
-
-        private List<Int32> ids; // id do extrato ou do recebimento
-        public List<Int32> Ids
-        {
-            get { return ids; }
-            set { ids = value; }
         }
 
         private DateTime data; // data do extrato ou do recebimento
@@ -30,11 +24,18 @@ namespace api.Models.Object
             set { data = value; }
         }
 
-        private List<decimal> valores; // valor do Extrato ou valor liquido do recebimento parcela
-        public List<decimal> Valores
+        private Nullable<DateTime> dataVenda; // data do extrato ou do recebimento
+        public Nullable<DateTime> DataVenda
         {
-            get { return valores; }
-            set { valores = value; }
+            get { return dataVenda; }
+            set { dataVenda = value; }
+        }
+
+        private List<ConciliacaoGrupo> grupo;
+        public List<ConciliacaoGrupo> Grupo
+        {
+            get { return grupo; }
+            set { grupo = value; }
         }
 
         private string adquirente; 
@@ -51,12 +52,61 @@ namespace api.Models.Object
             set { bandeira = value; }
         }
 
+        private string memo;
+        public string Memo
+        {
+            get { return memo; }
+            set { memo = value; }
+        }
+
+        private decimal valortotal;
+        public decimal ValorTotal
+        {
+            get { return valortotal; }
+            set { valortotal = value; }
+        }
+
         private ConciliacaoConta conta; // conta bancária associada
         public ConciliacaoConta Conta
         {
             get { return conta; }
             set { conta = value; }
         }
+
+
+
+        public class ConciliacaoGrupo
+        {
+            private Int32 id; // id do extrato ou do recebimento
+            public Int32 Id
+            {
+                get { return id; }
+                set { id = value; }
+            }
+
+            private decimal valor; // valor do Extrato ou valor liquido do recebimento parcela
+            public decimal Valor
+            {
+                get { return valor; }
+                set { valor = value; }
+            }
+
+            private string documento;
+            public string Documento
+            {
+                get { return documento; }
+                set { documento = value; }
+            }
+
+            /*private ConciliacaoConta conta; // conta bancária associada
+            public ConciliacaoConta Conta
+            {
+                get { return conta; }
+                set { conta = value; }
+            }*/
+        }
+
+
 
         public class ConciliacaoConta
         {
@@ -88,7 +138,6 @@ namespace api.Models.Object
                 set { nrConta = value; }
             }
 
-            
         }
 
 
@@ -99,7 +148,7 @@ namespace api.Models.Object
                 if (c1 == c2) return true; // é a mesma instância ou ambos são nulos
                 if (c1 == null || c2 == null) return false;
                 return c1.Data.Year == c2.Data.Year && c1.Data.Month == c2.Data.Month && c1.Data.Day == c2.Data.Day &&
-                       c1.Valores.Sum() == c2.Valores.Sum() && 
+                       c1.ValorTotal == c2.ValorTotal && 
                        c1.Adquirente.Equals(c2.Adquirente);
             }
 
@@ -107,7 +156,7 @@ namespace api.Models.Object
             {
                 if (c == null) return 0;
                 DateTime d = new DateTime(c.Data.Year, c.Data.Month, c.Data.Day);
-                return ((int)d.Ticks) + c.Adquirente.GetHashCode() + ((int)c.Valores.Sum());
+                return ((int)d.Ticks) + c.Adquirente.GetHashCode() + ((int)c.ValorTotal);
             }
         }
 

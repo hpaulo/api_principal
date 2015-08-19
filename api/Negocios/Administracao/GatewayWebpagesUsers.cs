@@ -250,7 +250,7 @@ namespace api.Negocios.Administracao
                             queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
                     }
                     string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-                    if (CnpjEmpresa != "")
+                    if (!CnpjEmpresa.Equals(""))
                     {
                         if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJEMPRESA, out outValue))
                             queryString["" + (int)CAMPOS.NU_CNPJEMPRESA] = CnpjEmpresa;

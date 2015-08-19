@@ -147,7 +147,7 @@ namespace api.Negocios.Card
                         queryString.Add("" + (int)CAMPOS.CDGRUPO, IdGrupo.ToString());
                 }
                 string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-                if (CnpjEmpresa != "")
+                if (!CnpjEmpresa.Equals(""))
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
                         queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
