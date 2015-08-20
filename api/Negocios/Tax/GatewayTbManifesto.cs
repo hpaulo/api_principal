@@ -290,7 +290,7 @@ namespace api.Negocios.Tax
                 // COLEÇÃO DE RETORNO
                 if (colecao == 1)
                 {
-                    CollectionTbManifesto = query.Select(e => new
+                    var max = query.Select(e => new
                     {
 
                         idManifesto = e.idManifesto,
@@ -313,7 +313,9 @@ namespace api.Negocios.Tax
                         nrProtocoloDownload = e.nrProtocoloDownload,
                         cdSituacaoDownload = e.cdSituacaoDownload,
                         dsSituacaoDownload = e.dsSituacaoDownload,
-                    }).ToList<dynamic>();
+                    }).Max(e => e.nrNSU);
+
+                    CollectionTbManifesto.Add(max);
                 }
                 else if (colecao == 0)
                 {

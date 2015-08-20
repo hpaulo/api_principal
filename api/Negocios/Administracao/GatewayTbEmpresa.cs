@@ -124,6 +124,7 @@ namespace api.Negocios.Admin
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbEmpresa = new List<dynamic>();
                 Retorno retorno = new Retorno();
+                retorno.Totais = new Dictionary<string, object>();
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
@@ -146,13 +147,20 @@ namespace api.Negocios.Admin
                 // COLEÇÃO DE RETORNO
                 if (colecao == 1)
                 {
-                    CollectionTbEmpresa = query.Select(e => new
+                    CollectionTbEmpresa = query
+                        .Where(e => e.dsCertificadoDigital != null && e.dsCertificadoDigitalSenha != null && e.tbEmpresaGrupo.flTaxServices == true)
+                        .Select(e => new
                     {
-
-                        nrCNPJBase = e.nrCNPJBase,
+                        nrCNPJ = _db.tbEmpresaFiliais.AsQueryable()
+                        .Where(f => f.cdEmpresaGrupo == e.cdEmpresaGrupo)
+                        .Select(s => 
+                            new { nrCNPJ = s.nrCNPJ }
+                            ),
                         dsCertificadoDigital = e.dsCertificadoDigital,
                         dsCertificadoDigitalSenha = e.dsCertificadoDigitalSenha,
-                        cdEmpresaGrupo = e.cdEmpresaGrupo,
+                        cdEmpresaGrupo = e.tbEmpresaGrupo.cdEmpresaGrupo,
+
+                        //maxNSU = _db.tbManifestos.Where(m => m.nrCNPJ.Equals(e.tbEmpresaGrupo.))
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -168,6 +176,7 @@ namespace api.Negocios.Admin
                 }
 
                 retorno.Registros = CollectionTbEmpresa;
+
 
                 return retorno;
             }
