@@ -159,7 +159,7 @@ namespace api.Negocios.Pos
 
                     case CAMPOS.ID_GRUPO:
                         int id_grupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.Recebimento.empresa.id_grupo.Equals(id_grupo));
+                        entity = entity.Where(e => e.Recebimento.empresa.id_grupo == id_grupo);
                         break;
                     case CAMPOS.NU_CNPJ:
                         string nu_cnpj = Convert.ToString(item.Value);
@@ -330,7 +330,7 @@ namespace api.Negocios.Pos
                         queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
                 }
                 string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-                if (CnpjEmpresa != "")
+                if (!CnpjEmpresa.Equals(""))
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
                         queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;

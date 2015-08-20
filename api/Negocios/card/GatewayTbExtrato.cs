@@ -16,7 +16,7 @@ namespace api.Negocios.Card
 {
     public class GatewayTbExtrato
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
@@ -40,12 +40,15 @@ namespace api.Negocios.Card
             DSTIPO = 106,
             DSARQUIVO = 107,
 
-            // RELACIONAMENTOS
+            // EMPRESA
             NU_CNPJ = 200,
             ID_GRUPO = 216,
 
+            // TBADQUIRENTE
+            CDADQUIRENTE = 300,
+
             // VIGÊNCIA
-            DTVIGENCIA = 300,
+            VIGENCIA = 400, // CNPJ!DATA!CDADQUIRENTE
         };
 
         /// <summary>
@@ -128,31 +131,77 @@ namespace api.Negocios.Card
                     // PERSONALIZADO
                     case CAMPOS.ID_GRUPO:
                         int id_grupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.tbContaCorrente.cdGrupo.Equals(id_grupo));
+                        entity = entity.Where(e => e.tbContaCorrente.cdGrupo == id_grupo).AsQueryable<tbExtrato>();
                         break;
                     case CAMPOS.NU_CNPJ: 
                         string nu_cnpj = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas.Where( v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(nu_cnpj)).Count() > 0);
+                        entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas.Where( v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(nu_cnpj)).Count() > 0).AsQueryable<tbExtrato>();
                         break;
-                    /*case CAMPOS.DTVIGENCIA:
-                        if (item.Value.Contains("|")) // BETWEEN
+                    case CAMPOS.CDADQUIRENTE:
+                        int cdAdquirente = Convert.ToInt32(item.Value);
+                        //entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas.Where( v => v.tbLoginAdquirenteEmpresa.cdAdquirente == cdAdquirente).Count() > 0).AsQueryable<tbExtrato>();
+                        entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                                                       .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                       .Where(b => b.cdAdquirente == cdAdquirente)
+                                                                       .Count() > 0).AsQueryable<tbExtrato>();
+                        break;
+                    case CAMPOS.VIGENCIA:
+                        string[] vigencia = item.Value.Split('!');
+                        if (vigencia.Length < 2) continue;
+
+                        string cnpj = vigencia[0];
+                        string dt = vigencia[1];
+
+                        if (dt.Contains("|"))
                         {
-                            string[] busca = item.Value.Split('|');
-                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
-                                                            .Where(v => (v.dtInicio.Year > dtaIni.Year || (v.dtInicio.Year == dtaIni.Year && v.dtInicio.Month > dtaIni.Month) ||
-                                                                        (v.dtInicio.Year == dtaIni.Year && v.dtInicio.Month == dtaIni.Month && v.dtInicio.Day >= dtaIni.Day))
-                                                                         && (v.dtInicio.Year < dtaFim.Year || (v.dtInicio.Year == dtaFim.Year && v.dtInicio.Month < dtaFim.Month) ||
-                                                                        (v.dtInicio.Year == dtaFim.Year && v.dtInicio.Month == dtaFim.Month && v.dtInicio.Day <= dtaFim.Day))).Count() > 0);
+                            string[] dts = dt.Split('|');
+                            DateTime dtIni = DateTime.ParseExact(dts[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtFim = DateTime.ParseExact(dts[1] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+
+                            // Para o LoginAdquirenteEmpresa, a data do filtro tem que estar na validade da vigência
+                            if (vigencia.Length > 2)
+                            {
+                                int cdadquirente = Convert.ToInt32(vigencia[2]);
+                                entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                                .Where(v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(cnpj))
+                                                                                .Where(v => v.tbLoginAdquirenteEmpresa.cdAdquirente == cdadquirente)
+                                                                                .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtIni.Year || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month > dtIni.Month) || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month == dtIni.Month && v.dtFim.Value.Day >= dtIni.Day)))
+                                                                                     && (v.dtInicio.Year < dtFim.Year || (v.dtInicio.Year == dtFim.Year && v.dtInicio.Month < dtFim.Month) || (v.dtInicio.Year == dtFim.Year && v.dtInicio.Month == dtFim.Month && v.dtInicio.Day <= dtFim.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtFim.Year || (v.dtFim.Value.Year == dtFim.Year && v.dtFim.Value.Month > dtFim.Month) || (v.dtFim.Value.Year == dtFim.Year && v.dtFim.Value.Month == dtFim.Month && v.dtFim.Value.Day >= dtFim.Day)))).Count() > 0).AsQueryable<tbExtrato>();
+                            }
+                            else
+                            {
+                                entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                                .Where(v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(cnpj))
+                                                                                .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtIni.Year || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month > dtIni.Month) || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month == dtIni.Month && v.dtFim.Value.Day >= dtIni.Day)))
+                                                                                     && (v.dtInicio.Year < dtFim.Year || (v.dtInicio.Year == dtFim.Year && v.dtInicio.Month < dtFim.Month) || (v.dtInicio.Year == dtFim.Year && v.dtInicio.Month == dtFim.Month && v.dtInicio.Day <= dtFim.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtFim.Year || (v.dtFim.Value.Year == dtFim.Year && v.dtFim.Value.Month > dtFim.Month) || (v.dtFim.Value.Year == dtFim.Year && v.dtFim.Value.Month == dtFim.Month && v.dtFim.Value.Day >= dtFim.Day)))).Count() > 0).AsQueryable<tbExtrato>();
+                            }
                         }
-                        else // IGUAL
-                        {
-                            string busca = item.Value;
-                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas.Where( v => v.dtInicio.Year == dtaIni.Year && v.dtInicio.Month == dtaIni.Month && v.dtInicio.Day == dtaIni.Day).Count() > 0);
-                        }
-                        break;*/
+                        else {
+                            DateTime dtIni = DateTime.ParseExact(dt + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+
+                            // Para o LoginAdquirenteEmpresa, a data do filtro tem que estar na validade da vigência
+                            if (vigencia.Length > 2)
+                            {
+                                int cdadquirente = Convert.ToInt32(vigencia[2]);
+                                entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                                .Where(v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(cnpj))
+                                                                                .Where(v => v.tbLoginAdquirenteEmpresa.cdAdquirente == cdadquirente)
+                                                                                .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtIni.Year || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month > dtIni.Month) || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month == dtIni.Month && v.dtFim.Value.Day >= dtIni.Day)))).Count() > 0).AsQueryable<tbExtrato>();
+                            }
+                            else
+                            {
+                                entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                                .Where(v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(cnpj))
+                                                                                .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtIni.Year || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month > dtIni.Month) || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month == dtIni.Month && v.dtFim.Value.Day >= dtIni.Day)))).Count() > 0).AsQueryable<tbExtrato>();
+                            }
+                        }                     
+                        break; 
                 }
             }
             #endregion
@@ -175,8 +224,8 @@ namespace api.Negocios.Card
                     else entity = entity.OrderByDescending(e => e.nrDocumento).AsQueryable<tbExtrato>();
                     break;
                 case CAMPOS.DTEXTRATO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtExtrato).ThenBy(e => e.idExtrato).AsQueryable<tbExtrato>();
-                    else entity = entity.OrderByDescending(e => e.dtExtrato).ThenByDescending(e => e.idExtrato).AsQueryable<tbExtrato>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtExtrato).ThenBy(e => e.dsTipo).ThenBy(e => e.dsDocumento).ThenBy(e => e.vlMovimento).ThenBy(e => e.idExtrato).AsQueryable<tbExtrato>();
+                    else entity = entity.OrderByDescending(e => e.dtExtrato).ThenByDescending(e => e.dsTipo).ThenByDescending(e => e.dsDocumento).ThenByDescending(e => e.vlMovimento).ThenByDescending(e => e.idExtrato).AsQueryable<tbExtrato>();
                     break;
                 case CAMPOS.DSDOCUMENTO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsDocumento).AsQueryable<tbExtrato>();
@@ -511,26 +560,36 @@ namespace api.Negocios.Card
                     extrato.dsDocumento = transacao.Memo;
                     extrato.dsArquivo = filePath;
 
+                    Int32 contMovimentacoesRepetidas = ofxDocument.Transactions.Where(t => t.Amount == extrato.vlMovimento)
+                                                                               .Where(t => t.CheckNum.Equals(extrato.nrDocumento))
+                                                                               .Where(t => t.TransType.ToString().Equals(extrato.dsTipo))
+                                                                               .Where(t => t.Memo.Equals(extrato.dsDocumento))
+                                                                               .Count();
+
+                    
+
                     // Verifica se existe uma movimentação com as mesmas informações
-                    tbExtrato old = _db.tbExtratos.Where(e => e.cdContaCorrente == extrato.cdContaCorrente)
-                                                  .Where(e => e.dtExtrato.Equals(extrato.dtExtrato))
-                                                  .Where(e => e.nrDocumento.Equals(extrato.nrDocumento))
-                                                  .Where(e => e.vlMovimento == extrato.vlMovimento)
-                                                  .Where(e => e.dsDocumento.Equals(extrato.dsDocumento))
-                                                  .Where(e => e.dsTipo.Equals(extrato.dsTipo))
-                                                  .FirstOrDefault();
-                    if (old != null)
+                    var olds = _db.tbExtratos.Where(e => e.cdContaCorrente == extrato.cdContaCorrente)
+                                                         .Where(e => e.dtExtrato.Equals(extrato.dtExtrato))
+                                                         .Where(e => e.nrDocumento.Equals(extrato.nrDocumento))
+                                                         .Where(e => e.vlMovimento == extrato.vlMovimento)
+                                                         .Where(e => e.dsDocumento.Equals(extrato.dsDocumento))
+                                                         .Where(e => e.dsTipo.Equals(extrato.dsTipo));
+
+                    if (olds.Count() >= contMovimentacoesRepetidas)
                     {
-                        // Já existe um registro  com essas informações
-                        int totalTransacoesOld = _db.tbExtratos.Where(e => e.dsArquivo.Equals(old.dsArquivo)).Count();
+                        string arquivoAntigo = olds.Select(o => o.dsArquivo).FirstOrDefault();
+                        // Já existe o(s) registro(s) com essas informações
+                        int totalTransacoesOld = _db.tbExtratos.Where(e => e.dsArquivo.Equals(arquivoAntigo)).Count();
                         // Verifica se o extrato atual possui mais movimentações que o anterior
                         if (ofxDocument.Transactions.Count > totalTransacoesOld)
                         {
-                            var arquivoAntigo = old.dsArquivo;
+                            
                             // Atualiza o arquivo
-                            old.dsArquivo = extrato.dsArquivo;
+                            foreach (var old in olds) old.dsArquivo = extrato.dsArquivo;
                             // Ainda tem movimentações referenciando o arquivo antigo?
                             if (totalTransacoesOld <= 1) File.Delete(arquivoAntigo); // Deleta o arquivo antigo
+                                
                         }
                     }
                     else
