@@ -7,6 +7,9 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
+using System.Data.Entity.Core.Objects;
 
 namespace api.Negocios.Tax
 {
@@ -63,7 +66,7 @@ namespace api.Negocios.Tax
         private static IQueryable<tbManifesto> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
-            var entity = _db.tbManifestos.AsQueryable();
+            var entity = _db.tbManifestos.AsQueryable<tbManifesto>();
 
             #region WHERE - ADICIONA OS FILTROS A QUERY
 
@@ -78,83 +81,83 @@ namespace api.Negocios.Tax
 
                     case CAMPOS.IDMANIFESTO:
                         Int32 idManifesto = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idManifesto.Equals(idManifesto)).AsQueryable();
+                        entity = entity.Where(e => e.idManifesto.Equals(idManifesto)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.NRCHAVE:
                         string nrChave = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nrChave.Equals(nrChave)).AsQueryable();
+                        entity = entity.Where(e => e.nrChave.Equals(nrChave)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.NRNSU:
                         string nrNSU = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nrNSU.Equals(nrNSU)).AsQueryable();
+                        entity = entity.Where(e => e.nrNSU.Equals(nrNSU)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.CDGRUPO:
                         Int32 cdGrupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdGrupo.Equals(cdGrupo)).AsQueryable();
+                        entity = entity.Where(e => e.cdGrupo.Equals(cdGrupo)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.NRCNPJ:
                         string nrCNPJ = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nrCNPJ.Equals(nrCNPJ)).AsQueryable();
+                        entity = entity.Where(e => e.nrCNPJ.Equals(nrCNPJ)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.NREMITENTECNPJCPF:
                         string nrEmitenteCNPJCPF = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nrEmitenteCNPJCPF.Equals(nrEmitenteCNPJCPF)).AsQueryable();
+                        entity = entity.Where(e => e.nrEmitenteCNPJCPF.Equals(nrEmitenteCNPJCPF)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.NMEMITENTE:
                         string nmEmitente = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nmEmitente.Equals(nmEmitente)).AsQueryable();
+                        entity = entity.Where(e => e.nmEmitente.Equals(nmEmitente)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.NREMITENTEIE:
                         string nrEmitenteIE = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nrEmitenteIE.Equals(nrEmitenteIE)).AsQueryable();
+                        entity = entity.Where(e => e.nrEmitenteIE.Equals(nrEmitenteIE)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.DTEMISSAO:
                         DateTime dtEmissao = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtEmissao.Equals(dtEmissao)).AsQueryable();
+                        entity = entity.Where(e => e.dtEmissao.Equals(dtEmissao)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.TPOPERACAO:
                         string tpOperacao = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.tpOperacao.Equals(tpOperacao)).AsQueryable();
+                        entity = entity.Where(e => e.tpOperacao.Equals(tpOperacao)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.VLNFE:
                         decimal vlNFe = Convert.ToDecimal(item.Value);
-                        entity = entity.Where(e => e.vlNFe.Equals(vlNFe)).AsQueryable();
+                        entity = entity.Where(e => e.vlNFe.Equals(vlNFe)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.DTRECEBIMENTO:
                         DateTime dtRecebimento = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtRecebimento.Equals(dtRecebimento)).AsQueryable();
+                        entity = entity.Where(e => e.dtRecebimento.Equals(dtRecebimento)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.CDSITUACAONFE:
                         string cdSituacaoNFe = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.cdSituacaoNFe.Equals(cdSituacaoNFe)).AsQueryable();
+                        entity = entity.Where(e => e.cdSituacaoNFe.Equals(cdSituacaoNFe)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.CDSITUACAOMANIFESTO:
                         short cdSituacaoManifesto = short.Parse(item.Value);
-                        entity = entity.Where(e => e.cdSituacaoManifesto.Equals(cdSituacaoManifesto)).AsQueryable();
+                        entity = entity.Where(e => e.cdSituacaoManifesto.Equals(cdSituacaoManifesto)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.DSSITUACAOMANIFESTO:
                         string dsSituacaoManifesto = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsSituacaoManifesto.Equals(dsSituacaoManifesto)).AsQueryable();
+                        entity = entity.Where(e => e.dsSituacaoManifesto.Equals(dsSituacaoManifesto)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.NRPROTOCOLOMANIFESTO:
                         string nrProtocoloManifesto = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nrProtocoloManifesto.Equals(nrProtocoloManifesto)).AsQueryable();
+                        entity = entity.Where(e => e.nrProtocoloManifesto.Equals(nrProtocoloManifesto)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.XMLNFE:
                         string xmlNFe = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.xmlNFe.Equals(xmlNFe)).AsQueryable();
+                        entity = entity.Where(e => e.xmlNFe.Equals(xmlNFe)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.NRPROTOCOLODOWNLOAD:
                         string nrProtocoloDownload = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nrProtocoloDownload.Equals(nrProtocoloDownload)).AsQueryable();
+                        entity = entity.Where(e => e.nrProtocoloDownload.Equals(nrProtocoloDownload)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.CDSITUACAODOWNLOAD:
                         short cdSituacaoDownload = short.Parse(item.Value);
-                        entity = entity.Where(e => e.cdSituacaoDownload.Equals(cdSituacaoDownload)).AsQueryable();
+                        entity = entity.Where(e => e.cdSituacaoDownload.Equals(cdSituacaoDownload)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.DSSITUACAODOWNLOAD:
                         string dsSituacaoDownload = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsSituacaoDownload.Equals(dsSituacaoDownload)).AsQueryable();
+                        entity = entity.Where(e => e.dsSituacaoDownload.Equals(dsSituacaoDownload)).AsQueryable<tbManifesto>();
                         break;
 
                 }
@@ -168,84 +171,84 @@ namespace api.Negocios.Tax
             {
 
                 case CAMPOS.IDMANIFESTO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.idManifesto).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.idManifesto).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.idManifesto).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.idManifesto).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.NRCHAVE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.nrChave).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.nrChave).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.nrChave).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.nrChave).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.NRNSU:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.nrNSU).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.nrNSU).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.nrNSU).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.nrNSU).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.CDGRUPO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdGrupo).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.cdGrupo).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdGrupo).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.cdGrupo).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.NRCNPJ:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.nrCNPJ).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.nrCNPJ).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.nrCNPJ).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.nrCNPJ).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.NREMITENTECNPJCPF:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.nrEmitenteCNPJCPF).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.nrEmitenteCNPJCPF).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.nrEmitenteCNPJCPF).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.nrEmitenteCNPJCPF).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.NMEMITENTE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.nmEmitente).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.nmEmitente).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.nmEmitente).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.nmEmitente).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.NREMITENTEIE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.nrEmitenteIE).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.nrEmitenteIE).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.nrEmitenteIE).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.nrEmitenteIE).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.DTEMISSAO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtEmissao).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dtEmissao).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtEmissao).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.dtEmissao).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.TPOPERACAO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.tpOperacao).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.tpOperacao).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.tpOperacao).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.tpOperacao).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.VLNFE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.vlNFe).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.vlNFe).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.vlNFe).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.vlNFe).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.DTRECEBIMENTO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtRecebimento).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dtRecebimento).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtRecebimento).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.dtRecebimento).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.CDSITUACAONFE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdSituacaoNFe).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.cdSituacaoNFe).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdSituacaoNFe).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.cdSituacaoNFe).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.CDSITUACAOMANIFESTO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdSituacaoManifesto).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.cdSituacaoManifesto).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdSituacaoManifesto).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.cdSituacaoManifesto).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.DSSITUACAOMANIFESTO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsSituacaoManifesto).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsSituacaoManifesto).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsSituacaoManifesto).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.dsSituacaoManifesto).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.NRPROTOCOLOMANIFESTO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.nrProtocoloManifesto).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.nrProtocoloManifesto).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.nrProtocoloManifesto).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.nrProtocoloManifesto).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.XMLNFE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.xmlNFe).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.xmlNFe).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.xmlNFe).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.xmlNFe).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.NRPROTOCOLODOWNLOAD:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.nrProtocoloDownload).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.nrProtocoloDownload).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.nrProtocoloDownload).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.nrProtocoloDownload).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.CDSITUACAODOWNLOAD:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdSituacaoDownload).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.cdSituacaoDownload).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdSituacaoDownload).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.cdSituacaoDownload).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.DSSITUACAODOWNLOAD:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsSituacaoDownload).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsSituacaoDownload).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsSituacaoDownload).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.dsSituacaoDownload).AsQueryable<tbManifesto>();
                     break;
 
             }
@@ -268,6 +271,10 @@ namespace api.Negocios.Tax
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbManifesto = new List<dynamic>();
                 Retorno retorno = new Retorno();
+
+                // Atualiza o contexto
+                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
@@ -371,6 +378,9 @@ namespace api.Negocios.Tax
         {
             try
             {
+                // Atualiza o contexto
+                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
                 _db.tbManifestos.Add(param);
                 _db.SaveChanges();
                 return param.idManifesto;
@@ -396,7 +406,14 @@ namespace api.Negocios.Tax
         {
             try
             {
-                _db.tbManifestos.Remove(_db.tbManifestos.Where(e => e.idManifesto.Equals(idManifesto)).First());
+                // Atualiza o contexto
+                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
+                tbManifesto manifesto = _db.tbManifestos.Where(e => e.idManifesto == idManifesto).FirstOrDefault();
+
+                if(manifesto == null) throw new Exception("Manifesto inexistente!");
+
+                _db.tbManifestos.Remove(manifesto);
                 _db.SaveChanges();
             }
             catch (Exception e)
@@ -421,20 +438,21 @@ namespace api.Negocios.Tax
         {
             try
             {
+                // Atualiza o contexto
+                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
                 tbManifesto value = _db.tbManifestos
-                        .Where(e => e.idManifesto.Equals(param.idManifesto))
+                        .Where(e => e.idManifesto == param.idManifesto)
                         .First<tbManifesto>();
 
-                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                if (value == null) throw new Exception("Manifesto inexistente!");
 
 
-                if (param.idManifesto != null && param.idManifesto != value.idManifesto)
-                    value.idManifesto = param.idManifesto;
                 if (param.nrChave != null && param.nrChave != value.nrChave)
                     value.nrChave = param.nrChave;
                 if (param.nrNSU != null && param.nrNSU != value.nrNSU)
                     value.nrNSU = param.nrNSU;
-                if (param.cdGrupo != null && param.cdGrupo != value.cdGrupo)
+                if (param.cdGrupo != 0 && param.cdGrupo != value.cdGrupo)
                     value.cdGrupo = param.cdGrupo;
                 if (param.nrCNPJ != null && param.nrCNPJ != value.nrCNPJ)
                     value.nrCNPJ = param.nrCNPJ;
