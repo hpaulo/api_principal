@@ -288,34 +288,16 @@ namespace api.Negocios.Tax
                 retorno.ItensPorPagina = pageSize;
 
                 // COLEÇÃO DE RETORNO
-                if (colecao == 1)
+                if (colecao == 1) //Consulta a última NSU do CNPJ informado
                 {
-                    var max = query.Select(e => new
-                    {
+                    CollectionTbManifesto = query
+                        .GroupBy(e => new { e.nrCNPJ })
+                        .Select(e => new
+                        {
+                            nrCNPJ = e.Key.nrCNPJ,
+                            ultNSU = e.Max(m => m.nrNSU),
+                        }).ToList<dynamic>();
 
-                        idManifesto = e.idManifesto,
-                        nrChave = e.nrChave,
-                        nrNSU = e.nrNSU,
-                        cdGrupo = e.cdGrupo,
-                        nrCNPJ = e.nrCNPJ,
-                        nrEmitenteCNPJCPF = e.nrEmitenteCNPJCPF,
-                        nmEmitente = e.nmEmitente,
-                        nrEmitenteIE = e.nrEmitenteIE,
-                        dtEmissao = e.dtEmissao,
-                        tpOperacao = e.tpOperacao,
-                        vlNFe = e.vlNFe,
-                        dtRecebimento = e.dtRecebimento,
-                        cdSituacaoNFe = e.cdSituacaoNFe,
-                        cdSituacaoManifesto = e.cdSituacaoManifesto,
-                        dsSituacaoManifesto = e.dsSituacaoManifesto,
-                        nrProtocoloManifesto = e.nrProtocoloManifesto,
-                        xmlNFe = e.xmlNFe,
-                        nrProtocoloDownload = e.nrProtocoloDownload,
-                        cdSituacaoDownload = e.cdSituacaoDownload,
-                        dsSituacaoDownload = e.dsSituacaoDownload,
-                    }).Max(e => e.nrNSU);
-
-                    CollectionTbManifesto.Add(max);
                 }
                 else if (colecao == 0)
                 {
@@ -344,7 +326,39 @@ namespace api.Negocios.Tax
                         dsSituacaoDownload = e.dsSituacaoDownload,
                     }).ToList<dynamic>();
                 }
-
+                else if (colecao == 2) //Consulta as notas disponíveis para manifestação
+                {
+                    CollectionTbManifesto = _db.tbManifestos
+                        .Join(_db.tbEmpresaFiliais, m => m.nrCNPJ, f => f.nrCNPJ, (m, f) => new { m, f })
+                        .Join(_db.tbEmpresas, j => j.f.nrCNPJBase, e => e.nrCNPJBase, (j, e) => new { j, e })
+                        .Where(e => e.j.m.cdSituacaoManifesto == null && e.j.m.cdSituacaoDownload == null)
+                        .Select(e => new
+                        {
+                            idManifesto = e.j.m.idManifesto,
+                            cdGrupo = e.j.m.cdGrupo,
+                            nrChave = e.j.m.nrChave,
+                            nrCNPJ = e.j.m.nrCNPJ,
+                            dsCertificadoDigital = e.e.dsCertificadoDigital,
+                            dsCertificadoDigitalSenha =e.e.dsCertificadoDigitalSenha,
+                        }).Take(1).ToList<dynamic>();
+                }
+                else if (colecao == 3) //Consulta as notas disponíveis para download
+                {
+                    CollectionTbManifesto = _db.tbManifestos
+                        .Join(_db.tbEmpresaFiliais, m => m.nrCNPJ, f => f.nrCNPJ, (m, f) => new { m, f })
+                        .Join(_db.tbEmpresas, j => j.f.nrCNPJBase, e => e.nrCNPJBase, (j, e) => new { j, e })
+                        .Where(e => (e.j.m.cdSituacaoManifesto == 135 || e.j.m.cdSituacaoManifesto == 573 || e.j.m.cdSituacaoManifesto == 650) && e.j.m.cdSituacaoDownload == null)
+                        .Select(e => new
+                        {
+                            idManifesto = e.j.m.idManifesto,
+                            cdGrupo = e.j.m.cdGrupo,
+                            nrChave = e.j.m.nrChave,
+                            nrCNPJ = e.j.m.nrCNPJ,
+                            dsCertificadoDigital = e.e.dsCertificadoDigital,
+                            dsCertificadoDigitalSenha = e.e.dsCertificadoDigitalSenha,
+                        }).ToList<dynamic>();
+                }
+                retorno.TotalDeRegistros = CollectionTbManifesto.Count();
                 retorno.Registros = CollectionTbManifesto;
 
                 return retorno;
@@ -371,6 +385,7 @@ namespace api.Negocios.Tax
         {
             try
             {
+                _db = new painel_taxservices_dbContext();
                 _db.tbManifestos.Add(param);
                 _db.SaveChanges();
                 return param.idManifesto;
@@ -421,8 +436,9 @@ namespace api.Negocios.Tax
         {
             try
             {
+                _db = new painel_taxservices_dbContext();
                 tbManifesto value = _db.tbManifestos
-                        .Where(e => e.idManifesto.Equals(param.idManifesto))
+                        .Where(e => e.idManifesto == param.idManifesto)
                         .First<tbManifesto>();
 
                 // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
@@ -480,6 +496,5 @@ namespace api.Negocios.Tax
                 throw new Exception(e.Message);
             }
         }
-
     }
 }

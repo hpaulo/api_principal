@@ -147,21 +147,19 @@ namespace api.Negocios.Admin
                 // COLEÇÃO DE RETORNO
                 if (colecao == 1)
                 {
-                    CollectionTbEmpresa = query
-                        .Where(e => e.dsCertificadoDigital != null && e.dsCertificadoDigitalSenha != null && e.tbEmpresaGrupo.flTaxServices == true)
-                        .Select(e => new
-                    {
-                        nrCNPJ = _db.tbEmpresaFiliais.AsQueryable()
-                        .Where(f => f.cdEmpresaGrupo == e.cdEmpresaGrupo)
-                        .Select(s => 
-                            new { nrCNPJ = s.nrCNPJ }
-                            ),
-                        dsCertificadoDigital = e.dsCertificadoDigital,
-                        dsCertificadoDigitalSenha = e.dsCertificadoDigitalSenha,
-                        cdEmpresaGrupo = e.tbEmpresaGrupo.cdEmpresaGrupo,
 
-                        //maxNSU = _db.tbManifestos.Where(m => m.nrCNPJ.Equals(e.tbEmpresaGrupo.))
-                    }).ToList<dynamic>();
+                    CollectionTbEmpresa = _db.tbEmpresas
+                        .Join(_db.tbEmpresaFiliais, e => e.nrCNPJBase, f => f.nrCNPJBase, (e, f) => new { e, f })
+                        .Join(_db.tbEmpresaGrupos, f => f.f.cdEmpresaGrupo, g => g.cdEmpresaGrupo, (f, g) => new { f, g })
+                        .Where(e => e.f.e.dsCertificadoDigital != null && e.f.e.dsCertificadoDigitalSenha != null && e.f.f.flAtivo == true && e.g.flTaxServices == true && e.g.flAtivo == true)
+                        .GroupBy(e => new { e.f.e.cdEmpresaGrupo, e.f.e.dsCertificadoDigital, e.f.e.dsCertificadoDigitalSenha, e.f.f.nrCNPJ })
+                        .Select(e => new {
+                        cdEmpresaGrupo = e.Key.cdEmpresaGrupo,
+                        dsCertificadoDigital = e.Key.dsCertificadoDigital,
+                        dsCertificadoDigitalSenha = e.Key.dsCertificadoDigitalSenha,
+                        nrCNPJ = e.Key.nrCNPJ,})
+                        .AsQueryable()
+                        .ToList<dynamic>();
                 }
                 else if (colecao == 0)
                 {
