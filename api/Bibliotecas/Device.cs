@@ -14,11 +14,15 @@ namespace api.Bibliotecas
         public static Boolean IsMobile()
         {
             var userAgent = HttpContext.Current.Request.UserAgent;
+            if (userAgent == null)
+                return false;
 
-            if( userAgent.Contains("Mobile") )
+            if (userAgent.Contains("Mobile"))
                 return true;
             else
                 return false;
+
+
 
             /*//Console.WriteLine(HttpContext.Current.Request.UserHostAddress);
             var userBrowser = new HttpBrowserCapabilities { Capabilities = new Hashtable { { string.Empty, userAgent } } };
@@ -37,16 +41,17 @@ namespace api.Bibliotecas
             object dados = new object();
             var Request = HttpContext.Current.Request;
 
-            dados = new {
-                                UserAgente = Request.UserAgent,
-                                Plataforma = Request.Browser.Platform,
-                                Browser = Request.Browser.Browser,
-                                Versao = Request.Browser.Version,
-                                MobileDeviceModel = Request.Browser.MobileDeviceModel,
-                                MobileDeviceManufacturer = Request.Browser.MobileDeviceManufacturer,
-                                IsMobileDevice = Request.Browser.IsMobileDevice
+            dados = new
+            {
+                UserAgente = Request.UserAgent,
+                Plataforma = Request.Browser.Platform,
+                Browser = Request.Browser.Browser,
+                Versao = Request.Browser.Version,
+                MobileDeviceModel = Request.Browser.MobileDeviceModel,
+                MobileDeviceManufacturer = Request.Browser.MobileDeviceManufacturer,
+                IsMobileDevice = Request.Browser.IsMobileDevice
 
-                        };
+            };
 
 
             return JsonConvert.SerializeObject(dados);
