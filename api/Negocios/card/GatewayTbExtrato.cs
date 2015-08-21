@@ -45,7 +45,7 @@ namespace api.Negocios.Card
             ID_GRUPO = 216,
 
             // TBADQUIRENTE
-            CDADQUIRENTE = 300,
+            CDADQUIRENTE = 300, // -1 para = null, 0 para != null
 
             // VIGÊNCIA
             VIGENCIA = 400, // CNPJ!DATA!CDADQUIRENTE
@@ -139,11 +139,21 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         int cdAdquirente = Convert.ToInt32(item.Value);
-                        //entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas.Where( v => v.tbLoginAdquirenteEmpresa.cdAdquirente == cdAdquirente).Count() > 0).AsQueryable<tbExtrato>();
-                        entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
-                                                                       .Where(b => b.dsMemo.Equals(e.dsDocumento))
-                                                                       .Where(b => b.cdAdquirente == cdAdquirente)
-                                                                       .Count() > 0).AsQueryable<tbExtrato>();
+                        if(cdAdquirente == -1)
+                            entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                                                           .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                           .Where(b => b.cdAdquirente == null)
+                                                                           .Count() > 0).AsQueryable<tbExtrato>();
+                        else if(cdAdquirente == 0)
+                            entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                                                           .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                           .Where(b => b.cdAdquirente != null)
+                                                                           .Count() > 0).AsQueryable<tbExtrato>();
+                        else
+                            entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                                                           .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                           .Where(b => b.cdAdquirente == cdAdquirente)
+                                                                           .Count() > 0).AsQueryable<tbExtrato>();
                         break;
                     case CAMPOS.VIGENCIA:
                         string[] vigencia = item.Value.Split('!');

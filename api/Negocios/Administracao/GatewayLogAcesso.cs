@@ -280,7 +280,7 @@ namespace api.Negocios.Administracao
                                           ds_login = e.webpages_Users.ds_login
                                         },
                     controller = new { id_controller = e.idController,
-                                       ds_controller = e.webpages_Controllers != null && e.idController > 50 ?
+                                       ds_controller = e.webpages_Controllers != null && e.idController >= 50 ?
                                                        (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
                                                        e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
                                                        (e.webpages_Controllers.id_subController != null ?

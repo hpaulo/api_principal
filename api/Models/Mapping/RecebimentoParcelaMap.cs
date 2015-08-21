@@ -25,11 +25,15 @@ namespace api.Models.Mapping
             this.Property(t => t.valorParcelaLiquida).HasColumnName("valorParcelaLiquida");
             this.Property(t => t.dtaRecebimento).HasColumnName("dtaRecebimento");
             this.Property(t => t.valorDescontado).HasColumnName("valorDescontado");
+            this.Property(t => t.idExtrato).HasColumnName("idExtrato");
 
             // Relationships
             this.HasRequired(t => t.Recebimento)
                 .WithMany(t => t.RecebimentoParcelas)
                 .HasForeignKey(d => d.idRecebimento);
+            this.HasOptional(t => t.tbExtrato)
+                .WithMany(t => t.RecebimentoParcelas)
+                .HasForeignKey(d => d.idExtrato);
 
         }
     }
