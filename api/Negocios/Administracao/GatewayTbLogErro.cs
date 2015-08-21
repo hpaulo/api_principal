@@ -7,6 +7,8 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
+using System.Data.Entity.Infrastructure;
+using System.Data.Entity.Core.Objects;
 
 namespace api.Negocios.Admin
 {
@@ -69,47 +71,47 @@ namespace api.Negocios.Admin
 
                     case CAMPOS.IDLOGERRO:
                         Int32 idLogErro = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idLogErro.Equals(idLogErro)).AsQueryable();
+                        entity = entity.Where(e => e.idLogErro.Equals(idLogErro)).AsQueryable<tbLogErro>();
                         break;
                     case CAMPOS.DSAPLICACAO:
                         string dsAplicacao = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsAplicacao.Equals(dsAplicacao)).AsQueryable();
+                        entity = entity.Where(e => e.dsAplicacao.Equals(dsAplicacao)).AsQueryable<tbLogErro>();
                         break;
                     case CAMPOS.DSVERSAO:
                         string dsVersao = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsVersao.Equals(dsVersao)).AsQueryable();
+                        entity = entity.Where(e => e.dsVersao.Equals(dsVersao)).AsQueryable<tbLogErro>();
                         break;
                     case CAMPOS.DTERRO:
                         DateTime dtErro = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtErro.Equals(dtErro)).AsQueryable();
+                        entity = entity.Where(e => e.dtErro.Equals(dtErro)).AsQueryable<tbLogErro>();
                         break;
                     case CAMPOS.DSNOMECOMPUTADOR:
                         string dsNomeComputador = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsNomeComputador.Equals(dsNomeComputador)).AsQueryable();
+                        entity = entity.Where(e => e.dsNomeComputador.Equals(dsNomeComputador)).AsQueryable<tbLogErro>();
                         break;
                     case CAMPOS.DSNOMEUSUARIO:
                         string dsNomeUsuario = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsNomeUsuario.Equals(dsNomeUsuario)).AsQueryable();
+                        entity = entity.Where(e => e.dsNomeUsuario.Equals(dsNomeUsuario)).AsQueryable<tbLogErro>();
                         break;
                     case CAMPOS.DSVERSAOSO:
                         string dsVersaoSO = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsVersaoSO.Equals(dsVersaoSO)).AsQueryable();
+                        entity = entity.Where(e => e.dsVersaoSO.Equals(dsVersaoSO)).AsQueryable<tbLogErro>();
                         break;
                     case CAMPOS.DSCULTURA:
                         string dsCultura = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsCultura.Equals(dsCultura)).AsQueryable();
+                        entity = entity.Where(e => e.dsCultura.Equals(dsCultura)).AsQueryable<tbLogErro>();
                         break;
                     case CAMPOS.DSMENSAGEM:
                         string dsMensagem = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsMensagem.Equals(dsMensagem)).AsQueryable();
+                        entity = entity.Where(e => e.dsMensagem.Equals(dsMensagem)).AsQueryable<tbLogErro>();
                         break;
                     case CAMPOS.DSSTACKTRACE:
                         string dsStackTrace = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsStackTrace.Equals(dsStackTrace)).AsQueryable();
+                        entity = entity.Where(e => e.dsStackTrace.Equals(dsStackTrace)).AsQueryable<tbLogErro>();
                         break;
                     case CAMPOS.DSXMLENTRADA:
                         string dsXmlEntrada = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsXmlEntrada.Equals(dsXmlEntrada)).AsQueryable();
+                        entity = entity.Where(e => e.dsXmlEntrada.Equals(dsXmlEntrada)).AsQueryable<tbLogErro>();
                         break;
 
                 }
@@ -123,48 +125,48 @@ namespace api.Negocios.Admin
             {
 
                 case CAMPOS.IDLOGERRO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.idLogErro).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.idLogErro).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.idLogErro).AsQueryable<tbLogErro>();
+                    else entity = entity.OrderByDescending(e => e.idLogErro).AsQueryable<tbLogErro>();
                     break;
                 case CAMPOS.DSAPLICACAO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsAplicacao).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsAplicacao).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsAplicacao).AsQueryable<tbLogErro>();
+                    else entity = entity.OrderByDescending(e => e.dsAplicacao).AsQueryable<tbLogErro>();
                     break;
                 case CAMPOS.DSVERSAO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsVersao).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsVersao).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsVersao).AsQueryable<tbLogErro>();
+                    else entity = entity.OrderByDescending(e => e.dsVersao).AsQueryable<tbLogErro>();
                     break;
                 case CAMPOS.DTERRO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtErro).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dtErro).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtErro).AsQueryable<tbLogErro>();
+                    else entity = entity.OrderByDescending(e => e.dtErro).AsQueryable<tbLogErro>();
                     break;
                 case CAMPOS.DSNOMECOMPUTADOR:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsNomeComputador).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsNomeComputador).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsNomeComputador).AsQueryable<tbLogErro>();
+                    else entity = entity.OrderByDescending(e => e.dsNomeComputador).AsQueryable<tbLogErro>();
                     break;
                 case CAMPOS.DSNOMEUSUARIO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsNomeUsuario).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsNomeUsuario).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsNomeUsuario).AsQueryable<tbLogErro>();
+                    else entity = entity.OrderByDescending(e => e.dsNomeUsuario).AsQueryable<tbLogErro>();
                     break;
                 case CAMPOS.DSVERSAOSO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsVersaoSO).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsVersaoSO).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsVersaoSO).AsQueryable<tbLogErro>();
+                    else entity = entity.OrderByDescending(e => e.dsVersaoSO).AsQueryable<tbLogErro>();
                     break;
                 case CAMPOS.DSCULTURA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsCultura).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsCultura).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsCultura).AsQueryable<tbLogErro>();
+                    else entity = entity.OrderByDescending(e => e.dsCultura).AsQueryable<tbLogErro>();
                     break;
                 case CAMPOS.DSMENSAGEM:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsMensagem).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsMensagem).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsMensagem).AsQueryable<tbLogErro>();
+                    else entity = entity.OrderByDescending(e => e.dsMensagem).AsQueryable<tbLogErro>();
                     break;
                 case CAMPOS.DSSTACKTRACE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsStackTrace).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsStackTrace).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsStackTrace).AsQueryable<tbLogErro>();
+                    else entity = entity.OrderByDescending(e => e.dsStackTrace).AsQueryable<tbLogErro>();
                     break;
                 case CAMPOS.DSXMLENTRADA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsXmlEntrada).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsXmlEntrada).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsXmlEntrada).AsQueryable<tbLogErro>();
+                    else entity = entity.OrderByDescending(e => e.dsXmlEntrada).AsQueryable<tbLogErro>();
                     break;
 
             }
@@ -187,6 +189,10 @@ namespace api.Negocios.Admin
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbLogErro = new List<dynamic>();
                 Retorno retorno = new Retorno();
+
+                // Atualiza o contexto
+                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
@@ -270,6 +276,9 @@ namespace api.Negocios.Admin
         {
             try
             {
+                // Atualiza o contexto
+                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
                 _db.tbLogErros.Add(param);
                 _db.SaveChanges();
                 return param.idLogErro;
@@ -295,6 +304,9 @@ namespace api.Negocios.Admin
         {
             try
             {
+                // Atualiza o contexto
+                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
                 _db.tbLogErros.Remove(_db.tbLogErros.Where(e => e.idLogErro.Equals(idLogErro)).First());
                 _db.SaveChanges();
             }
@@ -320,6 +332,9 @@ namespace api.Negocios.Admin
         {
             try
             {
+                // Atualiza o contexto
+                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
                 tbLogErro value = _db.tbLogErros
                         .Where(e => e.idLogErro.Equals(param.idLogErro))
                         .First<tbLogErro>();
