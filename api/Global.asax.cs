@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
 using System.Web.Http;
@@ -24,7 +26,15 @@ namespace api
             RouteConfig.RegisterRoutes(RouteTable.Routes);
             BundleConfig.RegisterBundles(BundleTable.Bundles);
 
+            SqlDependency.Start(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString);
+
             WebSecurity.InitializeDatabaseConnection("painel_taxservices_dbContext", "webpages_Users", "id_users", "ds_login", autoCreateTables: true);
+        }
+
+
+        protected void Application_End()
+        {
+            SqlDependency.Stop(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString);
         }
     }
 }
