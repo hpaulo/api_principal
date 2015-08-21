@@ -333,7 +333,7 @@ namespace api.Negocios.Administracao
 
 
                     List<dynamic> List = _db.webpages_UsersInRoles.Where(r => r.UserId == IdUser)
-                                                        .Where(r => r.RoleId  > 50)
+                                                        .Where(r => r.RoleId > 50)
                                                         .Select(r => new
                                                                     {
                                                                         methods = _db.webpages_Permissions

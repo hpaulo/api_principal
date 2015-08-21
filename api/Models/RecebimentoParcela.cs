@@ -11,8 +11,6 @@ namespace api.Models
         public Nullable<decimal> valorParcelaLiquida { get; set; }
         public System.DateTime dtaRecebimento { get; set; }
         public decimal valorDescontado { get; set; }
-        public Nullable<int> idExtrato { get; set; }
         public virtual Recebimento Recebimento { get; set; }
-        public virtual tbExtrato tbExtrato { get; set; }
     }
 }
