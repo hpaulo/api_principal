@@ -33,6 +33,10 @@ namespace api.Models.Mapping
                 .IsRequired()
                 .HasMaxLength(255);
 
+            this.Property(t => t.dsStackTrace)
+                .IsRequired()
+                .HasMaxLength(255);
+
             // Table & Column Mappings
             this.ToTable("tbLogErro", "admin");
             this.Property(t => t.idLogErro).HasColumnName("idLogErro");

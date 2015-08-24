@@ -13,7 +13,7 @@ namespace api.Negocios.Pos
 {
     public class GatewayRecebimentoParcela
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
@@ -34,6 +34,7 @@ namespace api.Negocios.Pos
             VALORPARCELALIQUIDA = 103,
             DTARECEBIMENTO = 104,
             VALORDESCONTADO = 105,
+            IDEXTRATO = 106, // -1 para = null, 0 para != null
 
             // EMPRESA
             NU_CNPJ = 300,
@@ -102,9 +103,15 @@ namespace api.Negocios.Pos
                         decimal valorParcelaLiquida = Convert.ToDecimal(item.Value);
                         entity = entity.Where(e => e.valorParcelaLiquida.Equals(valorParcelaLiquida));
                         break;
-                    
+                    case CAMPOS.IDEXTRATO:
+                        Int32 idExtrato = Convert.ToInt32(item.Value);
+                        if(idExtrato == -1) entity = entity.Where(e => e.idExtrato == null);
+                        else if(idExtrato == 0) entity = entity.Where(e => e.idExtrato != null);
+                        else entity = entity.Where(e => e.idExtrato == idExtrato);
+                        break;
+
                     /// PERSONALIZADO
-                    
+
                     case CAMPOS.DTARECEBIMENTO:
                         if (item.Value.Contains("|")) // BETWEEN
                         {
@@ -761,7 +768,12 @@ namespace api.Negocios.Pos
         {
             try
             {
-                _db.RecebimentoParcelas.Remove(_db.RecebimentoParcelas.Where(e => e.idRecebimento.Equals(idRecebimento)).First());
+                RecebimentoParcela recebimentoparcela = _db.RecebimentoParcelas.Where(e => e.idRecebimento == idRecebimento)
+                                                                               .FirstOrDefault();
+
+                if (recebimentoparcela == null) throw new Exception("Recebimento Parcela inexistente");
+
+                _db.RecebimentoParcelas.Remove(recebimentoparcela);
                 _db.SaveChanges();
             }
             catch (Exception e)
@@ -782,30 +794,48 @@ namespace api.Negocios.Pos
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, RecebimentoParcela param)
+        public static void Update(string token, List<ConciliaRecebimentoParcela> param)
         {
             try
             {
-                RecebimentoParcela value = _db.RecebimentoParcelas
-                        .Where(e => e.idRecebimento.Equals(param.idRecebimento))
+                foreach (ConciliaRecebimentoParcela grupoExtrato in param)
+                {
+                    if (grupoExtrato.IdsRecebimento != null)
+                    {
+                        foreach (Int32 idRecebimento in grupoExtrato.IdsRecebimento)
+                        {
+                            RecebimentoParcela value = _db.RecebimentoParcelas.Where(e => e.idRecebimento == idRecebimento).FirstOrDefault();
+                            if (value != null)
+                            {
+                                if (grupoExtrato.IdExtrato == -1) value.idExtrato = null;
+                                else value.idExtrato = grupoExtrato.IdExtrato;
+                                _db.SaveChanges();
+                            }
+                        }
+                    }
+
+                }
+                
+
+                /*RecebimentoParcela value = _db.RecebimentoParcelas
+                        .Where(e => e.idRecebimento == param.idRecebimento)
                         .First<RecebimentoParcela>();
 
-                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                if (value == null) throw new Exception("Recebimento Parcela inexistente");
 
-
-                if (param.idRecebimento != null && param.idRecebimento != value.idRecebimento)
-                    value.idRecebimento = param.idRecebimento;
-                if (param.numParcela != null && param.numParcela != value.numParcela)
+                if (param.numParcela != value.numParcela)
                     value.numParcela = param.numParcela;
-                if (param.valorParcelaBruta != null && param.valorParcelaBruta != value.valorParcelaBruta)
+                if (param.valorParcelaBruta != value.valorParcelaBruta)
                     value.valorParcelaBruta = param.valorParcelaBruta;
                 if (param.valorParcelaLiquida != null && param.valorParcelaLiquida != value.valorParcelaLiquida)
                     value.valorParcelaLiquida = param.valorParcelaLiquida;
                 if (param.dtaRecebimento != null && param.dtaRecebimento != value.dtaRecebimento)
                     value.dtaRecebimento = param.dtaRecebimento;
-                if (param.valorDescontado != null && param.valorDescontado != value.valorDescontado)
+                if (param.valorDescontado != value.valorDescontado)
                     value.valorDescontado = param.valorDescontado;
-                _db.SaveChanges();
+                _db.SaveChanges();*/
+
+
             }
             catch (Exception e)
             {

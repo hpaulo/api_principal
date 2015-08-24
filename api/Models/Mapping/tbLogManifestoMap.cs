@@ -15,7 +15,7 @@ namespace api.Models.Mapping
                 .IsRequired();
 
             this.Property(t => t.dsRetorno)
-                .HasMaxLength(255);
+                .HasMaxLength(50);
 
             this.Property(t => t.dsMetodo)
                 .HasMaxLength(30);

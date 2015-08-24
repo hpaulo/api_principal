@@ -15,6 +15,7 @@ namespace api.Models
         public string dsCultura { get; set; }
         public string dsMensagem { get; set; }
         public string dsStackTrace { get; set; }
+        public int idGrupo { get; set; }
         public string dsXmlEntrada { get; set; }
     }
 }
