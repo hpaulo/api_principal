@@ -109,7 +109,7 @@ namespace api.Controllers.Pos
         }*/
 
         // PUT /RecebimentoParcela/token/
-        public HttpResponseMessage Put(string token, [FromBody]List<ConciliaRecebimentoParcela> param)
+        public HttpResponseMessage Put(string token, RecebimentosParcela param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
