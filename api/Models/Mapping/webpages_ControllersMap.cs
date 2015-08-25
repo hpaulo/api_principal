@@ -19,13 +19,17 @@ namespace api.Models.Mapping
                 .IsRequired()
                 .HasMaxLength(255);
 
+            this.Property(t => t.nuOrdem)
+                .IsRequired();
+
             // Table & Column Mappings
-            this.ToTable("webpages_Controllers");
+            this.ToTable("webpages_Controllers", "dbo");
             this.Property(t => t.id_controller).HasColumnName("id_controller");
             this.Property(t => t.ds_controller).HasColumnName("ds_controller");
             this.Property(t => t.nm_controller).HasColumnName("nm_controller");
             this.Property(t => t.fl_menu).HasColumnName("fl_menu");
             this.Property(t => t.id_subController).HasColumnName("id_subController");
+            this.Property(t => t.nuOrdem).HasColumnName("nuOrdem");
 
             // Relationships
             this.HasOptional(t => t.webpages_Controllers2)

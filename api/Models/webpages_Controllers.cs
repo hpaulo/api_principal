@@ -18,6 +18,7 @@ namespace api.Models
         public string nm_controller { get; set; }
         public bool fl_menu { get; set; }
         public Nullable<int> id_subController { get; set; }
+        public int nuOrdem { get; set; }
         public virtual ICollection<LogAcesso1> LogAcesso1 { get; set; }
         public virtual ICollection<webpages_Methods> webpages_Methods { get; set; }
         public virtual ICollection<webpages_Controllers> webpages_Controllers1 { get; set; }

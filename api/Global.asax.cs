@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNet.SignalR;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
@@ -39,13 +40,13 @@ namespace api
 
         protected void Application_BeginRequest(object sender, EventArgs e)
         {
-            /*if (this.Context.Request.Path.Contains("signalr/negotiate"))
+            if (this.Context.Request.Path.Contains("signalr/negotiate") || this.Context.Request.Path.Contains("signalr/start"))
             {
-                this.Context.Response.AddHeader("Access-Control-Allow-Origin", "*");
-                this.Context.Response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Accept");
-                this.Context.Response.AddHeader("Access-Control-Allow-Methods", "GET, POST");
+                this.Context.Response.AddHeader("Access-Control-Allow-Origin", "http://127.0.0.1:58731");//"*");
+                this.Context.Response.AddHeader("Access-Control-Allow-Headers", "X-Requested-With, Content-Type, Accept");
+                this.Context.Response.AddHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS ");
                 this.Context.Response.AddHeader("Access-Control-Allow-Credentials", "true");
-            }*/
+            }
         }
     }
 }
