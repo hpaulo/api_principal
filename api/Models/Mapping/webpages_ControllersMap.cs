@@ -23,7 +23,7 @@ namespace api.Models.Mapping
                 .IsRequired();
 
             // Table & Column Mappings
-            this.ToTable("webpages_Controllers");
+            this.ToTable("webpages_Controllers", "dbo");
             this.Property(t => t.id_controller).HasColumnName("id_controller");
             this.Property(t => t.ds_controller).HasColumnName("ds_controller");
             this.Property(t => t.nm_controller).HasColumnName("nm_controller");

@@ -15,7 +15,7 @@ namespace api.Negocios.SignalR
         public static List<Models.LogExecution> list = null;
         private static IHubContext context = GlobalHost.ConnectionManager.GetHubContext<ServerHub>();
 
-        public static void GetData(SqlNotificationInfo Info = SqlNotificationInfo.Unknown)
+        public static void GetData(bool notifyAllClients, SqlNotificationInfo Info = SqlNotificationInfo.Unknown)
         {
 
             using (var connection = new SqlConnection(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString))
@@ -81,7 +81,7 @@ namespace api.Negocios.SignalR
                         list = retorno.Select(e => new Models.LogExecution { id = e["id"], statusExecution = e["statusExecution"], dtaExecucaoFim = e["dtaExecucaoFim"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)e["dtaExecucaoFim"] }).ToList<Models.LogExecution>();
 
                         
-                        context.Clients.All.notifyCarga(teste);
+                        if(notifyAllClients) context.Clients.All.notifyCarga(teste);
                     }
 
                 }
@@ -90,6 +90,7 @@ namespace api.Negocios.SignalR
 
         public static void enviaLista(string id)
         {
+            if (list == null) GetData(false);
             context.Clients.Client(id).notifyCarga(list);
         }
 
@@ -114,7 +115,7 @@ namespace api.Negocios.SignalR
                 //}
                 //SqlDependency dependency = (SqlDependency)sender;
                 //dependency.OnChange -= dependency_OnChange;
-                GetData(Info);
+                GetData(true, Info);
             }
         }
     }

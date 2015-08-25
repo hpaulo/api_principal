@@ -61,7 +61,7 @@ namespace api.Controllers.Login
                                                             .Where(r => r.RoleId > 50)
                                                             .AsQueryable();
 
-                List<webpages_Controllers> mobileControllers = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller LIKE '[[Mobile]%' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
+                List<webpages_Controllers> mobileControllers = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu, nuOrdem FROM dbo.webpages_Controllers WHERE ds_controller LIKE '[[Mobile]%' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu, c.nuOrdem FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
 
                 List<dynamic> permissoes = rolesDoUsuario
                                                 .Select(r => new
@@ -102,9 +102,9 @@ namespace api.Controllers.Login
                         fl_taxservices = false;
                     }
                     string prefixo = Mobile ? "[Mobile] " : "";
-                    cardservices = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = '" + prefixo + "Card Services' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
-                    proinfo = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = '" + prefixo + "ProInfo' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
-                    taxservices = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu FROM dbo.webpages_Controllers WHERE ds_controller = '" + prefixo + "Tax Services' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
+                    cardservices = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu, nuOrdem FROM dbo.webpages_Controllers WHERE ds_controller = '" + prefixo + "Card Services' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu, c.nuOrdem FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
+                    proinfo = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu, nuOrdem FROM dbo.webpages_Controllers WHERE ds_controller = '" + prefixo + "ProInfo' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu, c.nuOrdem FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
+                    taxservices = _db.Database.SqlQuery<webpages_Controllers>("WITH CTRL AS (SELECT ds_controller, id_controller, id_subController, nm_controller, fl_menu, nuOrdem FROM dbo.webpages_Controllers WHERE ds_controller = '" + prefixo + "Tax Services' AND id_subController IS NULL AND id_controller > 50 UNION ALL SELECT c.ds_controller, c.id_controller, c.id_subController, c.nm_controller, c.fl_menu, c.nuOrdem FROM dbo.webpages_Controllers c INNER JOIN CTRL s ON c.id_subController = s.id_controller) SELECT * FROM CTRL").ToList<webpages_Controllers>();
                 }
 
                 // Adiciona os controllers
@@ -183,7 +183,7 @@ namespace api.Controllers.Login
                     subControllers = _db.webpages_Controllers
                                                                 .Where(sub => sub.id_subController == e.id_controller)
                                                                 .Where(sub => list.Contains(sub.id_controller))
-                                                                .OrderByDescending(sub => e.nuOrdem)
+                                                                .OrderByDescending(sub => sub.nuOrdem)
                                                                 .ThenBy(sub => sub.ds_controller)
                                                                 .Select(sub => new
                                                                 {
@@ -206,7 +206,7 @@ namespace api.Controllers.Login
                                                                     }
                                                                                                         ).ToList<dynamic>(),
                                                                     subControllers = _db.webpages_Controllers
-                                                                                        .OrderByDescending(sub2 => e.nuOrdem)
+                                                                                        .OrderByDescending(sub2 => sub2.nuOrdem)
                                                                                         .ThenBy(sub2 => sub2.ds_controller)
                                                                                         .Where(sub2 => sub2.id_subController == sub.id_controller)
                                                                                         .Where(sub2 => list.Contains(sub2.id_controller))
