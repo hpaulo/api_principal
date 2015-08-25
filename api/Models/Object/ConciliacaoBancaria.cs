@@ -98,12 +98,12 @@ namespace api.Models.Object
                 set { documento = value; }
             }
 
-            /*private ConciliacaoConta conta; // conta bancária associada
-            public ConciliacaoConta Conta
+            private string bandeira;
+            public string Bandeira
             {
-                get { return conta; }
-                set { conta = value; }
-            }*/
+                get { return bandeira; }
+                set { bandeira = value; }
+            }
         }
 
 

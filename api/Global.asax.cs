@@ -36,5 +36,16 @@ namespace api
         {
             SqlDependency.Stop(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString);
         }
+
+        protected void Application_BeginRequest(object sender, EventArgs e)
+        {
+            /*if (this.Context.Request.Path.Contains("signalr/negotiate"))
+            {
+                this.Context.Response.AddHeader("Access-Control-Allow-Origin", "*");
+                this.Context.Response.AddHeader("Access-Control-Allow-Headers", "Content-Type, Accept");
+                this.Context.Response.AddHeader("Access-Control-Allow-Methods", "GET, POST");
+                this.Context.Response.AddHeader("Access-Control-Allow-Credentials", "true");
+            }*/
+        }
     }
 }

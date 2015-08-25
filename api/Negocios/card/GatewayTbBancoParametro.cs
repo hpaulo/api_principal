@@ -31,6 +31,7 @@ namespace api.Negocios.Card
             DSMEMO = 101,
             CDADQUIRENTE = 102,
             DSTIPO = 103,
+            FLVISIVEL = 104,
 
             // RELACIONAMENTOS
             DSADQUIRENTE = 201,
@@ -81,6 +82,10 @@ namespace api.Negocios.Card
                         string dsTipo = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.dsTipo.Equals(dsTipo)).AsQueryable<tbBancoParametro>();
                         break;
+                    case CAMPOS.FLVISIVEL:
+                        bool flVisivel = Convert.ToBoolean(item.Value);
+                        entity = entity.Where(e => e.flVisivel == flVisivel).AsQueryable<tbBancoParametro>();
+                        break;
 
                     // PERSONALIZADO
                     case CAMPOS.DSADQUIRENTE:
@@ -118,6 +123,10 @@ namespace api.Negocios.Card
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsTipo).AsQueryable<tbBancoParametro>();
                     else entity = entity.OrderByDescending(e => e.dsTipo).AsQueryable<tbBancoParametro>();
                     break;
+                case CAMPOS.FLVISIVEL:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.flVisivel).AsQueryable<tbBancoParametro>();
+                    else entity = entity.OrderByDescending(e => e.flVisivel).AsQueryable<tbBancoParametro>();
+                    break;
 
                 // PERSONALIZADO
                 case CAMPOS.DSADQUIRENTE:
@@ -143,12 +152,16 @@ namespace api.Negocios.Card
             List<dynamic> CollectionTbBancoParametro = new List<dynamic>();
             Retorno retorno = new Retorno();
 
+            // POR DEFAULT, LISTA SOMENTE OS QUE ESTÃO VISÍVEIS
+            string outValue = null;
+            if (!queryString.TryGetValue("" + (int)CAMPOS.FLVISIVEL, out outValue))
+                queryString.Add("" + (int)CAMPOS.FLVISIVEL, Convert.ToString(true));
+
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
 
             // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
+            retorno.TotalDeRegistros = query.Count();
 
 
             // PAGINAÇÃO
@@ -171,6 +184,7 @@ namespace api.Negocios.Card
                     dsMemo = e.dsMemo,
                     cdAdquirente = e.cdAdquirente,
                     dsTipo = e.dsTipo,
+                    flVisivel = e.flVisivel
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -182,6 +196,7 @@ namespace api.Negocios.Card
                     dsMemo = e.dsMemo,
                     cdAdquirente = e.cdAdquirente,
                     dsTipo = e.dsTipo,
+                    flVisivel = e.flVisivel
                 }).ToList<dynamic>();
             }
             else if (colecao == 2) // [WEB] 
@@ -197,6 +212,7 @@ namespace api.Negocios.Card
                                         stAdquirente = e.tbAdquirente.stAdquirente,
                                     },
                     dsTipo = e.dsTipo,
+                    flVisivel = e.flVisivel,
                     banco = new { Codigo = e.cdBanco, NomeExtenso = "" }, // Não dá para chamar a função direto daqui pois esse código é convertido em SQL e não acessa os dados de um objeto em memória
                 }).ToList<dynamic>();
 
@@ -208,6 +224,7 @@ namespace api.Negocios.Card
                         dsMemo = bancoParametro.dsMemo,
                         adquirente = bancoParametro.adquirente,
                         dsTipo = bancoParametro.dsTipo,
+                        flVisivel = bancoParametro.flVisivel,
                         banco = new { Codigo = bancoParametro.banco.Codigo, NomeExtenso = GatewayBancos.Get(bancoParametro.banco.Codigo) },
                     });
                 }
@@ -231,6 +248,8 @@ namespace api.Negocios.Card
             if (parametro != null) throw new Exception("Parâmetro bancário já existe");
 
             if (param.cdAdquirente == -1) param.cdAdquirente = null;
+
+            param.flVisivel = true;
 
             _db.tbBancoParametro.Add(param);
             _db.SaveChanges();
@@ -279,6 +298,8 @@ namespace api.Negocios.Card
             }
             if (param.dsTipo != null && param.dsTipo != value.dsTipo)
                 value.dsTipo = param.dsTipo;
+            if (param.flVisivel != value.flVisivel)
+                value.flVisivel = param.flVisivel;
             _db.SaveChanges();
 
         }

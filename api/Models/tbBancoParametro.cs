@@ -12,6 +12,7 @@ namespace api.Models.Object
         public string dsMemo { get; set; }
         public Nullable<int> cdAdquirente { get; set; }
         public string dsTipo { get; set; }
+        public bool flVisivel { get; set; }
         public virtual tbAdquirente tbAdquirente { get; set; }
     }
 }

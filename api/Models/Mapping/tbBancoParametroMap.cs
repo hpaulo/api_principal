@@ -36,6 +36,7 @@ namespace api.Models.Mapping
             this.Property(t => t.dsMemo).HasColumnName("dsMemo");
             this.Property(t => t.cdAdquirente).HasColumnName("cdAdquirente");
             this.Property(t => t.dsTipo).HasColumnName("dsTipo");
+            this.Property(t => t.flVisivel).HasColumnName("flVisivel");
 
             // Relationships
             this.HasOptional(t => t.tbAdquirente)

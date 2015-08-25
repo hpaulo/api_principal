@@ -370,7 +370,7 @@ namespace api.Negocios.Administracao
                             nu_telefone = e.pessoa.nu_telefone,
                             nu_ramal = e.pessoa.nu_ramal
                         },
-                        webpagesusersinroles = _db.webpages_UsersInRoles.Where(r => r.UserId == e.id_users).Select(r => new { RoleId = r.RoleId, RoleName = r.webpages_Roles.RoleName, RolePrincipal = r.RolePrincipal }).ToList(),
+                        webpagesusersinroles = _db.webpages_UsersInRoles.Where(r => r.RoleId > 50).Where(r => r.UserId == e.id_users).Select(r => new { RoleId = r.RoleId, RoleName = r.webpages_Roles.RoleName, RolePrincipal = r.RolePrincipal }).ToList(),
                         grupoempresa = e.grupo_empresa.ds_nome,
                         empresa = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
                         podeExcluir = e.LogAcesso1.Count() == 0,

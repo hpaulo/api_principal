@@ -8,6 +8,7 @@ using api.Bibliotecas;
 using api.Models.Object;
 using System.Globalization;
 using System.Data.Entity.Validation;
+using System.Web.Http;
 
 namespace api.Negocios.Pos
 {
@@ -286,8 +287,8 @@ namespace api.Negocios.Pos
                     else entity = entity.OrderByDescending(e => e.valorParcelaLiquida);
                     break;
                 case CAMPOS.DTARECEBIMENTO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
-                    else entity = entity.OrderByDescending(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
+                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
+                    else entity = entity.OrderBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenByDescending(e => e.dtaRecebimento).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.Recebimento.dtaVenda);
                     break;
                 case CAMPOS.VALORDESCONTADO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.valorDescontado);
@@ -297,8 +298,8 @@ namespace api.Negocios.Pos
 
                 // PERSONALIZADO
                 case CAMPOS.DTAVENDA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
-                    else entity = entity.OrderByDescending(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
+                    if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
+                    else entity = entity.OrderBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenByDescending(e => e.Recebimento.dtaVenda).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira).ThenBy(e => e.dtaRecebimento);
                     break;
                 case CAMPOS.DS_FANTASIA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.Recebimento.empresa.ds_fantasia).ThenBy(e => e.Recebimento.empresa.filial).ThenBy(e => e.Recebimento.BandeiraPos.desBandeira);
@@ -790,52 +791,31 @@ namespace api.Negocios.Pos
 
 
         /// <summary>
-        /// Altera RecebimentoParcela
+        /// Altera data de Recebimento do RecebimentoParcela
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, List<ConciliaRecebimentoParcela> param)
+        public static void Update(string token, RecebimentosParcela param)
         {
             try
             {
-                foreach (ConciliaRecebimentoParcela grupoExtrato in param)
+
+                if (param == null || param.DtaRecebimento == null || param.IdsRecebimento == null)
+                    throw new Exception("Argumento inválido");
+
+                foreach (Int32 idRecebimento in param.IdsRecebimento)
                 {
-                    if (grupoExtrato.IdsRecebimento != null)
+                    RecebimentoParcela recebimento = _db.RecebimentoParcelas
+                                                            .Where(e => e.idRecebimento == idRecebimento)
+                                                            .FirstOrDefault();
+
+                    if(recebimento != null && recebimento.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
                     {
-                        foreach (Int32 idRecebimento in grupoExtrato.IdsRecebimento)
-                        {
-                            RecebimentoParcela value = _db.RecebimentoParcelas.Where(e => e.idRecebimento == idRecebimento).FirstOrDefault();
-                            if (value != null)
-                            {
-                                if (grupoExtrato.IdExtrato == -1) value.idExtrato = null;
-                                else value.idExtrato = grupoExtrato.IdExtrato;
-                                _db.SaveChanges();
-                            }
-                        }
+                        recebimento.dtaRecebimento = param.DtaRecebimento;
+                        _db.SaveChanges();
                     }
 
                 }
-                
-
-                /*RecebimentoParcela value = _db.RecebimentoParcelas
-                        .Where(e => e.idRecebimento == param.idRecebimento)
-                        .First<RecebimentoParcela>();
-
-                if (value == null) throw new Exception("Recebimento Parcela inexistente");
-
-                if (param.numParcela != value.numParcela)
-                    value.numParcela = param.numParcela;
-                if (param.valorParcelaBruta != value.valorParcelaBruta)
-                    value.valorParcelaBruta = param.valorParcelaBruta;
-                if (param.valorParcelaLiquida != null && param.valorParcelaLiquida != value.valorParcelaLiquida)
-                    value.valorParcelaLiquida = param.valorParcelaLiquida;
-                if (param.dtaRecebimento != null && param.dtaRecebimento != value.dtaRecebimento)
-                    value.dtaRecebimento = param.dtaRecebimento;
-                if (param.valorDescontado != value.valorDescontado)
-                    value.valorDescontado = param.valorDescontado;
-                _db.SaveChanges();*/
-
-
             }
             catch (Exception e)
             {
