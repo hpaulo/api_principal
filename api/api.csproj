@@ -334,6 +334,8 @@
     <Compile Include="Models\Mapping\tbLogErroMap.cs" />
     <Compile Include="Models\Mapping\tbManifestoMap.cs" />
     <Compile Include="Models\Object\ConciliacaoBancaria.cs" />
+    <Compile Include="Models\Object\ConciliaRecebimentoParcela.cs" />
+    <Compile Include="Models\Object\RecebimentosParcela.cs" />
     <Compile Include="Models\tbBancoParametro.cs" />
     <Compile Include="Models\tbEmpresa.cs" />
     <Compile Include="Models\tbEmpresaFilial.cs" />

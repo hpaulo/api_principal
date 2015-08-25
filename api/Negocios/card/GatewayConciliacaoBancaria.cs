@@ -31,8 +31,8 @@ namespace api.Negocios.Card
         /// </summary>
         public enum CAMPOS
         {
-            DATA = 100,
-            TIPO = 101,  // 1 : CONCILIADO, 2 : NÃO-CONCILIADO
+            DATA = 100, 
+            TIPO = 101,  // 1 : CONCILIADO, 2 : PRÉ-CONCILIADO, 3 : NÃO-CONCILIADO
             ID_GRUPO = 102,
             NU_CNPJ = 103,
 
@@ -43,12 +43,13 @@ namespace api.Negocios.Card
         public enum TIPO_CONCILIADO
         {
             CONCILIADO = 1,
-            NAO_CONCILIADO = 2
+            PRE_CONCILIADO = 2,
+            NAO_CONCILIADO = 3
         };
 
         private static string TIPO_EXTRATO = "E";
         private static string TIPO_RECEBIMENTO = "R";
-        private static decimal TOLERANCIA = new decimal(0.01); // R$0.01 de tolerância
+        private static decimal TOLERANCIA = new decimal(0.01); // R$0.01 de tolerância para avaliar pré-conciliação
 
 
         /// <summary>
@@ -57,7 +58,7 @@ namespace api.Negocios.Card
         /// <param name="listaConciliacao">Lista com os elementos da conciliação</param>
         /// <param name="listaNaoConciliado">Lista que contém elementos não conciliados</param>
         /// <returns></returns>
-        private static void adicionaElementosNaoConciliadosNaLista(List<dynamic> listaConciliacao,
+        private static void adicionaElementosNaoConciliadosNaLista(List<dynamic> listaConciliacao, 
                                                                    List<ConciliacaoBancaria> listaNaoConciliado)
         {
             foreach (var item in listaNaoConciliado)
@@ -95,9 +96,10 @@ namespace api.Negocios.Card
         /// <param name="listaConciliacao">Lista com os elementos da conciliação</param>
         /// <param name="recebimento">ConciliacaoBancaria referente ao lado do ICARD</param>
         /// <param name="movimentacao">ConciliacaoBancaria referente ao lado do extrato</param>
+        /// <param name="tipo">CONCILIADO ou PRE-CONCILIADO</param>
         /// <returns></returns>
-        private static void adicionaElementosConciliadosNaLista(List<dynamic> listaConciliacao,
-                                                     ConciliacaoBancaria recebimento,
+        private static void adicionaElementosConciliadosNaLista(List<dynamic> listaConciliacao, 
+                                                     ConciliacaoBancaria recebimento, 
                                                      ConciliacaoBancaria movimentacao,
                                                      TIPO_CONCILIADO tipo)
         {
@@ -138,13 +140,13 @@ namespace api.Negocios.Card
         /// <param name="listaConciliacao">Lista com os elementos candidatos à conciliação</param>
         /// <param name="listaCandidatos">Lista que recebe os itens da conciliação bancária</param>
         /// <param name="listaNaoConciliado">Lista que receberá os elementos candidatos não conciliados</param>
+        /// <param name="adicionaNaListaPreConciliado">Set true se os elementos determinados como conciliados devem ser adicionados na listaConciliacao</param>
         /// <returns></returns>
-        private static void Concilia(List<dynamic> listaConciliacao,
-                                     List<ConciliacaoBancaria> listaCandidatos,
-                                     List<ConciliacaoBancaria> listaNaoConciliado)
+        private static void Concilia(List<dynamic> listaConciliacao, 
+                                     List<ConciliacaoBancaria> listaCandidatos, 
+                                     List<ConciliacaoBancaria> listaNaoConciliado,
+                                     bool adicionaNaListaPreConciliado)
         {
-
-            // CONCILIA ....
             for (var k = 0; k < listaCandidatos.Count; k++)
             {
                 ConciliacaoBancaria item1 = listaCandidatos[k];
@@ -163,27 +165,40 @@ namespace api.Negocios.Card
 
                 // CONCILIADO!
                 k++;
-                ConciliacaoBancaria recebimento = null;
-                ConciliacaoBancaria movimentacao = null;
-                if (item1.Tipo.Equals(TIPO_EXTRATO))
-                {
-                    movimentacao = item1;
-                    recebimento = item2;
-                }
-                else
-                {
-                    recebimento = item1;
-                    movimentacao = item2;
-                }
+                if (adicionaNaListaPreConciliado)
+                { 
+                    ConciliacaoBancaria recebimento = null;
+                    ConciliacaoBancaria movimentacao = null;
+                    if (item1.Tipo.Equals(TIPO_EXTRATO))
+                    {
+                        movimentacao = item1;
+                        recebimento = item2;
+                    }
+                    else
+                    {
+                        recebimento = item1;
+                        movimentacao = item2;
+                    }
 
-                adicionaElementosConciliadosNaLista(listaConciliacao, recebimento, movimentacao, TIPO_CONCILIADO.NAO_CONCILIADO);
+                    adicionaElementosConciliadosNaLista(listaConciliacao, recebimento, movimentacao, TIPO_CONCILIADO.PRE_CONCILIADO);
+                }
             }
         }
 
 
 
-        private static IEnumerable<List<List<ConciliacaoBancaria.ConciliacaoGrupo>>> GetCombinations(List<ConciliacaoBancaria.ConciliacaoGrupo> grupo,
-                                                                                  decimal sum,
+
+        // SUBGRUPOS
+
+        /// <summary>
+        /// Obtém as combinações de recebimentosparcelas que resultam em um valor sum
+        /// </summary>
+        /// <param name="grupo">Recebimentos parcelas agrupados</param>
+        /// <param name="sum">Valor almejado para conciliação</param>
+        /// <param name="values">Lista que armazenará os elementos de grupo que atinjem o valor sum</param>
+        /// <returns></returns>
+        private static IEnumerable<List<List<ConciliacaoBancaria.ConciliacaoGrupo>>> GetCombinations(List<ConciliacaoBancaria.ConciliacaoGrupo> grupo, 
+                                                                                  decimal sum, 
                                                                                   List<ConciliacaoBancaria.ConciliacaoGrupo> values = null)
         {
             if (values == null) values = new List<ConciliacaoBancaria.ConciliacaoGrupo>();
@@ -196,13 +211,13 @@ namespace api.Negocios.Card
                 temp.Add(grupo[i]);
                 vals.Add(temp);
 
-                if (Math.Abs(left) <= TOLERANCIA) yield return vals;
+                if(Math.Abs(left) <= TOLERANCIA) yield return vals;
                 else
                 {
                     List<ConciliacaoBancaria.ConciliacaoGrupo> possible = grupo.Take(i).Where(n => n.Valor <= sum).ToList<ConciliacaoBancaria.ConciliacaoGrupo>();
                     if (possible.Count > 0)
                     {
-                        foreach (List<List<ConciliacaoBancaria.ConciliacaoGrupo>> g in GetCombinations(possible, left, temp))
+                        foreach(List<List<ConciliacaoBancaria.ConciliacaoGrupo>> g in GetCombinations(possible, left, temp))
                             yield return g;
                     }
                 }
@@ -210,10 +225,161 @@ namespace api.Negocios.Card
         }
 
 
+        /// <summary>
+        /// Procura para cada movimentação de extrato subgrupos dos agrupamentos de recebimento parcela aos quais os valores "casam"
+        /// </summary>
+        /// <param name="listaConciliacao">Lista com os elementos candidatos à conciliação</param>
+        /// <param name="recebimentosParcelaAgrupados">Lista que contém os recebimentos parcelas agrupados</param>
+        /// <param name="extratoBancario">Lista que contém as movimentações bancárias</param>
+        /// <param name="adicionaNaListaPreConciliado">Set true se os elementos determinados como conciliados devem ser adicionados na listaConciliacao</param>
+        /// <returns></returns>
+        private static void conciliaSubGrupos(List<dynamic> listaConciliacao,
+                                              List<ConciliacaoBancaria> recebimentosParcelaAgrupados, 
+                                              List<ConciliacaoBancaria> extratoBancario,
+                                              bool adicionaNaListaPreConciliado)
+        {
+            #region OBTÉM POSSÍVEIS COMBINAÇÕES DE RECEBIMENTOSPARCELAS PARA CADA EXTRATO
+            List<dynamic> gruposExtrato = new List<dynamic>();
+            foreach (ConciliacaoBancaria extrato in extratoBancario)
+            {
+                // Obtém todas as combinações para o extrato
+                List<dynamic> grupos = new List<dynamic>();
+                foreach (ConciliacaoBancaria recebimento in recebimentosParcelaAgrupados)
+                {
+                    // Só avalia os de mesma data
+                    if (recebimento.Data.Year == extrato.Data.Year &&
+                       recebimento.Data.Month == extrato.Data.Month &&
+                       recebimento.Data.Day == extrato.Data.Day)
+                    {
+                        foreach (List<List<ConciliacaoBancaria.ConciliacaoGrupo>> g in GetCombinations(recebimento.Grupo, extrato.ValorTotal))
+                        {
+                            foreach (List<ConciliacaoBancaria.ConciliacaoGrupo> item in g)
+                            {
+                                grupos.Add(new
+                                {
+                                    bandeira = recebimento.Bandeira,
+                                    grupo = item.OrderBy(gp => gp.Bandeira).ThenBy(gp => gp.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>()
+                                });
+                            }
+                        }
+                    }
+                }
+                if (grupos.Count > 0)
+                {
+                    gruposExtrato.Add(new
+                    {
+                        idExtrato = extrato.Grupo[0].Id,
+                        valorExtrato = extrato.ValorTotal,
+                        recebimento = grupos
+                    });
+                }
+            }
+            #endregion
+
+            if (gruposExtrato.Count > 0)
+            {
+                #region PROCESSA COMBINAÇÕES E CONCILIA EVITANDO DUPLICIDADES
+                // Ordena por total de combinações encontradas
+                gruposExtrato = gruposExtrato.OrderBy(g => g.recebimento.Count).ToList<dynamic>();
+                Dictionary<Int32, bool> recebimentosPreConciliados = new Dictionary<Int32, bool>();
+                // Com os grupos que combinados resultam no valor do extrato, 
+                // usar combinações que não gerem inconsistências e duplicidades
+                foreach (var grupoExtrato in gruposExtrato)
+                {
+                    ConciliacaoBancaria movimentacao = extratoBancario.Where(e => e.Grupo[0].Id == grupoExtrato.idExtrato).FirstOrDefault();
+
+                    foreach (var receb in grupoExtrato.recebimento)
+                    {
+                        List<ConciliacaoBancaria.ConciliacaoGrupo> grupo = receb.grupo;
+
+                        bool grupovalido = true;
+
+                        #region AVALIA SE CADA ELEMENTO DO GRUPO NÃO FOI ADICIONADO EM UMA COMBINAÇÃO ANTERIOR
+                        bool value = true;
+                        foreach (ConciliacaoBancaria.ConciliacaoGrupo g in grupo)
+                        {
+                            if (recebimentosPreConciliados.TryGetValue(g.Id, out value))
+                            {
+                                grupovalido = false;
+                                break;
+                            }
+                        }
+                        #endregion
+
+                        if (grupovalido)
+                        {
+                            #region ADICIONA O GRUPO COMO PRÉ-CONCILIADO COM A MOVIMENTAÇÃO DO EXTRATO CORRENTE
+
+                            #region ADICIONA OS IDS DOS RECEBIMENTOSPARCELA NA LISTA DE PRÉ-CONCILIADOS
+                            foreach (ConciliacaoBancaria.ConciliacaoGrupo g in grupo)
+                                recebimentosPreConciliados.Add(g.Id, true);
+                            #endregion
+
+                            #region ADICIONA COMO PRÉ-CONCILIADO
+                            ConciliacaoBancaria recebimento = new ConciliacaoBancaria()
+                            {
+                                Tipo = TIPO_RECEBIMENTO,
+                                Data = movimentacao.Data,
+                                Grupo = grupo,
+                                Adquirente = movimentacao.Adquirente,
+                                Bandeira = receb.bandeira,
+                                ValorTotal = grupo.Sum(g => g.Valor),
+                            };
+                            if (adicionaNaListaPreConciliado)
+                                adicionaElementosConciliadosNaLista(listaConciliacao, recebimento, movimentacao, TIPO_CONCILIADO.PRE_CONCILIADO);
+                            #endregion
+
+                            #region REMOVE A MOVIMENTAÇÃO DE EXTRATO
+                            extratoBancario.Remove(movimentacao);
+                            #endregion
+
+                            #region REMOVE OS RECEBIMENTOS PARCELAS DO AGRUPAMENTO
+                            ConciliacaoBancaria rp = recebimentosParcelaAgrupados.Where(r => r.Grupo.Any(g => g.Id == grupo[0].Id)).FirstOrDefault();
+
+                            // O novo grupo é composto pelos elementos que estavam lá e não foram envolvidos na conciliação corrente
+                            List<ConciliacaoBancaria.ConciliacaoGrupo> newGrupo = new List<ConciliacaoBancaria.ConciliacaoGrupo>();
+                            foreach (ConciliacaoBancaria.ConciliacaoGrupo gp in rp.Grupo)
+                            {
+                                if (!grupo.Any(g => g.Id == gp.Id)) newGrupo.Add(gp);
+                            }
+                            recebimentosParcelaAgrupados.Remove(rp);
+
+                            // Só "re-adiciona" o grupo modificado caso possua elementos
+                            if (newGrupo.Count > 0)
+                            {
+                                ConciliacaoBancaria newRp = new ConciliacaoBancaria()
+                                {
+                                    Adquirente = rp.Adquirente,
+                                    Tipo = rp.Tipo,
+                                    Bandeira = rp.Bandeira,
+                                    Conta = rp.Conta,
+                                    Data = rp.Data,
+                                    DataVenda = rp.DataVenda,
+                                    Grupo = newGrupo.OrderBy(g => g.Bandeira).ThenBy(g => g.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                    Memo = rp.Memo,
+                                    ValorTotal = newGrupo.Sum(g => g.Valor),
+                                };
+
+                                recebimentosParcelaAgrupados.Add(newRp);
+                            }
+                            #endregion
+
+                            #endregion
+
+                            break; // vai para a próxima movimentação de extrato
+                        }
+                    }
+                }
+                #endregion
+            }
+
+        }
+
+
 
 
         /// <summary>
-        /// Retorna 
+        /// Retorna a lista de conciliação bancária
         /// </summary>
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
@@ -230,13 +396,14 @@ namespace api.Negocios.Card
                 Dictionary<string, string> queryStringRecebimentoParcela = new Dictionary<string, string>();
                 Dictionary<string, string> queryStringExtrato = new Dictionary<string, string>();
                 // DATA
-                if (!queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
-                    throw new Exception("A conciliação bancária só é realizada para um determinado intervalo de data");
-
                 string vigencia = String.Empty;
-                string data = queryString["" + (int)CAMPOS.DATA];
-                queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, data);
-                queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, data);
+                string data = String.Empty;
+                if (queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
+                {
+                    data = queryString["" + (int)CAMPOS.DATA];
+                    queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, data);
+                    queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, data);
+                }
                 // GRUPO EMPRESA
                 Int32 IdGrupo = Permissoes.GetIdGrupo(token);
                 if (IdGrupo == 0 && queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
@@ -246,7 +413,7 @@ namespace api.Negocios.Card
                     queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.ID_GRUPO, IdGrupo.ToString());
                     queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.ID_GRUPO, IdGrupo.ToString());
                 }
-                // FILIAL
+                // FILIAL => OBRIGATÓRIO INFORMAR!
                 string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
                 if (CnpjEmpresa.Equals("") && queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
                     CnpjEmpresa = queryString["" + (int)CAMPOS.NU_CNPJ];
@@ -254,9 +421,10 @@ namespace api.Negocios.Card
                 {
                     queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.NU_CNPJ, CnpjEmpresa);
                     //queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.NU_CNPJ, CnpjEmpresa);
-                    vigencia = CnpjEmpresa + "!" + data;
                 }
+                else throw new Exception("Uma filial deve ser selecionada como filtro de conciliação bancária!");
                 // ADQUIRENTE
+                string cdAdquirente = String.Empty;
                 if (queryString.TryGetValue("" + (int)CAMPOS.IDOPERADORA, out outValue))
                 {
                     int idOperadora = Convert.ToInt32(queryString["" + (int)CAMPOS.IDOPERADORA]);
@@ -268,25 +436,32 @@ namespace api.Negocios.Card
                         {
                             queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.IDOPERADORA, idOperadora.ToString());
                             queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.CDADQUIRENTE, adquirente.cdAdquirente.ToString());
-                            vigencia += "!" + adquirente.cdAdquirente.ToString();
+                            cdAdquirente = adquirente.cdAdquirente.ToString();
                         }
                     }
                 }
                 // Vigência
-                if (!vigencia.Equals("")) queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.VIGENCIA, vigencia);
-                // PARA O EXTRATO, SÓ CONSIDERA OS TIPO CRÉDITO
+                vigencia = CnpjEmpresa;
+                if (!data.Equals("")) {
+                    vigencia += "!" + data;
+                    if (!cdAdquirente.Equals("")) vigencia += "!" + cdAdquirente;
+                }else if (!cdAdquirente.Equals("")) vigencia += "!null!" + cdAdquirente;
+                queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.VIGENCIA, vigencia);
+                
+                // PARA O EXTRATO, SÓ CONSIDERA OS TIPO CREDIT
                 queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.DSTIPO, OFXSharp.OFXTransactionType.CREDIT.ToString());
 
 
 
                 // FILTRO DE TIPO ?
                 bool filtroTipoConciliado = false;
+                bool filtroTipoPreConciliado = false;
                 bool filtroTipoNaoConciliado = false;
                 if (queryString.TryGetValue("" + (int)CAMPOS.TIPO, out outValue))
                 {
-                    int t = Convert.ToInt32(queryString["" + (int)CAMPOS.TIPO]);
-                    TIPO_CONCILIADO tipo = (TIPO_CONCILIADO)t;
+                    TIPO_CONCILIADO tipo = (TIPO_CONCILIADO)Convert.ToInt32(queryString["" + (int)CAMPOS.TIPO]);
                     if (tipo.Equals(TIPO_CONCILIADO.CONCILIADO)) filtroTipoConciliado = true;
+                    else if (tipo.Equals(TIPO_CONCILIADO.PRE_CONCILIADO)) filtroTipoPreConciliado = true;
                     else if (tipo.Equals(TIPO_CONCILIADO.NAO_CONCILIADO)) filtroTipoNaoConciliado = true;
                 }
 
@@ -300,9 +475,8 @@ namespace api.Negocios.Card
                 decimal totalExtrato = new decimal(0.0);
 
 
-                // Só busca por conciliações já concretizadas se não tiver sido requisitado um filtro do tipo NÃO CONCILIADO
-                if (!filtroTipoNaoConciliado)
-                {
+                // Só busca por conciliações já concretizadas se não tiver sido requisitado um filtro do tipo PRE-CONCILIADO ou NÃO CONCILIADO
+                if (!filtroTipoPreConciliado && !filtroTipoNaoConciliado) {
                     #region OBTÉM AS INFORMAÇÕES DE DADOS JÁ CONCILIADOS PREVIAMENTE
                     // EXTRATOS JÁ CONCILIADOS, COM SEUS RESPECTIVOS RECEBIMENTOS CONCILIADOS
                     List<dynamic> extratosBancariosConciliados = queryExtrato.Where(e => e.RecebimentoParcelas.Count > 0)
@@ -331,7 +505,8 @@ namespace api.Negocios.Card
                                                                                 {
                                                                                     Id = x.idRecebimento,
                                                                                     Documento = x.Recebimento.nsu,
-                                                                                    Valor = x.valorParcelaLiquida ?? new decimal(0.0)
+                                                                                    Valor = x.valorParcelaLiquida ?? new decimal(0.0),
+                                                                                    Bandeira = x.Recebimento.BandeiraPos.desBandeira.ToUpper()
                                                                                 })/*.OrderBy(x => x.Valor) // não funciona aqui!*/
                                                                                 .ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                             ValorTotal = r.Select(x => x.valorParcelaLiquida ?? new decimal(0.0)).Sum(),
@@ -348,7 +523,7 @@ namespace api.Negocios.Card
                     if (extratosBancariosConciliados.Count > 0)
                     {
                         // Total do extrato
-                        totalExtrato += Convert.ToDecimal(extratosBancariosConciliados.Select(e => e.vlMovimento).Cast<decimal>().Sum());
+                        //totalExtrato += Convert.ToDecimal(extratosBancariosConciliados.Select(e => e.vlMovimento).Cast<decimal>().Sum());
 
                         // Adiciona como conciliados
                         foreach (var extrato in extratosBancariosConciliados)
@@ -375,14 +550,14 @@ namespace api.Negocios.Card
                             recebimento = new ConciliacaoBancaria
                             {
                                 Tipo = TIPO_RECEBIMENTO, // recebimento
-                                Grupo = recebimento.Grupo.OrderBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(), // ordena
+                                Grupo = recebimento.Grupo.OrderBy(x => x.Bandeira).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(), // ordena
                                 ValorTotal = recebimento.ValorTotal,
                                 Data = recebimento.Data,
                                 Adquirente = recebimento.Adquirente,
                                 Bandeira = recebimento.Bandeira,
                             };
                             // Total dos recebimentos
-                            totalRecebimento += recebimento.ValorTotal;
+                            //totalRecebimento += recebimento.ValorTotal;
                             // Adiciona
                             adicionaElementosConciliadosNaLista(CollectionConciliacaoBancaria, recebimento, movimentacao, TIPO_CONCILIADO.CONCILIADO);
                         }
@@ -394,7 +569,7 @@ namespace api.Negocios.Card
                 // Só busca por possíveis conciliações se não tiver sido requisitado um filtro do tipo CONCILIADO
                 if (!filtroTipoConciliado)
                 {
-                    #region OBTÉM AS INFORMAÇÕES DE DADOS NÃO-CONCILIADOS 
+                    #region OBTÉM AS INFORMAÇÕES DE DADOS NÃO-CONCILIADOS E BUSCA PRÉ-CONCILIAÇÕES
 
                     #region OBTÉM SOMENTE OS RECEBIMENTOS PARCELAS NÃO-CONCILIADOS
                     List<ConciliacaoBancaria> recebimentosParcela = queryRecebimentoParcela
@@ -406,7 +581,8 @@ namespace api.Negocios.Card
                                                                 new ConciliacaoBancaria.ConciliacaoGrupo {
                                                                     Id = r.idRecebimento,
                                                                     Documento = r.Recebimento.nsu,
-                                                                    Valor = r.valorParcelaLiquida ?? new decimal(0.0)
+                                                                    Valor = r.valorParcelaLiquida ?? new decimal(0.0),
+                                                                    Bandeira = r.Recebimento.BandeiraPos.desBandeira.ToUpper()
                                                                 }
                                                             },
                                                             ValorTotal = r.valorParcelaLiquida ?? new decimal(0.0),
@@ -417,7 +593,7 @@ namespace api.Negocios.Card
                                                         }).ToList<ConciliacaoBancaria>();
                     #endregion
 
-                    if (recebimentosParcela.Count > 0) totalRecebimento += recebimentosParcela.Sum(r => r.ValorTotal);
+                    //if (recebimentosParcela.Count > 0) totalRecebimento += recebimentosParcela.Sum(r => r.ValorTotal);
 
                     #region OBTÉM OS EXTRATOS NÃO CONCILIADOS QUE TEM ADQUIRENTE ASSOCIADA
                     List<ConciliacaoBancaria> extratoBancario = queryExtrato
@@ -458,36 +634,45 @@ namespace api.Negocios.Card
                                                             }).ToList<ConciliacaoBancaria>();
                     #endregion
 
-                    if (extratoBancario.Count > 0) totalExtrato += extratoBancario.Sum(r => r.ValorTotal);
+                    //if (extratoBancario.Count > 0) totalExtrato += extratoBancario.Sum(r => r.ValorTotal);
 
 
                     // TEM ELEMENTOS PARA CONCILIAR?
                     if (recebimentosParcela.Count == 0 || extratoBancario.Count == 0)
                     {
-                        // NÃO HÁ O QUE CONCILIAR!
-                        if (recebimentosParcela.Count > 0)
-                            #region ADICIONA NA COLEÇÃO DE RETORNO DADOS NÃO-CONCILIADOS DO LADO DO ICARD (AGRUPADOS)
-                            adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria,
-                                                        // Envia recebimentos agrupados
-                                                        recebimentosParcela
-                                                                .GroupBy(r => new { r.Data, r.Adquirente, r.Bandeira })
-                                                                .OrderBy(r => r.Key.Data)
-                                                                .ThenBy(r => r.Key.Adquirente)
-                                                                .ThenBy(r => r.Key.Bandeira)
-                                                                .Select(r => new ConciliacaoBancaria
-                                                                {
-                                                                    Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
-                                                                    Data = r.Key.Data,
-                                                                    ValorTotal = r.Sum(x => x.Grupo[0].Valor),
-                                                                    Adquirente = r.Key.Adquirente,
-                                                                    Bandeira = r.Key.Bandeira,
-                                                                }).ToList<ConciliacaoBancaria>());
-                        #endregion
-                        else if (extratoBancario.Count > 0)
-                            #region ADICIONA NA COLEÇÃO DE RETORNO DADOS NÃO-CONCILIADOS DO LADO DO EXTRATO BANCÁRIO
-                            adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
-                        #endregion
+                        if (!filtroTipoPreConciliado)
+                        {
+                            // NÃO HÁ O QUE CONCILIAR!
+                            if (recebimentosParcela.Count > 0)
+                            {
+                                //totalRecebimento += recebimentosParcela.Sum(r => r.ValorTotal);
+                                #region ADICIONA NA COLEÇÃO DE RETORNO DADOS NÃO-CONCILIADOS DO LADO DO ICARD (AGRUPADOS)
+                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria,
+                                                            // Envia recebimentos agrupados
+                                                            recebimentosParcela
+                                                                    .GroupBy(r => new { r.Data, r.Adquirente/*, r.Bandeira*/ })
+                                                                    .OrderBy(r => r.Key.Data)
+                                                                    .ThenBy(r => r.Key.Adquirente)
+                                                                    //.ThenBy(r => r.Key.Bandeira)
+                                                                    .Select(r => new ConciliacaoBancaria
+                                                                    {
+                                                                        Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                        Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Bandeira).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                        Data = r.Key.Data,
+                                                                        ValorTotal = r.Sum(x => x.Grupo[0].Valor),
+                                                                        Adquirente = r.Key.Adquirente,
+                                                                        //Bandeira = r.Key.Bandeira,
+                                                                    }).ToList<ConciliacaoBancaria>());
+                                #endregion
+                            }
+                            else if (extratoBancario.Count > 0)
+                            {
+                                //totalExtrato += extratoBancario.Sum(r => r.ValorTotal);
+                                #region ADICIONA NA COLEÇÃO DE RETORNO DADOS NÃO-CONCILIADOS DO LADO DO EXTRATO BANCÁRIO
+                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
+                                #endregion
+                            }
+                        }
                     }
                     else
                     {
@@ -506,14 +691,14 @@ namespace api.Negocios.Card
                                               .ToList<ConciliacaoBancaria>();
 
                         // Faz a conciliação
-                        Concilia(CollectionConciliacaoBancaria, listaCandidatos, listaNaoConciliado);
+                        Concilia(CollectionConciliacaoBancaria, listaCandidatos, listaNaoConciliado, !filtroTipoNaoConciliado);
 
                         #endregion
 
                         // Tem elementos não conciliados?
                         if (listaNaoConciliado.Count > 0)
                         {
-                            #region REMOVE DAS LISTAS OS ELEMENTOS JÁ CONCILIADOS
+                            #region REMOVE DAS LISTAS OS ELEMENTOS JÁ PRÉ-CONCILIADOS
                             recebimentosParcela = listaNaoConciliado.Where(e => e.Tipo.Equals(TIPO_RECEBIMENTO))
                                                                         .OrderBy(e => e.Data)
                                                                         .ThenBy(e => e.Adquirente)
@@ -525,37 +710,61 @@ namespace api.Negocios.Card
                                                                     .ThenBy(e => e.Adquirente)
                                                                     .ThenBy(e => e.Memo)
                                                                     .ToList<ConciliacaoBancaria>();
-
-                            List<ConciliacaoBancaria> recebimentosParcelaAgrupados = recebimentosParcela
-                                                                .GroupBy(r => new { r.Data, r.DataVenda, r.Adquirente, r.Bandeira })
-                                                                .OrderBy(r => r.Key.Data)
-                                                                .ThenBy(r => r.Key.DataVenda)
-                                                                .ThenBy(r => r.Key.Adquirente)
-                                                                .ThenBy(r => r.Key.Bandeira)
-                                                                .Select(r => new ConciliacaoBancaria
-                                                                {
-                                                                    Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
-                                                                    Data = r.Key.Data,
-                                                                    DataVenda = r.Key.DataVenda,
-                                                                    ValorTotal = r.Sum(x => x.Grupo[0].Valor),
-                                                                    Adquirente = r.Key.Adquirente,
-                                                                    Bandeira = r.Key.Bandeira,
-                                                                }).ToList<ConciliacaoBancaria>();
                             #endregion
 
                             // Tem elementos para conciliar?
                             if (recebimentosParcela.Count == 0 || extratoBancario.Count == 0)
                             {
-                                // NÃO HÁ MAIS O QUE CONCILIAR!
-                                if (recebimentosParcela.Count > 0)
-                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, recebimentosParcelaAgrupados);
-                                else if (extratoBancario.Count > 0)
-                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
+                                if (!filtroTipoPreConciliado)
+                                {
+                                    // NÃO HÁ MAIS O QUE CONCILIAR!
+                                    if (recebimentosParcela.Count > 0)
+                                    {
+                                        //totalRecebimento += recebimentosParcelaAgrupados.Sum(r => r.ValorTotal);
+                                        adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, 
+                                                            // Envia recebimentos agrupados
+                                                            recebimentosParcela
+                                                                    .GroupBy(r => new { r.Data, r.Adquirente, r.Bandeira })
+                                                                    .OrderBy(r => r.Key.Data)
+                                                                    .ThenBy(r => r.Key.Adquirente)
+                                                                    .ThenBy(r => r.Key.Bandeira)
+                                                                    .Select(r => new ConciliacaoBancaria
+                                                                    {
+                                                                        Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                        Grupo = r.Select(x => x.Grupo[0]).OrderBy/*(x => x.Bandeira).ThenBy*/(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                        Data = r.Key.Data,
+                                                                        ValorTotal = r.Sum(x => x.Grupo[0].Valor),
+                                                                        Adquirente = r.Key.Adquirente,
+                                                                        Bandeira = r.Key.Bandeira,
+                                                                    }).ToList<ConciliacaoBancaria>());
+                                    }
+                                    else if (extratoBancario.Count > 0)
+                                    {
+                                        //totalExtrato += extratoBancario.Sum(r => r.ValorTotal);
+                                        adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
+                                    }
+                                }
                             }
                             else
                             {
                                 #region PASSO 2) CONCILIA FAZENDO AGRUPAMENTO POR DATA, DATA VENDA, ADQUIRENTE E BANDEIRA NO RECEBIMENTO PARCELA
+                                // Agrupa por data da venda
+                                List<ConciliacaoBancaria> recebimentosParcelaAgrupados = recebimentosParcela
+                                                                    .GroupBy(r => new { r.Data, r.DataVenda, r.Adquirente, r.Bandeira })
+                                                                    .OrderBy(r => r.Key.Data)
+                                                                    .ThenBy(r => r.Key.DataVenda)
+                                                                    .ThenBy(r => r.Key.Adquirente)
+                                                                    .ThenBy(r => r.Key.Bandeira)
+                                                                    .Select(r => new ConciliacaoBancaria
+                                                                    {
+                                                                        Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                        Data = r.Key.Data,
+                                                                        DataVenda = r.Key.DataVenda,
+                                                                        ValorTotal = r.Sum(x => x.Grupo[0].Valor),
+                                                                        Adquirente = r.Key.Adquirente,
+                                                                        Bandeira = r.Key.Bandeira,
+                                                                    }).ToList<ConciliacaoBancaria>();
 
                                 // Concatena as duas listas, ordenando por data
                                 listaCandidatos = recebimentosParcelaAgrupados.Concat<ConciliacaoBancaria>(extratoBancario)
@@ -568,19 +777,25 @@ namespace api.Negocios.Card
 
                                 // Faz a conciliação
                                 listaNaoConciliado.Clear();
-                                Concilia(CollectionConciliacaoBancaria, listaCandidatos, listaNaoConciliado);
+                                Concilia(CollectionConciliacaoBancaria, listaCandidatos, listaNaoConciliado, !filtroTipoNaoConciliado);
 
                                 #endregion
 
                                 // Ainda tem elementos não conciliados?
                                 if (listaNaoConciliado.Count > 0)
                                 {
-                                    #region REMOVE DAS LISTAS OS ELEMENTOS JÁ CONCILIADOS
+                                    #region REMOVE DAS LISTAS OS ELEMENTOS JÁ PRÉ-CONCILIADOS
                                     recebimentosParcelaAgrupados = listaNaoConciliado.Where(r => r.Tipo.Equals(TIPO_RECEBIMENTO))
                                                                             .OrderBy(r => r.Data)
                                                                             .ThenBy(r => r.DataVenda)
                                                                             .ThenBy(r => r.Adquirente)
                                                                             .ThenBy(r => r.Bandeira)
+                                                                            .ToList<ConciliacaoBancaria>();
+
+                                    recebimentosParcela = recebimentosParcela.Where(e => recebimentosParcelaAgrupados.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id)))
+                                                                            .OrderBy(e => e.Data)
+                                                                            .ThenBy(e => e.Adquirente)
+                                                                            .ThenBy(e => e.Bandeira)
                                                                             .ToList<ConciliacaoBancaria>();
 
                                     extratoBancario = listaNaoConciliado.Where(e => e.Tipo.Equals(TIPO_EXTRATO))
@@ -593,22 +808,39 @@ namespace api.Negocios.Card
                                     // Tem elementos para conciliar?
                                     if (recebimentosParcelaAgrupados.Count == 0 || extratoBancario.Count == 0)
                                     {
-                                        // NÃO HÁ MAIS O QUE CONCILIAR!
-                                        if (extratoBancario.Count > 0)
-                                            adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
-                                        else if (recebimentosParcelaAgrupados.Count > 0)
+                                        if (!filtroTipoPreConciliado)
                                         {
-                                            adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, recebimentosParcelaAgrupados);
+                                            // NÃO HÁ MAIS O QUE CONCILIAR!
+                                            if (extratoBancario.Count > 0)
+                                            {
+                                                //totalExtrato += extratoBancario.Sum(r => r.ValorTotal);
+                                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
+                                            }
+                                            else if (recebimentosParcelaAgrupados.Count > 0)
+                                            {
+                                                //totalRecebimento += recebimentosParcelaAgrupados.Sum(r => r.ValorTotal);
+                                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria,
+                                                                                // Envia recebimentos agrupados
+                                                                                recebimentosParcela
+                                                                                .GroupBy(r => new { r.Data, r.Adquirente, r.Bandeira })
+                                                                                .OrderBy(r => r.Key.Data)
+                                                                                .ThenBy(r => r.Key.Adquirente)
+                                                                                .ThenBy(r => r.Key.Bandeira)
+                                                                                .Select(r => new ConciliacaoBancaria
+                                                                                {
+                                                                                    Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy/*(x => x.Bandeira).ThenBy*/(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                    Data = r.Key.Data,
+                                                                                    ValorTotal = r.Sum(x => x.Grupo[0].Valor),
+                                                                                    Adquirente = r.Key.Adquirente,
+                                                                                    Bandeira = r.Key.Bandeira,
+                                                                                }).ToList<ConciliacaoBancaria>());
+                                            }
                                         }
                                     }
                                     else
                                     {
                                         #region PASSO 3) CONCILIA FAZENDO AGRUPAMENTO POR DATA, ADQUIRENTE E BANDEIRA NO RECEBIMENTO PARCELA (SEM AGRUPAR POR DATA DA VENDA)
-                                        recebimentosParcela = recebimentosParcela.Where(e => recebimentosParcelaAgrupados.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id)))
-                                                                            .OrderBy(e => e.Data)
-                                                                            .ThenBy(e => e.Adquirente)
-                                                                            .ThenBy(e => e.Bandeira)
-                                                                            .ToList<ConciliacaoBancaria>();
                                         recebimentosParcelaAgrupados = recebimentosParcela
                                                                 .GroupBy(r => new { r.Data, r.Adquirente, r.Bandeira })
                                                                 .OrderBy(r => r.Key.Data)
@@ -617,7 +849,7 @@ namespace api.Negocios.Card
                                                                 .Select(r => new ConciliacaoBancaria
                                                                 {
                                                                     Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Bandeira).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                     Data = r.Key.Data,
                                                                     ValorTotal = r.Sum(x => x.Grupo[0].Valor),
                                                                     Adquirente = r.Key.Adquirente,
@@ -635,14 +867,14 @@ namespace api.Negocios.Card
 
                                         // Faz a conciliação
                                         listaNaoConciliado.Clear();
-                                        Concilia(CollectionConciliacaoBancaria, listaCandidatos, listaNaoConciliado);
+                                        Concilia(CollectionConciliacaoBancaria, listaCandidatos, listaNaoConciliado, !filtroTipoNaoConciliado);
 
                                         #endregion
 
                                         // Ainda tem elementos não conciliados?
                                         if (listaNaoConciliado.Count > 0)
                                         {
-                                            #region REMOVE DA LISTA OS ELEMENTOS JÁ CONCILIADOS
+                                            #region REMOVE DA LISTA OS ELEMENTOS JÁ PRÉ-CONCILIADOS
                                             recebimentosParcelaAgrupados = listaNaoConciliado.Where(r => r.Tipo.Equals(TIPO_RECEBIMENTO))
                                                                                     .OrderBy(r => r.Data)
                                                                                     .ThenBy(r => r.DataVenda)
@@ -661,157 +893,188 @@ namespace api.Negocios.Card
                                             // Tem elementos para conciliar?
                                             if (recebimentosParcelaAgrupados.Count == 0 || extratoBancario.Count == 0)
                                             {
-                                                // NÃO HÁ MAIS O QUE CONCILIAR!
-                                                if (extratoBancario.Count > 0)
-                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
-                                                else if (recebimentosParcelaAgrupados.Count > 0)
+                                                if (!filtroTipoPreConciliado)
                                                 {
-                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, recebimentosParcelaAgrupados);
+                                                    // NÃO HÁ MAIS O QUE CONCILIAR!
+                                                    if (extratoBancario.Count > 0)
+                                                    {
+                                                        //totalExtrato += extratoBancario.Sum(r => r.ValorTotal);
+                                                        adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
+                                                    }
+                                                    else if (recebimentosParcelaAgrupados.Count > 0)
+                                                    {
+                                                        //totalRecebimento += recebimentosParcelaAgrupados.Sum(r => r.ValorTotal);
+                                                        adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria,
+                                                                                // Envia recebimentos agrupados
+                                                                                recebimentosParcelaAgrupados);
+                                                    }
                                                 }
                                             }
                                             else
                                             {
                                                 #region PASSO 4) TENTA ENCONTRAR SUBGRUPOS DE CADA AGRUPAMENTO
+                                                conciliaSubGrupos(CollectionConciliacaoBancaria, recebimentosParcelaAgrupados, extratoBancario, !filtroTipoNaoConciliado);
+                                                #endregion
 
-                                                #region OBTÉM POSSÍVEIS COMBINAÇÕES DE RECEBIMENTOSPARCELAS PARA CADA EXTRATO
-                                                List<dynamic> gruposExtrato = new List<dynamic>();
-                                                foreach (ConciliacaoBancaria extrato in extratoBancario)
+                                                // Tem elementos para conciliar?
+                                                if (recebimentosParcelaAgrupados.Count == 0 || extratoBancario.Count == 0)
                                                 {
-                                                    // Obtém todas as combinações para o extrato
-                                                    List<dynamic> grupos = new List<dynamic>();
-                                                    foreach (ConciliacaoBancaria recebimento in recebimentosParcelaAgrupados)
+                                                    if (!filtroTipoPreConciliado)
                                                     {
-                                                        // Só avalia os de mesma data
-                                                        if (recebimento.Data.Year == extrato.Data.Year &&
-                                                           recebimento.Data.Month == extrato.Data.Month &&
-                                                           recebimento.Data.Day == extrato.Data.Day)
+                                                        // NÃO HÁ MAIS O QUE CONCILIAR!
+                                                        if (extratoBancario.Count > 0)
                                                         {
-                                                            foreach (List<List<ConciliacaoBancaria.ConciliacaoGrupo>> g in GetCombinations(recebimento.Grupo, extrato.ValorTotal))
+                                                            //totalExtrato += extratoBancario.Sum(r => r.ValorTotal);
+                                                            adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
+                                                        }
+                                                        else if (recebimentosParcelaAgrupados.Count > 0)
+                                                        {
+                                                            //totalRecebimento += recebimentosParcelaAgrupados.Sum(r => r.ValorTotal);
+                                                            adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria,
+                                                                                    // Envia recebimentos agrupados
+                                                                                    recebimentosParcelaAgrupados);
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    #region PASSO 5) AGRUPA SEM CONSIDERAR A BANDEIRA
+
+                                                    recebimentosParcela = recebimentosParcela.Where(e => recebimentosParcelaAgrupados.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id)))
+                                                                                .OrderBy(e => e.Data)
+                                                                                .ThenBy(e => e.Adquirente)
+                                                                                .ThenBy(e => e.Bandeira)
+                                                                                .ToList<ConciliacaoBancaria>();
+
+                                                    recebimentosParcelaAgrupados = recebimentosParcela
+                                                                                        .GroupBy(r => new { r.Data, r.Adquirente })
+                                                                                        .OrderBy(r => r.Key.Data)
+                                                                                        .ThenBy(r => r.Key.Adquirente)
+                                                                                        .Select(r => new ConciliacaoBancaria
+                                                                                        {
+                                                                                            Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                                            Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Bandeira).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                            Data = r.Key.Data,
+                                                                                            ValorTotal = r.Sum(x => x.Grupo[0].Valor),
+                                                                                            Adquirente = r.Key.Adquirente,
+                                                                                        }).ToList<ConciliacaoBancaria>();
+
+                                                    // Concatena as duas listas, ordenando por data
+                                                    listaCandidatos = recebimentosParcelaAgrupados.Concat<ConciliacaoBancaria>(extratoBancario)
+                                                                      .OrderBy(c => c.Data.Year)
+                                                                      .ThenBy(c => c.Data.Month)
+                                                                      .ThenBy(c => c.Data.Day)
+                                                                      .ThenBy(c => c.Adquirente)
+                                                                      .ThenBy(c => c.ValorTotal)
+                                                                      .ToList<ConciliacaoBancaria>();
+
+                                                    // Faz a conciliação
+                                                    listaNaoConciliado.Clear();
+                                                    Concilia(CollectionConciliacaoBancaria, listaCandidatos, listaNaoConciliado, !filtroTipoNaoConciliado);
+
+                                                    #endregion
+
+                                                    if (listaNaoConciliado.Count > 0)
+                                                    {
+                                                        #region REMOVE DA LISTA OS ELEMENTOS JÁ PRÉ-CONCILIADOS
+                                                        recebimentosParcelaAgrupados = listaNaoConciliado.Where(r => r.Tipo.Equals(TIPO_RECEBIMENTO))
+                                                                                                    .OrderBy(r => r.Data)
+                                                                                                    .ThenBy(r => r.DataVenda)
+                                                                                                    .ThenBy(r => r.Adquirente)
+                                                                                                    .ThenBy(r => r.Bandeira)
+                                                                                                    .ToList<ConciliacaoBancaria>();
+
+                                                        recebimentosParcela = recebimentosParcela.Where(e => recebimentosParcelaAgrupados.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id)))
+                                                                                .OrderBy(e => e.Data)
+                                                                                .ThenBy(e => e.Adquirente)
+                                                                                .ThenBy(e => e.Bandeira)
+                                                                                .ToList<ConciliacaoBancaria>();
+
+                                                        extratoBancario = listaNaoConciliado.Where(e => e.Tipo.Equals(TIPO_EXTRATO))
+                                                                                                .OrderBy(e => e.Data)
+                                                                                                .ThenBy(e => e.Adquirente)
+                                                                                                .ThenBy(e => e.Memo)
+                                                                                                .ToList<ConciliacaoBancaria>();
+
+                                                        #endregion
+
+                                                        // Tem elementos para conciliar?
+                                                        if (recebimentosParcelaAgrupados.Count == 0 || extratoBancario.Count == 0)
+                                                        {
+                                                            if (!filtroTipoPreConciliado)
                                                             {
-                                                                foreach (List<ConciliacaoBancaria.ConciliacaoGrupo> item in g)
+                                                                // NÃO HÁ MAIS O QUE CONCILIAR!
+                                                                if (extratoBancario.Count > 0)
                                                                 {
-                                                                    grupos.Add(new
-                                                                    {
-                                                                        bandeira = recebimento.Bandeira,
-                                                                        grupo = item.OrderBy(gp => gp.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>()
-                                                                    });
+                                                                    //totalExtrato += extratoBancario.Sum(r => r.ValorTotal);
+                                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
+                                                                }
+                                                                else if (recebimentosParcelaAgrupados.Count > 0)
+                                                                {
+                                                                    //totalRecebimento += recebimentosParcelaAgrupados.Sum(r => r.ValorTotal);
+                                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria,
+                                                                                // Envia recebimentos agrupados
+                                                                                recebimentosParcela
+                                                                                    .GroupBy(r => new { r.Data, r.Adquirente, r.Bandeira })
+                                                                                    .OrderBy(r => r.Key.Data)
+                                                                                    .ThenBy(r => r.Key.Adquirente)
+                                                                                    .ThenBy(r => r.Key.Bandeira)
+                                                                                    .Select(r => new ConciliacaoBancaria
+                                                                                    {
+                                                                                        Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                                        Grupo = r.Select(x => x.Grupo[0]).OrderBy/*(x => x.Bandeira).ThenBy*/(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                        Data = r.Key.Data,
+                                                                                        ValorTotal = r.Sum(x => x.Grupo[0].Valor),
+                                                                                        Adquirente = r.Key.Adquirente,
+                                                                                        Bandeira = r.Key.Bandeira,
+                                                                                    }).ToList<ConciliacaoBancaria>());
                                                                 }
                                                             }
                                                         }
-                                                    }
-                                                    if (grupos.Count > 0)
-                                                    {
-                                                        gruposExtrato.Add(new
+                                                        else
                                                         {
-                                                            idExtrato = extrato.Grupo[0].Id,
-                                                            valorExtrato = extrato.ValorTotal,
-                                                            recebimento = grupos
-                                                        });
-                                                    }
-                                                }
-                                                #endregion
 
-                                                if (gruposExtrato.Count > 0)
-                                                {
-                                                    #region PROCESSA COMBINAÇÕES E CONCILIA EVITANDO DUPLICIDADES
-                                                    // Ordena por total de combinações encontradas
-                                                    gruposExtrato = gruposExtrato.OrderBy(g => g.recebimento.Count).ToList<dynamic>();
-                                                    Dictionary<Int32, bool> recebimentosConciliados = new Dictionary<Int32, bool>();
-                                                    // Com os grupos que combinados resultam no valor do extrato, 
-                                                    // usar combinações que não gerem inconsistências e duplicidades
-                                                    foreach (var grupoExtrato in gruposExtrato)
-                                                    {
-                                                        ConciliacaoBancaria movimentacao = extratoBancario.Where(e => e.Grupo[0].Id == grupoExtrato.idExtrato).FirstOrDefault();
-
-                                                        foreach (var receb in grupoExtrato.recebimento)
-                                                        {
-                                                            List<ConciliacaoBancaria.ConciliacaoGrupo> grupo = receb.grupo;
-
-                                                            bool grupovalido = true;
-
-                                                            #region AVALIA SE CADA ELEMENTO DO GRUPO NÃO FOI ADICIONADO EM UMA COMBINAÇÃO ANTERIOR
-                                                            bool value = true;
-                                                            foreach (ConciliacaoBancaria.ConciliacaoGrupo g in grupo)
-                                                            {
-                                                                if (recebimentosConciliados.TryGetValue(g.Id, out value))
-                                                                {
-                                                                    grupovalido = false;
-                                                                    break;
-                                                                }
-                                                            }
+                                                            #region PASSO 6) TENTA ENCONTRAR SUBGRUPOS DE CADA AGRUPAMENTO
+                                                            conciliaSubGrupos(CollectionConciliacaoBancaria, recebimentosParcelaAgrupados, extratoBancario, !filtroTipoNaoConciliado);
                                                             #endregion
 
-                                                            if (grupovalido)
+                                                            if (!filtroTipoPreConciliado)
                                                             {
-                                                                #region ADICIONA O GRUPO COMO "CONCILIADO" COM A MOVIMENTAÇÃO DO EXTRATO CORRENTE
-
-                                                                #region ADICIONA OS IDS DOS RECEBIMENTOSPARCELA NA LISTA DE JÁ "CONCILIADOS"
-                                                                foreach (ConciliacaoBancaria.ConciliacaoGrupo g in grupo)
-                                                                    recebimentosConciliados.Add(g.Id, true);
-                                                                #endregion
-
-                                                                #region ADICIONA COMO "CONCILIADO"
-                                                                ConciliacaoBancaria recebimento = new ConciliacaoBancaria()
+                                                                #region PASSO 7) ADICIONA OS ELEMENTOS QUE SOBRARAM COMO NÃO CONCILIADOS
+                                                                if (recebimentosParcelaAgrupados.Count > 0)
                                                                 {
-                                                                    Tipo = TIPO_RECEBIMENTO,
-                                                                    Data = movimentacao.Data,
-                                                                    Grupo = grupo,
-                                                                    Adquirente = movimentacao.Adquirente,
-                                                                    Bandeira = receb.bandeira,
-                                                                    ValorTotal = grupo.Sum(g => g.Valor),
-                                                                };
-                                                                adicionaElementosConciliadosNaLista(CollectionConciliacaoBancaria, recebimento, movimentacao, TIPO_CONCILIADO.NAO_CONCILIADO);
-                                                                #endregion
-
-                                                                #region REMOVE A MOVIMENTAÇÃO DE EXTRATO
-                                                                extratoBancario.Remove(movimentacao);
-                                                                #endregion
-
-                                                                #region REMOVE OS RECEBIMENTOS PARCELAS DO AGRUPAMENTO
-                                                                ConciliacaoBancaria rp = recebimentosParcelaAgrupados.Where(r => r.Grupo.Any(g => g.Id == grupo[0].Id)).FirstOrDefault();
-
-                                                                // O novo grupo é composto pelos elementos que estavam lá e não foram envolvidos na conciliação corrente
-                                                                List<ConciliacaoBancaria.ConciliacaoGrupo> newGrupo = new List<ConciliacaoBancaria.ConciliacaoGrupo>();
-                                                                foreach (ConciliacaoBancaria.ConciliacaoGrupo gp in rp.Grupo)
-                                                                {
-                                                                    if (!grupo.Any(g => g.Id == gp.Id)) newGrupo.Add(gp);
+                                                                    recebimentosParcela = recebimentosParcela.Where(e => recebimentosParcelaAgrupados.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id)))
+                                                                                .OrderBy(e => e.Data)
+                                                                                .ThenBy(e => e.Adquirente)
+                                                                                .ThenBy(e => e.Bandeira)
+                                                                                .ToList<ConciliacaoBancaria>();
+                                                                    //totalRecebimento += recebimentosParcelaAgrupados.Sum(r => r.ValorTotal);
+                                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria,
+                                                                                recebimentosParcela
+                                                                                .GroupBy(r => new { r.Data, r.Adquirente, r.Bandeira })
+                                                                                .OrderBy(r => r.Key.Data)
+                                                                                .ThenBy(r => r.Key.Adquirente)
+                                                                                .ThenBy(r => r.Key.Bandeira)
+                                                                                .Select(r => new ConciliacaoBancaria
+                                                                                {
+                                                                                    Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy/*(x => x.Bandeira).ThenBy*/(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                    Data = r.Key.Data,
+                                                                                    ValorTotal = r.Sum(x => x.Grupo[0].Valor),
+                                                                                    Adquirente = r.Key.Adquirente,
+                                                                                    Bandeira = r.Key.Bandeira,
+                                                                                }).ToList<ConciliacaoBancaria>());
                                                                 }
-                                                                recebimentosParcelaAgrupados.Remove(rp);
-
-                                                                // Só "re-adiciona" o grupo modificado caso possua elementos
-                                                                if (newGrupo.Count > 0)
+                                                                if (extratoBancario.Count > 0)
                                                                 {
-                                                                    ConciliacaoBancaria newRp = new ConciliacaoBancaria()
-                                                                    {
-                                                                        Adquirente = rp.Adquirente,
-                                                                        Tipo = rp.Tipo,
-                                                                        Bandeira = rp.Bandeira,
-                                                                        Conta = rp.Conta,
-                                                                        Data = rp.Data,
-                                                                        DataVenda = rp.DataVenda,
-                                                                        Grupo = newGrupo.OrderBy(g => g.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
-                                                                        Memo = rp.Memo,
-                                                                        ValorTotal = newGrupo.Sum(g => g.Valor),
-                                                                    };
-
-                                                                    recebimentosParcelaAgrupados.Add(newRp);
+                                                                    //totalExtrato += extratoBancario.Sum(r => r.ValorTotal);
+                                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
                                                                 }
                                                                 #endregion
-
-                                                                #endregion
-
-                                                                break; // vai para a próxima movimentação de extrato
                                                             }
                                                         }
                                                     }
-                                                    #endregion
                                                 }
-                                                #endregion
-
-                                                #region PASSO 5) ADICIONA OS ELEMENTOS QUE SOBRARAM COMO NÃO CONCILIADOS
-                                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, recebimentosParcelaAgrupados);
-                                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
-                                                #endregion
                                             }
                                         }
                                     }
@@ -836,6 +1099,8 @@ namespace api.Negocios.Card
                 retorno.TotalDeRegistros = CollectionConciliacaoBancaria.Count;
 
                 // TOTAL
+                totalRecebimento = CollectionConciliacaoBancaria.Select(r => r.ValorTotalRecebimento).Cast<decimal>().Sum();
+                totalExtrato = CollectionConciliacaoBancaria.Select(r => r.ValorTotalExtrato).Cast<decimal>().Sum();
                 retorno.Totais = new Dictionary<string, object>();
                 retorno.Totais.Add("valorExtrato", totalExtrato);
                 retorno.Totais.Add("valorRecebimento", totalRecebimento);
@@ -865,5 +1130,46 @@ namespace api.Negocios.Card
             }
         }
 
+
+        /// <summary>
+        /// Aponta RecebimentoParcela para Extrato
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static void Update(string token, List<ConciliaRecebimentoParcela> param)
+        {
+            try
+            {
+                foreach (ConciliaRecebimentoParcela grupoExtrato in param)
+                {
+                    if (grupoExtrato.IdsRecebimento != null)
+                    {
+                        foreach (Int32 idRecebimento in grupoExtrato.IdsRecebimento)
+                        {
+                            RecebimentoParcela value = _db.RecebimentoParcelas.Where(e => e.idRecebimento == idRecebimento).FirstOrDefault();
+                            if (value != null)
+                            {
+                                if (grupoExtrato.IdExtrato == -1) value.idExtrato = null;
+                                else value.idExtrato = grupoExtrato.IdExtrato;
+                                _db.SaveChanges();
+                            }
+                        }
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento parcela" : erro);
+                }
+                throw new Exception(e.Message);
+            }
+        }
+
     }
+
 }

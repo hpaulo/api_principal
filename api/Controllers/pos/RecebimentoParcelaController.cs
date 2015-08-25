@@ -9,7 +9,7 @@ using api.Negocios.Pos;
 using api.Bibliotecas;
 using api.Models.Object;
 using Newtonsoft.Json;
-using api.Models.ConciliaRecebimentoParcela;
+using api.Models;
 
 namespace api.Controllers.Pos
 {
@@ -109,7 +109,7 @@ namespace api.Controllers.Pos
         }*/
 
         // PUT /RecebimentoParcela/token/
-        public HttpResponseMessage Put(string token, [FromBody]ConciliaRecebimentoParcela param)
+        public HttpResponseMessage Put(string token, RecebimentosParcela param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try

@@ -280,8 +280,8 @@ namespace api.Negocios.Pos
                     else entity = entity.OrderByDescending(e => e.cdAutorizador).AsQueryable();
                     break;
                 case CAMPOS.DTAVENDA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtaVenda).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).ThenBy(e => e.BandeiraPos.desBandeira).ThenBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dtaVenda).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).ThenBy(e => e.BandeiraPos.desBandeira).ThenBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).ThenBy(e => e.dtaVenda).ThenBy(e => e.BandeiraPos.desBandeira).ThenBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
+                    else entity = entity.OrderBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).ThenByDescending(e => e.dtaVenda).ThenBy(e => e.BandeiraPos.desBandeira).ThenBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
                     break;
                 case CAMPOS.VALORVENDABRUTA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.valorVendaBruta).AsQueryable();

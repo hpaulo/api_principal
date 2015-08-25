@@ -173,8 +173,20 @@ namespace api.Negocios.Admin
                     }).ToList<dynamic>();
                 }
 
-                retorno.Registros = CollectionTbEmpresa;
+                else if (colecao == 2)
+                {
+                    CollectionTbEmpresa = query.Select(e => new
+                    {
 
+                        nrCNPJBase = e.nrCNPJBase,
+                        dsCertificadoDigital = e.dsCertificadoDigital,
+                        dsCertificadoDigitalSenha = e.dsCertificadoDigitalSenha,
+                        cdEmpresaGrupo = e.cdEmpresaGrupo,
+                    }).Take(1).ToList<dynamic>();
+                }
+
+                retorno.TotalDeRegistros = CollectionTbEmpresa.Count;
+                retorno.Registros = CollectionTbEmpresa;
 
                 return retorno;
             }

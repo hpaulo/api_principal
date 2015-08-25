@@ -347,14 +347,14 @@ namespace api.Negocios.Tax
                             nrCNPJ = e.j.m.nrCNPJ,
                             dsCertificadoDigital = e.e.dsCertificadoDigital,
                             dsCertificadoDigitalSenha =e.e.dsCertificadoDigitalSenha,
-                        }).Take(1).ToList<dynamic>();
+                        }).ToList<dynamic>();
                 }
                 else if (colecao == 3) //Consulta as notas disponíveis para download
                 {
                     CollectionTbManifesto = _db.tbManifestos
                         .Join(_db.tbEmpresaFiliais, m => m.nrCNPJ, f => f.nrCNPJ, (m, f) => new { m, f })
                         .Join(_db.tbEmpresas, j => j.f.nrCNPJBase, e => e.nrCNPJBase, (j, e) => new { j, e })
-                        .Where(e => (e.j.m.cdSituacaoManifesto == 135 || e.j.m.cdSituacaoManifesto == 573 || e.j.m.cdSituacaoManifesto == 650) && e.j.m.cdSituacaoDownload == null)
+                        .Where(e => (e.j.m.cdSituacaoManifesto == 135 || e.j.m.cdSituacaoManifesto == 573 || e.j.m.cdSituacaoManifesto == 655) && e.j.m.cdSituacaoDownload == null)
                         .Select(e => new
                         {
                             idManifesto = e.j.m.idManifesto,
@@ -363,7 +363,7 @@ namespace api.Negocios.Tax
                             nrCNPJ = e.j.m.nrCNPJ,
                             dsCertificadoDigital = e.e.dsCertificadoDigital,
                             dsCertificadoDigitalSenha = e.e.dsCertificadoDigitalSenha,
-                        }).ToList<dynamic>();
+                        }).Take(11).ToList<dynamic>();
                 }
                 retorno.TotalDeRegistros = CollectionTbManifesto.Count();
                 retorno.Registros = CollectionTbManifesto;
