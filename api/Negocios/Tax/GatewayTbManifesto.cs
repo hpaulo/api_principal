@@ -363,7 +363,7 @@ namespace api.Negocios.Tax
                             nrCNPJ = e.j.m.nrCNPJ,
                             dsCertificadoDigital = e.e.dsCertificadoDigital,
                             dsCertificadoDigitalSenha = e.e.dsCertificadoDigitalSenha,
-                        }).Take(11).ToList<dynamic>();
+                        }).ToList<dynamic>();
                 }
                 retorno.TotalDeRegistros = CollectionTbManifesto.Count();
                 retorno.Registros = CollectionTbManifesto;
