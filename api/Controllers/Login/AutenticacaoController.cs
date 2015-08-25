@@ -157,7 +157,8 @@ namespace api.Controllers.Login
                 List<dynamic> controllers = _db.webpages_Controllers
                 .Where(e => e.id_subController == null)
                 .Where(e => list.Contains(e.id_controller))
-                .OrderBy(e => e.ds_controller)
+                .OrderByDescending(e => e.nuOrdem)
+                .ThenBy(e => e.ds_controller)
                 .Select(e => new
                 {
 
@@ -182,7 +183,8 @@ namespace api.Controllers.Login
                     subControllers = _db.webpages_Controllers
                                                                 .Where(sub => sub.id_subController == e.id_controller)
                                                                 .Where(sub => list.Contains(sub.id_controller))
-                                                                .OrderBy(sub => sub.ds_controller)
+                                                                .OrderByDescending(sub => e.nuOrdem)
+                                                                .ThenBy(sub => sub.ds_controller)
                                                                 .Select(sub => new
                                                                 {
                                                                     id_controller = sub.id_controller,
@@ -204,7 +206,8 @@ namespace api.Controllers.Login
                                                                     }
                                                                                                         ).ToList<dynamic>(),
                                                                     subControllers = _db.webpages_Controllers
-                                                                                        .OrderBy(sub2 => sub2.ds_controller)
+                                                                                        .OrderByDescending(sub2 => e.nuOrdem)
+                                                                                        .ThenBy(sub2 => sub2.ds_controller)
                                                                                         .Where(sub2 => sub2.id_subController == sub.id_controller)
                                                                                         .Where(sub2 => list.Contains(sub2.id_controller))
                                                                                         .Select(sub2 => new
