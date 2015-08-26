@@ -365,6 +365,7 @@ namespace api.Negocios.Tax
                             dsCertificadoDigitalSenha = e.e.dsCertificadoDigitalSenha,
                         }).ToList<dynamic>();
                 }
+
                 retorno.TotalDeRegistros = CollectionTbManifesto.Count();
                 retorno.Registros = CollectionTbManifesto;
 
