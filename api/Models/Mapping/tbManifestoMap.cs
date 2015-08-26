@@ -30,7 +30,7 @@ namespace api.Models.Mapping
                 .HasMaxLength(60);
 
             this.Property(t => t.nrEmitenteIE)
-                .HasMaxLength(14);
+                .HasMaxLength(15);
 
             this.Property(t => t.tpOperacao)
                 .IsFixedLength()

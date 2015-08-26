@@ -224,6 +224,7 @@ namespace api.Models
         public DbSet<tbEmpresaFilial> tbEmpresaFiliais { get; set; }
         public DbSet<tbEmpresaGrupo> tbEmpresaGrupos { get; set; }
         public DbSet<tbLogErro> tbLogErros { get; set; }
+        public DbSet<tbControleNSU> tbControleNSUs { get; set; }
 
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -435,6 +436,7 @@ namespace api.Models
             modelBuilder.Configurations.Add(new tbEmpresaGrupoMap());
             modelBuilder.Configurations.Add(new tbEmpresaMap());
             modelBuilder.Configurations.Add(new tbLogErroMap());
+            modelBuilder.Configurations.Add(new tbControleNSUMap());
         }
     }
 }
