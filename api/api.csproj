@@ -90,6 +90,15 @@
       <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="NFe.Components">
+      <HintPath>..\Biblioteca de terceiros\NFe.Components.dll</HintPath>
+    </Reference>
+    <Reference Include="NFe.ConvertTxt">
+      <HintPath>..\Biblioteca de terceiros\NFe.ConvertTxt.dll</HintPath>
+    </Reference>
+    <Reference Include="NFe.Settings">
+      <HintPath>..\Biblioteca de terceiros\NFe.Settings.dll</HintPath>
+    </Reference>
     <Reference Include="OFXSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Biblioteca de terceiros\OFXSharp.dll</HintPath>
@@ -248,6 +257,7 @@
     <Compile Include="Bibliotecas\LogAcaoUsuario.cs" />
     <Compile Include="Bibliotecas\LogAcesso.cs" />
     <Compile Include="Bibliotecas\MensagemErro.cs" />
+    <Compile Include="Bibliotecas\nfeRead.cs" />
     <Compile Include="Bibliotecas\Permissoes.cs" />
     <Compile Include="Bibliotecas\Token.cs" />
     <Compile Include="Controllers\Administracao\TbEmpresaController.cs" />

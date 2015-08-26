@@ -70,7 +70,7 @@ namespace api.Models.Mapping
             this.Property(t => t.cdSituacaoManifesto).HasColumnName("cdSituacaoManifesto");
             this.Property(t => t.dsSituacaoManifesto).HasColumnName("dsSituacaoManifesto");
             this.Property(t => t.nrProtocoloManifesto).HasColumnName("nrProtocoloManifesto");
-            this.Property(t => t.xmlNFe).HasColumnName("xmlNFe");
+            this.Property(t => t.xmlNFe).HasColumnName("xmlNFe").HasColumnType("xml").IsUnicode(true);
             this.Property(t => t.nrProtocoloDownload).HasColumnName("nrProtocoloDownload");
             this.Property(t => t.cdSituacaoDownload).HasColumnName("cdSituacaoDownload");
             this.Property(t => t.dsSituacaoDownload).HasColumnName("dsSituacaoDownload");
