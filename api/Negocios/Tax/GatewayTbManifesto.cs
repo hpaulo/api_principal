@@ -354,7 +354,7 @@ namespace api.Negocios.Tax
                     CollectionTbManifesto = _db.tbManifestos
                         .Join(_db.tbEmpresaFiliais, m => m.nrCNPJ, f => f.nrCNPJ, (m, f) => new { m, f })
                         .Join(_db.tbEmpresas, j => j.f.nrCNPJBase, e => e.nrCNPJBase, (j, e) => new { j, e })
-                        .Where(e => (e.j.m.cdSituacaoManifesto == 135 || e.j.m.cdSituacaoManifesto == 573 || e.j.m.cdSituacaoManifesto == 655) && e.j.m.cdSituacaoDownload == null)
+                        .Where(e => (e.j.m.cdSituacaoManifesto == 135 || e.j.m.cdSituacaoManifesto == 573|| e.j.m.cdSituacaoManifesto == 655) && e.j.m.cdSituacaoDownload == null)
                         .Select(e => new
                         {
                             idManifesto = e.j.m.idManifesto,
@@ -392,7 +392,9 @@ namespace api.Negocios.Tax
         public static Int32 Add(string token, tbManifesto param)
         {
             try
-            {
+            {    // Atualiza o contexto
+                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
                 _db.tbManifestos.Add(param);
                 _db.SaveChanges();
                 return param.idManifesto;
@@ -450,6 +452,9 @@ namespace api.Negocios.Tax
         {
             try
             {
+                // Atualiza o contexto
+                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
                 tbManifesto value = _db.tbManifestos
                         .Where(e => e.idManifesto == param.idManifesto)
                         .First<tbManifesto>();

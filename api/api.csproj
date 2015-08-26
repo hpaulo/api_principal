@@ -321,6 +321,7 @@
     <Compile Include="Controllers\Pos\TicketCarController.cs" />
     <Compile Include="Controllers\Pos\ValeCardController.cs" />
     <Compile Include="Controllers\SignalR\MonitorCargasController.cs" />
+    <Compile Include="Controllers\Tax\TbControleNSUController.cs" />
     <Compile Include="Controllers\Tax\TbManifestoController.cs" />
     <Compile Include="Controllers\Util\BancosController.cs" />
     <Compile Include="Controllers\Util\ExportarController.cs" />
@@ -332,6 +333,7 @@
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbBancoParametroMap.cs" />
+    <Compile Include="Models\Mapping\tbControleNSUMap.cs" />
     <Compile Include="Models\Mapping\tbEmpresaFilialMap.cs" />
     <Compile Include="Models\Mapping\tbEmpresaGrupoMap.cs" />
     <Compile Include="Models\Mapping\tbEmpresaMap.cs" />
@@ -341,6 +343,7 @@
     <Compile Include="Models\Object\ConciliaRecebimentoParcela.cs" />
     <Compile Include="Models\Object\RecebimentosParcela.cs" />
     <Compile Include="Models\tbBancoParametro.cs" />
+    <Compile Include="Models\tbControleNSU.cs" />
     <Compile Include="Models\tbEmpresa.cs" />
     <Compile Include="Models\tbEmpresaFilial.cs" />
     <Compile Include="Models\tbEmpresaGrupo.cs" />
@@ -824,6 +827,7 @@
     <Compile Include="Negocios\Card\GatewayTbEstadoTransacaoTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbProdutoTef.cs" />
     <Compile Include="Negocios\SignalR\GatewayMonitorCargas.cs" />
+    <Compile Include="Negocios\Tax\GatewayTbControleNSU.cs" />
     <Compile Include="Negocios\Tax\GatewayTbManifesto.cs" />
     <Compile Include="Negocios\Util\GatewayBancos.cs" />
     <Compile Include="Negocios\Util\GatewayExportar.cs" />
