@@ -330,6 +330,7 @@
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbBancoParametroMap.cs" />
+    <Compile Include="Models\Mapping\tbControleNSUMap.cs" />
     <Compile Include="Models\Mapping\tbEmpresaFilialMap.cs" />
     <Compile Include="Models\Mapping\tbEmpresaGrupoMap.cs" />
     <Compile Include="Models\Mapping\tbEmpresaMap.cs" />
@@ -339,6 +340,7 @@
     <Compile Include="Models\Object\ConciliaRecebimentoParcela.cs" />
     <Compile Include="Models\Object\RecebimentosParcela.cs" />
     <Compile Include="Models\tbBancoParametro.cs" />
+    <Compile Include="Models\tbControleNSU.cs" />
     <Compile Include="Models\tbEmpresa.cs" />
     <Compile Include="Models\tbEmpresaFilial.cs" />
     <Compile Include="Models\tbEmpresaGrupo.cs" />
