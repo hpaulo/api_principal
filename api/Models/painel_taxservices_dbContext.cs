@@ -225,6 +225,11 @@ namespace api.Models
         public DbSet<tbEmpresaGrupo> tbEmpresaGrupos { get; set; }
         public DbSet<tbLogErro> tbLogErros { get; set; }
         public DbSet<tbControleNSU> tbControleNSUs { get; set; }
+        public DbSet<tbCanal> tbCanals { get; set; }
+        public DbSet<tbNew> tbNews { get; set; }
+        public DbSet<tbCatalogo> tbCatalogos { get; set; }
+        public DbSet<tbNewsStatu> tbNewsStatuss { get; set; }
+        public DbSet<tbNewsGrupo> tbNewsGrupos { get; set; }
 
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -437,6 +442,11 @@ namespace api.Models
             modelBuilder.Configurations.Add(new tbEmpresaMap());
             modelBuilder.Configurations.Add(new tbLogErroMap());
             modelBuilder.Configurations.Add(new tbControleNSUMap());
+            modelBuilder.Configurations.Add(new tbCanalMap());
+            modelBuilder.Configurations.Add(new tbNewMap());
+            modelBuilder.Configurations.Add(new tbCatalogoMap());
+            modelBuilder.Configurations.Add(new tbNewsStatuMap());
+            modelBuilder.Configurations.Add(new tbNewsGrupoMap());
         }
     }
 }

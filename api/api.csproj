@@ -250,6 +250,11 @@
     <Compile Include="Bibliotecas\MensagemErro.cs" />
     <Compile Include="Bibliotecas\Permissoes.cs" />
     <Compile Include="Bibliotecas\Token.cs" />
+    <Compile Include="Controllers\Administracao\TbNewsStatusController.cs" />
+    <Compile Include="Controllers\Administracao\TbNewsGrupoController.cs" />
+    <Compile Include="Controllers\Administracao\TbCatalogoController.cs" />
+    <Compile Include="Controllers\Administracao\TbNewsController.cs" />
+    <Compile Include="Controllers\Administracao\TbCanalController.cs" />
     <Compile Include="Controllers\Administracao\TbEmpresaController.cs" />
     <Compile Include="Controllers\Administracao\TbEmpresaFilialController.cs" />
     <Compile Include="Controllers\Administracao\TbEmpresaGrupoController.cs" />
@@ -332,6 +337,16 @@
     <Compile Include="Hubs\ServerHub.cs" />
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
+    <Compile Include="Models\Mapping\tbNewsGrupoMap.cs" />
+    <Compile Include="Models\tbNewsGrupo.cs" />
+    <Compile Include="Models\Mapping\tbNewsStatuMap.cs" />
+    <Compile Include="Models\tbNewsStatu.cs" />
+    <Compile Include="Models\Mapping\tbCatalogoMap.cs" />
+    <Compile Include="Models\tbCatalogo.cs" />
+    <Compile Include="Models\Mapping\tbNewMap.cs" />
+    <Compile Include="Models\tbNew.cs" />
+    <Compile Include="Models\Mapping\tbCanalMap.cs" />
+    <Compile Include="Models\tbCanal.cs" />
     <Compile Include="Models\Mapping\tbBancoParametroMap.cs" />
     <Compile Include="Models\Mapping\tbControleNSUMap.cs" />
     <Compile Include="Models\Mapping\tbEmpresaFilialMap.cs" />
@@ -760,6 +775,10 @@
     <Compile Include="Models\webpages_Roles.cs" />
     <Compile Include="Models\webpages_Users.cs" />
     <Compile Include="Models\webpages_UsersInRoles.cs" />
+    <Compile Include="Negocios\Administracao\GatewaytbNewsStatu.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbNewsGrupo.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbCatalogo.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbNews.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbEmpresa.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbEmpresaFilial.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbEmpresaGrupo.cs" />
@@ -778,6 +797,7 @@
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsers.cs" />
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsersInRoles.cs" />
     <Compile Include="Controllers\Card\TbModoEntradaTefController.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbCanal.cs" />
     <Compile Include="Negocios\Card\GatewayConciliacaoBancaria.cs" />
     <Compile Include="Negocios\Card\GatewayTbBancoParametro.cs" />
     <Compile Include="Negocios\Card\GatewayTbLoginAdquirenteEmpresa.cs" />
