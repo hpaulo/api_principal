@@ -320,7 +320,6 @@
     <Compile Include="Controllers\Pos\TerminalLogicoController.cs" />
     <Compile Include="Controllers\Pos\TicketCarController.cs" />
     <Compile Include="Controllers\Pos\ValeCardController.cs" />
-    <Compile Include="Controllers\SignalR\MonitorCargasController.cs" />
     <Compile Include="Controllers\Tax\TbManifestoController.cs" />
     <Compile Include="Controllers\Util\BancosController.cs" />
     <Compile Include="Controllers\Util\ExportarController.cs" />
@@ -328,7 +327,6 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
-    <Compile Include="Hubs\ServerHub.cs" />
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbBancoParametroMap.cs" />
@@ -823,12 +821,10 @@
     <Compile Include="Negocios\Card\GatewayTbBandeiraTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbEstadoTransacaoTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbProdutoTef.cs" />
-    <Compile Include="Negocios\SignalR\GatewayMonitorCargas.cs" />
     <Compile Include="Negocios\Tax\GatewayTbManifesto.cs" />
     <Compile Include="Negocios\Util\GatewayBancos.cs" />
     <Compile Include="Negocios\Util\GatewayExportar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Startup.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Areas\HelpPage\HelpPage.css" />
@@ -891,24 +887,6 @@
     <None Include="Properties\PublishProfiles\Api.AtosCpaital.pubxml" />
     <None Include="Properties\PublishProfiles\ApiPortal.pubxml" />
     <None Include="Properties\PublishProfiles\LocalPublish.pubxml" />
-    <None Include="Scripts\jquery-2.1.4.intellisense.js" />
-    <Content Include="Scripts\jquery-2.1.4.js" />
-    <Content Include="Scripts\jquery-2.1.4.min.js" />
-    <Content Include="Scripts\jquery-2.1.4.min.map" />
-    <Content Include="Scripts\jquery-ui-1.11.4.js" />
-    <Content Include="Scripts\jquery-ui-1.11.4.min.js" />
-    <None Include="Scripts\jquery.validate-vsdoc.js" />
-    <Content Include="Scripts\jquery.signalR-2.2.0.js" />
-    <Content Include="Scripts\jquery.signalR-2.2.0.min.js" />
-    <Content Include="Scripts\jquery.unobtrusive-ajax.js" />
-    <Content Include="Scripts\jquery.unobtrusive-ajax.min.js" />
-    <Content Include="Scripts\jquery.validate.js" />
-    <Content Include="Scripts\jquery.validate.min.js" />
-    <Content Include="Scripts\jquery.validate.unobtrusive.js" />
-    <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
-    <Content Include="Scripts\knockout-3.3.0.debug.js" />
-    <Content Include="Scripts\knockout-3.3.0.js" />
-    <Content Include="Scripts\modernizr-2.8.3.js" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
@@ -933,7 +911,6 @@
     <Content Include="Images\orderedList7.png" />
     <Content Include="Images\orderedList8.png" />
     <Content Include="Images\orderedList9.png" />
-    <Content Include="Scripts\_references.js" />
     <Content Include="Views\Web.config" />
     <Content Include="Views\_ViewStart.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
