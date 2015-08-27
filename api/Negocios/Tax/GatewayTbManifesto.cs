@@ -114,9 +114,69 @@ namespace api.Negocios.Tax
                         entity = entity.Where(e => e.nrEmitenteIE.Equals(nrEmitenteIE)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.DTEMISSAO:
-                        DateTime dtEmissao = DateTime.ParseExact(item.Value + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture); //Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtEmissao.Equals(dtEmissao)).AsQueryable<tbManifesto>();
+                        //DateTime dtEmissao = DateTime.ParseExact(item.Value + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture); //Convert.ToDateTime(item.Value);
+                        //entity = entity.Where(e => e.dtEmissao.Equals(dtEmissao)).AsQueryable<tbManifesto>();
 
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            //entity = entity.Where(e => e.dtaVenda >= dtaIni && e.dtaVenda <= dtaFim);
+                            entity = entity.Where(e => e.dtEmissao != null && (e.dtEmissao.Value.Year > dtaIni.Year || (e.dtEmissao.Value.Year == dtaIni.Year && e.dtEmissao.Value.Month > dtaIni.Month) ||
+                                                                                          (e.dtEmissao.Value.Year == dtaIni.Year && e.dtEmissao.Value.Month == dtaIni.Month && e.dtEmissao.Value.Day >= dtaIni.Day))
+                                                    && (e.dtEmissao.Value.Year < dtaFim.Year || (e.dtEmissao.Value.Year == dtaFim.Year && e.dtEmissao.Value.Month < dtaFim.Month) ||
+                                                                                          (e.dtEmissao.Value.Year == dtaFim.Year && e.dtEmissao.Value.Month == dtaFim.Month && e.dtEmissao.Value.Day <= dtaFim.Day)));
+                        }
+                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtEmissao >= dta);
+                        }
+                        else if (item.Value.Contains("<")) // MENOR IGUAL
+                        {
+                            string busca;
+                            if (item.Value.Length == 8)
+                            {
+                                string dia = item.Value.Substring(6, 1);
+                                string anoMes = item.Value.Substring(0, 6);
+                                busca = anoMes + "0" + dia;
+                            }
+                            else
+                            {
+                                busca = item.Value.Replace("<", "");
+                            }
+                            //busca = item.Value.Replace("<", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtEmissao <= dta);
+                        }
+                        else if (item.Value.Length == 4)
+                        {
+                            string busca = item.Value + "0101";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtEmissao != null && e.dtEmissao.Value.Year == dtaIni.Year);
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtEmissao != null && e.dtEmissao.Value.Year == dtaIni.Year && e.dtEmissao.Value.Month == dtaIni.Month);
+                        }
+                        else if (item.Value.Length == 7)
+                        {
+                            string dia = item.Value.Substring(6, 1);
+                            string anoMes = item.Value.Substring(0, 6);
+                            string busca = anoMes + "0" + dia;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtEmissao != null && e.dtEmissao.Value.Year == dtaIni.Year && e.dtEmissao.Value.Month == dtaIni.Month && e.dtEmissao.Value.Day == dtaIni.Day);
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtEmissao != null && e.dtEmissao.Value.Year == dtaIni.Year && e.dtEmissao.Value.Month == dtaIni.Month && e.dtEmissao.Value.Day == dtaIni.Day);
+                        }
                         break;
                     case CAMPOS.TPOPERACAO:
                         string tpOperacao = Convert.ToString(item.Value);

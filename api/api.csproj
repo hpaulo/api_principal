@@ -124,8 +124,8 @@
       <HintPath>..\packages\Microsoft.AspNet.WebApi.Cors.5.2.3\lib\net45\System.Web.Http.Cors.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="System.Web.Http.OData, Version=5.5.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.AspNet.WebApi.OData.5.5.1\lib\net45\System.Web.Http.OData.dll</HintPath>
+    <Reference Include="System.Web.Http.OData, Version=5.7.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.OData.5.7.0\lib\net45\System.Web.Http.OData.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Web.Http.Tracing, Version=5.2.3.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -232,6 +232,11 @@
     <Compile Include="Bibliotecas\nfeRead.cs" />
     <Compile Include="Bibliotecas\Permissoes.cs" />
     <Compile Include="Bibliotecas\Token.cs" />
+    <Compile Include="Controllers\Administracao\TbNewsStatusController.cs" />
+    <Compile Include="Controllers\Administracao\TbNewsGrupoController.cs" />
+    <Compile Include="Controllers\Administracao\TbCatalogoController.cs" />
+    <Compile Include="Controllers\Administracao\TbNewsController.cs" />
+    <Compile Include="Controllers\Administracao\TbCanalController.cs" />
     <Compile Include="Controllers\Administracao\TbEmpresaController.cs" />
     <Compile Include="Controllers\Administracao\TbEmpresaFilialController.cs" />
     <Compile Include="Controllers\Administracao\TbEmpresaGrupoController.cs" />
@@ -311,6 +316,16 @@
     </Compile>
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
+    <Compile Include="Models\Mapping\tbNewsGrupoMap.cs" />
+    <Compile Include="Models\tbNewsGrupos.cs" />
+    <Compile Include="Models\Mapping\tbNewsStatuMap.cs" />
+    <Compile Include="Models\tbNewsStatus.cs" />
+    <Compile Include="Models\Mapping\tbCatalogoMap.cs" />
+    <Compile Include="Models\tbCatalogo.cs" />
+    <Compile Include="Models\Mapping\tbNewMap.cs" />
+    <Compile Include="Models\tbNews.cs" />
+    <Compile Include="Models\Mapping\tbCanalMap.cs" />
+    <Compile Include="Models\tbCanal.cs" />
     <Compile Include="Models\Mapping\tbBancoParametroMap.cs" />
     <Compile Include="Models\Mapping\tbControleNSUMap.cs" />
     <Compile Include="Models\Mapping\tbEmpresaFilialMap.cs" />
@@ -739,6 +754,10 @@
     <Compile Include="Models\webpages_Roles.cs" />
     <Compile Include="Models\webpages_Users.cs" />
     <Compile Include="Models\webpages_UsersInRoles.cs" />
+    <Compile Include="Negocios\Administracao\GatewaytbNewsStatus.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbNewsGrupo.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbCatalogo.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbNews.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbEmpresa.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbEmpresaFilial.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbEmpresaGrupo.cs" />
@@ -757,6 +776,7 @@
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsers.cs" />
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsersInRoles.cs" />
     <Compile Include="Controllers\Card\TbModoEntradaTefController.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbCanal.cs" />
     <Compile Include="Negocios\Card\GatewayConciliacaoBancaria.cs" />
     <Compile Include="Negocios\Card\GatewayTbBancoParametro.cs" />
     <Compile Include="Negocios\Card\GatewayTbLoginAdquirenteEmpresa.cs" />
@@ -871,6 +891,8 @@
     <None Include="Properties\PublishProfiles\Api.AtosCpaital.pubxml" />
     <None Include="Properties\PublishProfiles\ApiPortal.pubxml" />
     <None Include="Properties\PublishProfiles\LocalPublish.pubxml" />
+    <Content Include="Scripts\jquery-2.1.4.min.map" />
+    <None Include="Scripts\jquery.validate-vsdoc.js" />
     <None Include="Scripts\jquery-2.1.4.intellisense.js" />
     <Content Include="Scripts\jquery-2.1.4.js" />
     <Content Include="Scripts\jquery-2.1.4.min.js" />
@@ -880,15 +902,14 @@
     <Content Include="Scripts\jquery.signalR-2.1.2.min.js" />
     <Content Include="Scripts\jquery.unobtrusive-ajax.js" />
     <Content Include="Scripts\jquery.unobtrusive-ajax.min.js" />
-    <None Include="Scripts\jquery.validate-vsdoc.js" />
     <Content Include="Scripts\jquery.validate.js" />
     <Content Include="Scripts\jquery.validate.min.js" />
+    <None Include="Scripts\_references.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\knockout-3.3.0.debug.js" />
     <Content Include="Scripts\knockout-3.3.0.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
-    <None Include="Scripts\_references.js" />
     <Content Include="Web.config">
       <SubType>Designer</SubType>
     </Content>
@@ -918,7 +939,6 @@
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
-    <Content Include="Scripts\jquery-2.1.4.min.map" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
