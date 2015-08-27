@@ -12,14 +12,14 @@ using System.Data.Entity.Core.Objects;
 
 namespace api.Negocios.Admin
 {
-		public class GatewaytbNewsStatu
+		public class GatewaytbNewsStatus
 		{
         static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
-        public GatewaytbNewsStatu()
+        public GatewaytbNewsStatus()
         {
             _db.Configuration.ProxyCreationEnabled = false;
         }
@@ -46,7 +46,7 @@ namespace api.Negocios.Admin
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<tbNewsStatu> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<tbNewsStatus> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.tbNewsStatuss.AsQueryable();
@@ -64,19 +64,19 @@ namespace api.Negocios.Admin
 
 								case CAMPOS.IDNEWS:
 									Int32 idNews = Convert.ToInt32(item.Value);
-									entity = entity.Where(e => e.idNews.Equals(idNews)).AsQueryable<tbNewsStatu>();
+									entity = entity.Where(e => e.idNews.Equals(idNews)).AsQueryable<tbNewsStatus>();
 								break;
 								case CAMPOS.ID_USERS:
 									Int32 id_users = Convert.ToInt32(item.Value);
-									entity = entity.Where(e => e.id_users.Equals(id_users)).AsQueryable<tbNewsStatu>();
+									entity = entity.Where(e => e.id_users.Equals(id_users)).AsQueryable<tbNewsStatus>();
 								break;
 								case CAMPOS.FLRECEBIDO:
 									Boolean flRecebido = Convert.ToBoolean(item.Value);
-									entity = entity.Where(e => e.flRecebido.Equals(flRecebido)).AsQueryable<tbNewsStatu>();
+									entity = entity.Where(e => e.flRecebido.Equals(flRecebido)).AsQueryable<tbNewsStatus>();
 								break;
 								case CAMPOS.FLLIDO:
 									Boolean flLido = Convert.ToBoolean(item.Value);
-									entity = entity.Where(e => e.flLido.Equals(flLido)).AsQueryable<tbNewsStatu>();
+									entity = entity.Where(e => e.flLido.Equals(flLido)).AsQueryable<tbNewsStatus>();
 								break;
 
                     }
@@ -90,20 +90,20 @@ namespace api.Negocios.Admin
                 {
 
 						case CAMPOS.IDNEWS: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.idNews).AsQueryable<tbNewsStatu>();
-							else entity = entity.OrderByDescending(e =>  e.idNews).AsQueryable<tbNewsStatu>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.idNews).AsQueryable<tbNewsStatus>();
+							else entity = entity.OrderByDescending(e =>  e.idNews).AsQueryable<tbNewsStatus>();
 						break;
 						case CAMPOS.ID_USERS: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.id_users).AsQueryable<tbNewsStatu>();
-							else entity = entity.OrderByDescending(e =>  e.id_users).AsQueryable<tbNewsStatu>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.id_users).AsQueryable<tbNewsStatus>();
+							else entity = entity.OrderByDescending(e =>  e.id_users).AsQueryable<tbNewsStatus>();
 						break;
 						case CAMPOS.FLRECEBIDO: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.flRecebido).AsQueryable<tbNewsStatu>();
-							else entity = entity.OrderByDescending(e =>  e.flRecebido).AsQueryable<tbNewsStatu>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.flRecebido).AsQueryable<tbNewsStatus>();
+							else entity = entity.OrderByDescending(e =>  e.flRecebido).AsQueryable<tbNewsStatus>();
 						break;
 						case CAMPOS.FLLIDO: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.flLido).AsQueryable<tbNewsStatu>();
-							else entity = entity.OrderByDescending(e =>  e.flLido).AsQueryable<tbNewsStatu>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.flLido).AsQueryable<tbNewsStatus>();
+							else entity = entity.OrderByDescending(e =>  e.flLido).AsQueryable<tbNewsStatus>();
 						break;
 
                 }
@@ -194,7 +194,7 @@ namespace api.Negocios.Admin
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbNewsStatu param)
+        public static Int32 Add(string token, tbNewsStatus param)
         {
 			try
 			{
@@ -250,16 +250,16 @@ namespace api.Negocios.Admin
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbNewsStatu param)
+        public static void Update(string token, tbNewsStatus param)
         {
 			try
 			{
 				// Atualiza o contexto
                 ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
                 
-				tbNewsStatu value = _db.tbNewsStatuss
+				tbNewsStatus value = _db.tbNewsStatuss
 						.Where(e => e.idNews.Equals(param.idNews))
-						.First<tbNewsStatu>();
+						.First<tbNewsStatus>();
 
 				// OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 	            

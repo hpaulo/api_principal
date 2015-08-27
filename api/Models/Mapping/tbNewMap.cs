@@ -4,7 +4,7 @@ using System.Data.Entity.ModelConfiguration;
 
 namespace api.Models.Mapping
 {
-    public class tbNewMap : EntityTypeConfiguration<tbNew>
+    public class tbNewMap : EntityTypeConfiguration<tbNews>
     {
         public tbNewMap()
         {

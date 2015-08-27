@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace api.Models
 {
-    public partial class tbNew
+    public partial class tbNews
     {
-        public tbNew()
+        public tbNews()
         {
-            this.tbNewsStatus = new List<tbNewsStatu>();
+            this.tbNewsStatus = new List<tbNewsStatus>();
         }
 
         public int idNews { get; set; }
@@ -20,6 +20,6 @@ namespace api.Models
         public Nullable<System.DateTime> dtEnvio { get; set; }
         public virtual tbCanal tbCanal { get; set; }
         public virtual tbCatalogo tbCatalogo { get; set; }
-        public virtual ICollection<tbNewsStatu> tbNewsStatus { get; set; }
+        public virtual ICollection<tbNewsStatus> tbNewsStatus { get; set; }
     }
 }

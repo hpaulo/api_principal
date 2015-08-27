@@ -27,7 +27,7 @@ namespace api.Controllers.Admin
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-					Retorno dados = GatewayTbNewsStatus.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+					Retorno dados = GatewaytbNewsStatus.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 					log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse<Retorno>(HttpStatusCode.OK,dados);
@@ -60,7 +60,7 @@ namespace api.Controllers.Admin
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-					Int32 dados = GatewayTbNewsStatus.Add(token, param);
+					Int32 dados = GatewaytbNewsStatus.Add(token, param);
 					log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
@@ -92,7 +92,7 @@ namespace api.Controllers.Admin
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbNewsStatus.Update(token, param);
+                    GatewaytbNewsStatus.Update(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
@@ -124,7 +124,7 @@ namespace api.Controllers.Admin
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbNewsStatus.Delete(token, idNews);
+                    GatewaytbNewsStatus.Delete(token, idNews);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);

@@ -7,11 +7,11 @@ namespace api.Models
     {
         public tbCanal()
         {
-            this.tbNews = new List<tbNew>();
+            this.tbNews = new List<tbNews>();
         }
 
         public short cdCanal { get; set; }
         public string dsCanal { get; set; }
-        public virtual ICollection<tbNew> tbNews { get; set; }
+        public virtual ICollection<tbNews> tbNews { get; set; }
     }
 }

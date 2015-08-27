@@ -4,7 +4,7 @@ using System.Data.Entity.ModelConfiguration;
 
 namespace api.Models.Mapping
 {
-    public class tbNewsGrupoMap : EntityTypeConfiguration<tbNewsGrupo>
+    public class tbNewsGrupoMap : EntityTypeConfiguration<tbNewsGrupos>
     {
         public tbNewsGrupoMap()
         {
@@ -20,7 +20,7 @@ namespace api.Models.Mapping
                 .HasMaxLength(30);
 
             // Table & Column Mappings
-            this.ToTable("tbNewsGrupo", "admin");
+            this.ToTable("tbNewsGrupos", "admin");
             this.Property(t => t.cdNewsGrupo).HasColumnName("cdNewsGrupo");
             this.Property(t => t.cdEmpresaGrupo).HasColumnName("cdEmpresaGrupo");
             this.Property(t => t.dsNewsGrupo).HasColumnName("dsNewsGrupo");

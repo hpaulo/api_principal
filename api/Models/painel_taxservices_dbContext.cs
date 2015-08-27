@@ -226,10 +226,10 @@ namespace api.Models
         public DbSet<tbLogErro> tbLogErros { get; set; }
         public DbSet<tbControleNSU> tbControleNSUs { get; set; }
         public DbSet<tbCanal> tbCanals { get; set; }
-        public DbSet<tbNew> tbNews { get; set; }
+        public DbSet<tbNews> tbNews { get; set; }
         public DbSet<tbCatalogo> tbCatalogos { get; set; }
-        public DbSet<tbNewsStatu> tbNewsStatuss { get; set; }
-        public DbSet<tbNewsGrupo> tbNewsGrupos { get; set; }
+        public DbSet<tbNewsStatus> tbNewsStatuss { get; set; }
+        public DbSet<tbNewsGrupos> tbNewsGrupos { get; set; }
 
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)

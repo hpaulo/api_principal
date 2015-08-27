@@ -4,7 +4,7 @@ using System.Data.Entity.ModelConfiguration;
 
 namespace api.Models.Mapping
 {
-    public class tbNewsStatuMap : EntityTypeConfiguration<tbNewsStatu>
+    public class tbNewsStatuMap : EntityTypeConfiguration<tbNewsStatus>
     {
         public tbNewsStatuMap()
         {
@@ -26,7 +26,7 @@ namespace api.Models.Mapping
             this.Property(t => t.flLido).HasColumnName("flLido");
 
             // Relationships
-            this.HasRequired(t => t.tbNew)
+            this.HasRequired(t => t.tbNews)
                 .WithMany(t => t.tbNewsStatus)
                 .HasForeignKey(d => d.idNews);
             this.HasRequired(t => t.webpages_Users)

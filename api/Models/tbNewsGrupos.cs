@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace api.Models
 {
-    public partial class tbNewsGrupo
+    public partial class tbNewsGrupos
     {
-        public tbNewsGrupo()
+        public tbNewsGrupos()
         {
             this.webpages_Users = new List<webpages_Users>();
             this.tbCatalogoes = new List<tbCatalogo>();

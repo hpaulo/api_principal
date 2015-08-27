@@ -15,7 +15,7 @@ namespace api.Controllers.Admin
     public class TbNewsGrupoController : ApiController
     {
     
-        // GET /tbNewsGrupo/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
+        // GET /tbNewsGrupos/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
@@ -49,8 +49,8 @@ namespace api.Controllers.Admin
             }
         }
 
-        // POST /tbNewsGrupo/token/
-        public HttpResponseMessage Post(string token, [FromBody]tbNewsGrupo param)
+        // POST /tbNewsGrupos/token/
+        public HttpResponseMessage Post(string token, [FromBody]tbNewsGrupos param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
@@ -81,8 +81,8 @@ namespace api.Controllers.Admin
             }
         }
 
-        // PUT /tbNewsGrupo/token/
-        public HttpResponseMessage Put(string token, [FromBody]tbNewsGrupo param)
+        // PUT /tbNewsGrupos/token/
+        public HttpResponseMessage Put(string token, [FromBody]tbNewsGrupos param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
@@ -113,7 +113,7 @@ namespace api.Controllers.Admin
             }
         }
 
-        // DELETE /tbNewsGrupo/token/cdNewsGrupo
+        // DELETE /tbNewsGrupos/token/cdNewsGrupo
         public HttpResponseMessage Delete(string token, Int32 cdNewsGrupo)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();

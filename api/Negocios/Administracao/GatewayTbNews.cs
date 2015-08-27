@@ -12,14 +12,14 @@ using System.Data.Entity.Core.Objects;
 
 namespace api.Negocios.Admin
 {
-		public class GatewaytbNew
+		public class GatewayTbNews
 		{
         static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
-        public GatewaytbNew()
+        public GatewayTbNews()
         {
             _db.Configuration.ProxyCreationEnabled = false;
         }
@@ -41,7 +41,7 @@ namespace api.Negocios.Admin
        };
 
         /// <summary>
-        /// Get tbNew/tbNew
+        /// Get tbNews/tbNews
         /// </summary>
         /// <param name="colecao"></param>
         /// <param name="campo"></param>
@@ -50,7 +50,7 @@ namespace api.Negocios.Admin
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<tbNew> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<tbNews> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.tbNews.AsQueryable();
@@ -68,35 +68,35 @@ namespace api.Negocios.Admin
 
 								case CAMPOS.IDNEWS:
 									Int32 idNews = Convert.ToInt32(item.Value);
-									entity = entity.Where(e => e.idNews.Equals(idNews)).AsQueryable<tbNew>();
+									entity = entity.Where(e => e.idNews.Equals(idNews)).AsQueryable<tbNews>();
 								break;
 								case CAMPOS.DSNEWS:
 									string dsNews = Convert.ToString(item.Value);
-									entity = entity.Where(e => e.dsNews.Equals(dsNews)).AsQueryable<tbNew>();
+									entity = entity.Where(e => e.dsNews.Equals(dsNews)).AsQueryable<tbNews>();
 								break;
 								case CAMPOS.DTNEWS:
 									DateTime dtNews = Convert.ToDateTime(item.Value);
-									entity = entity.Where(e => e.dtNews.Equals(dtNews)).AsQueryable<tbNew>();
+									entity = entity.Where(e => e.dtNews.Equals(dtNews)).AsQueryable<tbNews>();
 								break;
 								case CAMPOS.CDEMPRESAGRUPO:
 									Int32 cdEmpresaGrupo = Convert.ToInt32(item.Value);
-									entity = entity.Where(e => e.cdEmpresaGrupo.Equals(cdEmpresaGrupo)).AsQueryable<tbNew>();
+									entity = entity.Where(e => e.cdEmpresaGrupo.Equals(cdEmpresaGrupo)).AsQueryable<tbNews>();
 								break;
 								case CAMPOS.CDCATALOGO:
 									short cdCatalogo = short.Parse(item.Value);
-									entity = entity.Where(e => e.cdCatalogo.Equals(cdCatalogo)).AsQueryable<tbNew>();
+									entity = entity.Where(e => e.cdCatalogo.Equals(cdCatalogo)).AsQueryable<tbNews>();
 								break;
 								case CAMPOS.CDCANAL:
                                 short cdCanal = short.Parse(item.Value);
-									entity = entity.Where(e => e.cdCanal.Equals(cdCanal)).AsQueryable<tbNew>();
+									entity = entity.Where(e => e.cdCanal.Equals(cdCanal)).AsQueryable<tbNews>();
 								break;
 								case CAMPOS.CDREPORTER:
 									string cdReporter = Convert.ToString(item.Value);
-									entity = entity.Where(e => e.cdReporter.Equals(cdReporter)).AsQueryable<tbNew>();
+									entity = entity.Where(e => e.cdReporter.Equals(cdReporter)).AsQueryable<tbNews>();
 								break;
 								case CAMPOS.DTENVIO:
 									DateTime dtEnvio = Convert.ToDateTime(item.Value);
-									entity = entity.Where(e => e.dtEnvio.Equals(dtEnvio)).AsQueryable<tbNew>();
+									entity = entity.Where(e => e.dtEnvio.Equals(dtEnvio)).AsQueryable<tbNews>();
 								break;
 
                     }
@@ -110,36 +110,36 @@ namespace api.Negocios.Admin
                 {
 
 						case CAMPOS.IDNEWS: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.idNews).AsQueryable<tbNew>();
-							else entity = entity.OrderByDescending(e =>  e.idNews).AsQueryable<tbNew>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.idNews).AsQueryable<tbNews>();
+							else entity = entity.OrderByDescending(e =>  e.idNews).AsQueryable<tbNews>();
 						break;
 						case CAMPOS.DSNEWS: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.dsNews).AsQueryable<tbNew>();
-							else entity = entity.OrderByDescending(e =>  e.dsNews).AsQueryable<tbNew>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.dsNews).AsQueryable<tbNews>();
+							else entity = entity.OrderByDescending(e =>  e.dsNews).AsQueryable<tbNews>();
 						break;
 						case CAMPOS.DTNEWS: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.dtNews).AsQueryable<tbNew>();
-							else entity = entity.OrderByDescending(e =>  e.dtNews).AsQueryable<tbNew>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.dtNews).AsQueryable<tbNews>();
+							else entity = entity.OrderByDescending(e =>  e.dtNews).AsQueryable<tbNews>();
 						break;
 						case CAMPOS.CDEMPRESAGRUPO: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.cdEmpresaGrupo).AsQueryable<tbNew>();
-							else entity = entity.OrderByDescending(e =>  e.cdEmpresaGrupo).AsQueryable<tbNew>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.cdEmpresaGrupo).AsQueryable<tbNews>();
+							else entity = entity.OrderByDescending(e =>  e.cdEmpresaGrupo).AsQueryable<tbNews>();
 						break;
 						case CAMPOS.CDCATALOGO: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.cdCatalogo).AsQueryable<tbNew>();
-							else entity = entity.OrderByDescending(e =>  e.cdCatalogo).AsQueryable<tbNew>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.cdCatalogo).AsQueryable<tbNews>();
+							else entity = entity.OrderByDescending(e =>  e.cdCatalogo).AsQueryable<tbNews>();
 						break;
 						case CAMPOS.CDCANAL: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.cdCanal).AsQueryable<tbNew>();
-							else entity = entity.OrderByDescending(e =>  e.cdCanal).AsQueryable<tbNew>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.cdCanal).AsQueryable<tbNews>();
+							else entity = entity.OrderByDescending(e =>  e.cdCanal).AsQueryable<tbNews>();
 						break;
 						case CAMPOS.CDREPORTER: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.cdReporter).AsQueryable<tbNew>();
-							else entity = entity.OrderByDescending(e =>  e.cdReporter).AsQueryable<tbNew>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.cdReporter).AsQueryable<tbNews>();
+							else entity = entity.OrderByDescending(e =>  e.cdReporter).AsQueryable<tbNews>();
 						break;
 						case CAMPOS.DTENVIO: 
-							if (orderby == 0)  entity = entity.OrderBy(e => e.dtEnvio).AsQueryable<tbNew>();
-							else entity = entity.OrderByDescending(e =>  e.dtEnvio).AsQueryable<tbNew>();
+							if (orderby == 0)  entity = entity.OrderBy(e => e.dtEnvio).AsQueryable<tbNews>();
+							else entity = entity.OrderByDescending(e =>  e.dtEnvio).AsQueryable<tbNews>();
 						break;
 
                 }
@@ -152,7 +152,7 @@ namespace api.Negocios.Admin
 
 
         /// <summary>
-        /// Retorna tbNew/tbNew
+        /// Retorna tbNews/tbNews
         /// </summary>
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
@@ -225,7 +225,7 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao listar tbNew" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar tbNews" : erro);
                 }
                 throw new Exception(e.Message);
             }
@@ -234,11 +234,11 @@ namespace api.Negocios.Admin
 
 	
         /// <summary>
-        /// Adiciona nova tbNew
+        /// Adiciona nova tbNews
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbNew param)
+        public static Int32 Add(string token, tbNews param)
         {
 			try
 			{
@@ -254,7 +254,7 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao salvar tbNew" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar tbNews" : erro);
                 }
                 throw new Exception(e.Message);
             }
@@ -262,7 +262,7 @@ namespace api.Negocios.Admin
 
 
         /// <summary>
-        /// Apaga uma tbNew
+        /// Apaga uma tbNews
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
@@ -281,7 +281,7 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao apagar tbNew" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar tbNews" : erro);
                 }
                 throw new Exception(e.Message);
             }
@@ -290,20 +290,20 @@ namespace api.Negocios.Admin
 
 
         /// <summary>
-        /// Altera tbNew
+        /// Altera tbNews
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbNew param)
+        public static void Update(string token, tbNews param)
         {
 			try
 			{
 				// Atualiza o contexto
                 ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
                 
-				tbNew value = _db.tbNews
+				tbNews value = _db.tbNews
 						.Where(e => e.idNews.Equals(param.idNews))
-						.First<tbNew>();
+						.First<tbNews>();
 
 				// OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 	            
@@ -331,7 +331,7 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao alterar tbNew" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar tbNews" : erro);
                 }
                 throw new Exception(e.Message);
             }
