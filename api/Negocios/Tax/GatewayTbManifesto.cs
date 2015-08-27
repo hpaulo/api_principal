@@ -430,6 +430,7 @@ namespace api.Negocios.Tax
                 }
                 else if (colecao == 4) // [PORTAL] Consulta NFe Completa NFe to JSON
                 {
+                    /*
                     List<dynamic> lista = new List<dynamic>();
 
                     CollectionTbManifesto = query.Select(e => new
@@ -489,6 +490,81 @@ namespace api.Negocios.Tax
 
                     CollectionTbManifesto.Clear();
                     CollectionTbManifesto = lista;
+                    */
+
+                    List<dynamic> lista = new List<dynamic>();
+
+                    CollectionTbManifesto = query
+                        .GroupBy(e => new { e.nrEmitenteCNPJCPF, e.nmEmitente })
+                        .OrderBy(e => e.Key.nmEmitente)
+                        .Select(e => new
+                        {
+                            nrEmitenteCNPJCPF = e.Key.nrEmitenteCNPJCPF,
+                            nmEmitente = e.Key.nmEmitente,
+                            UF = "",
+                            notas = e.Select(x => new
+                            {
+
+                                dtEmissao = x.dtEmissao,
+                                //modelo = 0,
+                                //numero = 0,
+                                //serie = 0,
+                                vlNFe = x.vlNFe,
+                                nrChave = x.nrChave,
+                                //nfe = "",
+                                dsSituacaoManifesto = x.dsSituacaoManifesto,
+                                dsSituacaoErp = "Não Importado",
+                                xmlNFe = x.xmlNFe
+
+                            }).OrderBy(x => x.dtEmissao).ToList<dynamic>()
+                        }).ToList<dynamic>();
+
+
+                    foreach (var item in CollectionTbManifesto)
+                    {
+                        //NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(item.notas[0].xmlNFe);
+
+
+                        List<dynamic> n = new List<dynamic>();
+                        string uf = String.Empty;
+                        foreach (var notas in item.notas)
+                        {
+                            NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(notas.xmlNFe);
+                            uf = xmlNFe.emit.enderEmit.UF;
+                            var e = new
+                            {
+                                /*dtEmissao = notas.dtEmissao,
+
+                                mod = xmlNFe.ide.mod,
+                                serie = xmlNFe.ide.serie,
+                                nNF = xmlNFe.ide.nNF,
+                                vlNFe = notas.vlNFe,
+                                nrChave = notas.nrChave,
+                                nfe = xmlNFe.protNFe.xMotivo,
+                                dsSituacaoManifesto = notas.dsSituacaoManifesto,
+                                dsSituacaoErp = notas.dsSituacaoErp*/
+                                xmlNFe
+                            };
+
+                            n.Add(e);
+                        }
+
+                        var nf = new
+                        {
+                            nrEmitenteCNPJCPF = item.nrEmitenteCNPJCPF,
+                            nmEmitente = item.nmEmitente,
+                            UF = uf,
+                            notas = n
+                        };
+
+                        lista.Add(nf);
+                    }
+
+                    CollectionTbManifesto.Clear();
+                    CollectionTbManifesto = lista;
+
+
+
                 }
                 else if (colecao == 5) // [PORTAL] Consulta NFe Completa NFe to JSON
                 {
