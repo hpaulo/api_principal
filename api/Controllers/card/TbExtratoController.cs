@@ -146,10 +146,10 @@ namespace api.Controllers.Card
                 if (Permissoes.Autenticado(token))
                 {
                     Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
-                    GatewayTbExtrato.Patch(token, queryString);
+                    object resp = GatewayTbExtrato.Patch(token, queryString);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse(HttpStatusCode.OK);
+                    return Request.CreateResponse(HttpStatusCode.OK, resp);
                 }
                 else
                 {
