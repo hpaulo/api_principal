@@ -554,21 +554,26 @@ namespace api.Negocios.Card
                 string contaNrConta = conta.nrConta;
                 while (contaNrConta.Length < nrConta.Length)
                     contaNrConta = "0" + contaNrConta; // adiciona zeros a esquerda
+                // Remove os possíveis zeros a esquerda
+                string nrContaSemZeros = conta.nrConta;
+                while (nrContaSemZeros[0] == '0')
+                    nrContaSemZeros = nrContaSemZeros.Substring(1);
+                // Adiciona zeros a esquerda
                 while (nrConta.Length < contaNrConta.Length)
                     nrConta = "0" + nrConta; // adiciona zeros a esquerda
-                if (!contaNrConta.Equals(nrConta))
+                if (!contaNrConta.Equals(nrConta) && !nrConta.EndsWith(nrContaSemZeros))
                 {
                     // Deleta o arquivo
                     File.Delete(filePath);
                     throw new Exception("Extrato upado não corresponde ao número da conta informada");
                 }
                 // Valida o número da agência
-                if (!nrAgencia.Equals("") && !conta.nrAgencia.Equals(nrAgencia))
+                /*if (!nrAgencia.Equals("") && !conta.nrAgencia.Equals(nrAgencia))
                 {
                     // Deleta o arquivo
                     File.Delete(filePath);
                     throw new Exception("Extrato upado não corresponde ao número da agência informada");
-                }
+                }*/
 
 
                 /* ARMAZENA */

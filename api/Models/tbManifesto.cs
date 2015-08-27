@@ -1,5 +1,8 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Xml.Linq;
 
 namespace api.Models
 {
@@ -22,8 +25,18 @@ namespace api.Models
         public string dsSituacaoManifesto { get; set; }
         public string nrProtocoloManifesto { get; set; }
         public string xmlNFe { get; set; }
+
+        [NotMapped]
+        public dynamic xmlNFeJson { get; set; }
+
+
         public string nrProtocoloDownload { get; set; }
         public Nullable<short> cdSituacaoDownload { get; set; }
         public string dsSituacaoDownload { get; set; }
+
+        public tbManifesto()
+        {
+            xmlNFeJson = Bibliotecas.nfeRead.Loader(xmlNFe);
+        }
     }
 }

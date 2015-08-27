@@ -10,6 +10,8 @@ using System.Data.Entity.Validation;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.Core.Objects;
+using Newtonsoft.Json;
+using System.Globalization;
 
 namespace api.Negocios.Tax
 {
@@ -112,8 +114,9 @@ namespace api.Negocios.Tax
                         entity = entity.Where(e => e.nrEmitenteIE.Equals(nrEmitenteIE)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.DTEMISSAO:
-                        DateTime dtEmissao = Convert.ToDateTime(item.Value);
+                        DateTime dtEmissao = DateTime.ParseExact(item.Value + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture); //Convert.ToDateTime(item.Value);
                         entity = entity.Where(e => e.dtEmissao.Equals(dtEmissao)).AsQueryable<tbManifesto>();
+
                         break;
                     case CAMPOS.TPOPERACAO:
                         string tpOperacao = Convert.ToString(item.Value);
@@ -295,7 +298,7 @@ namespace api.Negocios.Tax
                 retorno.ItensPorPagina = pageSize;
 
                 // COLEÇÃO DE RETORNO
-                if (colecao == 1) //Consulta a última NSU do CNPJ informado
+                if (colecao == 1) // [iTAX] Consulta a última NSU do CNPJ informado
                 {
                     CollectionTbManifesto = query
                         .GroupBy(e => new { e.nrCNPJ })
@@ -306,7 +309,7 @@ namespace api.Negocios.Tax
                         }).ToList<dynamic>();
 
                 }
-                else if (colecao == 0)
+                else if (colecao == 0) //  [iTAX] 
                 {
                     CollectionTbManifesto = query.Select(e => new
                     {
@@ -333,7 +336,7 @@ namespace api.Negocios.Tax
                         dsSituacaoDownload = e.dsSituacaoDownload,
                     }).ToList<dynamic>();
                 }
-                else if (colecao == 2) //Consulta as notas disponíveis para manifestação
+                else if (colecao == 2) // [iTAX] Consulta as notas disponíveis para manifestação
                 {
                     CollectionTbManifesto = _db.tbManifestos
                         .Join(_db.tbEmpresaFiliais, m => m.nrCNPJ, f => f.nrCNPJ, (m, f) => new { m, f })
@@ -349,12 +352,12 @@ namespace api.Negocios.Tax
                             dsCertificadoDigitalSenha =e.e.dsCertificadoDigitalSenha,
                         }).ToList<dynamic>();
                 }
-                else if (colecao == 3) //Consulta as notas disponíveis para download
+                else if (colecao == 3) // [iTAX] Consulta as notas disponíveis para download
                 {
                     CollectionTbManifesto = _db.tbManifestos
                         .Join(_db.tbEmpresaFiliais, m => m.nrCNPJ, f => f.nrCNPJ, (m, f) => new { m, f })
                         .Join(_db.tbEmpresas, j => j.f.nrCNPJBase, e => e.nrCNPJBase, (j, e) => new { j, e })
-                        .Where(e => (e.j.m.cdSituacaoManifesto == 135 || e.j.m.cdSituacaoManifesto == 573|| e.j.m.cdSituacaoManifesto == 655) && e.j.m.cdSituacaoDownload == null)
+                        .Where(e => (e.j.m.cdSituacaoManifesto == 135 || e.j.m.cdSituacaoManifesto == 573 || e.j.m.cdSituacaoManifesto == 655) && e.j.m.cdSituacaoDownload == null)
                         .Select(e => new
                         {
                             idManifesto = e.j.m.idManifesto,
@@ -364,6 +367,141 @@ namespace api.Negocios.Tax
                             dsCertificadoDigital = e.e.dsCertificadoDigital,
                             dsCertificadoDigitalSenha = e.e.dsCertificadoDigitalSenha,
                         }).ToList<dynamic>();
+                }
+                else if (colecao == 4) // [PORTAL] Consulta NFe Completa NFe to JSON
+                {
+                    List<dynamic> lista = new List<dynamic>();
+
+                    CollectionTbManifesto = query.Select(e => new
+                    {
+                        idManifesto = e.idManifesto,
+                        nrChave = e.nrChave,
+                        nrNSU = e.nrNSU,
+                        cdGrupo = e.cdGrupo,
+                        nrCNPJ = e.nrCNPJ,
+                        nrEmitenteCNPJCPF = e.nrEmitenteCNPJCPF,
+                        nmEmitente = e.nmEmitente,
+                        nrEmitenteIE = e.nrEmitenteIE,
+                        dtEmissao = e.dtEmissao,
+                        tpOperacao = e.tpOperacao,
+                        vlNFe = e.vlNFe,
+                        dtRecebimento = e.dtRecebimento,
+                        cdSituacaoNFe = e.cdSituacaoNFe,
+                        cdSituacaoManifesto = e.cdSituacaoManifesto,
+                        dsSituacaoManifesto = e.dsSituacaoManifesto,
+                        nrProtocoloManifesto = e.nrProtocoloManifesto,
+                        xmlNFe = e.xmlNFe,
+                        nrProtocoloDownload = e.nrProtocoloDownload,
+                        cdSituacaoDownload = e.cdSituacaoDownload,
+                        dsSituacaoDownload = e.dsSituacaoDownload,
+                    }).ToList<dynamic>();
+
+                    foreach (var item in CollectionTbManifesto)
+                    {
+                        NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(item.xmlNFe);
+                        var nf = new
+                        {
+
+                            idManifesto = item.idManifesto,
+                            nrChave = item.nrChave,
+                            nrNSU = item.nrNSU,
+                            cdGrupo = item.cdGrupo,
+                            nrCNPJ = item.nrCNPJ,
+                            nrEmitenteCNPJCPF = item.nrEmitenteCNPJCPF,
+                            nmEmitente = item.nmEmitente,
+                            nrEmitenteIE = item.nrEmitenteIE,
+                            dtEmissao = item.dtEmissao,
+                            tpOperacao = item.tpOperacao,
+                            vlNFe = item.vlNFe,
+                            dtRecebimento = item.dtRecebimento,
+                            cdSituacaoNFe = item.cdSituacaoNFe,
+                            cdSituacaoManifesto = item.cdSituacaoManifesto,
+                            dsSituacaoManifesto = item.dsSituacaoManifesto,
+                            nrProtocoloManifesto = item.nrProtocoloManifesto,
+                            xmlNFe = xmlNFe,
+                            nrProtocoloDownload = item.nrProtocoloDownload,
+                            cdSituacaoDownload = item.cdSituacaoDownload,
+                            dsSituacaoDownload = item.dsSituacaoDownload
+                        };
+
+                        lista.Add(nf);
+                    }
+
+                    CollectionTbManifesto.Clear();
+                    CollectionTbManifesto = lista;
+                }
+                else if (colecao == 5) // [PORTAL] Consulta NFe Completa NFe to JSON
+                {
+                    List<dynamic> lista = new List<dynamic>();
+
+                    CollectionTbManifesto = query
+                        .GroupBy(e => new { e.nrEmitenteCNPJCPF, e.nmEmitente })
+                        .OrderBy(e => e.Key.nmEmitente)
+                        .Select(e => new
+                    {
+                        nrEmitenteCNPJCPF = e.Key.nrEmitenteCNPJCPF,
+                        nmEmitente = e.Key.nmEmitente,
+                        UF = "",
+                        notas = e.Select(x => new { 
+                        
+                            dtEmissao = x.dtEmissao,
+                            //modelo = 0,
+                            //numero = 0,
+                            //serie = 0,
+                            vlNFe = x.vlNFe,
+                            nrChave = x.nrChave,
+                            //nfe = "",
+                            dsSituacaoManifesto = x.dsSituacaoManifesto,
+                            dsSituacaoErp = "Não Importado",
+                            xmlNFe = x.xmlNFe
+                        
+                        } ).OrderBy(x => x.dtEmissao).ToList<dynamic>()
+                    }).ToList<dynamic>();
+                        
+                    
+                    foreach (var item in CollectionTbManifesto)
+                    {
+                        //NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(item.notas[0].xmlNFe);
+
+
+                        List<dynamic> n = new List<dynamic>();
+                        string uf = String.Empty;
+                        foreach (var notas in item.notas)
+                        {
+                            NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(notas.xmlNFe);
+                            uf = xmlNFe.emit.enderEmit.UF;
+                            var e = new
+                            {
+                                dtEmissao = notas.dtEmissao,
+                                
+                                mod = xmlNFe.ide.mod,
+                                serie = xmlNFe.ide.serie,
+                                nNF = xmlNFe.ide.nNF,
+                                vlNFe = notas.vlNFe,
+                                nrChave = notas.nrChave,
+                                nfe = xmlNFe.protNFe.xMotivo,
+                                dsSituacaoManifesto = notas.dsSituacaoManifesto,
+                                dsSituacaoErp = notas.dsSituacaoErp
+                            };
+
+                            n.Add(e);
+                        }
+
+                        var nf = new
+                        {
+                            nrEmitenteCNPJCPF = item.nrEmitenteCNPJCPF,
+                            nmEmitente = item.nmEmitente,
+                            UF = uf,
+                            notas = n
+                        };
+
+                        lista.Add(nf);
+                    }
+
+                    CollectionTbManifesto.Clear();
+                    CollectionTbManifesto = lista;
+
+
                 }
 
                 retorno.TotalDeRegistros = CollectionTbManifesto.Count();
