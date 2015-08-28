@@ -75,9 +75,16 @@
     <Reference Include="NFe.Settings">
       <HintPath>..\Biblioteca de terceiros\NFe.Settings.dll</HintPath>
     </Reference>
+    <Reference Include="NFe_Util_2G, Version=1.4.1.0, Culture=neutral, PublicKeyToken=6369240506ce0263, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\Biblioteca de terceiros\NFe_Util_2G.dll</HintPath>
+    </Reference>
     <Reference Include="OFXSharp, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\Biblioteca de terceiros\OFXSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Reports">
+      <HintPath>..\Biblioteca de terceiros\Reports.dll</HintPath>
     </Reference>
     <Reference Include="SgmlReaderDll, Version=1.8.11.0, Culture=neutral, PublicKeyToken=46b2db9ca481831b, processorArchitecture=MSIL">
       <HintPath>..\packages\SgmlReader.1.8.11\lib\4.0\SgmlReaderDll.dll</HintPath>
@@ -86,6 +93,7 @@
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Net.Http.Extensions, Version=2.2.29.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Net.Http.2.2.29\lib\net45\System.Net.Http.Extensions.dll</HintPath>
       <Private>True</Private>
@@ -307,9 +315,11 @@
     <Compile Include="Controllers\Pos\TerminalLogicoController.cs" />
     <Compile Include="Controllers\Pos\TicketCarController.cs" />
     <Compile Include="Controllers\Pos\ValeCardController.cs" />
+    <Compile Include="Controllers\Tax\TbControleNSUController.cs" />
     <Compile Include="Controllers\Tax\TbManifestoController.cs" />
     <Compile Include="Controllers\Util\BancosController.cs" />
     <Compile Include="Controllers\Util\ExportarController.cs" />
+    <Compile Include="Controllers\Util\UtilNfeController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -825,9 +835,11 @@
     <Compile Include="Negocios\Card\GatewayTbBandeiraTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbEstadoTransacaoTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbProdutoTef.cs" />
+    <Compile Include="Negocios\Tax\GatewayTbControleNSU.cs" />
     <Compile Include="Negocios\Tax\GatewayTbManifesto.cs" />
     <Compile Include="Negocios\Util\GatewayBancos.cs" />
     <Compile Include="Negocios\Util\GatewayExportar.cs" />
+    <Compile Include="Negocios\Util\GatewayUtilNfe.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
