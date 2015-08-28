@@ -12,6 +12,8 @@ using System.Data.Entity.Infrastructure;
 using System.Data.Entity.Core.Objects;
 using Newtonsoft.Json;
 using System.Globalization;
+using NFe.ConvertTxt;
+using NFe.Components;
 
 namespace api.Negocios.Tax
 {
@@ -450,10 +452,10 @@ namespace api.Negocios.Tax
                                 //numero = 0,
                                 //serie = 0,
                                 vlNFe = x.vlNFe,
-                                nrChave = x.nrChave,
+                                //nrChave = x.nrChave,
                                 //nfe = "",
-                                dsSituacaoManifesto = x.dsSituacaoManifesto,
-                                dsSituacaoErp = "Não Importado",
+                                //dsSituacaoManifesto = x.dsSituacaoManifesto,
+                                //dsSituacaoErp = "Não Importado",
                                 xmlNFe = x.xmlNFe
 
                             }).OrderBy(x => x.dtEmissao).ToList<dynamic>()
@@ -463,13 +465,11 @@ namespace api.Negocios.Tax
                     foreach (var item in CollectionTbManifesto)
                     {
                         //NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(item.notas[0].xmlNFe);
-
-
-                        List<dynamic> n = new List<dynamic>();
+                        List<dynamic> notas = new List<dynamic>();
                         string uf = String.Empty;
-                        foreach (var notas in item.notas)
+                        foreach (var nota in item.notas)
                         {
-                            NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(notas.xmlNFe);
+                            NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(nota.xmlNFe);
                             uf = xmlNFe.emit.enderEmit.UF;
                             var e = new
                             {
@@ -486,7 +486,300 @@ namespace api.Negocios.Tax
                                 xmlNFe
                             };
 
-                            n.Add(e);
+                            notas.Add(new
+                            {
+                                nfe = new
+                                {
+                                    modelo = xmlNFe.ide.mod,
+                                    serie = xmlNFe.ide.serie,
+                                    numero = xmlNFe.ide.nNF,
+                                    dtEmissao = xmlNFe.ide.dEmi,
+                                    dtSaiEnt = xmlNFe.ide.dSaiEnt,
+                                    vlNFe = nota.vlNFe,
+                                    destinoOperacao = new
+                                    {
+                                        codigo = (int)xmlNFe.ide.idDest,
+                                        descricao = xmlNFe.ide.idDest.Equals(TpcnDestinoOperacao.doExterior) ? "Operação com exterior" :
+                                                    xmlNFe.ide.idDest.Equals(TpcnDestinoOperacao.doInterestadual) ? "Operação interestadual" :
+                                                    xmlNFe.ide.idDest.Equals(TpcnDestinoOperacao.doInterna) ? "Operação interna" : "",
+                                    },
+                                    consumidorFinal = new
+                                    {
+                                        codigo = (int)xmlNFe.ide.indFinal,
+                                        descricao = xmlNFe.ide.indFinal.Equals(TpcnConsumidorFinal.cfNao) ? "Normal" :
+                                                    xmlNFe.ide.indFinal.Equals(TpcnConsumidorFinal.cfConsumidorFinal) ? "Consumidor Final" : "",
+                                    },
+                                    presencaoComprador = new
+                                    {
+                                        codigo = (int)xmlNFe.ide.indPres,
+                                        descricao = xmlNFe.ide.indPres.Equals(TpcnPresencaComprador.pcNao) ? "Não se aplica" :
+                                                    xmlNFe.ide.indPres.Equals(TpcnPresencaComprador.pcPresencial) ? "Operação Presencial" :
+                                                    xmlNFe.ide.indPres.Equals(TpcnPresencaComprador.pcInternet) ? "Operação não presencial: Internet" :
+                                                    xmlNFe.ide.indPres.Equals(TpcnPresencaComprador.pcTeleatendimento) ? "Operação não presencial: teleatendimento" :
+                                                    xmlNFe.ide.indPres.Equals(TpcnPresencaComprador.pcOutros) ? "Operação não presencial: outros" : "",
+                                    },
+                                    emissao = new
+                                    {
+                                        processo = new
+                                        {
+                                            codigo = (int)xmlNFe.ide.procEmi,
+                                            descricao = xmlNFe.ide.procEmi.Equals(TpcnProcessoEmissao.peAplicativoContribuinte) ? "Emissão de NF-e com aplicativo do contribuinte" :
+                                                        xmlNFe.ide.procEmi.Equals(TpcnProcessoEmissao.peAvulsaFisco) ? "Emissão de NF-e avulsa pelo Fisco" :
+                                                        xmlNFe.ide.procEmi.Equals(TpcnProcessoEmissao.peAvulsaContribuinte) ? "Emissão de NF-e, pelo contribuinte com seu certificado digital, através do site do Fisco" :
+                                                        xmlNFe.ide.procEmi.Equals(TpcnProcessoEmissao.peContribuinteAplicativoFisco) ? "Emissão NF-e pelo contribuinte com o aplicativo fornecido pelo Fisco" : "",
+                                        },
+                                        versaoProcesso = xmlNFe.ide.verProc,
+                                        tipoEmissao = new
+                                        {
+                                            codigo = (int)xmlNFe.ide.tpEmis,
+                                            descricao = xmlNFe.ide.tpEmis.Equals(TipoEmissao.teNormal) ? "Emissão normal (não em contingência)" :
+                                                        xmlNFe.ide.tpEmis.Equals(TipoEmissao.teFS) ? "Contingência FS-IA, com impressão do DANFE em formulário de segurança" :
+                                                        xmlNFe.ide.tpEmis.Equals(TipoEmissao.teEPECeDPEC) ? "Contingência DPEC (Declaração Prévia de Emissão em Contingência)" :
+                                                        xmlNFe.ide.tpEmis.Equals(TipoEmissao.teFSDA) ? "Contingência FS-DA, com impressão do DANFE em formulário de segurança" :
+                                                        xmlNFe.ide.tpEmis.Equals(TipoEmissao.teSVCAN) ? "Contingência SVC-AN (SEFAZ Virtual de Contingência do AN)" :
+                                                        xmlNFe.ide.tpEmis.Equals(TipoEmissao.teSVCRS) ? "Contingência SVC-RS (SEFAZ Virtual de Contingência do RS)" :
+                                                        xmlNFe.ide.tpEmis.Equals(TipoEmissao.teOffLine) ? "Contingência off-line da NFC-e" : "",
+                                        },
+                                        finalidade = new
+                                        {
+                                            codigo = (int)xmlNFe.ide.finNFe,
+                                            descricao = xmlNFe.ide.finNFe.Equals(TpcnFinalidadeNFe.fnNormal) ? "NF-e normal" :
+                                                        xmlNFe.ide.finNFe.Equals(TpcnFinalidadeNFe.fnComplementar) ? "NF-e complementar" :
+                                                        xmlNFe.ide.finNFe.Equals(TpcnFinalidadeNFe.fnAjuste) ? "NF-e de ajuste" :
+                                                        xmlNFe.ide.finNFe.Equals(TpcnFinalidadeNFe.fnDevolucao) ? "Devolução/Retorno" : ""
+                                        },
+                                        naturezaOperacao = xmlNFe.ide.natOp,
+                                        tipoOperacao = new
+                                        {
+                                            codigo = (int)xmlNFe.ide.tpNF,
+                                            descricao = xmlNFe.ide.tpNF.Equals(TpcnTipoNFe.tnEntrada) ? "Entrada" :
+                                                        xmlNFe.ide.tpNF.Equals(TpcnTipoNFe.tnSaida) ? "Saída" : ""
+                                        },
+                                        formaPagamento = new
+                                        {
+                                            codigo = (int) xmlNFe.ide.indPag,
+                                            descricao = xmlNFe.ide.indPag.Equals(TpcnIndicadorPagamento.ipVista) ? "Pagamento à vista" :
+                                                        xmlNFe.ide.indPag.Equals(TpcnIndicadorPagamento.ipPrazo) ? "Pagamento a prazo" :
+                                                        xmlNFe.ide.indPag.Equals(TpcnIndicadorPagamento.ipOutras) ? "Outros" : ""
+                                        },  
+                                        digestValue = xmlNFe.protNFe.digVal,
+                                        /*eventos = new
+                                        {
+                                            protocolo = xmlNFe.protNFe.nProt,
+                                            dataHora = xmlNFe.protNFe.dhRecbto,
+                                            //dataHoraAN = ???
+                                        }*/
+                                    }
+                                },
+                                emitente = new
+                                {
+                                    razaoSocial = xmlNFe.emit.xNome,
+                                    CNPJ = xmlNFe.emit.CNPJ,
+                                    CPF = xmlNFe.emit.CPF,
+                                    endereco = new
+                                    {
+                                        logradouro = xmlNFe.emit.enderEmit.xLgr,
+                                        numero = xmlNFe.emit.enderEmit.nro,
+                                        complemento = xmlNFe.emit.enderEmit.xCpl,
+                                        bairro = xmlNFe.emit.enderEmit.xBairro,
+                                        municipio = new
+                                        {
+                                            codigo = xmlNFe.emit.enderEmit.cMun,
+                                            nome = xmlNFe.emit.enderEmit.xMun,
+                                        },
+                                        uf = xmlNFe.emit.enderEmit.UF,
+                                        pais = new
+                                        {
+                                            codigo = xmlNFe.emit.enderEmit.cPais,
+                                            nome = xmlNFe.emit.enderEmit.xPais
+                                        },
+                                        cep = xmlNFe.emit.enderEmit.CEP
+                                    },
+                                    telefone = xmlNFe.emit.enderEmit.fone,
+                                    inscricaoMunicipal = xmlNFe.emit.IM,
+                                    inscricaoEstadual = xmlNFe.emit.IE,
+                                    IEST = xmlNFe.emit.IEST,
+                                    CNAE = xmlNFe.emit.CNAE,
+                                    nomeFantasia = xmlNFe.emit.xFant,
+                                    CRT = xmlNFe.emit.CRT
+                                },
+                                destinatario = new
+                                {
+                                    razaoSocial = xmlNFe.dest.xNome,
+                                    CNPJ = xmlNFe.dest.CNPJ,
+                                    CPF = xmlNFe.dest.CPF,
+                                    endereco = new
+                                    {
+                                        logradouro = xmlNFe.dest.enderDest.xLgr,
+                                        numero = xmlNFe.dest.enderDest.nro,
+                                        complemento = xmlNFe.dest.enderDest.xCpl,
+                                        bairro = xmlNFe.dest.enderDest.xBairro,
+                                        municipio = new
+                                        {
+                                            codigo = xmlNFe.dest.enderDest.cMun,
+                                            nome = xmlNFe.dest.enderDest.xMun,
+                                        },
+                                        uf = xmlNFe.dest.enderDest.UF,
+                                        pais = new
+                                        {
+                                            codigo = xmlNFe.dest.enderDest.cPais,
+                                            nome = xmlNFe.dest.enderDest.xPais
+                                        },
+                                        cep = xmlNFe.dest.enderDest.CEP
+                                    },
+                                    idEstrangeiro = xmlNFe.dest.idEstrangeiro,
+                                    telefone = xmlNFe.dest.enderDest.fone,
+                                    inscricaoMunicipal = xmlNFe.dest.IM,
+                                    inscricaoEstadual = xmlNFe.dest.IE,
+                                    indicadorIE = xmlNFe.dest.indIEDest.ToString(),
+                                    inscricaoSUFRAMA = xmlNFe.dest.ISUF,
+                                    email = xmlNFe.dest.email,
+                                },
+                                entrega = new
+                                {
+                                    municipio = new {
+                                        codigo = xmlNFe.entrega.cMun,
+                                        nome = xmlNFe.entrega.xMun,
+                                    },
+                                    CNPJ = xmlNFe.entrega.CNPJ,
+                                    CPF = xmlNFe.entrega.CPF,
+                                    logradouro = xmlNFe.entrega.xLgr,
+                                    numero = xmlNFe.entrega.nro,
+                                    complemento = xmlNFe.entrega.xCpl,
+                                    bairro = xmlNFe.entrega.xBairro,
+                                    UF = xmlNFe.entrega.UF,
+                                },
+                                produtos = xmlNFe.det.Select(x => new
+                                {
+                                    produto = new
+                                    {
+                                        num = x.Prod.nItem,
+                                        descricao = x.Prod.xProd,
+                                        qtdComercial = x.Prod.qCom,
+                                        unidadeComercial = x.Prod.uCom,
+                                        valor = x.Prod.vProd,
+                                        codigo = x.Prod.cProd,
+                                        codNCM = x.Prod.NCM,
+                                        codEXTIPI = x.Prod.EXTIPI,
+                                        CFOP = x.Prod.CFOP,
+                                        outrasDespesas = x.Prod.vOutro,
+                                        valorDesconto = x.Prod.vDesc,
+                                        valorTotalFrete = x.Prod.vFrete,
+                                        valorSeguro = x.Prod.vSeg,
+                                        indicadorComposicao = new
+                                        {
+                                            codigo = (int) x.Prod.indTot,
+                                            descricao = x.Prod.indTot.Equals(TpcnIndicadorTotal.itNaoSomaTotalNFe) ? "Valor do item não compõe o valor total da NF-e" :
+                                                        x.Prod.indTot.Equals(TpcnIndicadorTotal.itSomaTotalNFe) ? "Valor do item compõe o valor total da NF-e" : ""
+                                        },
+                                        codigoEANComercial = x.Prod.cEAN,
+                                        unidadeTributaria = x.Prod.uTrib,
+                                        qtdTributario = x.Prod.qTrib,
+                                        codigoEANTributario = x.Prod.cEANTrib,
+                                        valorUnitarioComercializacao = x.Prod.vUnCom,
+                                        valorUnitarioTributacao = x.Prod.vUnTrib,
+                                        numPedidoCompra = x.Prod.xPed,
+                                        itemPedidoCompra = x.Prod.nItemPed,
+                                        FCI = x.Prod.nFCI
+                                    },
+                                    imposto = new
+                                    {
+                                        valorAproximadoPedido = x.Imposto.vTotTrib,
+                                        ICMS = new
+                                        {
+                                            origem = new
+                                            {
+                                                codigo = (int)x.Imposto.ICMS.orig,
+                                                descricao = x.Imposto.ICMS.orig.Equals(TpcnOrigemMercadoria.oeNacional) ? "Nacional" :
+                                                            x.Imposto.ICMS.orig.Equals(TpcnOrigemMercadoria.oeEstrangeiraImportacaoDireta) ? "Estrangeira - Importação direta" :
+                                                            x.Imposto.ICMS.orig.Equals(TpcnOrigemMercadoria.oeEstrangeiraAdquiridaBrasil) ? "Estrangeira - Adquirida no mercado interno" :
+                                                            x.Imposto.ICMS.orig.Equals(TpcnOrigemMercadoria.oeNacional_Mercadoria_ou_bem_com_Conteúdo_de_Importação_superior_a_40) ? "Nacional, mercadoria ou bem com Conteúdo de Importação superior a 40% e inferior ou igual a 70%" :
+                                                            x.Imposto.ICMS.orig.Equals(TpcnOrigemMercadoria.oeNacional_Cuja_produção_tenha_sido_feita_em_conformidade_com_o_PPB) ? "Nacional, cuja produção tenha sido feita em conformidade com os processos produtivos básicos de que tratam as legislações citadas nos Ajustes" :
+                                                            x.Imposto.ICMS.orig.Equals(TpcnOrigemMercadoria.oeNacional_Mercadoria_com_bem_ou_conteúdo_de_importação_inferior_a_40) ? "Nacional, mercadoria ou bem com conteúdo de importação inferior ou igual a 40%" :
+                                                            x.Imposto.ICMS.orig.Equals(TpcnOrigemMercadoria.oeEstrangeira_Importação_direta_sem_similar_nacional) ? "Estrangeira - Importação direta, sem similar nacional, constante em lista da CAMEX e gás natural" :
+                                                            x.Imposto.ICMS.orig.Equals(TpcnOrigemMercadoria.oeEstrangeira_Adquirida_no_mercado_interno_com_similar_nacional) ? "Estrangeira - Adquirida no mercado interno, sem similiar nacional, constante lista CAMEX e gás natural" : ""
+                                            },
+                                            tributacao = x.Imposto.ICMS.CST,
+                                            modalidadeBC = new
+                                            {
+                                                codigo = (int)x.Imposto.ICMS.modBC,
+                                                descricao = x.Imposto.ICMS.modBC.Equals(TpcnDeterminacaoBaseIcms.dbiMargemValorAgregado) ? "Margem Valor Agregado (%)" :
+                                                            x.Imposto.ICMS.modBC.Equals(TpcnDeterminacaoBaseIcms.dbiPauta) ? "Paute (Valor)" :
+                                                            x.Imposto.ICMS.modBC.Equals(TpcnDeterminacaoBaseIcms.dbiPrecoTabelado) ? "Preço Tabelado Máx. (valor)" :
+                                                            x.Imposto.ICMS.modBC.Equals(TpcnDeterminacaoBaseIcms.dbiValorOperacao) ? "Valor da operação" : ""
+                                            },
+                                            baseCalculoICMSNormal = x.Imposto.ICMS.vBC,
+                                            aliquotaICMSNormal = x.Imposto.ICMS.pICMS,
+                                            valorICMSNormal = x.Imposto.ICMS.vICMS,
+                                            baseCalculoICMSST = x.Imposto.ICMS.vBCST,
+                                            aliquotaICMSST = x.Imposto.ICMS.pICMSST,
+                                            valorICMSST = x.Imposto.ICMS.vICMSST,
+                                            percentualICMSST = x.Imposto.ICMS.pRedBCST,
+                                            percentualMVAICMSST = x.Imposto.ICMS.pMVAST,
+                                            modalidadeBCICMSST = new
+                                            {
+                                                codigo = (int)x.Imposto.ICMS.modBCST,
+                                                descricao = x.Imposto.ICMS.modBCST.Equals(TpcnDeterminacaoBaseIcmsST.dbisPrecoTabelado) ? "Preço tabelado ou máximo sugerido" :
+                                                            x.Imposto.ICMS.modBCST.Equals(TpcnDeterminacaoBaseIcmsST.dbisListaNegativa) ? "Lista negativa (Valor)" :
+                                                            x.Imposto.ICMS.modBCST.Equals(TpcnDeterminacaoBaseIcmsST.dbisListaPositiva) ? "Lista positiva (Valor)" :
+                                                            x.Imposto.ICMS.modBCST.Equals(TpcnDeterminacaoBaseIcmsST.dbisListaNeutra) ? "Lista neutra (Valor)" :
+                                                            x.Imposto.ICMS.modBCST.Equals(TpcnDeterminacaoBaseIcmsST.dbisMargemValorAgregado) ? "Margem valor agregado (%)" :
+                                                            x.Imposto.ICMS.modBCST.Equals(TpcnDeterminacaoBaseIcmsST.dbisPauta) ? "Pauta (valor)" : ""
+                                            }
+                                        },
+                                        ICMSTot = new
+                                        {
+                                            baseCalculoICMS = x.Imposto.ICMSTot.vBC,
+                                            baseCalculoICMSST = x.Imposto.ICMSTot.vBCST,
+                                            valorCOFINS = x.Imposto.ICMSTot.vCOFINS,
+                                            valorTotalDesconto = x.Imposto.ICMSTot.vDesc,
+                                            valorTotalFrete = x.Imposto.ICMSTot.vFrete,
+                                            valorTotalICMS = x.Imposto.ICMSTot.vICMS,
+                                            valorTotalICMSDesonerado = x.Imposto.ICMSTot.vICMSDeson,
+                                            valorTotalII = x.Imposto.ICMSTot.vII,
+                                            valorTotalIPI = x.Imposto.ICMSTot.vIPI,
+                                            valorTotalNfe = x.Imposto.ICMSTot.vNF,
+                                            outrasDespesas = x.Imposto.ICMSTot.vOutro,
+                                            valorPIS = x.Imposto.ICMSTot.vPIS,
+                                            valorTotalProdutos = x.Imposto.ICMSTot.vProd,
+                                            valorTotalSeguro = x.Imposto.ICMSTot.vSeg,
+                                            valorICMSST = x.Imposto.ICMSTot.vST,
+                                            valorAproximadoTotal = x.Imposto.ICMSTot.vTotTrib,
+                                        },
+                                        // IPI
+                                        PIS = new
+                                        {
+                                            CST = x.Imposto.PIS.CST,
+                                            aliquotaPercentual = x.Imposto.PIS.pPIS,
+                                            qtdVendida = x.Imposto.PIS.qBCProd,
+                                            aliquotaReais = x.Imposto.PIS.vAliqProd,
+                                            valorBaseCalculo = x.Imposto.PIS.vBC,
+                                            valorPIS = x.Imposto.PIS.vPIS
+                                        },
+                                        // PISST
+                                        COFINS = new
+                                        {
+                                            CST = x.Imposto.COFINS.CST,
+                                            aliquotaPercentual = x.Imposto.COFINS.pCOFINS,
+                                            qtdVendida = x.Imposto.COFINS.qBCProd,
+                                            aliquotaReais = x.Imposto.COFINS.vAliqProd,
+                                            valorBaseCalculo = x.Imposto.COFINS.vBC,
+                                            valorVendido = x.Imposto.COFINS.vBCProd,
+                                            valorCOFINS = x.Imposto.COFINS.vCOFINS,
+                                        },
+                                        COFINSST = new
+                                        {
+                                            aliquotaPercentual = x.Imposto.COFINSST.pCOFINS,
+                                            qtdVendida = x.Imposto.COFINSST.qBCProd,
+                                            aliquotaReais = x.Imposto.COFINSST.vAliqProd,
+                                            valorBaseCalculo = x.Imposto.COFINSST.vBC,
+                                            valorCOFINS = x.Imposto.COFINSST.vCOFINS,
+                                        },
+                                        // retTrib
+                                    }
+                                    // TO BE CONTINUE....
+                                }).ToList<dynamic>(),
+                            });
                         }
 
                         var nf = new
@@ -494,7 +787,7 @@ namespace api.Negocios.Tax
                             nrEmitenteCNPJCPF = item.nrEmitenteCNPJCPF,
                             nmEmitente = item.nmEmitente,
                             UF = uf,
-                            notas = n
+                            notas = notas
                         };
 
                         lista.Add(nf);
@@ -530,7 +823,7 @@ namespace api.Negocios.Tax
                             dsSituacaoManifesto = x.dsSituacaoManifesto,
                             dsSituacaoErp = "Não Importado",
                             xmlNFe = x.xmlNFe
-                        
+
                         } ).OrderBy(x => x.dtEmissao).ToList<dynamic>()
                     }).ToList<dynamic>();
                         
@@ -579,20 +872,7 @@ namespace api.Negocios.Tax
 
 
                 }
-                else if (colecao == 6) // [PORTAL] Download Xml NFe
-                {
 
-
-                    List<dynamic> lista = new List<dynamic>();
-
-                    CollectionTbManifesto = query
-                    .Select(e => new { xmlNFe = e.xmlNFe }).ToList<dynamic>();
-                        
-                    
-                   
-
-
-                }
                 retorno.TotalDeRegistros = CollectionTbManifesto.Count();
                 retorno.Registros = CollectionTbManifesto;
 
