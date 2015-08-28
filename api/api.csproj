@@ -315,6 +315,7 @@
     <Compile Include="Controllers\Pos\TerminalLogicoController.cs" />
     <Compile Include="Controllers\Pos\TicketCarController.cs" />
     <Compile Include="Controllers\Pos\ValeCardController.cs" />
+    <Compile Include="Controllers\Tax\TbControleNSUController.cs" />
     <Compile Include="Controllers\Tax\TbManifestoController.cs" />
     <Compile Include="Controllers\Util\BancosController.cs" />
     <Compile Include="Controllers\Util\ExportarController.cs" />
@@ -834,6 +835,7 @@
     <Compile Include="Negocios\Card\GatewayTbBandeiraTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbEstadoTransacaoTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbProdutoTef.cs" />
+    <Compile Include="Negocios\Tax\GatewayTbControleNSU.cs" />
     <Compile Include="Negocios\Tax\GatewayTbManifesto.cs" />
     <Compile Include="Negocios\Util\GatewayBancos.cs" />
     <Compile Include="Negocios\Util\GatewayExportar.cs" />
