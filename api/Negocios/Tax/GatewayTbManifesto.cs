@@ -369,7 +369,7 @@ namespace api.Negocios.Tax
                         }).ToList<dynamic>();
 
                 }
-                else if (colecao == 0) //  [iTAX] 
+                else if (colecao == 0) //  [PORTAL] Utilizado para Consulta de NFe GatewayUtilNfe
                 {
                     CollectionTbManifesto = query.Select(e => new
                     {
@@ -430,67 +430,7 @@ namespace api.Negocios.Tax
                 }
                 else if (colecao == 4) // [PORTAL] Consulta NFe Completa NFe to JSON
                 {
-                    /*
-                    List<dynamic> lista = new List<dynamic>();
-
-                    CollectionTbManifesto = query.Select(e => new
-                    {
-                        idManifesto = e.idManifesto,
-                        nrChave = e.nrChave,
-                        nrNSU = e.nrNSU,
-                        cdGrupo = e.cdGrupo,
-                        nrCNPJ = e.nrCNPJ,
-                        nrEmitenteCNPJCPF = e.nrEmitenteCNPJCPF,
-                        nmEmitente = e.nmEmitente,
-                        nrEmitenteIE = e.nrEmitenteIE,
-                        dtEmissao = e.dtEmissao,
-                        tpOperacao = e.tpOperacao,
-                        vlNFe = e.vlNFe,
-                        dtRecebimento = e.dtRecebimento,
-                        cdSituacaoNFe = e.cdSituacaoNFe,
-                        cdSituacaoManifesto = e.cdSituacaoManifesto,
-                        dsSituacaoManifesto = e.dsSituacaoManifesto,
-                        nrProtocoloManifesto = e.nrProtocoloManifesto,
-                        xmlNFe = e.xmlNFe,
-                        nrProtocoloDownload = e.nrProtocoloDownload,
-                        cdSituacaoDownload = e.cdSituacaoDownload,
-                        dsSituacaoDownload = e.dsSituacaoDownload,
-                    }).ToList<dynamic>();
-
-                    foreach (var item in CollectionTbManifesto)
-                    {
-                        NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(item.xmlNFe);
-                        var nf = new
-                        {
-
-                            idManifesto = item.idManifesto,
-                            nrChave = item.nrChave,
-                            nrNSU = item.nrNSU,
-                            cdGrupo = item.cdGrupo,
-                            nrCNPJ = item.nrCNPJ,
-                            nrEmitenteCNPJCPF = item.nrEmitenteCNPJCPF,
-                            nmEmitente = item.nmEmitente,
-                            nrEmitenteIE = item.nrEmitenteIE,
-                            dtEmissao = item.dtEmissao,
-                            tpOperacao = item.tpOperacao,
-                            vlNFe = item.vlNFe,
-                            dtRecebimento = item.dtRecebimento,
-                            cdSituacaoNFe = item.cdSituacaoNFe,
-                            cdSituacaoManifesto = item.cdSituacaoManifesto,
-                            dsSituacaoManifesto = item.dsSituacaoManifesto,
-                            nrProtocoloManifesto = item.nrProtocoloManifesto,
-                            xmlNFe = xmlNFe,
-                            nrProtocoloDownload = item.nrProtocoloDownload,
-                            cdSituacaoDownload = item.cdSituacaoDownload,
-                            dsSituacaoDownload = item.dsSituacaoDownload
-                        };
-
-                        lista.Add(nf);
-                    }
-
-                    CollectionTbManifesto.Clear();
-                    CollectionTbManifesto = lista;
-                    */
+                    
 
                     List<dynamic> lista = new List<dynamic>();
 
@@ -639,7 +579,20 @@ namespace api.Negocios.Tax
 
 
                 }
+                else if (colecao == 6) // [PORTAL] Download Xml NFe
+                {
 
+
+                    List<dynamic> lista = new List<dynamic>();
+
+                    CollectionTbManifesto = query
+                    .Select(e => new { xmlNFe = e.xmlNFe }).ToList<dynamic>();
+                        
+                    
+                   
+
+
+                }
                 retorno.TotalDeRegistros = CollectionTbManifesto.Count();
                 retorno.Registros = CollectionTbManifesto;
 
