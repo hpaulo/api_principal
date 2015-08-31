@@ -27,7 +27,8 @@ namespace api.Controllers.Util
             {
                 log = Bibliotecas.LogAcaoUsuario.New(token, null);
 
-                Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
+                Dictionary<string, string> queryString = new Dictionary<string, string>();
+                queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
@@ -43,24 +44,34 @@ namespace api.Controllers.Util
                         {
                             dynamic item = dados.Registros.Cast<dynamic>().Select(e => new { xmlNFe = e.xmlNFe, nrChave = e.nrChave }).First();
                             arquivo = GatewayUtilNfe.ArquivoXml(Convert.ToString(item.xmlNFe));
-                            nmArquivo = item.nrChave;
+                            nmArquivo = item.nrChave + ".xml";
 
                             if (arquivo.Length > 0)
                             {
                                 result = Request.CreateResponse(HttpStatusCode.OK);
                                 result.Content = new StreamContent(new MemoryStream(arquivo));
                                 result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
-                                result.Content.Headers.ContentDisposition.FileName = nmArquivo + ".xml";
+                                result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                                result.Content.Headers.ContentDisposition.FileName = nmArquivo;
+                                result.Content.Headers.Add("x-filename", nmArquivo);
+                                log.codResposta = (int)HttpStatusCode.OK;
+                                Bibliotecas.LogAcaoUsuario.Save(log);
+                                return result;
                             }
-                            log.codResposta = (int)HttpStatusCode.OK;
-                            Bibliotecas.LogAcaoUsuario.Save(log);
-                            return result;
+                            else
+                            {
+                                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                                Bibliotecas.LogAcaoUsuario.Save(log);
+                                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                            }
+                            
+                            //return result;
                         }
                         else
                         {
                             log.codResposta = (int)HttpStatusCode.NotFound;
                             Bibliotecas.LogAcaoUsuario.Save(log);
-                            throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                            throw new HttpResponseException(HttpStatusCode.NotFound);
                         }
                     }
                     else if (colecao == 1) // [PORTAL] Download de um Arquivo ZIP Contendo vários XMLs NFe
@@ -78,7 +89,11 @@ namespace api.Controllers.Util
                             result = Request.CreateResponse(HttpStatusCode.OK);
                             result.Content = new StreamContent(new MemoryStream(arquivo));
                             result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
+                            result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                             result.Content.Headers.ContentDisposition.FileName = nmArquivo;
+                            result.Content.Headers.ContentDisposition.Name = nmArquivo;
+                            result.Content.Headers.ContentDisposition.FileNameStar = nmArquivo;
+                            result.Content.Headers.Add("x-filename", nmArquivo);
                         }
                         log.codResposta = (int)HttpStatusCode.OK;
                         Bibliotecas.LogAcaoUsuario.Save(log);
@@ -91,14 +106,16 @@ namespace api.Controllers.Util
                         {
                             dynamic item = dados.Registros.Cast<dynamic>().Select(e => new { xmlNFe = e.xmlNFe, nrChave = e.nrChave }).First();
                             arquivo = GatewayUtilNfe.PDFDanfe(Convert.ToString(item.xmlNFe), Convert.ToString(item.nrChave));
-                            nmArquivo = item.nrChave;
+                            nmArquivo = item.nrChave + ".pdf";
 
                             if (arquivo.Length > 0)
                             {
                                 result = Request.CreateResponse(HttpStatusCode.OK);
                                 result.Content = new StreamContent(new MemoryStream(arquivo));
                                 result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
-                                result.Content.Headers.ContentDisposition.FileName = nmArquivo + ".pdf";
+                                result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                                result.Content.Headers.ContentDisposition.FileName = nmArquivo;
+                                result.Content.Headers.Add("x-filename", nmArquivo);
                             }
                             log.codResposta = (int)HttpStatusCode.OK;
                             Bibliotecas.LogAcaoUsuario.Save(log);
@@ -108,7 +125,7 @@ namespace api.Controllers.Util
                         {
                             log.codResposta = (int)HttpStatusCode.NotFound;
                             Bibliotecas.LogAcaoUsuario.Save(log);
-                            throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                            throw new HttpResponseException(HttpStatusCode.NotFound);
                         }
                     }
                     else if (colecao == 3) // [PORTAL] Download de um Arquivo ZIP Contendo vários PDFs DANFE
@@ -126,8 +143,10 @@ namespace api.Controllers.Util
                             result = Request.CreateResponse(HttpStatusCode.OK);
                             result.Content = new StreamContent(new MemoryStream(arquivo));
                             result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
+                            result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                             //result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                             result.Content.Headers.ContentDisposition.FileName = nmArquivo;
+                            result.Content.Headers.Add("x-filename", nmArquivo);
                         }
                         log.codResposta = (int)HttpStatusCode.OK;
                         Bibliotecas.LogAcaoUsuario.Save(log);
@@ -137,7 +156,7 @@ namespace api.Controllers.Util
                     {
                         log.codResposta = (int)HttpStatusCode.NotFound;
                         Bibliotecas.LogAcaoUsuario.Save(log);
-                        throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                        throw new HttpResponseException(HttpStatusCode.NotFound);
                     }
                 }
                 else
