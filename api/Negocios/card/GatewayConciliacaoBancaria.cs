@@ -246,10 +246,11 @@ namespace api.Negocios.Card
                 List<dynamic> grupos = new List<dynamic>();
                 foreach (ConciliacaoBancaria recebimento in recebimentosParcelaAgrupados)
                 {
-                    // Só avalia os de mesma data
-                    if (recebimento.Data.Year == extrato.Data.Year &&
-                       recebimento.Data.Month == extrato.Data.Month &&
-                       recebimento.Data.Day == extrato.Data.Day)
+                    // Só avalia os de mesma adquirente e mesma data
+                    if (recebimento.Adquirente.Equals(extrato.Adquirente) &&
+                        recebimento.Data.Year == extrato.Data.Year &&
+                        recebimento.Data.Month == extrato.Data.Month &&
+                        recebimento.Data.Day == extrato.Data.Day)
                     {
                         foreach (List<List<ConciliacaoBancaria.ConciliacaoGrupo>> g in GetCombinations(recebimento.Grupo, extrato.ValorTotal))
                         {
