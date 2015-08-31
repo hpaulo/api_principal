@@ -27,7 +27,8 @@ namespace api.Controllers.Util
             {
                 log = Bibliotecas.LogAcaoUsuario.New(token, null);
 
-                Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
+                Dictionary<string, string> queryString = new Dictionary<string, string>();
+                queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
