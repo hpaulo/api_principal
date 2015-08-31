@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Web;
 using System.Web.Http;
 
@@ -125,6 +126,7 @@ namespace api.Controllers.Util
                             result = Request.CreateResponse(HttpStatusCode.OK);
                             result.Content = new StreamContent(new MemoryStream(arquivo));
                             result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
+                            //result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
                             result.Content.Headers.ContentDisposition.FileName = nmArquivo;
                         }
                         log.codResposta = (int)HttpStatusCode.OK;
