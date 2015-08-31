@@ -109,7 +109,12 @@ namespace api.Negocios.Tax
                         break;
                     case CAMPOS.NMEMITENTE:
                         string nmEmitente = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nmEmitente.Equals(nmEmitente)).AsQueryable<tbManifesto>();
+                        if (nmEmitente.Contains("%")) // usa LIKE
+                        {
+                            string busca = nmEmitente.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.nmEmitente.Contains(busca));
+                        }else
+                            entity = entity.Where(e => e.nmEmitente.Equals(nmEmitente)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.NREMITENTEIE:
                         string nrEmitenteIE = Convert.ToString(item.Value);
@@ -268,8 +273,22 @@ namespace api.Negocios.Tax
                     else entity = entity.OrderByDescending(e => e.nrEmitenteIE).AsQueryable<tbManifesto>();
                     break;
                 case CAMPOS.DTEMISSAO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtEmissao).AsQueryable<tbManifesto>();
-                    else entity = entity.OrderByDescending(e => e.dtEmissao).AsQueryable<tbManifesto>();
+                    if (orderby == 0)
+                    {
+                        entity = entity.OrderBy(e => e.dtEmissao.Value.Year)
+                                       .ThenBy(e => e.dtEmissao.Value.Month)
+                                       .ThenBy(e => e.dtEmissao.Value.Day)
+                                       .ThenBy(e => e.nmEmitente)
+                                       .AsQueryable<tbManifesto>();
+                    }
+                    else
+                    {
+                        entity = entity.OrderByDescending(e => e.dtEmissao.Value.Year)
+                                       .ThenByDescending(e => e.dtEmissao.Value.Month)
+                                       .ThenByDescending(e => e.dtEmissao.Value.Day)
+                                       .ThenBy(e => e.nmEmitente)
+                                       .AsQueryable<tbManifesto>();
+                    }
                     break;
                 case CAMPOS.TPOPERACAO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.tpOperacao).AsQueryable<tbManifesto>();
@@ -343,21 +362,25 @@ namespace api.Negocios.Tax
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                var queryTotal = query;
+                
+                // Só interessa os registros que tem XML
+                query = query.Where(e => e.xmlNFe != null).AsQueryable<tbManifesto>();
 
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+ 
+                if (colecao != 4 && colecao != 5)
+                {
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = query.Count();
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
 
-
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
-
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
+                }
 
                 // COLEÇÃO DE RETORNO
                 if (colecao == 1) // [iTAX] Consulta a última NSU do CNPJ informado
@@ -432,13 +455,10 @@ namespace api.Negocios.Tax
                 }
                 else if (colecao == 4) // [PORTAL] Consulta NFe Completa NFe to JSON
                 {
-                    
-
-                    List<dynamic> lista = new List<dynamic>();
-
                     CollectionTbManifesto = query
                         .GroupBy(e => new { e.nrEmitenteCNPJCPF, e.nmEmitente })
                         .OrderBy(e => e.Key.nmEmitente)
+                        //.ThenBy(e => e.Count())
                         .Select(e => new
                         {
                             nrEmitenteCNPJCPF = e.Key.nrEmitenteCNPJCPF,
@@ -446,7 +466,7 @@ namespace api.Negocios.Tax
                             UF = "",
                             notas = e.Select(x => new
                             {
-
+                                idManifesto = x.idManifesto,
                                 dtEmissao = x.dtEmissao,
                                 //modelo = 0,
                                 //numero = 0,
@@ -458,10 +478,28 @@ namespace api.Negocios.Tax
                                 //dsSituacaoErp = "Não Importado",
                                 xmlNFe = x.xmlNFe
 
-                            }).OrderBy(x => x.dtEmissao).ToList<dynamic>()
+                            })
+                            .OrderBy(x => x.dtEmissao.Value.Year)
+                            .ThenBy(x => x.dtEmissao.Value.Month)
+                            .ThenBy(x => x.dtEmissao.Value.Day)
+                            .ToList<dynamic>()
                         }).ToList<dynamic>();
 
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = CollectionTbManifesto.Count;
 
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        CollectionTbManifesto = CollectionTbManifesto.Skip(skipRows).Take(pageSize).ToList<dynamic>();
+                    else
+                        pageNumber = 1;
+
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
+
+                    List<dynamic> lista = new List<dynamic>();
+                    #region OBTÉM DETALHES DE CADA NOTA
                     foreach (var item in CollectionTbManifesto)
                     {
                         //NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(item.notas[0].xmlNFe);
@@ -471,26 +509,13 @@ namespace api.Negocios.Tax
                         {
                             NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(nota.xmlNFe);
                             uf = xmlNFe.emit.enderEmit.UF;
-                            var e = new
-                            {
-                                /*dtEmissao = notas.dtEmissao,
-
-                                mod = xmlNFe.ide.mod,
-                                serie = xmlNFe.ide.serie,
-                                nNF = xmlNFe.ide.nNF,
-                                vlNFe = notas.vlNFe,
-                                nrChave = notas.nrChave,
-                                nfe = xmlNFe.protNFe.xMotivo,
-                                dsSituacaoManifesto = notas.dsSituacaoManifesto,
-                                dsSituacaoErp = notas.dsSituacaoErp*/
-                                xmlNFe
-                            };
 
                             notas.Add(new
                             {
+                                idManifesto = nota.idManifesto,
                                 nfe = new
                                 {
-                                    modelo = xmlNFe.ide.mod,
+                                    modelo = (int)xmlNFe.ide.mod,
                                     serie = xmlNFe.ide.serie,
                                     numero = xmlNFe.ide.nNF,
                                     dtEmissao = xmlNFe.ide.dEmi,
@@ -792,42 +817,55 @@ namespace api.Negocios.Tax
 
                         lista.Add(nf);
                     }
+                    #endregion
 
                     CollectionTbManifesto.Clear();
                     CollectionTbManifesto = lista;
 
-
-
                 }
                 else if (colecao == 5) // [PORTAL] Consulta NFe Completa NFe to JSON
                 {
-                    List<dynamic> lista = new List<dynamic>();
-
                     CollectionTbManifesto = query
                         .GroupBy(e => new { e.nrEmitenteCNPJCPF, e.nmEmitente })
                         .OrderBy(e => e.Key.nmEmitente)
+                        //.ThenBy(e => e.Count())
                         .Select(e => new
-                    {
-                        nrEmitenteCNPJCPF = e.Key.nrEmitenteCNPJCPF,
-                        nmEmitente = e.Key.nmEmitente,
-                        UF = "",
-                        notas = e.Select(x => new { 
-                        
-                            dtEmissao = x.dtEmissao,
-                            //modelo = 0,
-                            //numero = 0,
-                            //serie = 0,
-                            vlNFe = x.vlNFe,
-                            nrChave = x.nrChave,
-                            //nfe = "",
-                            dsSituacaoManifesto = x.dsSituacaoManifesto,
-                            dsSituacaoErp = "Não Importado",
-                            xmlNFe = x.xmlNFe
+                        {
+                            nrEmitenteCNPJCPF = e.Key.nrEmitenteCNPJCPF,
+                            nmEmitente = e.Key.nmEmitente,
+                            UF = "",
+                            notas = e.Select(x => new {
+                                idManifesto = x.idManifesto,
+                                dtEmissao = x.dtEmissao,
+                                vlNFe = x.vlNFe,
+                                nrChave = x.nrChave,
+                                dsSituacaoManifesto = x.dsSituacaoManifesto,
+                                dsSituacaoErp = "Não Importado",
+                                xmlNFe = x.xmlNFe
 
-                        } ).OrderBy(x => x.dtEmissao).ToList<dynamic>()
-                    }).ToList<dynamic>();
-                        
-                    
+                            })
+                            .OrderBy(x => x.dtEmissao.Value.Year)
+                            .ThenBy(x => x.dtEmissao.Value.Month)
+                            .ThenBy(x => x.dtEmissao.Value.Day)
+                            .ToList<dynamic>()
+                        }).ToList<dynamic>();
+
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = CollectionTbManifesto.Count;
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        CollectionTbManifesto = CollectionTbManifesto.Skip(skipRows).Take(pageSize).ToList<dynamic>();
+                    else
+                        pageNumber = 1;
+
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
+
+
+                    List<dynamic> lista = new List<dynamic>();
+                    #region OBTÉM INFO GERAL DE CADA NOTA
                     foreach (var item in CollectionTbManifesto)
                     {
                         //NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(item.notas[0].xmlNFe);
@@ -842,10 +880,10 @@ namespace api.Negocios.Tax
                             var e = new
                             {
                                 dtEmissao = notas.dtEmissao,
-                                
-                                mod = xmlNFe.ide.mod,
+                                idManifesto = notas.idManifesto,
+                                modelo = (int)xmlNFe.ide.mod,
                                 serie = xmlNFe.ide.serie,
-                                nNF = xmlNFe.ide.nNF,
+                                numero = xmlNFe.ide.nNF,
                                 vlNFe = notas.vlNFe,
                                 nrChave = notas.nrChave,
                                 nfe = xmlNFe.protNFe.xMotivo,
@@ -866,6 +904,7 @@ namespace api.Negocios.Tax
 
                         lista.Add(nf);
                     }
+                    #endregion
 
                     CollectionTbManifesto.Clear();
                     CollectionTbManifesto = lista;
@@ -873,7 +912,7 @@ namespace api.Negocios.Tax
 
                 }
 
-                retorno.TotalDeRegistros = CollectionTbManifesto.Count();
+                //retorno.TotalDeRegistros = CollectionTbManifesto.Count();
                 retorno.Registros = CollectionTbManifesto;
 
                 return retorno;

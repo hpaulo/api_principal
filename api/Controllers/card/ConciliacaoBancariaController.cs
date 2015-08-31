@@ -28,13 +28,13 @@ namespace api.Controllers.Card
                 {
                     Retorno dados = GatewayConciliacaoBancaria.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
                     log.codResposta = (int)HttpStatusCode.OK;
-                    //Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
                 }
                 else
                 {
                     log.codResposta = (int)HttpStatusCode.Unauthorized;
-                    //Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
@@ -42,7 +42,7 @@ namespace api.Controllers.Card
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
-                //Bibliotecas.LogAcaoUsuario.Save(log);
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
