@@ -11,6 +11,8 @@
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
+Biblioteca de terceiros/
+api/Web.config
 x64/
 build/
 bld/

@@ -445,35 +445,40 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Patch(string token, Dictionary<string, string> queryString)
+        public static object Patch(string token, Dictionary<string, string> queryString)
         {
             try
             {
             string pastaExtratos = HttpContext.Current.Server.MapPath("~/App_Data/Extratos/");
 
+            // Tem que estar associado a um grupo
             Int32 idGrupo = Permissoes.GetIdGrupo(token);
             if (idGrupo == 0) throw new Exception("Grupo inválido");
 
+            // Tem que informar por filtro a conta corrente
             string outValue = null;
             if (!queryString.TryGetValue("" + (int)CAMPOS.CDCONTACORRENTE, out outValue))
                 throw new Exception("Conta corrente não informada");
 
-            // Conta
+            #region OBTÉM E AVALIA CONTA INFORMADA
             Int32 cdContaCorrente = Convert.ToInt32(queryString["" + (int)CAMPOS.CDCONTACORRENTE]);
             tbContaCorrente conta = _db.tbContaCorrentes.Where(e => e.cdContaCorrente == cdContaCorrente).FirstOrDefault();
             if (conta == null) throw new Exception("Conta corrente inexistente");
             if (!conta.flAtivo) throw new Exception("Conta corrente está inativada");
+            #endregion
 
-            // Cria os diretórios, caso não existam
+            #region OBTÉM O DIRETÓRIO A SER SALVO O EXTRATO
             if (!Directory.Exists(pastaExtratos)) Directory.CreateDirectory(pastaExtratos);
             if (!Directory.Exists(pastaExtratos + idGrupo + "\\")) Directory.CreateDirectory(pastaExtratos + idGrupo + "/");
             // Diretório específico da conta
             string diretorio = pastaExtratos + idGrupo + "\\" + cdContaCorrente + "\\";
             if (!Directory.Exists(diretorio)) Directory.CreateDirectory(diretorio);
+            #endregion
 
             var httpRequest = HttpContext.Current.Request;
             if (httpRequest.Files.Count > 0)
             {
+                #region OBTÉM NOME ÚNICO PARA O ARQUIVO UPADO
                 // Arquivo upado
                 var postedFile = httpRequest.Files[0];
                 // Obtém a extensão
@@ -489,24 +494,28 @@ namespace api.Negocios.Card
                     nomeArquivo = nomeArquivo.Substring(0, nomeArquivo.LastIndexOf("_") + 1);
                     nomeArquivo += ++cont + extensao;
                 }
-                // Obtém o caminho completo do arquivo e o salva no disco
+                #endregion
+
+                #region SALVA ARQUIVO OFX NO DISCO
                 string filePath = diretorio + nomeArquivo;
                 postedFile.SaveAs(filePath);
-                // Obtém o objeto associado ao extrato
+                #endregion
+
+                #region OBTÉM OBJETO ASSOCIADO AO EXTRATO
                 var parser = new OFXDocumentParser();
 
                 OFXDocument ofxDocument = null;
-
-                    try
-                    {
+                try
+                {
                     ofxDocument = parser.Import(new FileStream(filePath, FileMode.Open));
-                    }
+                }
                     catch (Exception e)
                 {
                     // Deleta o arquivo
                     File.Delete(filePath);
                     throw new Exception("Arquivo não é um .ofx válido");
                 }
+                #endregion
 
                 /* 
                     CONTA
@@ -525,13 +534,14 @@ namespace api.Negocios.Card
                       => TransactionID = CheckNum: string
                       => Memo : string // descrição
                 */
-                /* VALIDA A CONTA */
+
+                #region VALIDA A CONTA QUE CONSTA NO EXTRATO
                 string banco = ofxDocument.Account.BankID;
                 string nrAgencia = ofxDocument.Account.BranchID;
                 string nrConta = ofxDocument.Account.AccountID;
 
-                // Valida código do banco
-                if (banco.Length > 3) banco = banco.Substring(banco.Length - 3, 3); // pega somente os últimos 3 dígitos
+                #region VALIDA CÓDIGO DO BANCO
+                    if (banco.Length > 3) banco = banco.Substring(banco.Length - 3, 3); // pega somente os últimos 3 dígitos
                 else
                 {
                     // Adiciona zeros a esquerda, caso tenha menos de 3 dígitos
@@ -543,13 +553,18 @@ namespace api.Negocios.Card
                     File.Delete(filePath);
                     throw new Exception("Extrato upado não corresponde ao banco da conta informada");
                 }
-                // Valida o número da conta
+                    #endregion
+
+                #region VALIDA NÚMERO DA CONTA
+                // BRADESCO INCLUI NO <ACCTID> nrAgencia/nrConta
                 if (nrConta.Contains("/"))
                 {
                     // Agência e conta estão "juntas"
                     nrAgencia = nrConta.Substring(0, nrConta.IndexOf("/"));
                     nrConta = nrConta.Substring(nrConta.IndexOf("/") + 1);
                 }
+                // BANESE INCLUI UM "(<num>)" no final do <ACCTID>
+                if (nrConta.Contains("(")) nrConta = nrConta.Substring(0, nrConta.IndexOf("("));
                 // Deixa os nomes com mesmo comprimento
                 string contaNrConta = conta.nrConta;
                 while (contaNrConta.Length < nrConta.Length)
@@ -561,12 +576,15 @@ namespace api.Negocios.Card
                 // Adiciona zeros a esquerda
                 while (nrConta.Length < contaNrConta.Length)
                     nrConta = "0" + nrConta; // adiciona zeros a esquerda
-                if (!contaNrConta.Equals(nrConta) && !nrConta.EndsWith(nrContaSemZeros))
-                {
+                if (!contaNrConta.Equals(nrConta) && 
+                    !nrConta.EndsWith(nrContaSemZeros)) // ITAU INCLUI NO <ACCTID> <agencia><conta> (tudo junto!)
+                    {
                     // Deleta o arquivo
                     File.Delete(filePath);
                     throw new Exception("Extrato upado não corresponde ao número da conta informada");
                 }
+                #endregion
+                
                 // Valida o número da agência
                 /*if (!nrAgencia.Equals("") && !conta.nrAgencia.Equals(nrAgencia))
                 {
@@ -575,12 +593,16 @@ namespace api.Negocios.Card
                     throw new Exception("Extrato upado não corresponde ao número da agência informada");
                 }*/
 
+                #endregion
 
-                /* ARMAZENA */
+
                 bool armazenou = false;
+                DateTime? dataArmazenada = null;
+
+                #region ARMAZENA MOVIMENTAÇÕES BANCÁRIAS
                 foreach (var transacao in ofxDocument.Transactions)
                 {
-                    // Obtém a nova movimentação
+                    #region OBTÉM O OBJETO CORRESPONDENTE A MOVIMENTAÇÃO
                     tbExtrato extrato = new tbExtrato();
                     extrato.cdContaCorrente = cdContaCorrente;
                     extrato.dtExtrato = new DateTime(transacao.Date.Year, transacao.Date.Month, transacao.Date.Day);
@@ -589,27 +611,30 @@ namespace api.Negocios.Card
                     extrato.dsTipo = transacao.TransType.ToString();
                     extrato.dsDocumento = transacao.Memo;
                     extrato.dsArquivo = filePath;
+                    #endregion
 
+                    #region OBTÉM O TOTAL DE MOVIMENTAÇÕES REPETIDAS PARA A MOVIMENTAÇÃO CORRENTE
                     Int32 contMovimentacoesRepetidas = ofxDocument.Transactions.Where(t => t.Amount == extrato.vlMovimento)
                                                                                .Where(t => t.CheckNum.Equals(extrato.nrDocumento))
                                                                                .Where(t => t.TransType.ToString().Equals(extrato.dsTipo))
                                                                                .Where(t => t.Memo.Equals(extrato.dsDocumento))
                                                                                .Count();
+                    #endregion
 
-                    
-
-                    // Verifica se existe uma movimentação com as mesmas informações
+                    #region OBTÉM AS MOVIMENTAÇÕES JÁ ARMAZENADAS NA BASE QUE POSSUEM MESMAS INFORMAÇÕES DA MOVIMENTAÇÃO CORRENTE
                     var olds = _db.tbExtratos.Where(e => e.cdContaCorrente == extrato.cdContaCorrente)
                                                          .Where(e => e.dtExtrato.Equals(extrato.dtExtrato))
                                                          .Where(e => e.nrDocumento.Equals(extrato.nrDocumento))
                                                          .Where(e => e.vlMovimento == extrato.vlMovimento)
                                                          .Where(e => e.dsDocumento.Equals(extrato.dsDocumento))
                                                          .Where(e => e.dsTipo.Equals(extrato.dsTipo));
+                    #endregion
 
                     if (olds.Count() >= contMovimentacoesRepetidas)
                     {
+                        // Já existe o(s) registro(s) com essas informações!
+                        #region SE O ARQUIVO ATUAL TEM MAIS MOVIMENTAÇÕES, ATUALIZA A REFERÊNCIA DE ARQUIVO DOS EXTRATOS QUE JÁ ESTÃO NA BASE
                         string arquivoAntigo = olds.Select(o => o.dsArquivo).FirstOrDefault();
-                        // Já existe o(s) registro(s) com essas informações
                         int totalTransacoesOld = _db.tbExtratos.Where(e => e.dsArquivo.Equals(arquivoAntigo)).Count();
                         // Verifica se o extrato atual possui mais movimentações que o anterior
                         if (ofxDocument.Transactions.Count > totalTransacoesOld)
@@ -621,29 +646,43 @@ namespace api.Negocios.Card
                             if (totalTransacoesOld <= 1) File.Delete(arquivoAntigo); // Deleta o arquivo antigo
                                 
                         }
+                        #endregion
                     }
                     else
                     {
                         // Salva uma nova movimentação
                         _db.tbExtratos.Add(extrato);
                         _db.SaveChanges();
+                        armazenou = true;
+                        if (dataArmazenada == null) dataArmazenada = extrato.dtExtrato;
                     }
 
                     if (transacao.TransType.Equals(OFXTransactionType.CREDIT) ||
                        transacao.TransType.Equals(OFXTransactionType.DEBIT))
                     {
-                        // Salva o parâmetro bancário
+                        #region SALVA PARÂMETRO BANCÁRIO
                         tbBancoParametro parametro = new tbBancoParametro();
                         parametro.cdAdquirente = null;
                         parametro.cdBanco = conta.cdBanco;
                         parametro.dsMemo = extrato.dsDocumento;
                         parametro.dsTipo = extrato.dsTipo;
+                        parametro.flVisivel = true;
                         try { GatewayTbBancoParametro.Add(token, parametro); } catch { }
+                        #endregion
                     }
                 }
+                #endregion
 
-                // Se não armazenou pelo menos um elemento, deleta o arquivo
+                // Se não armazenou pelo menos um elemento, deleta o arquivo do disco
                 if (!armazenou) File.Delete(filePath);
+
+                if(dataArmazenada == null) dataArmazenada = ofxDocument.StatementStart;
+
+                return new
+                {
+                    ano = dataArmazenada != null ? dataArmazenada.Value.Year : 0,
+                    mes = dataArmazenada != null ? dataArmazenada.Value.Month : 0
+                };
 
             }
             else throw new Exception("400"); // Bad Request

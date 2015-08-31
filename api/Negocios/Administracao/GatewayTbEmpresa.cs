@@ -148,18 +148,22 @@ namespace api.Negocios.Admin
                 if (colecao == 1)
                 {
 
-                    CollectionTbEmpresa = _db.tbEmpresas
+                     CollectionTbEmpresa = _db.tbEmpresas
                         .Join(_db.tbEmpresaFiliais, e => e.nrCNPJBase, f => f.nrCNPJBase, (e, f) => new { e, f })
                         .Join(_db.tbEmpresaGrupos, f => f.f.cdEmpresaGrupo, g => g.cdEmpresaGrupo, (f, g) => new { f, g })
                         .Where(e => e.f.e.dsCertificadoDigital != null && e.f.e.dsCertificadoDigitalSenha != null && e.f.f.flAtivo == true && e.g.flTaxServices == true && e.g.flAtivo == true)
-                        .GroupBy(e => new { e.f.e.cdEmpresaGrupo, e.f.e.dsCertificadoDigital, e.f.e.dsCertificadoDigitalSenha, e.f.f.nrCNPJ })
+                        .GroupBy(e => new { e.f.e.cdEmpresaGrupo, e.f.e.dsCertificadoDigitalSenha, e.f.f.nrCNPJ,e.f.e.nrCNPJBase })
                         .Select(e => new {
                         cdEmpresaGrupo = e.Key.cdEmpresaGrupo,
-                        dsCertificadoDigital = e.Key.dsCertificadoDigital,
+                        
+                        dsCertificadoDigital = _db.tbEmpresas
+                        .Where(t => t.nrCNPJBase.Equals(e.Key.nrCNPJBase))
+                        .Select(s=> new{s.dsCertificadoDigital}).FirstOrDefault().dsCertificadoDigital,
+
                         dsCertificadoDigitalSenha = e.Key.dsCertificadoDigitalSenha,
-                        nrCNPJ = e.Key.nrCNPJ,})
-                        .AsQueryable()
-                        .ToList<dynamic>();
+                        nrCNPJ = e.Key.nrCNPJ})
+                        .AsQueryable().ToList<dynamic>();
+
                 }
                 else if (colecao == 0)
                 {
@@ -185,9 +189,10 @@ namespace api.Negocios.Admin
                     }).Take(1).ToList<dynamic>();
                 }
 
-                retorno.TotalDeRegistros = CollectionTbEmpresa.Count;
-                retorno.Registros = CollectionTbEmpresa;
 
+                    retorno.TotalDeRegistros = CollectionTbEmpresa.Count;
+                    retorno.Registros = CollectionTbEmpresa;
+    
                 return retorno;
             }
             catch (Exception e)

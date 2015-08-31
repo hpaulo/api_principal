@@ -5,17 +5,17 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using api.Models;
-using api.Negocios.Card;
+using api.Negocios.Admin;
 using api.Bibliotecas;
 using api.Models.Object;
 using Newtonsoft.Json;
 
-namespace api.Controllers.Card
+namespace api.Controllers.Admin
 {
-    public class TbExtratoController : ApiController
+    public class TbNewsController : ApiController
     {
-
-        // GET /tbExtrato/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
+    
+        // GET /tbNews/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
@@ -27,10 +27,11 @@ namespace api.Controllers.Card
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    Retorno dados = GatewayTbExtrato.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                    log.codResposta = (int)HttpStatusCode.OK;
+					Retorno dados = GatewayTbNews.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+					log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK,dados);
+                
                 }
                 else
                 {
@@ -48,8 +49,8 @@ namespace api.Controllers.Card
             }
         }
 
-        // POST /tbExtrato/token/
-        public HttpResponseMessage Post(string token, [FromBody]tbExtrato param)
+        // POST /tbNews/token/
+        public HttpResponseMessage Post(string token, [FromBody]tbNews param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
@@ -59,8 +60,8 @@ namespace api.Controllers.Card
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    Int32 dados = GatewayTbExtrato.Add(token, param);
-                    log.codResposta = (int)HttpStatusCode.OK;
+					Int32 dados = GatewayTbNews.Add(token, param);
+					log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
                 }
@@ -78,42 +79,20 @@ namespace api.Controllers.Card
                 Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-
-
         }
 
-        /* PUT /tbExtrato/token/ => Não altera
-        public HttpResponseMessage Put(string token, [FromBody]tbExtrato param)
-        {
-            try
-            {
-                HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
-                {
-                    GatewayTbExtrato.Update(token, param);
-                    return Request.CreateResponse(HttpStatusCode.OK);
-                }
-                else
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
-            }
-            catch
-            {
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
-            }
-        }*/
-
-        // DELETE /tbExtrato/token/idExtrato
-        public HttpResponseMessage Delete(string token, Int32 idExtrato)
+        // PUT /tbNews/token/
+        public HttpResponseMessage Put(string token, [FromBody]tbNews param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("idExtrato : " + idExtrato));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbExtrato.Delete(token, idExtrato);
+                    GatewayTbNews.Update(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
@@ -134,22 +113,21 @@ namespace api.Controllers.Card
             }
         }
 
-        // PATCH: /tbExtrato/token/ => upload de um arquivo ofx
-        public HttpResponseMessage Patch(string token)
+        // DELETE /tbNews/token/idNews
+        public HttpResponseMessage Delete(string token, Int32 idNews)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("idNews : " + idNews));
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
-                    object resp = GatewayTbExtrato.Patch(token, queryString);
+                    GatewayTbNews.Delete(token, idNews);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse(HttpStatusCode.OK, resp);
+                    return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
                 {

@@ -16,9 +16,6 @@ namespace api.Models.Mapping
                 .IsFixedLength()
                 .HasMaxLength(8);
 
-            this.Property(t => t.dsCertificadoDigital)
-                .HasMaxLength(1000);
-
             this.Property(t => t.dsCertificadoDigitalSenha)
                 .HasMaxLength(30);
 

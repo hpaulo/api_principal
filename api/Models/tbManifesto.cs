@@ -36,7 +36,7 @@ namespace api.Models
 
         public tbManifesto()
         {
-            xmlNFeJson = Bibliotecas.nfeRead.Loader(xmlNFe);
+            if(xmlNFe !=null) xmlNFeJson = Bibliotecas.nfeRead.Loader(xmlNFe);
         }
     }
 }
