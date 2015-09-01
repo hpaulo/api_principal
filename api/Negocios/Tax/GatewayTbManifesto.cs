@@ -519,9 +519,21 @@ namespace api.Negocios.Tax
                                     modelo = (int)xmlNFe.ide.mod,
                                     serie = xmlNFe.ide.serie,
                                     numero = xmlNFe.ide.nNF,
-                                    dtEmissao = xmlNFe.ide.dEmi,
+                                    dtEmissao = nota.dtEmissao,//xmlNFe.ide.dEmi,
                                     dtSaiEnt = xmlNFe.ide.dSaiEnt,
                                     vlNFe = nota.vlNFe,
+                                    #region FORMATO DE IMPRESSÃO DO DANFE
+                                    formatoImpressaoDANFE = new
+                                    {
+                                        codigo = (int)xmlNFe.ide.tpImp,
+                                        descricao = xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiNao) ? "Sem geração de DANFE" :
+                                                    xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiRetrato) ? "DANFE normal, Retrato" :
+                                                    xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiPaisagem) ? "DANFE normal, Paisagem" :
+                                                    xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiDANFESimplificado) ? "DANFE Simplificado" :
+                                                    xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiDANFENFCe) ? "DANFE NFC-e" :
+                                                    xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiDANFENFCe_em_mensagem_eletrônica) ? "DANFE NFC-e em mensagem eletrônica" : ""
+                                    },
+                                    #endregion
                                     #region DESTINO DA OPERAÇÃO
                                     destinoOperacao = new
                                     {
@@ -636,7 +648,7 @@ namespace api.Negocios.Tax
                                             nome = xmlNFe.emit.enderEmit.xMun,
                                         },
                                         #endregion
-                                        uf = xmlNFe.emit.enderEmit.UF,
+                                        UF = xmlNFe.emit.enderEmit.UF,
                                         #region PAÍS
                                         pais = new
                                         {
@@ -684,7 +696,7 @@ namespace api.Negocios.Tax
                                             nome = xmlNFe.dest.enderDest.xMun,
                                         },
                                         #endregion
-                                        uf = xmlNFe.dest.enderDest.UF,
+                                        UF = xmlNFe.dest.enderDest.UF,
                                         #region PAÍS
                                         pais = new
                                         {
@@ -781,7 +793,7 @@ namespace api.Negocios.Tax
                                     #region IMPOSTO
                                     imposto = new
                                     {
-                                        valorAproximadoPedido = x.Imposto.vTotTrib,
+                                        valorAproximadoTributos = x.Imposto.vTotTrib,
                                         #region ICMS
                                         ICMS = new
                                         {

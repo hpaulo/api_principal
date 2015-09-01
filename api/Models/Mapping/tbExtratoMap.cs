@@ -13,8 +13,8 @@ namespace api.Models.Mapping
             // Properties
             this.Property(t => t.nrDocumento)
                 .HasMaxLength(20);
-            this.Property(t => t.dsDocumento)
-                .HasMaxLength(50);
+            this.Property(t => t.dsDocumento);
+                //.HasMaxLength(50);
             this.Property(t => t.dsTipo)
                 .HasMaxLength(30); 
 

@@ -11,6 +11,7 @@ using System.Net.Http;
 using OFXSharp;
 using System.IO;
 using System.Data.Entity.Validation;
+using api.Controllers.Util;
 
 namespace api.Negocios.Card
 {
@@ -496,24 +497,51 @@ namespace api.Negocios.Card
                 }
                 #endregion
 
-                #region SALVA ARQUIVO OFX NO DISCO
+                #region SALVA ARQUIVO NO DISCO
                 string filePath = diretorio + nomeArquivo;
                 postedFile.SaveAs(filePath);
                 #endregion
-
+                
                 #region OBTÉM OBJETO ASSOCIADO AO EXTRATO
-                var parser = new OFXDocumentParser();
-
+                // VERIFICA EXTENSÃO DO ARQUIVO
                 OFXDocument ofxDocument = null;
-                try
+                if (extensao.ToLower().Equals(".ofx"))
                 {
-                    ofxDocument = parser.Import(new FileStream(filePath, FileMode.Open));
-                }
+                    // OFX
+                    OFXDocumentParser parser = new OFXDocumentParser();
+                    try
+                    {
+                        ofxDocument = parser.Import(new FileStream(filePath, FileMode.Open));
+                    }
                     catch (Exception e)
+                    {
+                        // Deleta o arquivo
+                        File.Delete(filePath);
+                        throw new Exception("Arquivo não é um .ofx válido");
+                    }
+                }else if (extensao.ToLower().Equals(".pdf"))
                 {
-                    // Deleta o arquivo
-                    File.Delete(filePath);
-                    throw new Exception("Arquivo não é um .ofx válido");
+                    // PDF
+                    if (!conta.cdBanco.Equals("033"))
+                    {
+                        File.Delete(filePath); // Deleta o arquivo
+                        throw new Exception("Só é aceito PDF de contas do banco Santander (033) !");
+                    }
+                    // Parser
+                    try
+                    {
+                        ofxDocument = ExtratoPDFSantanderController.Import(filePath);
+                    }
+                    catch (Exception e)
+                    {
+                        // Deleta o arquivo
+                        File.Delete(filePath);
+                        throw new Exception("Arquivo não é um .pdf válido");
+                    }
+                }
+                else {
+                    File.Delete(filePath); // Deleta o arquivo
+                    throw new Exception("Formato de arquivo inválido!");
                 }
                 #endregion
 
