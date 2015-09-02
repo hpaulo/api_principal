@@ -480,7 +480,8 @@ namespace api.Negocios.Card
                 if (!filtroTipoPreConciliado && !filtroTipoNaoConciliado) {
                     #region OBTÉM AS INFORMAÇÕES DE DADOS JÁ CONCILIADOS PREVIAMENTE
                     // EXTRATOS JÁ CONCILIADOS, COM SEUS RESPECTIVOS RECEBIMENTOS CONCILIADOS
-                    List<dynamic> extratosBancariosConciliados = queryExtrato.Where(e => e.RecebimentoParcelas.Count > 0)
+                    List<dynamic> extratosBancariosConciliados = queryExtrato
+                                                .Where(e => e.RecebimentoParcelas.Count > 0)
                                                 .Select(e => new {
                                                     idExtrato = e.idExtrato,
                                                     dtExtrato = e.dtExtrato,
@@ -518,7 +519,7 @@ namespace api.Negocios.Card
                                                 }).ToList<dynamic>();
 
                     // RECEBIMENTOS PARCELAS JÁ CONCILIADOS
-                    List<ConciliacaoBancaria> recebimentosParcelaConciliados = new List<ConciliacaoBancaria>();
+                    //List<ConciliacaoBancaria> recebimentosParcelaConciliados = new List<ConciliacaoBancaria>();
 
                     // Total dos elementos já conciliados
                     if (extratosBancariosConciliados.Count > 0)
