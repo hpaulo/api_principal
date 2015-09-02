@@ -41,7 +41,7 @@ namespace api.Negocios.Admin
        };
 
         /// <summary>
-        /// Get tbNews/tbNews
+        /// Get TbNews/TbNews
         /// </summary>
         /// <param name="colecao"></param>
         /// <param name="campo"></param>
@@ -53,7 +53,7 @@ namespace api.Negocios.Admin
         private static IQueryable<tbNews> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
-            var entity = _db.tbNews.AsQueryable();
+            var entity = _db.tbNewss.AsQueryable();
 
             #region WHERE - ADICIONA OS FILTROS A QUERY
 
@@ -87,7 +87,7 @@ namespace api.Negocios.Admin
 									entity = entity.Where(e => e.cdCatalogo.Equals(cdCatalogo)).AsQueryable<tbNews>();
 								break;
 								case CAMPOS.CDCANAL:
-                                short cdCanal = short.Parse(item.Value);
+                                    short cdCanal = short.Parse(item.Value);
 									entity = entity.Where(e => e.cdCanal.Equals(cdCanal)).AsQueryable<tbNews>();
 								break;
 								case CAMPOS.CDREPORTER:
@@ -152,7 +152,7 @@ namespace api.Negocios.Admin
 
 
         /// <summary>
-        /// Retorna tbNews/tbNews
+        /// Retorna TbNews/TbNews
         /// </summary>
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
@@ -160,7 +160,7 @@ namespace api.Negocios.Admin
 			try
 			{   
 				//DECLARAÇÕES
-				List<dynamic> CollectiontbNew = new List<dynamic>();
+				List<dynamic> CollectionTbNews = new List<dynamic>();
 				Retorno retorno = new Retorno();
 
                 // Atualiza o contexto
@@ -187,7 +187,7 @@ namespace api.Negocios.Admin
 				// COLEÇÃO DE RETORNO
 				if (colecao == 1)
 				{
-					CollectiontbNew = query.Select(e => new
+					CollectionTbNews = query.Select(e => new
 					{
 	
 						idNews = e.idNews,
@@ -202,7 +202,7 @@ namespace api.Negocios.Admin
 				}
 				else if (colecao == 0)
 				{
-					CollectiontbNew = query.Select(e => new
+					CollectionTbNews = query.Select(e => new
 					{
 	
 						idNews = e.idNews,
@@ -216,7 +216,7 @@ namespace api.Negocios.Admin
 					}).ToList<dynamic>();
 				}
 
-				retorno.Registros = CollectiontbNew;
+				retorno.Registros = CollectionTbNews;
 
 				return retorno;
 			}
@@ -225,7 +225,7 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao listar tbNews" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar TbNews" : erro);
                 }
                 throw new Exception(e.Message);
             }
@@ -234,7 +234,7 @@ namespace api.Negocios.Admin
 
 	
         /// <summary>
-        /// Adiciona nova tbNews
+        /// Adiciona nova TbNews
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
@@ -245,7 +245,7 @@ namespace api.Negocios.Admin
 			     // Atualiza o contexto
                 ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
                 
-				_db.tbNews.Add(param);
+				_db.tbNewss.Add(param);
 				_db.SaveChanges();
 				return param.idNews;
             }
@@ -254,7 +254,7 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao salvar tbNews" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar TbNews" : erro);
                 }
                 throw new Exception(e.Message);
             }
@@ -262,7 +262,7 @@ namespace api.Negocios.Admin
 
 
         /// <summary>
-        /// Apaga uma tbNews
+        /// Apaga uma TbNews
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
@@ -273,7 +273,7 @@ namespace api.Negocios.Admin
             	// Atualiza o contexto
                 ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
                 
-				_db.tbNews.Remove(_db.tbNews.Where(e => e.idNews.Equals(idNews)).First());
+				_db.tbNewss.Remove(_db.tbNewss.Where(e => e.idNews.Equals(idNews)).First());
 				_db.SaveChanges();
             }
             catch (Exception e)
@@ -281,7 +281,7 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao apagar tbNews" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar TbNews" : erro);
                 }
                 throw new Exception(e.Message);
             }
@@ -301,7 +301,7 @@ namespace api.Negocios.Admin
 				// Atualiza o contexto
                 ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
                 
-				tbNews value = _db.tbNews
+				tbNews value = _db.tbNewss
 						.Where(e => e.idNews.Equals(param.idNews))
 						.First<tbNews>();
 
@@ -331,7 +331,7 @@ namespace api.Negocios.Admin
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao alterar tbNews" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar TbNews" : erro);
                 }
                 throw new Exception(e.Message);
             }

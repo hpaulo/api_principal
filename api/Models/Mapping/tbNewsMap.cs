@@ -1,12 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
 
 namespace api.Models.Mapping
 {
-    public class tbNewMap : EntityTypeConfiguration<tbNews>
+    public class tbNewsMap : EntityTypeConfiguration<tbNews>
     {
-        public tbNewMap()
+        public tbNewsMap()
         {
             // Primary Key
             this.HasKey(t => t.idNews);

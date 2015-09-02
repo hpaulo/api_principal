@@ -53,8 +53,9 @@
       <HintPath>..\packages\EntityFramework.6.1.3\lib\net45\EntityFramework.SqlServer.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="itextsharp">
-      <HintPath>..\Biblioteca de terceiros\itextsharp.dll</HintPath>
+    <Reference Include="itextsharp, Version=5.5.6.0, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <HintPath>..\packages\iTextSharp.5.5.6\lib\itextsharp.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.Data.Edm, Version=5.6.4.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -332,11 +333,11 @@
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbNewsGrupoMap.cs" />
     <Compile Include="Models\tbNewsGrupos.cs" />
-    <Compile Include="Models\Mapping\tbNewsStatuMap.cs" />
+    <Compile Include="Models\Mapping\tbNewsStatusMap.cs" />
     <Compile Include="Models\tbNewsStatus.cs" />
     <Compile Include="Models\Mapping\tbCatalogoMap.cs" />
     <Compile Include="Models\tbCatalogo.cs" />
-    <Compile Include="Models\Mapping\tbNewMap.cs" />
+    <Compile Include="Models\Mapping\tbNewsMap.cs" />
     <Compile Include="Models\tbNews.cs" />
     <Compile Include="Models\Mapping\tbCanalMap.cs" />
     <Compile Include="Models\tbCanal.cs" />
