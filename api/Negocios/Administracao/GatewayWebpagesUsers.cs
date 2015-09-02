@@ -639,7 +639,7 @@ namespace api.Negocios.Administracao
 
                         if (param.Webpagesusersinroles != null)
                         {
-                            foreach (var item in param.Webpagesusersinroles)
+                            foreach (webpages_UsersInRoles item in param.Webpagesusersinroles)
                             {
                                 if (item.UserId == -1)
                                 {

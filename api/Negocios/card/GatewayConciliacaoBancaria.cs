@@ -1145,7 +1145,12 @@ namespace api.Negocios.Card
                     {
                         foreach (Int32 idRecebimento in grupoExtrato.IdsRecebimento)
                         {
-                            RecebimentoParcela value = _db.RecebimentoParcelas.Where(e => e.idRecebimento == idRecebimento).FirstOrDefault();
+                            RecebimentoParcela value = _db.RecebimentoParcelas
+                                                                        .Where(e => e.idRecebimento == idRecebimento)
+                                                                        .Where(e => e.dtaRecebimento.Year == grupoExtrato.Data.Year)
+                                                                        .Where(e => e.dtaRecebimento.Month == grupoExtrato.Data.Month)
+                                                                        .Where(e => e.dtaRecebimento.Day == grupoExtrato.Data.Day)
+                                                                        .FirstOrDefault();
                             if (value != null)
                             {
                                 if (grupoExtrato.IdExtrato == -1) value.idExtrato = null;

@@ -14,6 +14,13 @@ namespace api.Models.Object
             set { idExtrato = value; }
         }
 
+        private DateTime data;
+        public DateTime Data
+        {
+            get { return data; }
+            set { data = value; }
+        }
+
         private List<Int32> idsRecebimento;
 
         public List<Int32> IdsRecebimento

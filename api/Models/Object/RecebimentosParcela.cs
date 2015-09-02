@@ -8,11 +8,18 @@ namespace api.Models.Object
 {
     public class RecebimentosParcela
     {
-        private DateTime dtaRecebimento;
-        public DateTime DtaRecebimento
+        private DateTime dtaRecebimentoAtual;
+        public DateTime DtaRecebimentoAtual
         {
-            get { return dtaRecebimento; }
-            set { dtaRecebimento = value; }
+            get { return dtaRecebimentoAtual; }
+            set { dtaRecebimentoAtual = value; }
+        }
+
+        private DateTime dtaRecebimentoNova;
+        public DateTime DtaRecebimentoNova
+        {
+            get { return dtaRecebimentoNova; }
+            set { dtaRecebimentoNova = value; }
         }
 
         private List<Int32> idsRecebimento;
