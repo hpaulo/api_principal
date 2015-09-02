@@ -33,6 +33,7 @@ namespace api.Models
         public string nrProtocoloDownload { get; set; }
         public Nullable<short> cdSituacaoDownload { get; set; }
         public string dsSituacaoDownload { get; set; }
+        public string cdSituacaoEntrega { get; set; }
 
         public tbManifesto()
         {

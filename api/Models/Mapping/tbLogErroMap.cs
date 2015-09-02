@@ -30,8 +30,7 @@ namespace api.Models.Mapping
                 .HasMaxLength(255);
 
             this.Property(t => t.dsMensagem)
-                .IsRequired()
-                .HasMaxLength(255);
+                .IsRequired();
 
             // Table & Column Mappings
             this.ToTable("tbLogErro", "admin");

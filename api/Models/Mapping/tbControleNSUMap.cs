@@ -15,16 +15,12 @@ namespace api.Models.Mapping
 
             // Properties
             this.Property(t => t.nrCNPJ)
-                .IsRequired();
-
-            this.Property(t => t.ultNSU)
-              .IsRequired();
-
-            this.Property(t => t.nrCNPJ)
+                .IsRequired()
                 .HasMaxLength(14);
 
             this.Property(t => t.ultNSU)
-                .HasMaxLength(15);
+              .IsRequired()
+              .HasMaxLength(15);
 
             // Table & Column Mappings
             this.ToTable("tbControleNSU", "tax");

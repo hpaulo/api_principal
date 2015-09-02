@@ -56,6 +56,7 @@ namespace api.Negocios.Tax
             NRPROTOCOLODOWNLOAD = 117,
             CDSITUACAODOWNLOAD = 118,
             DSSITUACAODOWNLOAD = 119,
+            CDSITUACAOENTREGA = 120,
 
         };
 
@@ -231,6 +232,10 @@ namespace api.Negocios.Tax
                         string dsSituacaoDownload = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.dsSituacaoDownload.Equals(dsSituacaoDownload)).AsQueryable<tbManifesto>();
                         break;
+                    case CAMPOS.CDSITUACAOENTREGA:
+                        string cdSituacaoEntrega = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.cdSituacaoNFe.Equals(cdSituacaoEntrega)).AsQueryable<tbManifesto>();
+                        break;
 
                 }
             }
@@ -336,6 +341,10 @@ namespace api.Negocios.Tax
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsSituacaoDownload).AsQueryable<tbManifesto>();
                     else entity = entity.OrderByDescending(e => e.dsSituacaoDownload).AsQueryable<tbManifesto>();
                     break;
+                case CAMPOS.CDSITUACAOENTREGA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdSituacaoEntrega).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.cdSituacaoEntrega).AsQueryable<tbManifesto>();
+                    break;
 
             }
             #endregion
@@ -367,6 +376,7 @@ namespace api.Negocios.Tax
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
                 
                 // Só interessa os registros que tem XML
+                if(colecao != 0)
                 query = query.Where(e => e.xmlNFe != null).AsQueryable<tbManifesto>();
 
  
@@ -422,6 +432,7 @@ namespace api.Negocios.Tax
                         nrProtocoloDownload = e.nrProtocoloDownload,
                         cdSituacaoDownload = e.cdSituacaoDownload,
                         dsSituacaoDownload = e.dsSituacaoDownload,
+                        cdSituacaoEntrega = e.cdSituacaoEntrega,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2) // [iTAX] Consulta as notas disponíveis para manifestação
@@ -1371,7 +1382,7 @@ namespace api.Negocios.Tax
 
                 tbManifesto manifesto = _db.tbManifestos.Where(e => e.idManifesto == idManifesto).FirstOrDefault();
 
-                if(manifesto == null) throw new Exception("Manifesto inexistente!");
+                if (manifesto == null) throw new Exception("Manifesto inexistente!");
 
                 _db.tbManifestos.Remove(manifesto);
                 _db.SaveChanges();
@@ -1384,6 +1395,10 @@ namespace api.Negocios.Tax
                     throw new Exception(erro.Equals("") ? "Falha ao apagar TbManifesto" : erro);
                 }
                 throw new Exception(e.Message);
+            }
+            finally
+            {
+                semaforo.Release(1);
             }
         }
 
@@ -1447,6 +1462,8 @@ namespace api.Negocios.Tax
                     value.cdSituacaoDownload = param.cdSituacaoDownload;
                 if (param.dsSituacaoDownload != null && param.dsSituacaoDownload != value.dsSituacaoDownload)
                     value.dsSituacaoDownload = param.dsSituacaoDownload;
+                if (param.cdSituacaoEntrega != null && param.cdSituacaoEntrega != value.cdSituacaoEntrega)
+                    value.cdSituacaoEntrega = param.cdSituacaoEntrega;
                 _db.SaveChanges();
             }
             catch (Exception e)
