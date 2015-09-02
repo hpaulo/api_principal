@@ -468,14 +468,7 @@ namespace api.Negocios.Tax
                             {
                                 idManifesto = x.idManifesto,
                                 dtEmissao = x.dtEmissao,
-                                //modelo = 0,
-                                //numero = 0,
-                                //serie = 0,
                                 vlNFe = x.vlNFe,
-                                //nrChave = x.nrChave,
-                                //nfe = "",
-                                //dsSituacaoManifesto = x.dsSituacaoManifesto,
-                                //dsSituacaoErp = "Não Importado",
                                 xmlNFe = x.xmlNFe
 
                             })
@@ -513,14 +506,35 @@ namespace api.Negocios.Tax
                             notas.Add(new
                             {
                                 idManifesto = nota.idManifesto,
+                                #region NFE
                                 nfe = new
                                 {
+                                    #region INFO
+                                    info = new
+                                    {
+                                        ID = xmlNFe.infNFe.ID,
+                                        versao = xmlNFe.infNFe.Versao,
+                                    },
+                                    #endregion
                                     modelo = (int)xmlNFe.ide.mod,
                                     serie = xmlNFe.ide.serie,
                                     numero = xmlNFe.ide.nNF,
-                                    dtEmissao = xmlNFe.ide.dEmi,
+                                    dtEmissao = nota.dtEmissao,//xmlNFe.ide.dEmi,
                                     dtSaiEnt = xmlNFe.ide.dSaiEnt,
                                     vlNFe = nota.vlNFe,
+                                    #region FORMATO DE IMPRESSÃO DO DANFE
+                                    formatoImpressaoDANFE = new
+                                    {
+                                        codigo = (int)xmlNFe.ide.tpImp,
+                                        descricao = xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiNao) ? "Sem geração de DANFE" :
+                                                    xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiRetrato) ? "DANFE normal, Retrato" :
+                                                    xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiPaisagem) ? "DANFE normal, Paisagem" :
+                                                    xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiDANFESimplificado) ? "DANFE Simplificado" :
+                                                    xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiDANFENFCe) ? "DANFE NFC-e" :
+                                                    xmlNFe.ide.tpImp.Equals(TpcnTipoImpressao.tiDANFENFCe_em_mensagem_eletrônica) ? "DANFE NFC-e em mensagem eletrônica" : ""
+                                    },
+                                    #endregion
+                                    #region DESTINO DA OPERAÇÃO
                                     destinoOperacao = new
                                     {
                                         codigo = (int)xmlNFe.ide.idDest,
@@ -528,13 +542,17 @@ namespace api.Negocios.Tax
                                                     xmlNFe.ide.idDest.Equals(TpcnDestinoOperacao.doInterestadual) ? "Operação interestadual" :
                                                     xmlNFe.ide.idDest.Equals(TpcnDestinoOperacao.doInterna) ? "Operação interna" : "",
                                     },
+                                    #endregion
+                                    #region CONSUMIDOR FINAL
                                     consumidorFinal = new
                                     {
                                         codigo = (int)xmlNFe.ide.indFinal,
                                         descricao = xmlNFe.ide.indFinal.Equals(TpcnConsumidorFinal.cfNao) ? "Normal" :
                                                     xmlNFe.ide.indFinal.Equals(TpcnConsumidorFinal.cfConsumidorFinal) ? "Consumidor Final" : "",
                                     },
-                                    presencaoComprador = new
+                                    #endregion
+                                    #region PRESENÇA COMPRADOR
+                                    presencaComprador = new
                                     {
                                         codigo = (int)xmlNFe.ide.indPres,
                                         descricao = xmlNFe.ide.indPres.Equals(TpcnPresencaComprador.pcNao) ? "Não se aplica" :
@@ -543,8 +561,11 @@ namespace api.Negocios.Tax
                                                     xmlNFe.ide.indPres.Equals(TpcnPresencaComprador.pcTeleatendimento) ? "Operação não presencial: teleatendimento" :
                                                     xmlNFe.ide.indPres.Equals(TpcnPresencaComprador.pcOutros) ? "Operação não presencial: outros" : "",
                                     },
+                                    #endregion
+                                    #region EMISSÃO
                                     emissao = new
                                     {
+                                        #region PROCESSO
                                         processo = new
                                         {
                                             codigo = (int)xmlNFe.ide.procEmi,
@@ -553,7 +574,9 @@ namespace api.Negocios.Tax
                                                         xmlNFe.ide.procEmi.Equals(TpcnProcessoEmissao.peAvulsaContribuinte) ? "Emissão de NF-e, pelo contribuinte com seu certificado digital, através do site do Fisco" :
                                                         xmlNFe.ide.procEmi.Equals(TpcnProcessoEmissao.peContribuinteAplicativoFisco) ? "Emissão NF-e pelo contribuinte com o aplicativo fornecido pelo Fisco" : "",
                                         },
+                                        #endregion
                                         versaoProcesso = xmlNFe.ide.verProc,
+                                        #region TIPO DE EMISSÃO
                                         tipoEmissao = new
                                         {
                                             codigo = (int)xmlNFe.ide.tpEmis,
@@ -565,6 +588,8 @@ namespace api.Negocios.Tax
                                                         xmlNFe.ide.tpEmis.Equals(TipoEmissao.teSVCRS) ? "Contingência SVC-RS (SEFAZ Virtual de Contingência do RS)" :
                                                         xmlNFe.ide.tpEmis.Equals(TipoEmissao.teOffLine) ? "Contingência off-line da NFC-e" : "",
                                         },
+                                        #endregion
+                                        #region FINALIDADE
                                         finalidade = new
                                         {
                                             codigo = (int)xmlNFe.ide.finNFe,
@@ -573,20 +598,25 @@ namespace api.Negocios.Tax
                                                         xmlNFe.ide.finNFe.Equals(TpcnFinalidadeNFe.fnAjuste) ? "NF-e de ajuste" :
                                                         xmlNFe.ide.finNFe.Equals(TpcnFinalidadeNFe.fnDevolucao) ? "Devolução/Retorno" : ""
                                         },
+                                        #endregion
                                         naturezaOperacao = xmlNFe.ide.natOp,
+                                        #region TIPO DE OPERAÇÃO
                                         tipoOperacao = new
                                         {
                                             codigo = (int)xmlNFe.ide.tpNF,
                                             descricao = xmlNFe.ide.tpNF.Equals(TpcnTipoNFe.tnEntrada) ? "Entrada" :
                                                         xmlNFe.ide.tpNF.Equals(TpcnTipoNFe.tnSaida) ? "Saída" : ""
                                         },
+                                        #endregion
+                                        #region FORMA DE PAGAMENTO
                                         formaPagamento = new
                                         {
-                                            codigo = (int) xmlNFe.ide.indPag,
+                                            codigo = (int)xmlNFe.ide.indPag,
                                             descricao = xmlNFe.ide.indPag.Equals(TpcnIndicadorPagamento.ipVista) ? "Pagamento à vista" :
                                                         xmlNFe.ide.indPag.Equals(TpcnIndicadorPagamento.ipPrazo) ? "Pagamento a prazo" :
                                                         xmlNFe.ide.indPag.Equals(TpcnIndicadorPagamento.ipOutras) ? "Outros" : ""
-                                        },  
+                                        },
+                                        #endregion
                                         digestValue = xmlNFe.protNFe.digVal,
                                         /*eventos = new
                                         {
@@ -595,77 +625,113 @@ namespace api.Negocios.Tax
                                             //dataHoraAN = ???
                                         }*/
                                     }
+                                    #endregion
                                 },
+                                #endregion
+                                #region EMITENTE
                                 emitente = new
                                 {
                                     razaoSocial = xmlNFe.emit.xNome,
                                     CNPJ = xmlNFe.emit.CNPJ,
                                     CPF = xmlNFe.emit.CPF,
+                                    #region ENDEREÇO
                                     endereco = new
                                     {
                                         logradouro = xmlNFe.emit.enderEmit.xLgr,
                                         numero = xmlNFe.emit.enderEmit.nro,
                                         complemento = xmlNFe.emit.enderEmit.xCpl,
                                         bairro = xmlNFe.emit.enderEmit.xBairro,
+                                        #region MUNICÍPIO
                                         municipio = new
                                         {
                                             codigo = xmlNFe.emit.enderEmit.cMun,
                                             nome = xmlNFe.emit.enderEmit.xMun,
                                         },
-                                        uf = xmlNFe.emit.enderEmit.UF,
+                                        #endregion
+                                        UF = xmlNFe.emit.enderEmit.UF,
+                                        #region PAÍS
                                         pais = new
                                         {
                                             codigo = xmlNFe.emit.enderEmit.cPais,
                                             nome = xmlNFe.emit.enderEmit.xPais
                                         },
+                                        #endregion
                                         cep = xmlNFe.emit.enderEmit.CEP
                                     },
+                                    #endregion
                                     telefone = xmlNFe.emit.enderEmit.fone,
                                     inscricaoMunicipal = xmlNFe.emit.IM,
                                     inscricaoEstadual = xmlNFe.emit.IE,
                                     IEST = xmlNFe.emit.IEST,
                                     CNAE = xmlNFe.emit.CNAE,
                                     nomeFantasia = xmlNFe.emit.xFant,
-                                    CRT = xmlNFe.emit.CRT
+                                    #region CRT
+                                    CRT = new
+                                    {
+                                        codigo = (int)xmlNFe.emit.CRT,
+                                        descricao = xmlNFe.emit.CRT.Equals(TpcnCRT.crtSimplesNacional) ? "Simples Nacional" :
+                                                    xmlNFe.emit.CRT.Equals(TpcnCRT.crtSimplesExcessoReceita) ? "Simples Nacional, excesso sublimite de receita bruta" :
+                                                    xmlNFe.emit.CRT.Equals(TpcnCRT.crtRegimeNormal) ? "Regime normal" : "",
+                                    },
+                                    #endregion
                                 },
+                                #endregion
+                                #region DESTINATÁRIO
                                 destinatario = new
                                 {
                                     razaoSocial = xmlNFe.dest.xNome,
                                     CNPJ = xmlNFe.dest.CNPJ,
                                     CPF = xmlNFe.dest.CPF,
+                                    #region ENDEREÇO
                                     endereco = new
                                     {
                                         logradouro = xmlNFe.dest.enderDest.xLgr,
                                         numero = xmlNFe.dest.enderDest.nro,
                                         complemento = xmlNFe.dest.enderDest.xCpl,
                                         bairro = xmlNFe.dest.enderDest.xBairro,
+                                        #region MUNICÍPIO
                                         municipio = new
                                         {
                                             codigo = xmlNFe.dest.enderDest.cMun,
                                             nome = xmlNFe.dest.enderDest.xMun,
                                         },
-                                        uf = xmlNFe.dest.enderDest.UF,
+                                        #endregion
+                                        UF = xmlNFe.dest.enderDest.UF,
+                                        #region PAÍS
                                         pais = new
                                         {
                                             codigo = xmlNFe.dest.enderDest.cPais,
                                             nome = xmlNFe.dest.enderDest.xPais
                                         },
+                                        #endregion
                                         cep = xmlNFe.dest.enderDest.CEP
                                     },
+                                    #endregion
                                     idEstrangeiro = xmlNFe.dest.idEstrangeiro,
                                     telefone = xmlNFe.dest.enderDest.fone,
                                     inscricaoMunicipal = xmlNFe.dest.IM,
                                     inscricaoEstadual = xmlNFe.dest.IE,
-                                    indicadorIE = xmlNFe.dest.indIEDest.ToString(),
+                                    #region INDICADOR IE
+                                    indicadorIE = new {
+                                        codigo = (int)xmlNFe.dest.indIEDest,
+                                        descricao = xmlNFe.dest.indIEDest.Equals(TpcnindIEDest.inContribuinte) ? "Contribuinte ICMS (informar a IE do destinatário)" :
+                                                    xmlNFe.dest.indIEDest.Equals(TpcnindIEDest.inIsento) ? "Contribuinte isento de Inscrição no cadastro de Contribuintes do ICMS" :
+                                                    xmlNFe.dest.indIEDest.Equals(TpcnindIEDest.inNaoContribuinte) ? "Não Contribuinte, que pode ou não possuir Inscrição" : ""
+                                    },
+                                    #endregion
                                     inscricaoSUFRAMA = xmlNFe.dest.ISUF,
                                     email = xmlNFe.dest.email,
                                 },
+                                #endregion
+                                #region ENTREGA
                                 entrega = new
                                 {
+                                    #region MUNICÍPIO
                                     municipio = new {
                                         codigo = xmlNFe.entrega.cMun,
                                         nome = xmlNFe.entrega.xMun,
                                     },
+                                    #endregion
                                     CNPJ = xmlNFe.entrega.CNPJ,
                                     CPF = xmlNFe.entrega.CPF,
                                     logradouro = xmlNFe.entrega.xLgr,
@@ -674,8 +740,12 @@ namespace api.Negocios.Tax
                                     bairro = xmlNFe.entrega.xBairro,
                                     UF = xmlNFe.entrega.UF,
                                 },
+                                #endregion
+                                #region PRODUTOS
                                 produtos = xmlNFe.det.Select(x => new
                                 {
+                                    infoAdicional = x.infAdProd,
+                                    #region PRODUTO
                                     produto = new
                                     {
                                         num = x.Prod.nItem,
@@ -691,12 +761,14 @@ namespace api.Negocios.Tax
                                         valorDesconto = x.Prod.vDesc,
                                         valorTotalFrete = x.Prod.vFrete,
                                         valorSeguro = x.Prod.vSeg,
+                                        #region INDICADOR COMPOSIÇÃO
                                         indicadorComposicao = new
                                         {
-                                            codigo = (int) x.Prod.indTot,
+                                            codigo = (int)x.Prod.indTot,
                                             descricao = x.Prod.indTot.Equals(TpcnIndicadorTotal.itNaoSomaTotalNFe) ? "Valor do item não compõe o valor total da NF-e" :
                                                         x.Prod.indTot.Equals(TpcnIndicadorTotal.itSomaTotalNFe) ? "Valor do item compõe o valor total da NF-e" : ""
                                         },
+                                        #endregion
                                         codigoEANComercial = x.Prod.cEAN,
                                         unidadeTributaria = x.Prod.uTrib,
                                         qtdTributario = x.Prod.qTrib,
@@ -705,11 +777,24 @@ namespace api.Negocios.Tax
                                         valorUnitarioTributacao = x.Prod.vUnTrib,
                                         numPedidoCompra = x.Prod.xPed,
                                         itemPedidoCompra = x.Prod.nItemPed,
-                                        FCI = x.Prod.nFCI
+                                        FCI = x.Prod.nFCI,
+                                        //List<Arma> arma;
+                                        //Comb comb;
+                                        //List<detExport> detExport;
+                                        //List<DI> DI;
+                                        //List<Med> med;
+                                        //string nRECOPI;
+                                        //string NVE;
+                                        //veicProd veicProd;
+                                        //TpcnTipoCampo vUnCom_Tipo;
+                                        //TpcnTipoCampo vUnTrib_Tipo;
                                     },
+                                    #endregion
+                                    #region IMPOSTO
                                     imposto = new
                                     {
-                                        valorAproximadoPedido = x.Imposto.vTotTrib,
+                                        valorAproximadoTributos = x.Imposto.vTotTrib,
+                                        #region ICMS
                                         ICMS = new
                                         {
                                             origem = new
@@ -752,6 +837,8 @@ namespace api.Negocios.Tax
                                                             x.Imposto.ICMS.modBCST.Equals(TpcnDeterminacaoBaseIcmsST.dbisPauta) ? "Pauta (valor)" : ""
                                             }
                                         },
+                                        #endregion
+                                        #region ICMSTot
                                         ICMSTot = new
                                         {
                                             baseCalculoICMS = x.Imposto.ICMSTot.vBC,
@@ -771,7 +858,33 @@ namespace api.Negocios.Tax
                                             valorICMSST = x.Imposto.ICMSTot.vST,
                                             valorAproximadoTotal = x.Imposto.ICMSTot.vTotTrib,
                                         },
-                                        // IPI
+                                        #endregion
+                                        #region IMPOSTO DE IMPORTAÇÃO (II)
+                                        II = new
+                                        {
+                                            valorBaseCalculo = x.Imposto.II.vBC,
+                                            valorDespesas = x.Imposto.II.vDespAdu,
+                                            valorII = x.Imposto.II.vII,
+                                            valorIOF = x.Imposto.II.vIOF
+                                        },
+                                        #endregion
+                                        #region IPI
+                                        IPI = new
+                                        {
+                                            codigoEnquadramento = x.Imposto.IPI.cEnq,
+                                            classeEnquadramento = x.Imposto.IPI.clEnq,
+                                            CNPJProdutor = x.Imposto.IPI.CNPJProd,
+                                            codigoSelo = x.Imposto.IPI.cSelo,
+                                            CST = x.Imposto.IPI.CST,
+                                            aliquotaIPI = x.Imposto.IPI.pIPI,
+                                            qtdSelo = x.Imposto.IPI.qSelo,
+                                            qtdTotalUnidadePadrao = x.Imposto.IPI.qUnid,
+                                            baseCalculo = x.Imposto.IPI.vBC,
+                                            valorIPI = x.Imposto.IPI.vIPI,
+                                            valorUnidade = x.Imposto.IPI.vUnid,
+                                        },
+                                        #endregion
+                                        #region PIS
                                         PIS = new
                                         {
                                             CST = x.Imposto.PIS.CST,
@@ -781,7 +894,18 @@ namespace api.Negocios.Tax
                                             valorBaseCalculo = x.Imposto.PIS.vBC,
                                             valorPIS = x.Imposto.PIS.vPIS
                                         },
-                                        // PISST
+                                        #endregion
+                                        #region PISST
+                                        PISST = new
+                                        {
+                                            aliquotaPercentual = x.Imposto.PISST.pPis,
+                                            qtdVendida = x.Imposto.PISST.qBCProd,
+                                            aliquotaReais = x.Imposto.PISST.vAliqProd,
+                                            valorBaseCalculo = x.Imposto.PISST.vBC,
+                                            valorPIS = x.Imposto.PISST.vPIS,
+                                        },
+                                        #endregion
+                                        #region COFINS
                                         COFINS = new
                                         {
                                             CST = x.Imposto.COFINS.CST,
@@ -792,6 +916,8 @@ namespace api.Negocios.Tax
                                             valorVendido = x.Imposto.COFINS.vBCProd,
                                             valorCOFINS = x.Imposto.COFINS.vCOFINS,
                                         },
+                                        #endregion
+                                        #region COFINSST
                                         COFINSST = new
                                         {
                                             aliquotaPercentual = x.Imposto.COFINSST.pCOFINS,
@@ -800,10 +926,248 @@ namespace api.Negocios.Tax
                                             valorBaseCalculo = x.Imposto.COFINSST.vBC,
                                             valorCOFINS = x.Imposto.COFINSST.vCOFINS,
                                         },
-                                        // retTrib
-                                    }
-                                    // TO BE CONTINUE....
+                                        #endregion
+                                        #region RETENÇÃO DE TRIBUTOS
+                                        retTrib = new
+                                        {
+                                            valorBaseCalculoIRRF = x.Imposto.retTrib.vBCIRRF,
+                                            valorRetencaoPrevidencia = x.Imposto.retTrib.vBCRetPrev,
+                                            valorRetidoIRRF = x.Imposto.retTrib.vIRRF,
+                                            valorRetidoCOFINS = x.Imposto.retTrib.vRetCOFINS,
+                                            valorRetidoCSLL = x.Imposto.retTrib.vRetCSLL,
+                                            valorRetidoPIS = x.Imposto.retTrib.vRetPIS,
+                                            valorBaseCalculoPrevidencia = x.Imposto.retTrib.vRetPrev,
+                                        },
+                                        #endregion
+                                    },
+                                    #endregion
+                                    #region IMPOSTO DEVOLVIDO
+                                    impostoDevolvido = new
+                                    {
+                                        percentualMercadoria = x.impostoDevol.pDevol,
+                                        valorIPI = x.impostoDevol.vIPIDevol
+                                    },
+                                    #endregion
                                 }).ToList<dynamic>(),
+
+                                #endregion
+                                #region TRANSPORTE
+                                transporte = new
+                                {
+                                    balsa = xmlNFe.Transp.balsa,
+                                    #region MODALIDADE
+                                    modalidade = new
+                                    {
+                                        codigo = (int)xmlNFe.Transp.modFrete,
+                                        descricao = xmlNFe.Transp.modFrete.Equals(TpcnModalidadeFrete.mfContaEmitente) ? "Por conta do emitente" :
+                                                    xmlNFe.Transp.modFrete.Equals(TpcnModalidadeFrete.mfContaDestinatario) ? "Por conta do destinatário/remetente" :
+                                                    xmlNFe.Transp.modFrete.Equals(TpcnModalidadeFrete.mfContaTerceiros) ? "Por conta de terceiros" :
+                                                    xmlNFe.Transp.modFrete.Equals(TpcnModalidadeFrete.mfSemFrete) ? "Sem frete" : ""
+                                    },
+                                    #endregion
+                                    #region REBOQUES
+                                    reboques = xmlNFe.Transp.Reboque.Select(x => new
+                                    {
+                                        placa = x.placa,
+                                        RNTC = x.RNTC,
+                                        UF = x.UF
+                                    }).ToList<dynamic>(),
+                                    #endregion
+                                    #region GRUPO RETENÇÃO ICMS Transporte
+                                    retTransp = new
+                                    {
+                                        CFOP = xmlNFe.Transp.retTransp.CFOP,
+                                        codigoMunicipioOcorrencia = xmlNFe.Transp.retTransp.cMunFG,
+                                        aliquotaRetencao = xmlNFe.Transp.retTransp.pICMSRet,
+                                        valorBaseCalculoRetencao = xmlNFe.Transp.retTransp.vBCRet,
+                                        valorICMSRetido = xmlNFe.Transp.retTransp.vICMSRet,
+                                        valorServico = xmlNFe.Transp.retTransp.vServ,
+                                    },
+                                    #endregion
+                                    #region GRUPO TRANSPORTADOR
+                                    grupoTransportador = new
+                                    {
+                                        CNPJ = xmlNFe.Transp.Transporta.CNPJ,
+                                        CPF = xmlNFe.Transp.Transporta.CPF,
+                                        IE = xmlNFe.Transp.Transporta.IE,
+                                        UF = xmlNFe.Transp.Transporta.UF,
+                                        endereco = xmlNFe.Transp.Transporta.xEnder,
+                                        municipio = xmlNFe.Transp.Transporta.xMun,
+                                        nome = xmlNFe.Transp.Transporta.xNome
+                                    },
+                                    #endregion
+                                    vagao = xmlNFe.Transp.vagao,
+                                    #region GRUPO VEÍCULO TRANSPORTE
+                                    grupoVeiculoTransporte = new
+                                    {
+                                        placa = xmlNFe.Transp.veicTransp.placa,
+                                        RNTC = xmlNFe.Transp.veicTransp.RNTC,
+                                        UF = xmlNFe.Transp.veicTransp.UF,
+                                    },
+                                    #endregion
+                                    #region GRUPO VOLUMES
+                                        grupoVolumes = xmlNFe.Transp.Vol.Select(x => new
+                                        {
+                                            qtd = x.qVol,
+                                            especie = x.esp,
+                                            marca = x.marca,
+                                            numeracao = x.nVol,
+                                            pesoLiquido = x.pesoL,
+                                            pesoBruto = x.pesoB,
+                                            lacres = x.Lacres.Select(l => l.nLacre).ToList<string>()
+                                        }).ToList<dynamic>()
+                                    #endregion
+                                },
+                                #endregion
+                                #region TOTAIS
+                                totais = new
+                                {
+                                    #region ICMS
+                                    ICMS = new
+                                    {
+                                        valorBaseCalculoICMS = xmlNFe.Total.ICMSTot.vBC,
+                                        valorICMS = xmlNFe.Total.ICMSTot.vICMS,
+                                        valorICMSDesonerado = xmlNFe.Total.ICMSTot.vICMSDeson,
+                                        valorBaseCalculoICMSST = xmlNFe.Total.ICMSTot.vBCST,
+                                        valorICMSST = xmlNFe.Total.ICMSTot.vST,
+                                        valorProdutos = xmlNFe.Total.ICMSTot.vProd,
+                                        valorFrete = xmlNFe.Total.ICMSTot.vFrete,
+                                        valorSeguro = xmlNFe.Total.ICMSTot.vSeg,
+                                        valorDesconto = xmlNFe.Total.ICMSTot.vDesc,
+                                        valorII = xmlNFe.Total.ICMSTot.vII,
+                                        valorIPI = xmlNFe.Total.ICMSTot.vIPI,
+                                        valorPIS = xmlNFe.Total.ICMSTot.vPIS,
+                                        valorCOFINS = xmlNFe.Total.ICMSTot.vCOFINS,
+                                        valorOutrasDespesas = xmlNFe.Total.ICMSTot.vOutro,
+                                        valorNF = xmlNFe.Total.ICMSTot.vNF,
+                                        valorTributos = xmlNFe.Total.ICMSTot.vTotTrib,
+                                    },
+                                    #endregion
+                                    #region ISSQN
+                                    ISSQN = new
+                                    {
+                                        valorServico = xmlNFe.Total.ISSQNtot.vServ,
+                                        valorBaseCalculo = xmlNFe.Total.ISSQNtot.vBC,
+                                        valorISS = xmlNFe.Total.ISSQNtot.vISS,
+                                        valorPIS = xmlNFe.Total.ISSQNtot.vPIS,
+                                        valorCOFINS = xmlNFe.Total.ISSQNtot.vCOFINS,
+                                        dataPrestacao = xmlNFe.Total.ISSQNtot.dCompet,
+                                        valorDeducao = xmlNFe.Total.ISSQNtot.vDeducao,
+                                        valorOutras = xmlNFe.Total.ISSQNtot.vOutro,
+                                        valorDescontoIncondicionado = xmlNFe.Total.ISSQNtot.vDescIncond,
+                                        valorDescontoCondicionado = xmlNFe.Total.ISSQNtot.vDescCond,
+                                        valorRetencao = xmlNFe.Total.ISSQNtot.vISSRet,
+                                        #region CÓDIGO DO REGIME ESPECIAL DE TRIBUTAÇÃO
+                                        codigoRegimeTributacao = new
+                                        {
+                                            codigo = (int)xmlNFe.Total.ISSQNtot.cRegTrib,
+                                            descricao = xmlNFe.Total.ISSQNtot.cRegTrib.Equals(TpcnRegimeTributario.Microempresa_Municipal) ? "Microempresa Municipal" :
+                                                        xmlNFe.Total.ISSQNtot.cRegTrib.Equals(TpcnRegimeTributario.Estimativa) ? "Estimativa" :
+                                                        xmlNFe.Total.ISSQNtot.cRegTrib.Equals(TpcnRegimeTributario.Sociedade_de_Profissionais) ? "Sociedade de Profissionais" :
+                                                        xmlNFe.Total.ISSQNtot.cRegTrib.Equals(TpcnRegimeTributario.Cooperativa) ? "Cooperativa" :
+                                                        xmlNFe.Total.ISSQNtot.cRegTrib.Equals(TpcnRegimeTributario.Microempresário_Individual__MEI) ? "Microempresário Individual (MEI)" :
+                                                        xmlNFe.Total.ISSQNtot.cRegTrib.Equals(TpcnRegimeTributario.Microempresário_e_Empresa_de_Pequeno_Porte__ME_EPP) ? "Microempresário e Empresa de Pequeno Porte (ME/EPP)" : ""
+                                        }
+                                        #endregion
+                                    },
+                                    #endregion
+                                    #region RETENÇÃO DE TRIBUTOS
+                                    retTrib = new
+                                    {
+                                        valorPIS = xmlNFe.Total.retTrib.vRetPIS,
+                                        valorCOFINS = xmlNFe.Total.retTrib.vRetCOFINS,
+                                        valorCSLL = xmlNFe.Total.retTrib.vRetCSLL,
+                                        valorBaseCalculoIRRF = xmlNFe.Total.retTrib.vBCIRRF,
+                                        valorIRRF = xmlNFe.Total.retTrib.vIRRF,
+                                        valorBaseCalculoPrevidencia = xmlNFe.Total.retTrib.vBCRetPrev,
+                                        valorPrevidencia = xmlNFe.Total.retTrib.vRetPrev
+                                    }
+                                    #endregion
+                                },
+                                #endregion
+                                #region COBRANÇA
+                                cobranca = new
+                                {
+                                    #region FATURA
+                                    fatura = new
+                                    {
+                                        numero = xmlNFe.Cobr.Fat.nFat,
+                                        valorOriginal = xmlNFe.Cobr.Fat.vOrig,
+                                        valorDesconto = xmlNFe.Cobr.Fat.vDesc,
+                                        valorLiquido = xmlNFe.Cobr.Fat.vLiq
+                                    },
+                                    #endregion
+                                    #region DUPLICATAS
+                                    duplicatas = xmlNFe.Cobr.Dup.Select(x => new
+                                    {
+                                        numero = x.nDup,
+                                        dataVencimento = x.dVenc,
+                                        valor = x.vDup
+                                    }).ToList<dynamic>()
+                                    #endregion
+                                },
+                                #endregion
+                                #region RETIRADA
+                                retirada = new
+                                {
+                                    #region MUNICÍPIO
+                                    municipio = new
+                                    {
+                                        codigo = xmlNFe.entrega.cMun,
+                                        nome = xmlNFe.entrega.xMun,
+                                    },
+                                    #endregion
+                                    CNPJ = xmlNFe.retirada.CNPJ,
+                                    CPF = xmlNFe.retirada.CPF,
+                                    logradouro = xmlNFe.retirada.xLgr,
+                                    numero = xmlNFe.retirada.nro,
+                                    complemento = xmlNFe.retirada.xCpl,
+                                    bairro = xmlNFe.retirada.xBairro,
+                                    UF = xmlNFe.retirada.UF,
+                                },
+                                #endregion
+                                #region INFORMAÇÕES ADICIONAIS
+                                infoAdicional = new
+                                {
+                                    fisco = xmlNFe.InfAdic.infAdFisco,
+                                    complementar = xmlNFe.InfAdic.infCpl,
+                                    #region GRUPO CAMPO DE USO LIVRE DO CONTRIBUINTE
+                                    obsContribuinte = xmlNFe.InfAdic.obsCont.Select(x => new
+                                    {
+                                        identificacao = x.xCampo,
+                                        conteudo = x.xTexto
+                                    }).ToList<dynamic>(),
+                                    #endregion
+                                    #region GRUPO CAMPO DE USO LIVRE DO FISCO
+                                    obsFisco = xmlNFe.InfAdic.obsFisco.Select(x => new
+                                    {
+                                        identificacao = x.xCampo,
+                                        conteudo = x.xTexto
+                                    }).ToList<dynamic>(),
+                                    #endregion
+                                    #region GRUPO PROCESSADO REFERENCIADO
+                                    processoReferenciado = xmlNFe.InfAdic.procRef.Select(x => new
+                                    {
+                                        identificador = x.nProc,
+                                        indicadorOrigem = x.indProc
+                                        /*
+                                            0 = SEFAZ
+                                            1 = Justiça Federal
+                                            2 = Justiça Estadual
+                                            3 = Secex/RFB
+                                            9 = Outros
+                                        */
+                                    }).ToList<dynamic>(),
+                                    #endregion
+                                },
+                                #endregion
+                                // Cobr Cobr
+                                // List<pag> pag
+                                // protNFe protNFe
+                                // List<autXML> autXML
+                                // Cana cana
+                                // Compra compra
+                                // Exporta exporta
                             });
                         }
 
