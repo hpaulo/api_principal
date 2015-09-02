@@ -1494,9 +1494,11 @@ namespace api.Negocios.Tax
                 if (param.dsSituacaoDownload != null && param.dsSituacaoDownload != value.dsSituacaoDownload)
                     value.dsSituacaoDownload = param.dsSituacaoDownload;
                 if (param.dtEntrega != null && param.dtEntrega != value.dtEntrega)
+                {
                     value.dtEntrega = param.dtEntrega;
-                if (param.idUsers != null && param.idUsers != value.idUsers)
-                    value.idUsers = param.idUsers;
+                    value.idUsers = Bibliotecas.Permissoes.GetIdUser(token);
+                }
+
                 _db.SaveChanges();
             }
             catch (Exception e)
