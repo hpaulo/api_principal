@@ -4,9 +4,9 @@ using System.Data.Entity.ModelConfiguration;
 
 namespace api.Models.Mapping
 {
-    public class tbNewsStatuMap : EntityTypeConfiguration<tbNewsStatus>
+    public class tbNewsStatusMap : EntityTypeConfiguration<tbNewsStatus>
     {
-        public tbNewsStatuMap()
+        public tbNewsStatusMap()
         {
             // Primary Key
             this.HasKey(t => new { t.idNews, t.id_users });
