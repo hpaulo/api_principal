@@ -52,6 +52,10 @@ namespace api.Models.Mapping
             this.Property(t => t.dsSituacaoDownload)
                 .HasMaxLength(255);
 
+            this.Property(t => t.cdSituacaoEntrega)
+                .IsFixedLength()
+                .HasMaxLength(1);
+
             // Table & Column Mappings
             this.ToTable("tbManifesto", "tax");
             this.Property(t => t.idManifesto).HasColumnName("idManifesto");
@@ -74,6 +78,7 @@ namespace api.Models.Mapping
             this.Property(t => t.nrProtocoloDownload).HasColumnName("nrProtocoloDownload");
             this.Property(t => t.cdSituacaoDownload).HasColumnName("cdSituacaoDownload");
             this.Property(t => t.dsSituacaoDownload).HasColumnName("dsSituacaoDownload");
+            this.Property(t => t.cdSituacaoEntrega).HasColumnName("cdSituacaoEntrega");
         }
     }
 }
