@@ -651,10 +651,10 @@ namespace api.Negocios.Card
                                 adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria,
                                                             // Envia recebimentos agrupados
                                                             recebimentosParcela
-                                                                    .GroupBy(r => new { r.Data, r.Adquirente/*, r.Bandeira*/ })
+                                                                    .GroupBy(r => new { r.Data, r.Adquirente, r.Bandeira })
                                                                     .OrderBy(r => r.Key.Data)
                                                                     .ThenBy(r => r.Key.Adquirente)
-                                                                    //.ThenBy(r => r.Key.Bandeira)
+                                                                    .ThenBy(r => r.Key.Bandeira)
                                                                     .Select(r => new ConciliacaoBancaria
                                                                     {
                                                                         Tipo = TIPO_RECEBIMENTO, // recebimento
@@ -662,7 +662,7 @@ namespace api.Negocios.Card
                                                                         Data = r.Key.Data,
                                                                         ValorTotal = r.Sum(x => x.Grupo[0].Valor),
                                                                         Adquirente = r.Key.Adquirente,
-                                                                        //Bandeira = r.Key.Bandeira,
+                                                                        Bandeira = r.Key.Bandeira,
                                                                     }).ToList<ConciliacaoBancaria>());
                                 #endregion
                             }
@@ -878,7 +878,6 @@ namespace api.Negocios.Card
                                             #region REMOVE DA LISTA OS ELEMENTOS JÁ PRÉ-CONCILIADOS
                                             recebimentosParcelaAgrupados = listaNaoConciliado.Where(r => r.Tipo.Equals(TIPO_RECEBIMENTO))
                                                                                     .OrderBy(r => r.Data)
-                                                                                    .ThenBy(r => r.DataVenda)
                                                                                     .ThenBy(r => r.Adquirente)
                                                                                     .ThenBy(r => r.Bandeira)
                                                                                     .ToList<ConciliacaoBancaria>();
@@ -980,9 +979,7 @@ namespace api.Negocios.Card
                                                         #region REMOVE DA LISTA OS ELEMENTOS JÁ PRÉ-CONCILIADOS
                                                         recebimentosParcelaAgrupados = listaNaoConciliado.Where(r => r.Tipo.Equals(TIPO_RECEBIMENTO))
                                                                                                     .OrderBy(r => r.Data)
-                                                                                                    .ThenBy(r => r.DataVenda)
                                                                                                     .ThenBy(r => r.Adquirente)
-                                                                                                    .ThenBy(r => r.Bandeira)
                                                                                                     .ToList<ConciliacaoBancaria>();
 
                                                         recebimentosParcela = recebimentosParcela.Where(e => recebimentosParcelaAgrupados.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id)))

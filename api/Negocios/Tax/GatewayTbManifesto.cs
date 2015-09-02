@@ -14,11 +14,13 @@ using Newtonsoft.Json;
 using System.Globalization;
 using NFe.ConvertTxt;
 using NFe.Components;
+using System.Threading;
 
 namespace api.Negocios.Tax
 {
     public class GatewayTbManifesto
     {
+        static Semaphore semaforo = new Semaphore(1,1);
         static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
@@ -357,8 +359,9 @@ namespace api.Negocios.Tax
                 Retorno retorno = new Retorno();
 
                 // Atualiza o contexto
+                semaforo.WaitOne();
                 ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
-
+                semaforo.Release(1);
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
@@ -1161,7 +1164,22 @@ namespace api.Negocios.Tax
                                     #endregion
                                 },
                                 #endregion
-                                // Cobr Cobr
+                                #region AVULSA
+                                avulsa = new
+                                {
+                                    CNPJ = xmlNFe.avulsa.CNPJ,
+                                    dtEmissao = xmlNFe.avulsa.dEmi,
+                                    dtPagamento = xmlNFe.avulsa.dPag,
+                                    telefone = xmlNFe.avulsa.fone,
+                                    matriculaAgente = xmlNFe.avulsa.matr,
+                                    numDAR = xmlNFe.avulsa.nDAR,
+                                    reparticaoEmitente = xmlNFe.avulsa.repEmi,
+                                    UF = xmlNFe.avulsa.UF,
+                                    valorDAR = xmlNFe.avulsa.vDAR,
+                                    nomeAgente = xmlNFe.avulsa.xAgente,
+                                    orgaoEmitente = xmlNFe.avulsa.xOrgao,
+                                }
+                                #endregion
                                 // List<pag> pag
                                 // protNFe protNFe
                                 // List<autXML> autXML
@@ -1275,6 +1293,18 @@ namespace api.Negocios.Tax
 
 
                 }
+                else if (colecao == 6) //  [MOBILE]
+                {
+                    CollectionTbManifesto = query.Select(e => new
+                    {
+                        idManifesto = e.idManifesto,
+                        nmEmitente = e.nmEmitente,
+                        //nmDestinatario = e.empresa.ds_fantasia, // => COLOCAR FK NO BANCO!
+                        nmDestinatario = _db.empresas.Where(f => f.nu_cnpj.Equals(e.nrCNPJ)).Select(f => f.ds_fantasia).FirstOrDefault(),
+                        vlNFe = e.vlNFe,
+                        nrChave = e.nrChave,
+                    }).ToList<dynamic>();
+                }
 
                 //retorno.TotalDeRegistros = CollectionTbManifesto.Count();
                 retorno.Registros = CollectionTbManifesto;
@@ -1303,6 +1333,7 @@ namespace api.Negocios.Tax
         {
             try
             {    // Atualiza o contexto
+                semaforo.WaitOne();
                 ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
 
                 _db.tbManifestos.Add(param);
@@ -1318,6 +1349,10 @@ namespace api.Negocios.Tax
                 }
                 throw new Exception(e.Message);
             }
+            finally
+            {
+                semaforo.Release(1);
+            }
         }
 
 
@@ -1331,6 +1366,7 @@ namespace api.Negocios.Tax
             try
             {
                 // Atualiza o contexto
+                semaforo.WaitOne();
                 ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
 
                 tbManifesto manifesto = _db.tbManifestos.Where(e => e.idManifesto == idManifesto).FirstOrDefault();
@@ -1363,6 +1399,7 @@ namespace api.Negocios.Tax
             try
             {
                 // Atualiza o contexto
+                semaforo.WaitOne();
                 ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
 
                 tbManifesto value = _db.tbManifestos
@@ -1420,6 +1457,10 @@ namespace api.Negocios.Tax
                     throw new Exception(erro.Equals("") ? "Falha ao alterar TbManifesto" : erro);
                 }
                 throw new Exception(e.Message);
+            }
+            finally
+            {
+                semaforo.Release(1);
             }
         }
     }
