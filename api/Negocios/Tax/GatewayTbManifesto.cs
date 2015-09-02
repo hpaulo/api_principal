@@ -56,7 +56,8 @@ namespace api.Negocios.Tax
             NRPROTOCOLODOWNLOAD = 117,
             CDSITUACAODOWNLOAD = 118,
             DSSITUACAODOWNLOAD = 119,
-            CDSITUACAOENTREGA = 120,
+            DTENTREGA = 120,
+            IDUSERS = 121,
 
         };
 
@@ -232,9 +233,14 @@ namespace api.Negocios.Tax
                         string dsSituacaoDownload = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.dsSituacaoDownload.Equals(dsSituacaoDownload)).AsQueryable<tbManifesto>();
                         break;
-                    case CAMPOS.CDSITUACAOENTREGA:
-                        string cdSituacaoEntrega = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.cdSituacaoNFe.Equals(cdSituacaoEntrega)).AsQueryable<tbManifesto>();
+                    case CAMPOS.DTENTREGA:
+                        string buscaDtEntrega = item.Value;
+                        DateTime dtEntrega = DateTime.ParseExact(buscaDtEntrega + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                        entity = entity.Where(e => e.dtEntrega != null && e.dtEntrega.Value.Year == dtEntrega.Year && e.dtEntrega.Value.Month == dtEntrega.Month && e.dtEntrega.Value.Day == dtEntrega.Day).AsQueryable<tbManifesto>();
+                        break;
+                    case CAMPOS.IDUSERS:
+                        int idUsers = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.idUsers == idUsers).AsQueryable<tbManifesto>();
                         break;
 
                 }
@@ -341,9 +347,13 @@ namespace api.Negocios.Tax
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsSituacaoDownload).AsQueryable<tbManifesto>();
                     else entity = entity.OrderByDescending(e => e.dsSituacaoDownload).AsQueryable<tbManifesto>();
                     break;
-                case CAMPOS.CDSITUACAOENTREGA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdSituacaoEntrega).AsQueryable<tbManifesto>();
-                    else entity = entity.OrderByDescending(e => e.cdSituacaoEntrega).AsQueryable<tbManifesto>();
+                case CAMPOS.DTENTREGA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtEntrega).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.dtEntrega).AsQueryable<tbManifesto>();
+                    break;
+                case CAMPOS.IDUSERS:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.idUsers).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.idUsers).AsQueryable<tbManifesto>();
                     break;
 
             }
@@ -432,7 +442,8 @@ namespace api.Negocios.Tax
                         nrProtocoloDownload = e.nrProtocoloDownload,
                         cdSituacaoDownload = e.cdSituacaoDownload,
                         dsSituacaoDownload = e.dsSituacaoDownload,
-                        cdSituacaoEntrega = e.cdSituacaoEntrega,
+                        dtEntrega = e.dtEntrega,
+                        idUsers = e.idUsers,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2) // [iTAX] Consulta as notas disponíveis para manifestação
@@ -1337,7 +1348,7 @@ namespace api.Negocios.Tax
                     CollectionTbManifesto = lista;
                 }
 
-                //retorno.TotalDeRegistros = CollectionTbManifesto.Count();
+                retorno.TotalDeRegistros = CollectionTbManifesto.Count();
                 retorno.Registros = CollectionTbManifesto;
 
                 return retorno;
@@ -1482,8 +1493,10 @@ namespace api.Negocios.Tax
                     value.cdSituacaoDownload = param.cdSituacaoDownload;
                 if (param.dsSituacaoDownload != null && param.dsSituacaoDownload != value.dsSituacaoDownload)
                     value.dsSituacaoDownload = param.dsSituacaoDownload;
-                if (param.cdSituacaoEntrega != null && param.cdSituacaoEntrega != value.cdSituacaoEntrega)
-                    value.cdSituacaoEntrega = param.cdSituacaoEntrega;
+                if (param.dtEntrega != null && param.dtEntrega != value.dtEntrega)
+                    value.dtEntrega = param.dtEntrega;
+                if (param.idUsers != null && param.idUsers != value.idUsers)
+                    value.idUsers = param.idUsers;
                 _db.SaveChanges();
             }
             catch (Exception e)
