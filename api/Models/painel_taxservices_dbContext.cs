@@ -226,7 +226,7 @@ namespace api.Models
         public DbSet<tbLogErro> tbLogErros { get; set; }
         public DbSet<tbControleNSU> tbControleNSUs { get; set; }
         public DbSet<tbCanal> tbCanals { get; set; }
-        public DbSet<tbNews> tbNews { get; set; }
+        public DbSet<tbNews> tbNewss { get; set; }
         public DbSet<tbCatalogo> tbCatalogos { get; set; }
         public DbSet<tbNewsStatus> tbNewsStatuss { get; set; }
         public DbSet<tbNewsGrupos> tbNewsGrupos { get; set; }
@@ -443,9 +443,9 @@ namespace api.Models
             modelBuilder.Configurations.Add(new tbLogErroMap());
             modelBuilder.Configurations.Add(new tbControleNSUMap());
             modelBuilder.Configurations.Add(new tbCanalMap());
-            modelBuilder.Configurations.Add(new tbNewMap());
+            modelBuilder.Configurations.Add(new tbNewsMap());
             modelBuilder.Configurations.Add(new tbCatalogoMap());
-            modelBuilder.Configurations.Add(new tbNewsStatuMap());
+            modelBuilder.Configurations.Add(new tbNewsStatusMap());
             modelBuilder.Configurations.Add(new tbNewsGrupoMap());
         }
     }

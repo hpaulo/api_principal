@@ -1310,11 +1310,31 @@ namespace api.Negocios.Tax
                     {
                         idManifesto = e.idManifesto,
                         nmEmitente = e.nmEmitente,
-                        //nmDestinatario = e.empresa.ds_fantasia, // => COLOCAR FK NO BANCO!
-                        nmDestinatario = _db.empresas.Where(f => f.nu_cnpj.Equals(e.nrCNPJ)).Select(f => f.ds_fantasia).FirstOrDefault(),
+                        dtEmissao = e.dtEmissao,
+                        xmlNFe = e.xmlNFe,
                         vlNFe = e.vlNFe,
                         nrChave = e.nrChave,
                     }).ToList<dynamic>();
+
+                    List<dynamic> lista = new List<dynamic>();
+                    foreach (var item in CollectionTbManifesto)
+                    {
+                        NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(item.xmlNFe);
+                        var e = new
+                        {
+                            idManifesto = item.idManifesto,
+                            nmEmitente = item.nmEmitente,
+                            dtEmissao = item.dtEmissao,
+                            nmDestinatario = xmlNFe.dest.xNome,
+                            vlNFe = item.vlNFe,
+                            nrChave = item.nrChave,
+                        };
+
+                        lista.Add(e);
+                    }
+
+                    CollectionTbManifesto.Clear();
+                    CollectionTbManifesto = lista;
                 }
 
                 //retorno.TotalDeRegistros = CollectionTbManifesto.Count();

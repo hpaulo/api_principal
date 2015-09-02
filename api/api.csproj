@@ -333,11 +333,11 @@
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbNewsGrupoMap.cs" />
     <Compile Include="Models\tbNewsGrupos.cs" />
-    <Compile Include="Models\Mapping\tbNewsStatuMap.cs" />
+    <Compile Include="Models\Mapping\tbNewsStatusMap.cs" />
     <Compile Include="Models\tbNewsStatus.cs" />
     <Compile Include="Models\Mapping\tbCatalogoMap.cs" />
     <Compile Include="Models\tbCatalogo.cs" />
-    <Compile Include="Models\Mapping\tbNewMap.cs" />
+    <Compile Include="Models\Mapping\tbNewsMap.cs" />
     <Compile Include="Models\tbNews.cs" />
     <Compile Include="Models\Mapping\tbCanalMap.cs" />
     <Compile Include="Models\tbCanal.cs" />
