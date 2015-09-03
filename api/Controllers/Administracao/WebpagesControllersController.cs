@@ -26,7 +26,7 @@ namespace api.Controllers.Administracao
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
 
-                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
 
                 if (Permissoes.Autenticado(token))
                 {
@@ -59,7 +59,7 @@ namespace api.Controllers.Administracao
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
 
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
 
                 if (Permissoes.Autenticado(token))
                 {
@@ -94,7 +94,7 @@ namespace api.Controllers.Administracao
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
 
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put");
 
                 if (Permissoes.Autenticado(token))
                 {
@@ -127,7 +127,7 @@ namespace api.Controllers.Administracao
             {
                 HttpResponseMessage retorno = new HttpResponseMessage();
 
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("id_controller : " + id_controller));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("id_controller : " + id_controller), "Delete");
 
                 if (Permissoes.Autenticado(token))
                 {

@@ -10,7 +10,7 @@ namespace api.Bibliotecas
 {
     public class LogAcaoUsuario
     {
-        public static tbLogAcessoUsuario New(string token, string dsJson)
+        public static tbLogAcessoUsuario New(string token, string dsJson, string dsMethod)
         {
             try
             {
@@ -40,7 +40,7 @@ namespace api.Bibliotecas
                     
                     log.dtAcesso = DateTime.Now;
                     log.dsAplicacao = Mobile ? "M" : "P";
-                    log.dsMethod = HttpContext.Current.Request.HttpMethod;
+                    log.dsMethod = dsMethod;
                     log.idController = _db.LogAcesso1.Where(l => l.idUsers == log.idUser)
                                                      .Where(l => l.flMobile == Mobile)
                                                      .OrderByDescending(l => l.dtAcesso)

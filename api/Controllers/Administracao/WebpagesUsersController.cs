@@ -21,7 +21,7 @@ namespace api.Controllers.Administracao
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
 
                 IEnumerable<KeyValuePair<string, string>> a = Request.GetQueryNameValuePairs();
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
@@ -55,7 +55,7 @@ namespace api.Controllers.Administracao
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
@@ -89,7 +89,7 @@ namespace api.Controllers.Administracao
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
@@ -121,7 +121,7 @@ namespace api.Controllers.Administracao
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("id_users : " + id_users));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("id_users : " + id_users), "Delete");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))

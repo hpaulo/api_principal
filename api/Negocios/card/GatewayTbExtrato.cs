@@ -446,7 +446,7 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static object Patch(string token, Dictionary<string, string> queryString)
+        public static object Patch(string token, Dictionary<string, string> queryString, tbLogAcessoUsuario log)
         {
             try
             {
@@ -476,12 +476,12 @@ namespace api.Negocios.Card
             if (!Directory.Exists(diretorio)) Directory.CreateDirectory(diretorio);
             #endregion
 
-            var httpRequest = HttpContext.Current.Request;
+            HttpRequest httpRequest = HttpContext.Current.Request;
             if (httpRequest.Files.Count > 0)
             {
                 #region OBTÉM NOME ÚNICO PARA O ARQUIVO UPADO
                 // Arquivo upado
-                var postedFile = httpRequest.Files[0];
+                HttpPostedFile postedFile = httpRequest.Files[0];
                 // Obtém a extensão
                 string extensao = postedFile.FileName.Substring(postedFile.FileName.LastIndexOf("."));
                 // Obtém o nome do arquivo upado
@@ -502,6 +502,9 @@ namespace api.Negocios.Card
                 postedFile.SaveAs(filePath);
                 #endregion
                 
+                // Loga o nome do arquivo
+                if(log != null) log.dsJson = filePath;
+
                 #region OBTÉM OBJETO ASSOCIADO AO EXTRATO
                 // VERIFICA EXTENSÃO DO ARQUIVO
                 OFXDocument ofxDocument = null;

@@ -21,7 +21,7 @@ namespace api.Controllers.Card
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
 
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
@@ -54,7 +54,7 @@ namespace api.Controllers.Card
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
@@ -86,7 +86,7 @@ namespace api.Controllers.Card
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
@@ -118,7 +118,7 @@ namespace api.Controllers.Card
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("cdRedeTef : " + cdRedeTef));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("cdRedeTef : " + cdRedeTef), "Delete");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))

@@ -123,7 +123,13 @@ namespace api.Negocios.Admin
                         break;
                     case CAMPOS.DSJSON:
                         string dsJson = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsJson.Equals(dsJson)).AsQueryable<tbLogAcessoUsuario>();
+                        if (dsJson.Contains("%")) // usa LIKE
+                        {
+                            string busca = dsJson.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.dsJson.Contains(busca)).AsQueryable<tbLogAcessoUsuario>();
+                        }
+                        else
+                            entity = entity.Where(e => e.dsJson.Equals(dsJson)).AsQueryable<tbLogAcessoUsuario>();
                         break;
                     case CAMPOS.DSUSERAGENT:
                         string dsUserAgent = Convert.ToString(item.Value);

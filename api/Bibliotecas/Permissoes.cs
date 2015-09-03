@@ -11,39 +11,40 @@ namespace api.Bibliotecas
     public class Permissoes
     {
 
-        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        // ======================== VALIDAÇÃO DE ACESSO AOS MÉTODOS DA API ======================================//
 
-        // Dicionário para gerenciamento de segurança de métodos POST, PUT e DELETE
-        // A partir da url da API, retorna o ID do controller associado
-        /*private static Dictionary<string, Int32> dicionarioPortal = new Dictionary<string, Int32>
-                            {
-                            // ADMINISTRAÇÃO
-                            {"administracao/pessoa", GetIdController(new List<string>() { "USUÁRIOS", "GESTÃO DE ACESSOS" })},
-                            //{"administracao/tblogacessousuario", GetIdController(new List<string>() { "USUÁRIOS", "GESTÃO DE ACESSOS" })}, // usuário jamais poderá cadastrar ou alterar! Exclusão deve ser avaliada....
-                            {"administracao/webpagescontrollers", GetIdController(new List<string>() { "MÓDULOS E FUNCIONALIDADES", "GESTÃO DE ACESSOS" })},
-                            //{"administracao/webpagesmembership", GetIdController(new List<string>() { "USUÁRIOS", "GESTÃO DE ACESSOS"})}, // o cara pode resetar a própria senha, mas pode não ter permissão para resetar a de outros usuários
-                            {"administracao/webpagesmethods", GetIdController(new List<string>() { "MÓDULOS E FUNCIONALIDADES", "GESTÃO DE ACESSOS" })},
-                            {"administracao/webpagespermissions", GetIdController(new List<string>() { "PRIVILÉGIOS", "GESTÃO DE ACESSOS" })},
-                            //{"administracao/webpagesrolelevels", GetIdController(new List<string>() { "PRIVILÉGIOS", "GESTÃO DE ACESSOS" })}, // por enquanto, só é possível manipular role levels direto no banco
-                            {"administracao/webpagesroles", GetIdController(new List<string>() { "PRIVILÉGIOS", "GESTÃO DE ACESSOS" })},
-                            { "administracao/webpagesusers", GetIdController(new List<string>() { "USUÁRIOS", "GESTÃO DE ACESSOS"})},
-                            { "administracao/webpagesusersinroles", GetIdController(new List<string>() { "USUÁRIOS", "GESTÃO DE ACESSOS"})}, // avaliar se o usuário logado pode atribuir a permissão ao usuário informado como parâmetro
-                            // CARD
-                            // ....
-                            // CLIENTE
-                            {"cliente/empresa", GetIdController(new List<string>() { "FILIAIS", "GESTÃO DE EMPRESAS" })},
-                            {"cliente/grupoempresa", GetIdController(new List<string>() { "EMPRESAS", "GESTÃO DE EMPRESAS" })},
-                            // POS
-                            //{"pos/adquirente", GetIdController(new List<string>() { "", "" })}, // por enquanto, só é possível manipular adquirentes (associadas a ATOS) direto no banco
-                            //{"pos/bandeirapos", GetIdController(new List<string>() { "", "" })}, // por enquanto, só é possível manipular bandeiras direto no banco
-                            {"pos/loginoperadora", GetIdController(new List<string>() { "DADOS DE ACESSO", "CONSOLIDAÇÃO" })}, // tem um controller SENHAS INVÁLIDAS, que faz UPDATE. Mas sempre quem tem acesso a esse controller tem acesso a DADOS DE ACESSO
-                            //{"pos/operadora", GetIdController(new List<string>() { "", "" })}, // por enquanto, só é possível manipular adquirentes direto no banco
-                            //{"pos/recebimento", GetIdController(new List<string>() { "RELATÓRIOS", "CONSOLIDAÇÃO" })}, // só é possível ler
-                            //{"pos/recebimentoparcela", GetIdController(new List<string>() { "RELATÓRIOS", "CASH FLOW" })}, // só é possível ler
-                            //{"pos/terminallogico", GetIdController(new List<string>() { "", "" })}, // por enquanto, só é possível manipular terminais lógicos direto no banco
+        private static AcessoMetodoAPI acessoMetodosAPIs = new AcessoMetodoAPI();
 
-                        };*/
+        /// <summary>
+        /// Retorna true se o usuário tem permissão para acessar o método da URL da API
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="url"></param>
+        /// <param name="metodo"></param>
+        /// <returns></returns>
+        public static bool usuarioTemPermissaoMetodoURL(string token, string url, string metodo)
+        {
+            if (acessoMetodosAPIs.Count() == 0) PopulateAcessoMetodosAPIs();
 
+            metodo = metodo.ToUpper();
+
+            string method = metodo.Equals("GET") ? "Leitura" :
+                            metodo.Equals("POST") || metodo.Equals("PATCH") ? "Cadastro" :
+                            metodo.Equals("PUT") ? "Atualização" :
+                            metodo.Equals("DELETE") ? "Remoção" : "Unknown";
+
+            Int32 idController = GetIdUltimoControllerAcessado(token);
+            if (idController == 0 || !usuarioTemPermissaoMetodoController(token, idController, method)) return false;
+
+            // Controller acessado pode fazer a requisição?
+            return acessoMetodosAPIs.IsMetodoControllerPermitidoInURL(url, idController, metodo);
+        }
+
+        /// <summary>
+        /// Obtém o ID do controller a partir do dsController
+        /// </summary>
+        /// <param name="dscontrollers"></param> Lista dos dscontrollers, do filho para o pai
+        /// <returns></returns>
         private static Int32 GetIdController(List<string> dscontrollers)
         {
             using (var _db = new painel_taxservices_dbContext())
@@ -77,6 +78,44 @@ namespace api.Bibliotecas
 
             }
         }
+
+        private static void PopulateAcessoMetodosAPIs(){
+
+            List<ControllersOrigem> controllersOrigem = new List<ControllersOrigem>();
+            acessoMetodosAPIs.Clear();
+
+            // --------------------------------- PORTAL ------------------------------------------ //
+
+            // IDS CONTROLLERS
+            Int32 idControllerPortalModulosFuncionalidades = GetIdController(new List<string>() { "MÓDULOS E FUNCIONALIDADES", "GESTÃO DE ACESSOS" });
+            Int32 idControllerPortalPrivilegios = GetIdController(new List<string>() { "PRIVILÉGIOS", "GESTÃO DE ACESSOS" });
+            Int32 idControllerPortalUsuarios = GetIdController(new List<string>() { "USUÁRIOS", "GESTÃO DE ACESSOS" });
+            Int32 idControllerPortalMinhaConta = 91;
+
+            // ============================= ADMINISTRAÇÃO ======================================= //
+            /*                            WEBPAGESCONTROLLERS                                      */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > MÓDULOS E FUNCIONALIDADES
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalModulosFuncionalidades, new List<string>() { "GET", "DELETE", "POST", "PUT" }));
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > PRIVILÉGIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalPrivilegios, new List<string>() { "GET" })); 
+            // ÚNICA RESTRIÇÃO É O PUT PARA ALTERAR O GRUPO EMPRESA => PODE VIR DE QUALQUER TELA
+            acessoMetodosAPIs.Add("administracao/webpagescontrollers", controllersOrigem);
+            /*                               WEBPAGESUSERS                                         */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > USUÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalUsuarios, new List<string>() { "GET", "DELETE", "POST", "PUT" }));
+            // [PORTAL] MINHA CONTA
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalMinhaConta, new List<string>() { "GET", "PUT" }));
+            // ÚNICA RESTRIÇÃO É O PUT PARA ALTERAR O GRUPO EMPRESA => PODE VIR DE QUALQUER TELA
+            acessoMetodosAPIs.Add("administracao/webpagesusers", controllersOrigem);
+
+            // --------------------------------- FIM - PORTAL ---------------------------------------- //
+
+        }
+
+
+        // ======================== FIM - VALIDAÇÃO DE ACESSO AOS MÉTODOS DA API ======================== //
 
 
 
@@ -252,20 +291,69 @@ namespace api.Bibliotecas
             }
         }
 
-        public static bool usuarioTemPermissao(string token, Int32 idController, string ds_method)
+        /// <summary>
+        /// Retorna o id do último controller (tela) acessado pelo usuário
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public static Int32 GetIdUltimoControllerAcessado(string token)
         {
-            webpages_Users user = GetUser(token);
-            if (user == null) return false;
+            Int32 UserId = GetIdUser(token);
 
+            if (UserId == 0) return 0;
+
+            using (var _db = new painel_taxservices_dbContext())
+            {
+                _db.Configuration.ProxyCreationEnabled = false;
+                return _db.LogAcesso1
+                            .Where(e => e.idUsers == UserId)
+                            .Select(e => e.idController ?? 0)
+                            .FirstOrDefault();
+            }
+        }
+
+
+        /// <summary>
+        /// Retorna true se o usuário com o token informado possui permissão para o controller
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="idController"></param>
+        /// <returns></returns>
+        public static bool usuarioTemPermissaoController(string token, Int32 idController)
+        {
             Int32 idRole = GetRoleId(token);
-            Int32 idMethod = GetIdMethod(idController, ds_method);
+            if (idRole == 0) return false;
 
             using (var _db = new painel_taxservices_dbContext())
             {
                 _db.Configuration.ProxyCreationEnabled = false;
 
                 return _db.webpages_Permissions.Where(p => p.id_roles == idRole)
-                                               .Where(p => p.id_method == idMethod)
+                                               .Where(p => p.webpages_Methods.id_controller == idController)
+                                               .Count() > 0;
+            }
+        }
+
+
+        /// <summary>
+        /// Retorna true se o usuário com o token informado possui permissão para o método do controller
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="idController"></param>
+        /// <returns></returns>
+        public static bool usuarioTemPermissaoMetodoController(string token, Int32 idController, string metodo)
+        {
+            Int32 idRole = GetRoleId(token);
+            if (idRole == 0) return false;
+
+            using (var _db = new painel_taxservices_dbContext())
+            {
+                _db.Configuration.ProxyCreationEnabled = false;
+
+                metodo = metodo.ToLower();
+
+                return _db.webpages_Permissions.Where(p => p.id_roles == idRole)
+                                               .Where(p => p.webpages_Methods.ds_method.ToLower().Equals(metodo))
                                                .Count() > 0;
             }
         }

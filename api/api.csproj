@@ -332,6 +332,7 @@
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbNewsGrupoMap.cs" />
+    <Compile Include="Models\Object\AcessoMetodoAPI.cs" />
     <Compile Include="Models\tbNewsGrupos.cs" />
     <Compile Include="Models\Mapping\tbNewsStatusMap.cs" />
     <Compile Include="Models\tbNewsStatus.cs" />

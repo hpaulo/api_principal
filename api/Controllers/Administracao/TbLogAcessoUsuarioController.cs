@@ -24,7 +24,7 @@ namespace api.Controllers.Admin
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
 
-                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
 
                 if (Permissoes.Autenticado(token))
                 {
@@ -56,7 +56,7 @@ namespace api.Controllers.Admin
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
