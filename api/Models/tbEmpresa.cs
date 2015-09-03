@@ -9,6 +9,10 @@ namespace api.Models
         public byte[] dsCertificadoDigital { get; set; }
         public string dsCertificadoDigitalSenha { get; set; }
         public int cdEmpresaGrupo { get; set; }
+        public Nullable<System.DateTime> dtCadastro { get; set; }
+        public Nullable<System.DateTime> dtValidade { get; set; }
+        public Nullable<bool> flSenhaValida { get; set; }
         public virtual tbEmpresaGrupo tbEmpresaGrupo { get; set; }
+
     }
 }

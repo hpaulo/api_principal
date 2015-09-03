@@ -76,6 +76,7 @@ namespace api.Models.Mapping
             this.Property(t => t.dsSituacaoDownload).HasColumnName("dsSituacaoDownload");
             this.Property(t => t.dtEntrega).HasColumnName("dtEntrega");
             this.Property(t => t.idUsers).HasColumnName("idUsers");
+            this.Property(t => t.flEntrega).HasColumnName("flEntrega");
         }
     }
 }

@@ -92,10 +92,10 @@ namespace api.Controllers.Admin
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbEmpresa.Update(token, param);
+                    Retorno dados = GatewayTbEmpresa.Update(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse(HttpStatusCode.OK);
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK,dados);
                 }
                 else
                 {

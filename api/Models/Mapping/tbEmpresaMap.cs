@@ -25,6 +25,9 @@ namespace api.Models.Mapping
             this.Property(t => t.dsCertificadoDigital).HasColumnName("dsCertificadoDigital");
             this.Property(t => t.dsCertificadoDigitalSenha).HasColumnName("dsCertificadoDigitalSenha");
             this.Property(t => t.cdEmpresaGrupo).HasColumnName("cdEmpresaGrupo");
+            this.Property(t => t.dtCadastro).HasColumnName("dtCadastro");
+            this.Property(t => t.dtValidade).HasColumnName("dtValidade");
+            this.Property(t => t.flSenhaValida).HasColumnName("flSenhaValida");
 
             // Relationships
             this.HasRequired(t => t.tbEmpresaGrupo)

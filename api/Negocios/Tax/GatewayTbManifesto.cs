@@ -58,6 +58,7 @@ namespace api.Negocios.Tax
             DSSITUACAODOWNLOAD = 119,
             DTENTREGA = 120,
             IDUSERS = 121,
+            FLENTREGA = 122,
 
         };
 
@@ -242,6 +243,10 @@ namespace api.Negocios.Tax
                         int idUsers = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.idUsers == idUsers).AsQueryable<tbManifesto>();
                         break;
+                    case CAMPOS.FLENTREGA:
+                        bool flEntrega = Convert.ToBoolean(item.Value);
+                        entity = entity.Where(e => e.flEntrega == flEntrega).AsQueryable<tbManifesto>();
+                        break;
 
                 }
             }
@@ -355,6 +360,10 @@ namespace api.Negocios.Tax
                     if (orderby == 0) entity = entity.OrderBy(e => e.idUsers).AsQueryable<tbManifesto>();
                     else entity = entity.OrderByDescending(e => e.idUsers).AsQueryable<tbManifesto>();
                     break;
+                case CAMPOS.FLENTREGA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.flEntrega).AsQueryable<tbManifesto>();
+                    else entity = entity.OrderByDescending(e => e.flEntrega).AsQueryable<tbManifesto>();
+                    break;
 
             }
             #endregion
@@ -444,6 +453,7 @@ namespace api.Negocios.Tax
                         dsSituacaoDownload = e.dsSituacaoDownload,
                         dtEntrega = e.dtEntrega,
                         idUsers = e.idUsers,
+                        flEntrega = e.flEntrega,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2) // [iTAX] Consulta as notas disponíveis para manifestação
@@ -1325,6 +1335,7 @@ namespace api.Negocios.Tax
                         xmlNFe = e.xmlNFe,
                         vlNFe = e.vlNFe,
                         nrChave = e.nrChave,
+                        cdGrupo = e.cdGrupo,
                     }).ToList<dynamic>();
 
                     List<dynamic> lista = new List<dynamic>();
@@ -1339,6 +1350,7 @@ namespace api.Negocios.Tax
                             nmDestinatario = xmlNFe.dest.xNome,
                             vlNFe = item.vlNFe,
                             nrChave = item.nrChave,
+                            cdGrupo = item.cdGrupo,
                         };
 
                         lista.Add(e);
@@ -1493,9 +1505,10 @@ namespace api.Negocios.Tax
                     value.cdSituacaoDownload = param.cdSituacaoDownload;
                 if (param.dsSituacaoDownload != null && param.dsSituacaoDownload != value.dsSituacaoDownload)
                     value.dsSituacaoDownload = param.dsSituacaoDownload;
-                if (param.dtEntrega != null && param.dtEntrega != value.dtEntrega)
+                if (param.flEntrega != null && param.flEntrega != value.flEntrega)
                 {
-                    value.dtEntrega = param.dtEntrega;
+                    value.flEntrega = true;
+                    value.dtEntrega = DateTime.Now;
                     value.idUsers = Bibliotecas.Permissoes.GetIdUser(token);
                 }
 
