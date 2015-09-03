@@ -35,6 +35,7 @@ namespace api.Models
         public string dsSituacaoDownload { get; set; }
         public Nullable<System.DateTime> dtEntrega { get; set; }
         public Nullable<int> idUsers { get; set; }
+        public Nullable<bool> flEntrega { get; set; }
 
         public tbManifesto()
         {
