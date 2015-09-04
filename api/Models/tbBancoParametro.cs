@@ -13,6 +13,8 @@ namespace api.Models.Object
         public Nullable<int> cdAdquirente { get; set; }
         public string dsTipo { get; set; }
         public bool flVisivel { get; set; }
+        public string nrCnpj { get; set; }
         public virtual tbAdquirente tbAdquirente { get; set; }
+        public virtual empresa empresa { get; set; }
     }
 }

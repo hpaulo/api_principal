@@ -276,7 +276,7 @@ namespace api.Negocios.Pos
                         login = e.login,
                         senha = e.senha,
                         status = e.status,
-                        //empresa = new { cnpj = e.empresa.nu_cnpj, ds_fantasia = e.empresa.ds_fantasia },
+                        empresa = new { cnpj = e.empresa.nu_cnpj, ds_fantasia = e.empresa.ds_fantasia, filial = e.empresa.filial },
                         //operadora = new { id = e.Operadora.id ,desOperadora = e.Operadora.nmOperadora },
                         operadora = new { id = e.Operadora.id, desOperadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault() },
                         estabelecimento = e.estabelecimento

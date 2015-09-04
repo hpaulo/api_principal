@@ -392,6 +392,25 @@ namespace api.Negocios.Cliente
                         podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).Count() == 0
                     }).ToList<dynamic>();
                 }
+                else if (colecao == 3)
+                {
+                    CollectionEmpresa = query.Select(e => new
+                    {
+                        nu_cnpj = e.nu_cnpj,
+                        ds_fantasia = e.ds_fantasia,
+                        filial = e.filial,
+                        estabelecimentos = e.LoginOperadoras
+                                                .Select(l => new
+                                                {
+                                                    estabelecimento = l.estabelecimento,
+                                                    operadora = new
+                                                    {
+                                                        id = l.idOperadora,
+                                                        nmOperadora = l.Operadora.nmOperadora
+                                                    }
+                                                }).ToList<dynamic>()
+                    }).ToList<dynamic>();
+                }
 
                 retorno.Registros = CollectionEmpresa;
 

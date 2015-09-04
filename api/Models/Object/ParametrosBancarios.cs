@@ -37,6 +37,13 @@ namespace api.Models.Object
             set { cdAdquirente = value; }
         }
 
+        private string nrCnpj;
+        public string NrCnpj
+        {
+            get { return nrCnpj; }
+            set { nrCnpj = value; }
+        }
+
         private bool flVisivel;
         public bool FlVisivel
         {
