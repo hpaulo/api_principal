@@ -100,7 +100,13 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.ESTABELECIMENTO:
                         string estabelecimento = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.estabelecimento.Equals(estabelecimento)).AsQueryable<LoginOperadora>();
+                        if (estabelecimento.Contains("%")) // usa LIKE
+                        {
+                            string busca = estabelecimento.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.estabelecimento.Contains(busca)).AsQueryable<LoginOperadora>();
+                        }
+                        else
+                            entity = entity.Where(e => e.estabelecimento.Equals(estabelecimento)).AsQueryable<LoginOperadora>();
                         break;
                 }
             }

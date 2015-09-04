@@ -132,11 +132,14 @@ namespace api.Negocios.Card
                     // PERSONALIZADO
                     case CAMPOS.ID_GRUPO:
                         int id_grupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.tbContaCorrente.cdGrupo == id_grupo).AsQueryable<tbExtrato>();
+                        entity = entity.Where(e => e.tbContaCorrente.cdGrupo == id_grupo).AsQueryable<tbExtrato>(); // somente as movimentações referentes às contas do grupo
                         break;
                     case CAMPOS.NU_CNPJ: 
-                        string nu_cnpj = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas.Where( v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(nu_cnpj)).Count() > 0).AsQueryable<tbExtrato>();
+                        string nrCnpj = Convert.ToString(item.Value);
+                        entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                                                       .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                       .Where(b => b.nrCnpj == null || b.nrCnpj.Equals(nrCnpj)) // somente as movimentações que se referem a filial => os memos "genéricos" ou específicos da filial (identificado pelo estabelecimento)
+                                                                       .Count() > 0).AsQueryable<tbExtrato>();
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         int cdAdquirente = Convert.ToInt32(item.Value);

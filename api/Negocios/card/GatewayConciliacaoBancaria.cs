@@ -421,7 +421,7 @@ namespace api.Negocios.Card
                 if (!CnpjEmpresa.Equals(""))
                 {
                     queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.NU_CNPJ, CnpjEmpresa);
-                    //queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.NU_CNPJ, CnpjEmpresa);
+                    queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.NU_CNPJ, CnpjEmpresa);
                 }
                 else throw new Exception("Uma filial deve ser selecionada como filtro de conciliação bancária!");
                 // ADQUIRENTE

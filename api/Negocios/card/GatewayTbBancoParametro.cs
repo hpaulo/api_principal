@@ -32,6 +32,7 @@ namespace api.Negocios.Card
             CDADQUIRENTE = 102,
             DSTIPO = 103,
             FLVISIVEL = 104,
+            NRCNPJ = 105,
 
             // RELACIONAMENTOS
             DSADQUIRENTE = 201,
@@ -86,6 +87,11 @@ namespace api.Negocios.Card
                         bool flVisivel = Convert.ToBoolean(item.Value);
                         entity = entity.Where(e => e.flVisivel == flVisivel).AsQueryable<tbBancoParametro>();
                         break;
+                    case CAMPOS.NRCNPJ:
+                        string nrCnpj = Convert.ToString(item.Value);
+                        if(nrCnpj.Equals("")) entity = entity.Where(e => e.nrCnpj == null).AsQueryable<tbBancoParametro>();
+                        else entity = entity.Where(e => e.nrCnpj.Equals(nrCnpj)).AsQueryable<tbBancoParametro>();
+                        break;
 
                     // PERSONALIZADO
                     case CAMPOS.DSADQUIRENTE:
@@ -126,6 +132,10 @@ namespace api.Negocios.Card
                 case CAMPOS.FLVISIVEL:
                     if (orderby == 0) entity = entity.OrderBy(e => e.flVisivel).AsQueryable<tbBancoParametro>();
                     else entity = entity.OrderByDescending(e => e.flVisivel).AsQueryable<tbBancoParametro>();
+                    break;
+                case CAMPOS.NRCNPJ:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.nrCnpj).AsQueryable<tbBancoParametro>();
+                    else entity = entity.OrderByDescending(e => e.nrCnpj).AsQueryable<tbBancoParametro>();
                     break;
 
                 // PERSONALIZADO
@@ -221,6 +231,11 @@ namespace api.Negocios.Card
                         ds_fantasia = e.empresa.ds_fantasia,
                         filial = e.empresa.filial
                     },
+                    grupoempresa = e.nrCnpj == null ? null : new
+                    {
+                        id_grupo = e.empresa.id_grupo,
+                        ds_nome = e.empresa.grupo_empresa.ds_nome
+                    },
                     banco = new { Codigo = e.cdBanco, NomeExtenso = "" }, // Não dá para chamar a função direto daqui pois esse código é convertido em SQL e não acessa os dados de um objeto em memória
                 }).ToList<dynamic>();
 
@@ -234,6 +249,7 @@ namespace api.Negocios.Card
                         dsTipo = bancoParametro.dsTipo,
                         flVisivel = bancoParametro.flVisivel,
                         empresa = bancoParametro.empresa,
+                        grupoempresa = bancoParametro.grupoempresa,
                         banco = new { Codigo = bancoParametro.banco.Codigo, NomeExtenso = GatewayBancos.Get(bancoParametro.banco.Codigo) },
                     });
                 }
