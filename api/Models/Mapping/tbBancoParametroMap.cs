@@ -30,7 +30,6 @@ namespace api.Models.Mapping
                 .HasMaxLength(30);
 
             this.Property(t => t.nrCnpj)
-                .IsRequired()
                 .IsFixedLength()
                 .HasMaxLength(14);
 
