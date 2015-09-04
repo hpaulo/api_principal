@@ -52,7 +52,7 @@ namespace api.Controllers.Card
         }
 
         // PUT /tbBancoParametro/token/
-        public HttpResponseMessage Put(string token, [FromBody]tbBancoParametro param)
+        public HttpResponseMessage Put(string token, ParametrosBancarios param)//[FromBody]tbBancoParametro param)
         {
             try
             {

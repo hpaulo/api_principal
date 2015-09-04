@@ -236,6 +236,7 @@
     <Compile Include="Areas\HelpPage\SampleGeneration\SampleDirection.cs" />
     <Compile Include="Areas\HelpPage\SampleGeneration\TextSample.cs" />
     <Compile Include="Areas\HelpPage\XmlDocumentationProvider.cs" />
+    <Compile Include="Bibliotecas\CertificadoDigital.cs" />
     <Compile Include="Bibliotecas\CodigoCompensacaoBancos.cs" />
     <Compile Include="Bibliotecas\Device.cs" />
     <Compile Include="Bibliotecas\LogAcaoUsuario.cs" />
@@ -333,6 +334,8 @@
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbNewsGrupoMap.cs" />
     <Compile Include="Models\Object\AcessoMetodoAPI.cs" />
+    <Compile Include="Models\Object\Mensagem.cs" />
+    <Compile Include="Models\Object\ParametrosBancarios.cs" />
     <Compile Include="Models\tbNewsGrupos.cs" />
     <Compile Include="Models\Mapping\tbNewsStatusMap.cs" />
     <Compile Include="Models\tbNewsStatus.cs" />

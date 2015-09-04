@@ -278,9 +278,41 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbBancoParametro param)
+        public static void Update(string token, ParametrosBancarios param)//tbBancoParametro param)
         {
-            tbBancoParametro value = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(param.cdBanco))
+            foreach (ParametroBancario parametro in param.Parametros)
+            {
+                if (param.Deletar)
+                {
+                    try { Delete(token, parametro.CdBanco, parametro.DsMemo); } catch { }
+                }
+                else
+                {
+
+                    tbBancoParametro value = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(parametro.CdBanco))
+                                                                 .Where(e => e.dsMemo.Equals(parametro.DsMemo))
+                                                                 .FirstOrDefault();
+
+                    if (value != null)
+                    {
+                        // TIPO
+                        if (parametro.DsTipo != null && parametro.DsTipo != value.dsTipo)
+                            value.dsTipo = parametro.DsTipo;
+                        // Adquirente
+                        if (param.CdAdquirente != null && param.CdAdquirente != value.cdAdquirente)
+                        {
+                            if (param.CdAdquirente == -1) value.cdAdquirente = null;
+                            else value.cdAdquirente = param.CdAdquirente;
+                        }
+                        // Visibilidade
+                        if (param.FlVisivel != value.flVisivel) value.flVisivel = param.FlVisivel;
+                        // Salva
+                        _db.SaveChanges();
+                    }
+                }
+            }
+            
+            /*tbBancoParametro value = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(param.cdBanco))
                                                              .Where(e => e.dsMemo.Equals(param.dsMemo))
                                                              .FirstOrDefault();
 
@@ -300,7 +332,7 @@ namespace api.Negocios.Card
                 value.dsTipo = param.dsTipo;
             if (param.flVisivel != value.flVisivel)
                 value.flVisivel = param.flVisivel;
-            _db.SaveChanges();
+            _db.SaveChanges();*/
 
         }
 
