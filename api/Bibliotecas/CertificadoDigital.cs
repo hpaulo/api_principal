@@ -32,12 +32,12 @@ namespace api.Bibliotecas
                 if (ex.Message.Contains("A senha de rede especificada não está correta"))
                 {
                     mensagem.cdMensagem = 201;
-                    mensagem.dsMensagem = "Certificado inválido";
+                    mensagem.dsMensagem = "Senha incorreta";
                 }
                 else
                 {
                     mensagem.cdMensagem = 202;
-                    mensagem.dsMensagem = "Senha incorreta";
+                    mensagem.dsMensagem = "Certificado inválido";
                 }
                 return mensagem;
             }

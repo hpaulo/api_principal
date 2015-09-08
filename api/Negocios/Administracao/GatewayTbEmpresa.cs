@@ -36,6 +36,9 @@ namespace api.Negocios.Admin
             DTCADASTRO = 104,
             DTVALIDADE = 105,
             FLSENHAVALIDA = 106,
+
+            // RELACIONAMENTOS
+            DSEMPRESAGRUPO = 201,
         };
 
         /// <summary>
@@ -51,7 +54,7 @@ namespace api.Negocios.Admin
         private static IQueryable<tbEmpresa> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
-            var entity = _db.tbEmpresas.AsQueryable();
+            var entity = _db.tbEmpresas.AsQueryable<tbEmpresa>();
 
             #region WHERE - ADICIONA OS FILTROS A QUERY
 
@@ -64,31 +67,43 @@ namespace api.Negocios.Admin
                 {
                     case CAMPOS.NRCNPJBASE:
                         string nrCNPJBase = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nrCNPJBase.Equals(nrCNPJBase)).AsQueryable();
+                        entity = entity.Where(e => e.nrCNPJBase.Equals(nrCNPJBase)).AsQueryable<tbEmpresa>();
                         break;
                     case CAMPOS.DSCERTIFICADODIGITAL:
                         string dsCertificadoDigital = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsCertificadoDigital.Equals(dsCertificadoDigital)).AsQueryable();
+                        entity = entity.Where(e => e.dsCertificadoDigital.Equals(dsCertificadoDigital)).AsQueryable<tbEmpresa>();
                         break;
                     case CAMPOS.DSCERTIFICADODIGITALSENHA:
                         string dsCertificadoDigitalSenha = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsCertificadoDigitalSenha.Equals(dsCertificadoDigitalSenha)).AsQueryable();
+                        entity = entity.Where(e => e.dsCertificadoDigitalSenha.Equals(dsCertificadoDigitalSenha)).AsQueryable<tbEmpresa>();
                         break;
                     case CAMPOS.CDEMPRESAGRUPO:
                         Int32 cdEmpresaGrupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdEmpresaGrupo.Equals(cdEmpresaGrupo)).AsQueryable();
+                        entity = entity.Where(e => e.cdEmpresaGrupo.Equals(cdEmpresaGrupo)).AsQueryable<tbEmpresa>();
                         break;
                     case CAMPOS.DTCADASTRO:
                         DateTime dtCadastro = DateTime.ParseExact(item.Value + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                        entity = entity.Where(e => e.dtCadastro != null && e.dtCadastro.Value.Year == dtCadastro.Year && e.dtCadastro.Value.Month == dtCadastro.Month && e.dtCadastro.Value.Day == dtCadastro.Day).AsQueryable();
+                        entity = entity.Where(e => e.dtCadastro != null && e.dtCadastro.Value.Year == dtCadastro.Year && e.dtCadastro.Value.Month == dtCadastro.Month && e.dtCadastro.Value.Day == dtCadastro.Day).AsQueryable<tbEmpresa>();
                         break;
                     case CAMPOS.DTVALIDADE:
                         DateTime dtValidade = DateTime.ParseExact(item.Value + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                        entity = entity.Where(e => e.dtValidade != null && e.dtValidade.Value.Year == dtValidade.Year && e.dtValidade.Value.Month == dtValidade.Month && e.dtValidade.Value.Day == dtValidade.Day).AsQueryable();
+                        entity = entity.Where(e => e.dtValidade != null && e.dtValidade.Value.Year == dtValidade.Year && e.dtValidade.Value.Month == dtValidade.Month && e.dtValidade.Value.Day == dtValidade.Day).AsQueryable<tbEmpresa>();
                         break;
                     case CAMPOS.FLSENHAVALIDA:
                         bool flSenhaValida = Convert.ToBoolean(item.Value);
-                        entity = entity.Where(e => e.flSenhaValida == flSenhaValida).AsQueryable();
+                        entity = entity.Where(e => e.flSenhaValida == flSenhaValida).AsQueryable<tbEmpresa>();
+                        break;
+
+                    // RELACIONAMENTOS
+                    case CAMPOS.DSEMPRESAGRUPO:
+                        string dsEmpresaGrupo = Convert.ToString(item.Value);
+                        if (dsEmpresaGrupo.Contains("%"))
+                        {
+                            string busca = dsEmpresaGrupo.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.tbEmpresaGrupo.dsEmpresaGrupo.Contains(busca)).AsQueryable<tbEmpresa>();
+                        }
+                        else
+                            entity = entity.Where(e => e.tbEmpresaGrupo.dsEmpresaGrupo.Equals(dsEmpresaGrupo)).AsQueryable<tbEmpresa>();
                         break;
                 }
             }
@@ -101,34 +116,39 @@ namespace api.Negocios.Admin
             {
 
                 case CAMPOS.NRCNPJBASE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.nrCNPJBase).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.nrCNPJBase).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.nrCNPJBase).AsQueryable<tbEmpresa>();
+                    else entity = entity.OrderByDescending(e => e.nrCNPJBase).AsQueryable<tbEmpresa>();
                     break;
                 case CAMPOS.DSCERTIFICADODIGITAL:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsCertificadoDigital).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsCertificadoDigital).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsCertificadoDigital).AsQueryable<tbEmpresa>();
+                    else entity = entity.OrderByDescending(e => e.dsCertificadoDigital).AsQueryable<tbEmpresa>();
                     break;
                 case CAMPOS.DSCERTIFICADODIGITALSENHA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dsCertificadoDigitalSenha).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dsCertificadoDigitalSenha).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsCertificadoDigitalSenha).AsQueryable<tbEmpresa>();
+                    else entity = entity.OrderByDescending(e => e.dsCertificadoDigitalSenha).AsQueryable<tbEmpresa>();
                     break;
                 case CAMPOS.CDEMPRESAGRUPO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdEmpresaGrupo).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.cdEmpresaGrupo).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdEmpresaGrupo).AsQueryable<tbEmpresa>();
+                    else entity = entity.OrderByDescending(e => e.cdEmpresaGrupo).AsQueryable<tbEmpresa>();
                     break;
                 case CAMPOS.DTCADASTRO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtCadastro).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dtCadastro).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtCadastro).AsQueryable<tbEmpresa>();
+                    else entity = entity.OrderByDescending(e => e.dtCadastro).AsQueryable<tbEmpresa>();
                     break;
                 case CAMPOS.DTVALIDADE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtValidade).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dtValidade).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtValidade).AsQueryable<tbEmpresa>();
+                    else entity = entity.OrderByDescending(e => e.dtValidade).AsQueryable<tbEmpresa>();
                     break;
                 case CAMPOS.FLSENHAVALIDA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.flSenhaValida).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.flSenhaValida).AsQueryable();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.flSenhaValida).AsQueryable<tbEmpresa>();
+                    else entity = entity.OrderByDescending(e => e.flSenhaValida).AsQueryable<tbEmpresa>();
                     break;
 
+                // RELACIONAMENTOS
+                case CAMPOS.DSEMPRESAGRUPO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.tbEmpresaGrupo.dsEmpresaGrupo).ThenBy(e => e.nrCNPJBase).AsQueryable<tbEmpresa>();
+                    else entity = entity.OrderByDescending(e => e.tbEmpresaGrupo.dsEmpresaGrupo).ThenByDescending(e => e.nrCNPJBase).AsQueryable<tbEmpresa>();
+                    break;
             }
             #endregion
 
@@ -146,6 +166,26 @@ namespace api.Negocios.Admin
         {
             try
             {
+                // FILTRO
+                string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.CDEMPRESAGRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.CDEMPRESAGRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.CDEMPRESAGRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (!CnpjEmpresa.Equals(""))
+                {
+                    string CnpjBaseEmpresa = CnpjEmpresa.Substring(0, 8);
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJBASE, out outValue))
+                        queryString["" + (int)CAMPOS.NRCNPJBASE] = CnpjBaseEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NRCNPJBASE, CnpjBaseEmpresa);
+                }
+
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbEmpresa = new List<dynamic>();
                 Retorno retorno = new Retorno();
@@ -153,10 +193,17 @@ namespace api.Negocios.Admin
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                var queryTotal = query;
+
+                // Vendedor ATOS sem estar associado com um grupo empresa?
+                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))
+                {
+                    // Perfil Comercial tem uma carteira de clientes específica
+                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                    query = query.Where(e => listaIdsGruposEmpresas.Contains(e.cdEmpresaGrupo)).AsQueryable<tbEmpresa>();
+                }
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
 
                 // PAGINAÇÃO
@@ -170,7 +217,7 @@ namespace api.Negocios.Admin
                 retorno.ItensPorPagina = pageSize;
 
                 // COLEÇÃO DE RETORNO
-                if (colecao == 1)
+                if (colecao == 1) // Consulta de todas as empresas aptas a importação XML
                 {
                     CollectionTbEmpresa = _db.tbEmpresas
                        .Join(_db.tbEmpresaFiliais, e => e.nrCNPJBase, f => f.nrCNPJBase, (e, f) => new { e, f })
@@ -204,17 +251,29 @@ namespace api.Negocios.Admin
                         flSenhaValida = e.flSenhaValida,
                     }).ToList<dynamic>();
                 }
-
-                else if (colecao == 2)
+                else if (colecao == 2) // Verificar WEBAPI
                 {
                     CollectionTbEmpresa = query.Select(e => new
                     {
-
                         nrCNPJBase = e.nrCNPJBase,
                         dsCertificadoDigital = e.dsCertificadoDigital,
                         dsCertificadoDigitalSenha = e.dsCertificadoDigitalSenha,
                         cdEmpresaGrupo = e.cdEmpresaGrupo,
                     }).Take(1).ToList<dynamic>();
+                }
+                else if (colecao == 3) // [PORTAL] Cadastro Certificado Digital
+                {
+                    CollectionTbEmpresa = query.Select(e => new
+                    {
+                        nrCNPJBase = e.nrCNPJBase,
+                        certificadoDigitalPresente = e.dsCertificadoDigital != null,
+                        senhaPresente = e.dsCertificadoDigitalSenha != null && !e.dsCertificadoDigitalSenha.Equals(""),
+                        tbempresagrupo = new { cdEmpresaGrupo = e.cdEmpresaGrupo,
+                                               dsEmpresaGrupo = e.tbEmpresaGrupo.dsEmpresaGrupo },
+                        dtCadastro = e.dtCadastro,
+                        dtValidade = e.dtValidade,
+                        flSenhaValida = e.flSenhaValida,
+                    }).ToList<dynamic>();
                 }
 
 
@@ -236,7 +295,7 @@ namespace api.Negocios.Admin
 
 
 
-        /// <summary>
+        /*/// <summary>
         /// Adiciona nova TbEmpresa
         /// </summary>
         /// <param name="param"></param>
@@ -282,11 +341,11 @@ namespace api.Negocios.Admin
                 }
                 throw new Exception(e.Message);
             }
-        }
+        }*/
 
 
 
-        /// <summary>
+        /*/// <summary>
         /// Altera tbEmpresa
         /// </summary>
         /// <param name="param"></param>
@@ -317,15 +376,16 @@ namespace api.Negocios.Admin
                 memoryStream.Read(data, 0, data.Length);
                 memoryStream.Close();
 
-                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NOS PARAMETROS
-                if (data != null && data != value.dsCertificadoDigital)
+                // VERIFICAR SE EXISTE ALTERAÇÃO NOS PARAMETROS
+                if (data != null && (value.dsCertificadoDigital == null || !data.SequenceEqual(value.dsCertificadoDigital)))
                     value.dsCertificadoDigital = data;
-                if (param.dsCertificadoDigitalSenha != null && param.dsCertificadoDigitalSenha != value.dsCertificadoDigitalSenha)
+                if (param.dsCertificadoDigitalSenha != null && (value.dsCertificadoDigitalSenha == null || !param.dsCertificadoDigitalSenha.Equals(value.dsCertificadoDigitalSenha)))
                     value.dsCertificadoDigitalSenha = param.dsCertificadoDigitalSenha;
 
                 Mensagem mensagem = CertificadoDigital.ValidarCertificado(value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
                 if (mensagem.cdMensagem == 200)
                 {
+                    value.dtCadastro = DateTime.Now;
                     value.dtValidade = CertificadoDigital.GetDataValidade(param.dsCertificadoDigital, param.dsCertificadoDigitalSenha);
                     value.flSenhaValida = true;
 
@@ -335,6 +395,74 @@ namespace api.Negocios.Admin
                 retorno.Registros.Add(mensagem);
                 
                 return retorno;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar TbEmpresa" : erro);
+                }
+                throw new Exception(e.Message);
+            }
+        }*/
+
+
+
+        /// <summary>
+        /// Altera certificado e senha
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static Mensagem Patch(string token, Dictionary<string, string> queryString)
+        {
+            try
+            {
+                // TEM QUE TER ENVIADO VIA QUERYSTRING nrCNPJBase e dsCertificadoDigitalSenha
+                string outValue = null;
+                if (!queryString.TryGetValue("" + (int)GatewayTbEmpresa.CAMPOS.NRCNPJBASE, out outValue) ||
+                    !queryString.TryGetValue("" + (int)GatewayTbEmpresa.CAMPOS.DSCERTIFICADODIGITALSENHA, out outValue))
+                    throw new Exception("CNPJ base e Senha são obrigatórios!");
+
+                string nrCNPJBase = queryString["" + (int)GatewayTbEmpresa.CAMPOS.NRCNPJBASE];
+                string dsCertificadoDigitalSenha = queryString["" + (int)GatewayTbEmpresa.CAMPOS.DSCERTIFICADODIGITALSENHA];
+
+                // Obtém o objet
+                tbEmpresa value = _db.tbEmpresas.Where(e => e.nrCNPJBase.Equals(nrCNPJBase)).FirstOrDefault();
+
+                if (value == null) throw new Exception("CNPJ Base inexistente!");
+
+                // TEM QUE TER ENVIADO O ARQUIVO
+                HttpRequest httpRequest = HttpContext.Current.Request;
+                if (httpRequest.Files.Count == 0) throw new Exception("Não foi identificado o certificado digital");
+                
+                // Obtém o arquivo
+                HttpPostedFile postedFile = httpRequest.Files[0];
+                // Valida a extensão
+                string extensao = postedFile.FileName.Substring(postedFile.FileName.LastIndexOf("."));
+                if (!extensao.ToLower().Equals(".pfx")) throw new Exception("Formato do arquivo deve ser PFX!");
+
+                // Converte para um array de bytes
+                BinaryReader binaryReader = new BinaryReader(postedFile.InputStream);
+                byte[] data = binaryReader.ReadBytes(postedFile.ContentLength);
+
+                // VERIFICAR SE EXISTE ALTERAÇÃO NOS PARAMETROS
+                if (data != null && (value.dsCertificadoDigital == null || !data.SequenceEqual(value.dsCertificadoDigital)))
+                    value.dsCertificadoDigital = data;
+                if (value.dsCertificadoDigitalSenha == null || !dsCertificadoDigitalSenha.Equals(value.dsCertificadoDigitalSenha))
+                    value.dsCertificadoDigitalSenha = dsCertificadoDigitalSenha;
+
+                Mensagem mensagem = CertificadoDigital.ValidarCertificado(value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
+                if (mensagem.cdMensagem == 200)
+                {
+                    value.dtCadastro = DateTime.Now;
+                    value.dtValidade = CertificadoDigital.GetDataValidade(value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
+                    value.flSenhaValida = true;
+
+                    _db.SaveChanges();
+                }
+
+                return mensagem;
             }
             catch (Exception e)
             {

@@ -105,7 +105,7 @@ namespace api.Negocios.Pos
                             string busca = estabelecimento.Replace("%", "").ToString();
                             // Remove os zeros a esquerda
                             while (busca.StartsWith("0")) busca = busca.Substring(1);
-                            // Consulta
+                            // Consult
                             entity = entity.Where(e => e.estabelecimento.Contains(busca)).AsQueryable<LoginOperadora>();
                         }
                         else

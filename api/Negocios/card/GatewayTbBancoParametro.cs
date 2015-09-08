@@ -359,7 +359,7 @@ namespace api.Negocios.Card
                             else value.cdAdquirente = param.CdAdquirente;
                         }
                         // Filial
-                        if (param.NrCnpj != null && param.NrCnpj != value.nrCnpj)
+                        if (param.NrCnpj != null && (value.nrCnpj == null || !param.NrCnpj.Equals(value.nrCnpj)))
                         {
                             if (param.NrCnpj.Equals("")) value.nrCnpj = null;
                             else value.nrCnpj = param.NrCnpj;
