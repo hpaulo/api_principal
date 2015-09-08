@@ -1505,7 +1505,7 @@ namespace api.Negocios.Tax
                     value.cdSituacaoDownload = param.cdSituacaoDownload;
                 if (param.dsSituacaoDownload != null && param.dsSituacaoDownload != value.dsSituacaoDownload)
                     value.dsSituacaoDownload = param.dsSituacaoDownload;
-                if (param.flEntrega != null && param.flEntrega != value.flEntrega)
+                if (param.flEntrega == true)
                 {
                     value.flEntrega = true;
                     value.dtEntrega = DateTime.Now;
