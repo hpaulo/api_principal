@@ -15,8 +15,8 @@ namespace api.Models.Object
             set { idController = value; }
         }
 
-        private List<string> metodos;
-        public List<string> Metodos
+        private string[] metodos;
+        public string[] Metodos
         {
             get { return metodos; }
             set { metodos = value; }
@@ -25,13 +25,14 @@ namespace api.Models.Object
         public ControllersOrigem()
         {
             idController = 0;
-            metodos = new List<string>();
+            metodos = new string[0];
         }
 
-        public ControllersOrigem(Int32 idController, List<string> metodos)
+        public ControllersOrigem(Int32 idController, string[] metodos)
         {
             this.idController = idController;
-            metodos = new List<string>(metodos);
+            this.metodos = new string[metodos.Length];
+            metodos.CopyTo(this.metodos, 0);
         }
     }
 

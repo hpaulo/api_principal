@@ -37,6 +37,8 @@ namespace api.Negocios.Card
             // RELACIONAMENTOS
             DSADQUIRENTE = 201,
 
+            ID_GRUPO = 316
+
         };
 
         /// <summary>
@@ -90,7 +92,7 @@ namespace api.Negocios.Card
                     case CAMPOS.NRCNPJ:
                         string nrCnpj = Convert.ToString(item.Value);
                         if(nrCnpj.Equals("")) entity = entity.Where(e => e.nrCnpj == null).AsQueryable<tbBancoParametro>();
-                        else entity = entity.Where(e => e.nrCnpj.Equals(nrCnpj)).AsQueryable<tbBancoParametro>();
+                        else entity = entity.Where(e => e.nrCnpj != null && e.nrCnpj.Equals(nrCnpj)).AsQueryable<tbBancoParametro>();
                         break;
 
                     // PERSONALIZADO
@@ -103,6 +105,10 @@ namespace api.Negocios.Card
                         }
                         else
                             entity = entity.Where(e => e.tbAdquirente.dsAdquirente.Equals(nome)).AsQueryable<tbBancoParametro>();
+                        break;
+                    case CAMPOS.ID_GRUPO:
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.nrCnpj == null || (e.nrCnpj != null && e.empresa.id_grupo == id_grupo)).AsQueryable<tbBancoParametro>();
                         break;
                 }
             }
@@ -162,8 +168,30 @@ namespace api.Negocios.Card
             List<dynamic> CollectionTbBancoParametro = new List<dynamic>();
             Retorno retorno = new Retorno();
 
-            // POR DEFAULT, LISTA SOMENTE OS QUE ESTÃO VISÍVEIS
+            // FILTRO DE FILIAL
             string outValue = null;
+            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+            if (!CnpjEmpresa.Equals(""))
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
+                    queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
+                else
+                    queryString.Add("" + (int)CAMPOS.NRCNPJ, CnpjEmpresa);
+            }
+            else
+            {
+                // NÃO ESTÁ ASSOCIADO A UM FILIAL => VERIFICA SE ESTÁ ASSOCIADO A UM GRUPO
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+            }
+
+            // POR DEFAULT, LISTA SOMENTE OS QUE ESTÃO VISÍVEIS
             if (!queryString.TryGetValue("" + (int)CAMPOS.FLVISIVEL, out outValue))
                 queryString.Add("" + (int)CAMPOS.FLVISIVEL, Convert.ToString(true));
 
