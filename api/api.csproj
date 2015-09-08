@@ -336,6 +336,7 @@
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbDispositivoUsuarioMap.cs" />
     <Compile Include="Models\Object\Ionic.cs" />
+    <Compile Include="Models\Object\Login.cs" />
     <Compile Include="Models\tbDispositivoUsuario.cs" />
     <Compile Include="Models\Mapping\tbNewsGrupoMap.cs" />
     <Compile Include="Models\Object\AcessoMetodoAPI.cs" />
