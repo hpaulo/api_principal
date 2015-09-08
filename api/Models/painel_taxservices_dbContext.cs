@@ -231,6 +231,7 @@ namespace api.Models
         public DbSet<tbCatalogo> tbCatalogos { get; set; }
         public DbSet<tbNewsStatus> tbNewsStatuss { get; set; }
         public DbSet<tbNewsGrupos> tbNewsGrupos { get; set; }
+        public DbSet<tbDispositivoUsuario> tbDispositivoUsuarios { get; set; }
 
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -448,6 +449,7 @@ namespace api.Models
             modelBuilder.Configurations.Add(new tbCatalogoMap());
             modelBuilder.Configurations.Add(new tbNewsStatusMap());
             modelBuilder.Configurations.Add(new tbNewsGrupoMap());
+            modelBuilder.Configurations.Add(new tbDispositivoUsuarioMap());
         }
     }
 }
