@@ -104,6 +104,13 @@ namespace api.Models.Object
                 get { return bandeira; }
                 set { bandeira = value; }
             }
+
+            private Nullable<DateTime> dataVenda; // data do extrato ou do recebimento
+            public Nullable<DateTime> DataVenda
+            {
+                get { return dataVenda; }
+                set { dataVenda = value; }
+            }
         }
 
 

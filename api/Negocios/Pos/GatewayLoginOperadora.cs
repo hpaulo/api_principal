@@ -100,7 +100,16 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.ESTABELECIMENTO:
                         string estabelecimento = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.estabelecimento.Equals(estabelecimento)).AsQueryable<LoginOperadora>();
+                        if (estabelecimento.Contains("%")) // usa LIKE
+                        {
+                            string busca = estabelecimento.Replace("%", "").ToString();
+                            // Remove os zeros a esquerda
+                            while (busca.StartsWith("0")) busca = busca.Substring(1);
+                            // Consult
+                            entity = entity.Where(e => e.estabelecimento.Contains(busca)).AsQueryable<LoginOperadora>();
+                        }
+                        else
+                            entity = entity.Where(e => e.estabelecimento.Equals(estabelecimento)).AsQueryable<LoginOperadora>();
                         break;
                 }
             }
@@ -173,25 +182,28 @@ namespace api.Negocios.Pos
 
             try
             {
-
-                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-
+                // Filtro de grupo empresa e filial
                 string outValue = null;
                 Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-                if (IdGrupo != 0)
+                if (colecao != 3 || 
+                    !queryString.TryGetValue("" + (int)CAMPOS.ESTABELECIMENTO, out outValue) || // se for a coleção 3, tem que ter filtro de estabelecimento
+                    !Permissoes.isAtosRole(token)) // Como coleção 3 é para consultar estabelecimento, quem for de perfil atos
                 {
-                    if (queryString.TryGetValue("" + (int)CAMPOS.IDGRUPO, out outValue))
-                        queryString["" + (int)CAMPOS.IDGRUPO] = IdGrupo.ToString();
-                    else
-                        queryString.Add("" + (int)CAMPOS.IDGRUPO, IdGrupo.ToString());
-                }
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-                if (!CnpjEmpresa.Equals(""))
-                {
-                    if (queryString.TryGetValue("" + (int)CAMPOS.CNPJ, out outValue))
-                        queryString["" + (int)CAMPOS.CNPJ] = CnpjEmpresa;
-                    else
-                        queryString.Add("" + (int)CAMPOS.CNPJ, CnpjEmpresa);
+                    if (IdGrupo != 0)
+                    {
+                        if (queryString.TryGetValue("" + (int)CAMPOS.IDGRUPO, out outValue))
+                            queryString["" + (int)CAMPOS.IDGRUPO] = IdGrupo.ToString();
+                        else
+                            queryString.Add("" + (int)CAMPOS.IDGRUPO, IdGrupo.ToString());
+                    }
+                    string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                    if (!CnpjEmpresa.Equals(""))
+                    {
+                        if (queryString.TryGetValue("" + (int)CAMPOS.CNPJ, out outValue))
+                            queryString["" + (int)CAMPOS.CNPJ] = CnpjEmpresa;
+                        else
+                            queryString.Add("" + (int)CAMPOS.CNPJ, CnpjEmpresa);
+                    }
                 }
 
 
@@ -201,14 +213,21 @@ namespace api.Negocios.Pos
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                var queryTotal = query;
+
+                // Perfil vendedor ?
+                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))
+                {
+                    // Perfil Comercial tem uma carteira de clientes específica
+                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                    query = query.Where(e => listaIdsGruposEmpresas.Contains(e.empresa.id_grupo)).AsQueryable<LoginOperadora>();
+                }
 
 
                 // PAGINAÇÃO
                 if (colecao != 4) // senhas inválidas
                 {
                     // TOTAL DE REGISTROS
-                    retorno.TotalDeRegistros = queryTotal.Count();
+                    retorno.TotalDeRegistros = query.Count();
 
                     int skipRows = (pageNumber - 1) * pageSize;
                     if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
@@ -276,7 +295,8 @@ namespace api.Negocios.Pos
                         login = e.login,
                         senha = e.senha,
                         status = e.status,
-                        //empresa = new { cnpj = e.empresa.nu_cnpj, ds_fantasia = e.empresa.ds_fantasia },
+                        empresa = new { cnpj = e.empresa.nu_cnpj, ds_fantasia = e.empresa.ds_fantasia, filial = e.empresa.filial },
+                        grupoempresa = new { id_grupo = e.empresa.id_grupo, ds_nome = e.empresa.grupo_empresa.ds_nome },
                         //operadora = new { id = e.Operadora.id ,desOperadora = e.Operadora.nmOperadora },
                         operadora = new { id = e.Operadora.id, desOperadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault() },
                         estabelecimento = e.estabelecimento

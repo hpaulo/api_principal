@@ -21,7 +21,7 @@ namespace api.Controllers.Admin
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
 
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
@@ -49,13 +49,13 @@ namespace api.Controllers.Admin
             }
         }
 
-        // POST /tbEmpresa/token/
+        /*// POST /tbEmpresa/token/
         public HttpResponseMessage Post(string token, [FromBody]tbEmpresa param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
@@ -87,7 +87,7 @@ namespace api.Controllers.Admin
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
@@ -111,15 +111,15 @@ namespace api.Controllers.Admin
                 Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-        }
+        }*/
 
-        // DELETE /tbEmpresa/token/nrCNPJBase
+        /*// DELETE /tbEmpresa/token/nrCNPJBase
         public HttpResponseMessage Delete(string token, string nrCNPJBase)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("nrCNPJBase : " + nrCNPJBase));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("nrCNPJBase : " + nrCNPJBase), "Delete");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
@@ -128,6 +128,41 @@ namespace api.Controllers.Admin
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
+                }
+                else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
+            }
+            catch (Exception e)
+            {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
+                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+        }*/
+
+
+        // PATCH /tbEmpresa/token/
+        public HttpResponseMessage Patch(string token)
+        {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+            try
+            {
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Patch");
+
+                HttpResponseMessage retorno = new HttpResponseMessage();
+                if (Permissoes.Autenticado(token))
+                {
+                    Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
+                    Mensagem mensagem = GatewayTbEmpresa.Patch(token, queryString);
+                    log.codResposta = mensagem.cdMensagem;
+                    if (mensagem.cdMensagem != 200) log.msgErro = mensagem.dsMensagem;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Mensagem>(HttpStatusCode.OK, mensagem);
                 }
                 else
                 {

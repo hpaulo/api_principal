@@ -8,6 +8,7 @@ using api.Models;
 using api.Negocios.Administracao;
 using api.Bibliotecas;
 using api.Models.Object;
+using Newtonsoft.Json;
 
 namespace api.Controllers.Log
 {
@@ -17,17 +18,34 @@ namespace api.Controllers.Log
         // GET /LogAcesso/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
+
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
+
                 if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, GatewayLogAcesso.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString));
+                {
+                    Retorno dados = GatewayLogAcesso.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+                }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.msgErro = "Unauthorized";
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch(Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
@@ -35,19 +53,36 @@ namespace api.Controllers.Log
         // POST /LogAcesso/token/
         public HttpResponseMessage Post(string token, LogAcesso1 param)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+
+                Int32 idController = (int)param.idController;
+
+                // Usuário tem que estar autenticado e ter permissão para acessar a tela requisitada
+                if (Permissoes.Autenticado(token) && Permissoes.usuarioTemPermissaoController(token, idController))
                 {
-                    GatewayLogAcesso.Add(token, (int)param.idController);
+                    GatewayLogAcesso.Add(token, idController);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.msgErro = "Unauthorized";
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
             catch(Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }

@@ -21,12 +21,12 @@ namespace api.Controllers.Administracao
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, null);
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
 
                 IEnumerable<KeyValuePair<string, string>> a = Request.GetQueryNameValuePairs();
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+                if (Permissoes.Autenticado(token)/* && Permissoes.usuarioTemPermissaoMetodoURL(token, UrlAPIs.ADMINISTRACAO_WEBPAGESUSERS, "GET")*/)
                 {
                     Retorno dados = GatewayWebpagesUsers.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
                     log.codResposta = (int)HttpStatusCode.OK;
@@ -55,10 +55,10 @@ namespace api.Controllers.Administracao
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+                if (Permissoes.Autenticado(token)/* && Permissoes.usuarioTemPermissaoMetodoURL(token, UrlAPIs.ADMINISTRACAO_WEBPAGESUSERS, "POST")*/)
                 {
                     Int32 dados = GatewayWebpagesUsers.Add(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
@@ -89,10 +89,12 @@ namespace api.Controllers.Administracao
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+                if (Permissoes.Autenticado(token)
+                    /* && ((param.Id_grupo != 0 && Permissoes.usuarioPodeSeAssociarAoGrupo(token, param.Id_grupo)) || // associação de um grupo pode vir de qualquer tela de origem
+                    Permissoes.usuarioTemPermissaoMetodoURL(token, UrlAPIs.ADMINISTRACAO_WEBPAGESUSERS, "PUT"))*/)
                 {
                     GatewayWebpagesUsers.Update(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
@@ -121,10 +123,10 @@ namespace api.Controllers.Administracao
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("id_users : " + id_users));
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("id_users : " + id_users), "Delete");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+                if (Permissoes.Autenticado(token)/* && Permissoes.usuarioTemPermissaoMetodoURL(token, UrlAPIs.ADMINISTRACAO_WEBPAGESUSERS, "DELETE")*/)
                 {
                     GatewayWebpagesUsers.Delete(token, id_users);
                     log.codResposta = (int)HttpStatusCode.OK;

@@ -1,3 +1,4 @@
+using api.Models.Object;
 using System;
 using System.Collections.Generic;
 
@@ -34,7 +35,7 @@ namespace api.Models
             this.TaxaAdministracaos = new List<TaxaAdministracao>();
             this.tbContaCorrentes = new List<tbContaCorrente>();
             this.tbLoginAdquirenteEmpresas = new List<tbLoginAdquirenteEmpresa>();
-            //this.tbRecebimentos = new List<tbRecebimento>();
+            this.tbBancoParametros = new List<tbBancoParametro>();
         }
 
         public string nu_cnpj { get; set; }
@@ -84,6 +85,7 @@ namespace api.Models
         public virtual ICollection<TaxaAdministracao> TaxaAdministracaos { get; set; }
         public virtual ICollection<tbContaCorrente> tbContaCorrentes { get; set; }
         public virtual ICollection<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
+        public virtual ICollection<tbBancoParametro> tbBancoParametros { get; set; }
         //public virtual ICollection<tbRecebimento> tbRecebimentos { get; set; }
     }
 }
