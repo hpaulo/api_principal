@@ -9,19 +9,21 @@ namespace api.Bibliotecas
 {
     public static class CertificadoDigital
     {
-        public static DateTime GetDataValidade(byte[] cetificado, string senha)
+        public static DateTime GetDataValidade(byte[] certificado, string senha)
         {
-            X509Certificate2 certific = new X509Certificate2(cetificado, senha);
+            X509Certificate2 certific = new X509Certificate2(certificado, senha,
+    X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
             DateTime dtValidade = DateTime.Parse(certific.GetExpirationDateString());
             return dtValidade;
         }
 
-        public static Mensagem ValidarCertificado(byte[] cetificado, string senha)
+        public static Mensagem ValidarCertificado(byte[] certificado, string senha)
         {
             Mensagem mensagem = new Mensagem();
             try
             {
-                X509Certificate2 certific = new X509Certificate2(cetificado, senha);
+                X509Certificate2 certific = new X509Certificate2(certificado, senha,
+    X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
                 mensagem.cdMensagem = 200;
                 mensagem.dsMensagem = "Certificado válido";
                 return mensagem;
@@ -37,7 +39,7 @@ namespace api.Bibliotecas
                 else
                 {
                     mensagem.cdMensagem = 202;
-                    mensagem.dsMensagem = "Certificado inválido";
+                    mensagem.dsMensagem = "Certificado inválido (" + ex.Message + ")";
                 }
                 return mensagem;
             }

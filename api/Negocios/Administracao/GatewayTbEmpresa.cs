@@ -447,16 +447,16 @@ namespace api.Negocios.Admin
                 byte[] data = binaryReader.ReadBytes(postedFile.ContentLength);
 
                 // VERIFICAR SE EXISTE ALTERAÇÃO NOS PARAMETROS
-                if (data != null && (value.dsCertificadoDigital == null || !data.SequenceEqual(value.dsCertificadoDigital)))
+                if (value.dsCertificadoDigital == null || !data.SequenceEqual(value.dsCertificadoDigital))
                     value.dsCertificadoDigital = data;
                 if (value.dsCertificadoDigitalSenha == null || !dsCertificadoDigitalSenha.Equals(value.dsCertificadoDigitalSenha))
                     value.dsCertificadoDigitalSenha = dsCertificadoDigitalSenha;
 
-                Mensagem mensagem = CertificadoDigital.ValidarCertificado(value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
+                Mensagem mensagem = CertificadoDigital.ValidarCertificado(data, dsCertificadoDigitalSenha);//value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
                 if (mensagem.cdMensagem == 200)
                 {
                     value.dtCadastro = DateTime.Now;
-                    value.dtValidade = CertificadoDigital.GetDataValidade(value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
+                    value.dtValidade = CertificadoDigital.GetDataValidade(data, dsCertificadoDigitalSenha);//value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
                     value.flSenhaValida = true;
 
                     _db.SaveChanges();
