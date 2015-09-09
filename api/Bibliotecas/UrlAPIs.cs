@@ -13,6 +13,7 @@ namespace api.Bibliotecas
         public static string ADMINISTRACAO_PESSOA = "administracao/pessoa";
         public static string ADMINISTRACAO_TBCANAL = "administracao/tbcanal";
         public static string ADMINISTRACAO_TBCATALOGO = "administracao/tbcatalogo";
+        public static string ADMINISTRACAO_TBDISPOSITIVOUSUARIO = "administracao/tbdispositivousuario";
         public static string ADMINISTRACAO_TBEMPRESA = "administracao/tbempresa";
         public static string ADMINISTRACAO_TBEMPRESAFILIAL = "administracao/tbempresafilial";
         public static string ADMINISTRACAO_TBEMPRESAGRUPO = "administracao/tbempresagrupo";
@@ -25,7 +26,7 @@ namespace api.Bibliotecas
         public static string ADMINISTRACAO_WEBPAGESCONTROLLERS = "administracao/webpagescontrollers";
         public static string ADMINISTRACAO_WEBPAGESMEMBERSHIP = "administracao/webpagesmembership";
         public static string ADMINISTRACAO_WEBPAGESMETHODS = "administracao/webpagesmethods";
-        public static string ADMINISTRACAO_WEBPAGESOPERMISSIONS = "administracao/webpagespermissions";
+        public static string ADMINISTRACAO_WEBPAGESPERMISSIONS = "administracao/webpagespermissions";
         public static string ADMINISTRACAO_WEBPAGESROLELEVELS = "administracao/webpagesrolelevels";
         public static string ADMINISTRACAO_WEBPAGESROLES = "administracao/webpagesroles";
         public static string ADMINISTRACAO_WEBPAGESUSERS = "administracao/webpagesusers";

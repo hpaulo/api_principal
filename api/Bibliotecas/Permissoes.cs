@@ -87,16 +87,32 @@ namespace api.Bibliotecas
         /// <summary>
         /// Inicializa o objeto acessoMetodosAPIs, que armazena para cada API as possíveis origens (telas) da requisição e seus respectivos métodos
         /// </summary>
-        private static void PopulateAcessoMetodosAPIs(){
-
+        private static void PopulateAcessoMetodosAPIs()
+        {
+            #region POPULA
             List<ControllersOrigem> controllersOrigem = new List<ControllersOrigem>();
             acessoMetodosAPIs.Clear();
 
             // -------------------------------- CONTROLLERS PORTAL -------------------------------- //
-            Int32 idControllerPortalModulosFuncionalidades = GetIdController(new List<string>() { "MÓDULOS E FUNCIONALIDADES", "GESTÃO DE ACESSOS" });
-            Int32 idControllerPortalPrivilegios = GetIdController(new List<string>() { "PRIVILÉGIOS", "GESTÃO DE ACESSOS" });
-            Int32 idControllerPortalUsuarios = GetIdController(new List<string>() { "USUÁRIOS", "GESTÃO DE ACESSOS" });
+            Int32 idControllerPortalAdministrativoAcessoUsuarios = GetIdController(new List<string>() { "ACESSO DE USUÁRIOS", "LOGS" });
+            Int32 idControllerPortalAdministrativoAcoesUsuarios = GetIdController(new List<string>() { "ACÕES DE USUÁRIOS", "LOGS" });
+            Int32 idControllerPortalAdministrativoContasCorrentes = GetIdController(new List<string>() { "CONTAS CORRENTES", "DADOS BANCÁRIOS" });
+            Int32 idControllerPortalAdministrativoDadosAcesso = GetIdController(new List<string>() { "DADOS DE ACESSO", "GESTÃO DE EMPRESAS" });
+            Int32 idControllerPortalAdministrativoEmpresas = GetIdController(new List<string>() { "EMPRESAS", "GESTÃO DE EMPRESAS" });
+            Int32 idControllerPortalAdministrativoExtratosBancarios = GetIdController(new List<string>() { "EXTRATOS BANCÁRIOS", "DADOS BANCÁRIOS" });
+            Int32 idControllerPortalAdministrativoFiliais = GetIdController(new List<string>() { "FILIAIS", "GESTÃO DE EMPRESAS" });
+            Int32 idControllerPortalAdministrativoModulosFuncionalidades = GetIdController(new List<string>() { "MÓDULOS E FUNCIONALIDADES", "GESTÃO DE ACESSOS" });
+            Int32 idControllerPortalAdministrativoMonitorCargas = GetIdController(new List<string>() { "MONITOR DE CARGAS", "MONITOR" });
+            Int32 idControllerPortalAdministrativoParametrosBancarios = GetIdController(new List<string>() { "PARÂMETROS BANCÁRIOS", "DADOS BANCÁRIOS" });
+            Int32 idControllerPortalAdministrativoPrivilegios = GetIdController(new List<string>() { "PRIVILÉGIOS", "GESTÃO DE ACESSOS" });
+            Int32 idControllerPortalAdministrativoSenhasInvalidas = GetIdController(new List<string>() { "SENHAS INVÁLIDAS", "GESTÃO DE EMPRESAS" });
+            Int32 idControllerPortalAdministrativoUsuarios = GetIdController(new List<string>() { "USUÁRIOS", "GESTÃO DE ACESSOS" });
+            Int32 idControllerPortalCardServicesCashFlowRelatorios = GetIdController(new List<string>() { "RELATÓRIOS", "CASH FLOW" });
+            Int32 idControllerPortalCardServicesConciliacaoBancaria = GetIdController(new List<string>() { "CONCILIAÇÃO BANCÁRIA", "CONCILIAÇÃO" });
+            Int32 idControllerPortalCardServicesConsolidacaoRelatorios = GetIdController(new List<string>() { "RELATÓRIOS", "CONSOLIDAÇÃO" });
             Int32 idControllerPortalMinhaConta = 91;
+            Int32 idControllerPortalTaxServicesCadastroCertificadoDigital = GetIdController(new List<string>() { "CADASTRO CERTIFICADO DIGITAL", "NOTA FISCAL ELETRÔNICA" });
+            Int32 idControllerPortalTaxServicesImportacaoXML = GetIdController(new List<string>() { "IMPORTAÇÃO XML", "NOTA FISCAL ELETRÔNICA" });
             // ...
             // ----------------------------- FIM - CONTROLLERS PORTAL ----------------------------- //
 
@@ -106,23 +122,457 @@ namespace api.Bibliotecas
 
 
             // ============================= ADMINISTRAÇÃO ======================================= //
+            /*                                  LOGACESSO                                           */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > LOGS > ACESSO DE USUÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoAcessoUsuarios, new string[] { "GET" }));
+            // MOBILE......
+            // Adiciona
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_LOGACESSO, controllersOrigem);
+            /*                                   PESSOA                                            */
+            controllersOrigem.Clear();
+            // Portal não acessa essa API
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_PESSOA, controllersOrigem);
+            /*                                  TBCANAL                                            */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBCANAL, controllersOrigem);
+            /*                                 TBCATALOGO                                          */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBCATALOGO, controllersOrigem);
+            /*                             TBDISPOSITIVOUSUARIO                                    */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBDISPOSITIVOUSUARIO, controllersOrigem);
+            /*                                  TBEMPRESA                                          */
+            controllersOrigem.Clear();
+            // [PORTAL] TAX SERVICES > NOTA FISCAL ELETRÔNICA > CADASTRO CERTIFICADO DIGITAL
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalTaxServicesCadastroCertificadoDigital, new string[] { "GET", "PATCH" }));
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBEMPRESA, controllersOrigem);
+            /*                                TBEMPRESAFILIAL                                      */
+            controllersOrigem.Clear();
+            // PORTAL...
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBEMPRESAFILIAL, controllersOrigem);
+            /*                                TBEMPRESAGRUPO                                       */
+            controllersOrigem.Clear();
+            // PORTAL...
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBEMPRESAGRUPO, controllersOrigem);
+            /*                               TBLOGACESSOUSUARIO                                    */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > LOGS > AÇÕES DE USUÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoAcoesUsuarios, new string[] { "GET" }));
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBLOGACESSOUSUARIO, controllersOrigem);
+            /*                                   TBLOGERRO                                         */
+            controllersOrigem.Clear();
+            // PORTAL...
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBLOGERRO, controllersOrigem);
+            /*                                 TBLOGMANIFESTO                                      */
+            controllersOrigem.Clear();
+            // PORTAL...
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBLOGMANIFESTO, controllersOrigem);
+            /*                                     TBNEWS                                          */
+            controllersOrigem.Clear();
+            // PORTAL...
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBNEWS, controllersOrigem);
+            /*                                   TBNEWSGRUPO                                       */
+            controllersOrigem.Clear();
+            // PORTAL...
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBNEWSGRUPO, controllersOrigem);
+            /*                                   TBNEWSSTATUS                                      */
+            controllersOrigem.Clear();
+            // PORTAL...
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_TBNEWSSTATUS, controllersOrigem);
             /*                            WEBPAGESCONTROLLERS                                      */
             controllersOrigem.Clear();
             // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > MÓDULOS E FUNCIONALIDADES
-            controllersOrigem.Add(new ControllersOrigem(idControllerPortalModulosFuncionalidades, new string[] { "GET", "DELETE", "POST", "PUT" }));
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoModulosFuncionalidades, new string[] { "GET", "DELETE", "POST", "PUT" }));
             // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > PRIVILÉGIOS
-            controllersOrigem.Add(new ControllersOrigem(idControllerPortalPrivilegios, new string[] { "GET" })); 
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoPrivilegios, new string[] { "GET" })); 
+            // MOBILE......
             // Adiciona
             acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_WEBPAGESCONTROLLERS, controllersOrigem);
+            /*                             WEBPAGESMEMBERSHIP                                      */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > USUÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoUsuarios, new string[] { "PUT" }));
+            // [PORTAL] MINHA CONTA
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalMinhaConta, new string[] { "PUT" }));
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_WEBPAGESMEMBERSHIP, controllersOrigem);
+            /*                               WEBPAGESMETHODS                                       */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > MÓDULOS E FUNCIONALIDADES
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoModulosFuncionalidades, new string[] { "DELETE", "POST", "PUT" }));
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_WEBPAGESMETHODS, controllersOrigem);
+            /*                             WEBPAGESPERMISSIONS                                     */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > PRIVILÉGIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoPrivilegios, new string[] { "PUT" }));
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_WEBPAGESPERMISSIONS, controllersOrigem);
+            /*                             WEBPAGESROLELEVELS                                      */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > PRIVILÉGIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoPrivilegios, new string[] { "GET" }));
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_WEBPAGESROLELEVELS, controllersOrigem);
+            /*                                WEBPAGESROLES                                        */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > PRIVILÉGIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoPrivilegios, new string[] { "GET", "DELETE", "POST", "PUT" }));
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > USUÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoUsuarios, new string[] { "GET" }));
+            // MOBILE....
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_WEBPAGESROLES, controllersOrigem);
             /*                               WEBPAGESUSERS                                         */
             controllersOrigem.Clear();
             // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > USUÁRIOS
-            controllersOrigem.Add(new ControllersOrigem(idControllerPortalUsuarios, new string[] { "GET", "DELETE", "POST", "PUT" }));
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoUsuarios, new string[] { "GET", "DELETE", "POST", "PUT" }));
             // [PORTAL] MINHA CONTA
             controllersOrigem.Add(new ControllersOrigem(idControllerPortalMinhaConta, new string[] { "GET", "PUT" }));
+            // MOBILE......
             // Adiciona (OBS: ÚNICA RESTRIÇÃO É O "PUT" PARA ALTERAR O GRUPO EMPRESA => PODE VIR DE QUALQUER TELA)
             acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_WEBPAGESUSERS, controllersOrigem);
+            /*                            WEBPAGESUSERSINROLES                                     */
+            controllersOrigem.Clear();
+            // Portal não acessa essa API
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_WEBPAGESUSERSINROLES, controllersOrigem);
 
+            // ================================= CARD ============================================ //
+            /*                            CONCILIACAOBANCARIA                                      */
+            controllersOrigem.Clear();
+            // [PORTAL] CARD SERVICES > CONCILIAÇÃO > CONCILIAÇÃO BANCÁRIA
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesConciliacaoBancaria, new string[] { "GET", "PUT" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_CONCILIACAOBANCARIA, controllersOrigem);
+            /*                               TBADQUIRENTE                                          */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > PARÂMETROS BANCÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoParametrosBancarios, new string[] { "GET" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBADQUIRENTE, controllersOrigem);
+            /*                             TBBANCOPARAMETRO                                        */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > PARÂMETROS BANCÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoParametrosBancarios, new string[] { "GET", "DELETE", "PUT" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBBANCOPARAMETRO, controllersOrigem);
+            /*                              TBBANDEIRATEF                                          */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBBANDEIRATEF, controllersOrigem);
+            /*                             TBCONTACORRENTE                                         */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > CONTAS CORRENTES
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoContasCorrentes, new string[] { "GET", "DELETE", "POST", "PUT" }));
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > EXTRATOS BANCÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoExtratosBancarios, new string[] { "GET" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBCONTACORRENTE, controllersOrigem);
+            /*                   TBCONTACORRENTETBLOGINADQUIRENTEEMPRESA                           */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > CONTAS CORRENTES
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoContasCorrentes, new string[] { "GET", "POST", "PUT" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBCONTACORRENTETBLOGINADQUIRENTEEMPRESA, controllersOrigem);
+            /*                              TBESTADOTRANSACAOTEF                                   */
+            controllersOrigem.Clear();
+            // PORTAL.....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBESTADOTRANSACAOTEF, controllersOrigem);
+            /*                                   TBEXTRATO                                         */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > EXTRATOS BANCÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoExtratosBancarios, new string[] { "GET", "PATCH" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBEXTRATO, controllersOrigem);
+            /*                            TBLOGINADQUIRENTEEMPRESA                                 */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > CONTAS CORRENTES
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoContasCorrentes, new string[] { "GET" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBLOGINADQUIRENTEEMPRESA, controllersOrigem);
+            /*                                TBMODOENTRADATEF                                     */
+            controllersOrigem.Clear();
+            // PORTAL.....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBMODOENTRADATEF, controllersOrigem);
+            /*                                  TBPRODUTOTEF                                       */
+            controllersOrigem.Clear();
+            // PORTAL.....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBPRODUTOTEF, controllersOrigem);
+            /*                              TBRECEBIMENTORESUMO                                    */
+            controllersOrigem.Clear();
+            // PORTAL.....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBRECEBIMENTORESUMO, controllersOrigem);
+            /*                               TBRECEBIMENTOTEF                                      */
+            controllersOrigem.Clear();
+            // PORTAL.....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBRECEBIMENTOTEF, controllersOrigem);
+            /*                              TBSITUACAOREDETEF                                      */
+            controllersOrigem.Clear();
+            // PORTAL.....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBSITUACAOREDETEF, controllersOrigem);
+            /*                              TBTIPOPRODUTOTEF                                       */
+            controllersOrigem.Clear();
+            // PORTAL.....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBTIPOPRODUTOTEF, controllersOrigem);
+            /*                               TBTRANSACAOTEF                                        */
+            controllersOrigem.Clear();
+            // PORTAL.....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CARD_TBTRANSACAOTEF, controllersOrigem);
+
+            // ================================ CLIENTE ========================================== //
+            /*                                  EMPRESA                                            */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > PARÂMETROS BANCÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoParametrosBancarios, new string[] { "GET" }));
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > USUÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoUsuarios, new string[] { "GET" }));
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE EMPRESAS > DADOS DE ACESSO
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoDadosAcesso, new string[] { "GET" }));
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE EMPRESAS > FILIAIS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoFiliais, new string[] { "GET", "DELETE", "POST", "PUT" }));
+            // [PORTAL] ADMINISTRATIVO > MONITOR > MONITOR DE CARGAS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoMonitorCargas, new string[] { "GET" }));
+            // [PORTAL] CARD SERVICES > CASH FLOW > RELATÓRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesCashFlowRelatorios, new string[] { "GET" }));
+            // [PORTAL] CARD SERVICES > CONSOLIDAÇÃO > RELATÓRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesConsolidacaoRelatorios, new string[] { "GET" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CLIENTE_EMPRESA, controllersOrigem);
+            /*                               GRUPOEMPRESA                                          */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > USUÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoUsuarios, new string[] { "GET" }));
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE EMPRESAS > FILIAIS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoFiliais, new string[] { "GET" }));
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE EMPRESAS > EMPRESAS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoEmpresas, new string[] { "GET", "DELETE", "POST", "PUT" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.CLIENTE_GRUPOEMPRESA, controllersOrigem);
+
+            // ================================== POS ============================================ //
+            /*                                ADQUIRENTE                                           */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > PARÂMETROS BANCÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoDadosAcesso, new string[] { "GET" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_ADQUIRENTE, controllersOrigem);
+            /*                                   AMEX                                              */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_AMEX, controllersOrigem);
+            /*                                 BANDEIRA                                            */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_BANDEIRA, controllersOrigem);
+            /*                                BANDEIRAPOS                                          */
+            controllersOrigem.Clear();
+            // [PORTAL] CARD SERVICES > CASH FLOW > RELATÓRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesCashFlowRelatorios, new string[] { "GET" }));
+            // [PORTAL] CARD SERVICES > CONSOLIDAÇÃO > RELATÓRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesConsolidacaoRelatorios, new string[] { "GET" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_BANDEIRAPOS, controllersOrigem);
+            /*                                BANESECARD                                           */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_BANESECARD, controllersOrigem);
+            /*                                  CIELO                                              */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_CIELO, controllersOrigem);
+            /*                           CONCILIACAOPAGAMENTOPOS                                   */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_CONCILIACAOPAGAMENTOPOS, controllersOrigem);
+            /*                           CONCILIACAORECEBIMENTO                                    */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_CONCILIACAORECEBIMENTO, controllersOrigem);
+            /*                                  FITCARD                                            */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_FITCARD, controllersOrigem);
+            /*                              GETNETSANTANDER                                        */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_GETNETSANTANDER, controllersOrigem);
+            /*                                 GOODCARD                                            */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_GOODCARD, controllersOrigem);
+            /*                                 GREENCARD                                           */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_GREENCARD, controllersOrigem);
+            /*                                LOGEXECUTION                                         */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_LOGEXECUTION, controllersOrigem);
+            /*                            LOGEXECUTIONEXCEPTION                                    */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_LOGEXECUTIONEXCEPTION, controllersOrigem);
+            /*                               LOGINOPERADORA                                        */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > PARÂMETROS BANCÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoParametrosBancarios, new string[] { "GET" }));
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE EMPRESAS > DADOS DE ACESSO
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoDadosAcesso, new string[] { "GET", "DELETE", "POST", "PUT" }));
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE EMPRESAS > SENHAS INVÁLIDAS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoSenhasInvalidas, new string[] { "GET", "DELETE", "PUT" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_LOGINOPERADORA, controllersOrigem);
+            /*                                 NUTRICASH                                           */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_NUTRICASH, controllersOrigem);
+            /*                                   OMNI                                              */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_OMNI, controllersOrigem);
+            /*                                OPERADORA                                            */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > GESTÃO DE EMPRESAS > DADOS DE ACESSO
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoDadosAcesso, new string[] { "GET" }));
+            // [PORTAL] ADMINISTRATIVO > MONITOR > MONITOR DE CARGAS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoMonitorCargas, new string[] { "GET" }));
+            // [PORTAL] CARD SERVICES > CASH FLOW > RELATÓRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesCashFlowRelatorios, new string[] { "GET" }));
+            // [PORTAL] CARD SERVICES > CONSOLIDAÇÃO > RELATÓRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesConsolidacaoRelatorios, new string[] { "GET" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_OPERADORA, controllersOrigem);
+            /*                                POLICARD                                             */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_POLICARD, controllersOrigem);
+            /*                               RECEBIMENTO                                           */
+            controllersOrigem.Clear();
+            // [PORTAL] CARD SERVICES > CONSOLIDAÇÃO > RELATÓRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesConsolidacaoRelatorios, new string[] { "GET" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_RECEBIMENTO, controllersOrigem);
+            /*                            RECEBIMENTOPARCELA                                       */
+            controllersOrigem.Clear();
+            // [PORTAL] CARD SERVICES > CASH FLOW > RELATÓRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesCashFlowRelatorios, new string[] { "GET" }));
+            // [PORTAL] CARD SERVICES > CONCILIAÇÃO > CONCILIAÇÃO BANCÁRIA
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesConciliacaoBancaria, new string[] { "PUT" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_RECEBIMENTOPARCELA, controllersOrigem);
+            /*                                REDECARD                                             */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_REDECARD, controllersOrigem);
+            /*                                REDEMED                                              */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_REDEMED, controllersOrigem);
+            /*                                SODEXO                                               */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_SODEXO, controllersOrigem);
+            /*                            TAXAADMINISTRACAO                                        */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_TAXAADMINISTRACAO, controllersOrigem);
+            /*                             TERMINALLOGICO                                          */
+            controllersOrigem.Clear();
+            // [PORTAL] CARD SERVICES > CONSOLIDAÇÃO > RELATÓRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesConsolidacaoRelatorios, new string[] { "GET" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_TERMINALLOGICO, controllersOrigem);
+            /*                                TICKETCAR                                            */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_TICKETCAR, controllersOrigem);
+            /*                                VALECARD                                             */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.POS_VALECARD, controllersOrigem);
+
+            // ================================== TAX ============================================ //
+            /*                               TBCONTROLENSU                                         */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.TAX_TBCONTROLENSU, controllersOrigem);
+            /*                                TBMANIFESTO                                          */
+            controllersOrigem.Clear();
+            // [PORTAL] TAX SERVICES > NOTA FISCAL ELETRONICA > IMPORTAÇÃO XML
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalTaxServicesImportacaoXML, new string[] { "GET" }));
+            // MOBILE......
+            // OBS: HÁ UMA TELA QUE NÃO TEM IDCONTROLLER MAS FAZ GET PARA ESSA PÁGINA
+            acessoMetodosAPIs.Add(UrlAPIs.TAX_TBMANIFESTO, controllersOrigem);
+
+            // ================================== UTIL =========================================== //
+            /*                                   BANCOS                                            */
+            controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > CONTAS CORRENTES
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoContasCorrentes, new string[] { "GET" }));
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > PARÂMETROS BANCÁRIOS
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoParametrosBancarios, new string[] { "GET" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.UTIL_BANCOS, controllersOrigem);
+            /*                                  EXPORTAR                                           */
+            controllersOrigem.Clear();
+            // PORTAL....
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.UTIL_EXPORTAR, controllersOrigem);
+            /*                                  UTILNFE                                            */
+            controllersOrigem.Clear();
+            // [PORTAL] TAX SERVICES > NOTA FISCAL ELETRONICA > IMPORTAÇÃO XML
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalTaxServicesImportacaoXML, new string[] { "GET" }));
+            // MOBILE......
+            acessoMetodosAPIs.Add(UrlAPIs.UTIL_UTILNFE, controllersOrigem);
+            #endregion
         }
 
 
