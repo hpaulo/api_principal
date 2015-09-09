@@ -382,6 +382,25 @@ namespace api.Negocios.Tax
         {
             try
             {
+                // FILTRO
+                string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.CDGRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.CDGRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.CDGRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (!CnpjEmpresa.Equals(""))
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NRCNPJ, CnpjEmpresa);
+                }
+
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbManifesto = new List<dynamic>();
                 Retorno retorno = new Retorno();
@@ -393,7 +412,15 @@ namespace api.Negocios.Tax
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                
+
+                // Vendedor ATOS sem estar associado com um grupo empresa?
+                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))
+                {
+                    // Perfil Comercial tem uma carteira de clientes específica
+                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                    query = query.Where(e => listaIdsGruposEmpresas.Contains(e.cdGrupo)).AsQueryable<tbManifesto>();
+                }
+
                 // Só interessa os registros que tem XML
                 if(colecao != 0)
                 query = query.Where(e => e.xmlNFe != null).AsQueryable<tbManifesto>();
@@ -1505,7 +1532,7 @@ namespace api.Negocios.Tax
                     value.cdSituacaoDownload = param.cdSituacaoDownload;
                 if (param.dsSituacaoDownload != null && param.dsSituacaoDownload != value.dsSituacaoDownload)
                     value.dsSituacaoDownload = param.dsSituacaoDownload;
-                if (param.flEntrega != null && param.flEntrega != value.flEntrega)
+                if (param.flEntrega == true)
                 {
                     value.flEntrega = true;
                     value.dtEntrega = DateTime.Now;

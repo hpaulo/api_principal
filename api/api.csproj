@@ -246,6 +246,7 @@
     <Compile Include="Bibliotecas\Permissoes.cs" />
     <Compile Include="Bibliotecas\Token.cs" />
     <Compile Include="Bibliotecas\UrlAPIs.cs" />
+    <Compile Include="Controllers\Administracao\TbDispositivoUsuarioController.cs" />
     <Compile Include="Controllers\Administracao\TbNewsStatusController.cs" />
     <Compile Include="Controllers\Administracao\TbNewsGrupoController.cs" />
     <Compile Include="Controllers\Administracao\TbCatalogoController.cs" />
@@ -333,6 +334,10 @@
     </Compile>
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
+    <Compile Include="Models\Mapping\tbDispositivoUsuarioMap.cs" />
+    <Compile Include="Models\Object\Ionic.cs" />
+    <Compile Include="Models\Object\Login.cs" />
+    <Compile Include="Models\tbDispositivoUsuario.cs" />
     <Compile Include="Models\Mapping\tbNewsGrupoMap.cs" />
     <Compile Include="Models\Object\AcessoMetodoAPI.cs" />
     <Compile Include="Models\Object\Mensagem.cs" />
@@ -681,7 +686,6 @@
     <Compile Include="Models\Object\CadastroControllers.cs" />
     <Compile Include="Models\Object\Kpi.cs" />
     <Compile Include="Models\Object\Log.cs" />
-    <Compile Include="Models\Object\Login.cs" />
     <Compile Include="Models\Object\Monitor.cs" />
     <Compile Include="Models\Object\Retorno.cs" />
     <Compile Include="Models\Object\RolesPermissions.cs" />
@@ -774,6 +778,7 @@
     <Compile Include="Models\webpages_Roles.cs" />
     <Compile Include="Models\webpages_Users.cs" />
     <Compile Include="Models\webpages_UsersInRoles.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbDispositivoUsuario.cs" />
     <Compile Include="Negocios\Administracao\GatewaytbNewsStatus.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbNewsGrupo.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbCatalogo.cs" />
