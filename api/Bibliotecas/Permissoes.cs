@@ -630,6 +630,24 @@ namespace api.Bibliotecas
         }
 
         /// <summary>
+        /// A partir do ds_login, obtém o id do usuário correspondente
+        /// </summary>
+        /// <param name="ds_login"></param>
+        /// <returns>0 se o ds_login for inválido</returns>
+        public static Int32 GetIdUserPeloLogin(string ds_login)
+        {
+            using (var _db = new painel_taxservices_dbContext())
+            {
+                _db.Configuration.ProxyCreationEnabled = false;
+
+                webpages_Users user = _db.webpages_Users.Where(o => o.ds_login.Equals(ds_login)).Select(o => o).FirstOrDefault();
+
+                if (user != null) return (Int32)user.id_users;
+                return 0;
+            }
+        }
+
+        /// <summary>
         /// A partir do token, obtém o id do grupo que o usuário correspondente está associado
         /// </summary>
         /// <param name="token"></param>

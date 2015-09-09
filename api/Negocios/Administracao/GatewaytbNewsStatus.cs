@@ -256,18 +256,23 @@ namespace api.Negocios.Admin
 			{
 				// Atualiza o contexto
                 ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
-                
+
+                // token
+                Int32 idUsers = Permissoes.GetIdUser(token);
+
+               
 				tbNewsStatus value = _db.tbNewsStatuss
-						.Where(e => e.idNews.Equals(param.idNews))
+						.Where(e => e.idNews == param.idNews)
+                        .Where(e => e.id_users == idUsers)
 						.First<tbNewsStatus>();
 
 				// OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 	            
 				
-					if (param.idNews != null && param.idNews != value.idNews)
-						value.idNews = param.idNews;
-					if (param.id_users != null && param.id_users != value.id_users)
-						value.id_users = param.id_users;
+					//if (param.idNews != null && param.idNews != value.idNews)
+					//	value.idNews = param.idNews;
+					//if (param.id_users != null && param.id_users != value.id_users)
+					//	value.id_users = param.id_users;
 					if (param.flRecebido != null && param.flRecebido != value.flRecebido)
 						value.flRecebido = param.flRecebido;
 					if (param.flLido != null && param.flLido != value.flLido)

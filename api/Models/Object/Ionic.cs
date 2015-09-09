@@ -11,8 +11,8 @@ namespace api.Models.Object
         public string model { get; set; }
         public string uuid { get; set; }
         public string version { get; set; }
-        public Int32 screen_width { get; set; }
-        public Int32 screen_height { get; set; }
+        public Int16 screen_width { get; set; }
+        public Int16 screen_height { get; set; }
     }
 
     public class Push
@@ -32,6 +32,7 @@ namespace api.Models.Object
     {
         public Device device { get; set; }
         public string name { get; set; }
+        public string usuario { get; set; }
         public string user_id { get; set; }
         public Boolean unregister { get; set; }
         public string app_id { get; set; }
@@ -40,14 +41,10 @@ namespace api.Models.Object
         public string bio { get; set; }
         public Push _push { get; set; }
 
-        public class android_tokens
-        {
-            //String[] lista;
-        }
-
         public IonicWebHook() 
         {
             this.device = new Device();
+            this._push = new Push();
         }
     }
     /*

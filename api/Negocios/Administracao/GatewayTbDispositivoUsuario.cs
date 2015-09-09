@@ -266,11 +266,33 @@ namespace api.Negocios.Admin
             {
                 // Atualiza o contexto
                 ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+                tbDispositivoUsuario disUser = new tbDispositivoUsuario();
 
-                //_db.tbDispositivoUsuarios.Add(param);
-                //_db.SaveChanges();
-                //return param.idDispositivoUsuario;
-                return 1;
+                if (param.usuario == null)
+                {
+                    return 1;
+                }
+                else
+                {
+                    disUser.dsPlataforma = param.device.platform;
+                    disUser.dsModelo = param.device.model;
+                    disUser.dsVersao = param.device.version;
+                    disUser.tmLargura = param.device.screen_width;
+                    disUser.tmAltura = param.device.screen_height;
+                    disUser.idIONIC = param.device.uuid;
+                    disUser.idUserIONIC = param.user_id;
+                    if (param._push.android_tokens.Count > 0)
+                        disUser.cdTokenValido = param._push.android_tokens.First();
+                    else if (param._push.ios_tokens.Count > 0)
+                        disUser.cdTokenValido = param._push.ios_tokens.First();
+                    else
+                        disUser.cdTokenValido = null;
+
+                    disUser.idUser = Permissoes.GetIdUserPeloLogin(param.usuario);
+                    _db.tbDispositivoUsuarios.Add(disUser);
+                    _db.SaveChanges();
+                    return 1;
+                }
             }
             catch (Exception e)
             {
