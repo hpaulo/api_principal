@@ -643,16 +643,27 @@ namespace api.Negocios.Card
                     extrato.vlMovimento = transacao.Amount;
                     extrato.nrDocumento = transacao.CheckNum;
                     extrato.dsTipo = transacao.TransType.ToString();
-                    extrato.dsDocumento = transacao.Memo;
                     extrato.dsArquivo = filePath;
+
+                    bool memo = true;
+                    extrato.dsDocumento = "";
+                    if(transacao.Memo != null && !transacao.Memo.Equals(""))
+                        extrato.dsDocumento = transacao.Memo;
+                    else if(transacao.Name != null)
+                    { 
+                        extrato.dsDocumento = transacao.Name;
+                        memo = false;
+                    }
+   
                     #endregion
 
                     #region OBTÉM O TOTAL DE MOVIMENTAÇÕES REPETIDAS PARA A MOVIMENTAÇÃO CORRENTE
-                    Int32 contMovimentacoesRepetidas = ofxDocument.Transactions.Where(t => t.Amount == extrato.vlMovimento)
-                                                                               .Where(t => t.CheckNum.Equals(extrato.nrDocumento))
-                                                                               .Where(t => t.TransType.ToString().Equals(extrato.dsTipo))
-                                                                               .Where(t => t.Memo.Equals(extrato.dsDocumento))
-                                                                               .Count();
+                    IEnumerable<Transaction> trans = ofxDocument.Transactions.Where(t => t.Amount == extrato.vlMovimento)
+                                                                             .Where(t => t.CheckNum.Equals(extrato.nrDocumento))
+                                                                             .Where(t => t.TransType.ToString().Equals(extrato.dsTipo));
+                    if(!memo) trans = trans.Where(t => t.Name.Equals(extrato.dsDocumento));
+                    else trans = trans.Where(t => t.Memo.Equals(extrato.dsDocumento));
+                    Int32 contMovimentacoesRepetidas = trans.Count();
                     #endregion
 
                     #region OBTÉM AS MOVIMENTAÇÕES JÁ ARMAZENADAS NA BASE QUE POSSUEM MESMAS INFORMAÇÕES DA MOVIMENTAÇÃO CORRENTE
