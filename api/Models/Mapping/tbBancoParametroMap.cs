@@ -17,8 +17,7 @@ namespace api.Models.Mapping
 
             // Properties
             this.Property(t => t.dsMemo)
-                .IsRequired()
-                .HasMaxLength(50);
+                .IsRequired();
 
             this.Property(t => t.cdBanco)
                 .IsRequired()

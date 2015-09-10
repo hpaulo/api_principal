@@ -712,7 +712,11 @@ namespace api.Negocios.Card
                         parametro.dsMemo = extrato.dsDocumento;
                         parametro.dsTipo = extrato.dsTipo;
                         parametro.flVisivel = true;
-                        try { GatewayTbBancoParametro.Add(token, parametro); } catch { }
+                        try
+                        {
+                            GatewayTbBancoParametro.Add(token, parametro);
+                        } catch(Exception e)
+                        { }
                         #endregion
                     }
                 }

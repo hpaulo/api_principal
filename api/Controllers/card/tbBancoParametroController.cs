@@ -79,6 +79,7 @@ namespace api.Controllers.Card
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
+                    if (dsMemo == null) dsMemo = String.Empty;
                     GatewayTbBancoParametro.Delete(token, cdBanco, dsMemo);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }

@@ -376,7 +376,7 @@ namespace api.Negocios.Administracao
             try
             {
                 webpages_Roles value = _db.webpages_Roles
-                        .Where(e => e.RoleId.Equals(param.RoleId))
+                        .Where(e => e.RoleId == param.RoleId)
                         .First<webpages_Roles>();
 
                 if (value == null) throw new Exception("Role inexistente"); // não existe role com o Id informado
