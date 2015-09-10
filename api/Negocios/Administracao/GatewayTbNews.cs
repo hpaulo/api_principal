@@ -251,7 +251,7 @@ namespace api.Negocios.Admin
                         //cdCanal = e.cdCanal,
                         //cdReporter = e.cdReporter,
                         //dtEnvio = e.dtEnvio,
-                        flLido = e.tbNewsStatus.Select(s => s.flLido).FirstOrDefault()
+                        flLido = e.tbNewsStatus.Where(s => s.id_users == idUsers).Select(s => s.flLido).FirstOrDefault()
                     }).ToList<dynamic>();
                 }
 

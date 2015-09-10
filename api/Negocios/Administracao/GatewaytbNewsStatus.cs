@@ -262,8 +262,7 @@ namespace api.Negocios.Admin
 
                
 				tbNewsStatus value = _db.tbNewsStatuss
-						.Where(e => e.idNews == param.idNews)
-                        .Where(e => e.id_users == idUsers)
+						.Where(e => e.idNews == param.idNews && e.id_users == idUsers)
 						.First<tbNewsStatus>();
 
 				// OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
