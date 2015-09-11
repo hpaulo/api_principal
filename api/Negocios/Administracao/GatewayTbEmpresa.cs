@@ -452,11 +452,14 @@ namespace api.Negocios.Admin
                 if (value.dsCertificadoDigitalSenha == null || !dsCertificadoDigitalSenha.Equals(value.dsCertificadoDigitalSenha))
                     value.dsCertificadoDigitalSenha = dsCertificadoDigitalSenha;
 
-                Mensagem mensagem = CertificadoDigital.ValidarCertificado(data, dsCertificadoDigitalSenha);//value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
+                //Decodifica a senha
+                string senha = CertificadoDigital.DecodeFrom64(dsCertificadoDigitalSenha);
+
+                Mensagem mensagem = CertificadoDigital.ValidarCertificado(data, senha);//value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
                 if (mensagem.cdMensagem == 200)
                 {
                     value.dtCadastro = DateTime.Now;
-                    value.dtValidade = CertificadoDigital.GetDataValidade(data, dsCertificadoDigitalSenha);//value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
+                    value.dtValidade = CertificadoDigital.GetDataValidade(data, senha);//value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
                     value.flSenhaValida = true;
 
                     _db.SaveChanges();

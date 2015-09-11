@@ -9,6 +9,7 @@ namespace api.Bibliotecas
 {
     public static class CertificadoDigital
     {
+        #region GetDataValidade
         public static DateTime GetDataValidade(byte[] certificado, string senha)
         {
             X509Certificate2 certific = new X509Certificate2(certificado, senha,
@@ -16,7 +17,9 @@ namespace api.Bibliotecas
             DateTime dtValidade = DateTime.Parse(certific.GetExpirationDateString());
             return dtValidade;
         }
+        #endregion
 
+        #region ValidarCertificado
         public static Mensagem ValidarCertificado(byte[] certificado, string senha)
         {
             Mensagem mensagem = new Mensagem();
@@ -44,5 +47,17 @@ namespace api.Bibliotecas
                 return mensagem;
             }
         }
+        #endregion
+
+        #region DecodeFrom64
+        public static string DecodeFrom64(string encodedData)
+        {
+            byte[] encodedDataAsBytes
+                = System.Convert.FromBase64String(encodedData);
+            string returnValue =
+               System.Text.ASCIIEncoding.ASCII.GetString(encodedDataAsBytes);
+            return returnValue;
+        }
+        #endregion
     }
 }
