@@ -452,7 +452,7 @@ namespace api.Negocios.Admin
                 if (value.dsCertificadoDigitalSenha == null || !dsCertificadoDigitalSenha.Equals(value.dsCertificadoDigitalSenha))
                     value.dsCertificadoDigitalSenha = dsCertificadoDigitalSenha;
 
-                //Decodifica a senha
+                // Decodifica a senha
                 string senha = CertificadoDigital.DecodeFrom64(dsCertificadoDigitalSenha);
 
                 Mensagem mensagem = CertificadoDigital.ValidarCertificado(data, senha);//value.dsCertificadoDigital, value.dsCertificadoDigitalSenha);
