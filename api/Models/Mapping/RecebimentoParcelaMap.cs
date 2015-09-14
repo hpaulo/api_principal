@@ -11,11 +11,20 @@ namespace api.Models.Mapping
             this.HasKey(t => new { t.idRecebimento, t.numParcela });
 
             // Properties
-            this.Property(t => t.idRecebimento)
+            /*this.Property(t => t.idRecebimento)
                 .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);
 
             this.Property(t => t.numParcela)
-                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);
+                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);*/
+            // Properties
+            this.Property(t => t.dtaRecebimento)
+                .IsRequired();
+
+            this.Property(t => t.valorDescontado)
+                .IsRequired();
+
+            this.Property(t => t.valorParcelaLiquida)
+                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
 
             // Table & Column Mappings
             this.ToTable("RecebimentoParcela", "pos");
