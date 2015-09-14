@@ -27,8 +27,19 @@ namespace api.Bibliotecas
             {
                 X509Certificate2 certific = new X509Certificate2(certificado, senha,
     X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
-                mensagem.cdMensagem = 200;
-                mensagem.dsMensagem = "Certificado válido";
+
+                DateTime dtValidade = DateTime.Parse(certific.GetExpirationDateString());
+                if (dtValidade >= DateTime.Now)
+                {
+                    mensagem.cdMensagem = 200;
+                    mensagem.dsMensagem = "Certificado válido";
+                }
+                else
+                {
+                    mensagem.cdMensagem = 203;
+                    mensagem.dsMensagem = "Certificado vencido";
+                }
+
                 return mensagem;
 
             }
