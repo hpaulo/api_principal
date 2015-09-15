@@ -7,6 +7,8 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
+using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml;
 
 namespace api.Negocios.Administracao
 {
@@ -177,7 +179,11 @@ namespace api.Negocios.Administracao
                         nu_ramal = e.nu_ramal,
                     }).ToList<dynamic>();
                 }
-
+                else if (colecao == 2)
+                {
+                    List<pessoa> elements = query.Select(e => e).ToList<pessoa>();
+                    
+                }
                 retorno.Registros = CollectionPessoa;
 
                 return retorno;

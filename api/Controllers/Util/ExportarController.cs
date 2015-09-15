@@ -2,9 +2,11 @@
 using api.Negocios.Pos;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Web.Http;
 
 namespace api.Controllers.Util
@@ -12,9 +14,23 @@ namespace api.Controllers.Util
     public class ExportarController : ApiController
     {
         // GET api/<controller>
-        public IEnumerable<string> Get()
+        //public IEnumerable<string> Get()
+        //{
+        //    return new string[] { "value1", "value2" };
+        //}
+
+        [HttpGet]
+        public HttpResponseMessage Get()
         {
-            return new string[] { "value1", "value2" };
+            MediaTypeHeaderValue mediaType = MediaTypeHeaderValue.Parse("application/octet-stream");
+            byte[] excelFile = Negocios.Util.GatewayExportar.Excel();
+            string fileName = "Orders.xlsx";
+            MemoryStream memoryStream = new MemoryStream(excelFile);
+            HttpResponseMessage response = response = Request.CreateResponse(HttpStatusCode.OK);
+            response.Content = new StreamContent(memoryStream);
+            response.Content.Headers.ContentType = mediaType;
+            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("fileName") { FileName = fileName };
+            return response;
         }
 
         // GET api/<controller>/5
