@@ -1278,6 +1278,7 @@ namespace api.Negocios.Tax
                             notas = e.Select(x => new {
                                 idManifesto = x.idManifesto,
                                 dtEmissao = x.dtEmissao,
+                                dtEntrega = x.dtEntrega,
                                 vlNFe = x.vlNFe,
                                 nrChave = x.nrChave,
                                 dsSituacaoManifesto = x.dsSituacaoManifesto,
