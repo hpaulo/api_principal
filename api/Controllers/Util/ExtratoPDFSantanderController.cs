@@ -78,7 +78,8 @@ namespace api.Controllers.Util
             bool head = false;
             for (int i = 0; i < temp.Count; i++)
             {
-                Console.WriteLine("Line: " + i + " Total: " + temp.Count + " | " + temp[i].ToString());
+                if(i == 201)
+                    Console.WriteLine("Line: " + i + " Total: " + temp.Count + " | " + temp[i].ToString());
                 string value = String.Empty;
 
                 switch (i)
@@ -136,6 +137,7 @@ namespace api.Controllers.Util
                                 cipherText.IndexOf("Saldo de Conta Corrente") < 0 &&
                                 cipherText.IndexOf("Saldo em Investimentos com Resgate") < 0 &&
                                 cipherText.IndexOf("Saldo Disponível (") < 0 &&
+                                cipherText.IndexOf("Saldo Disponível Conta Corrente") < 0 &&
                                 cipherText.IndexOf("Saldo Disponível Total") < 0 &&
                                 cipherText.IndexOf("Ouvidoria 0800") < 0
                                 )
