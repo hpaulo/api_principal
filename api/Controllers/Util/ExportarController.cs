@@ -19,19 +19,22 @@ namespace api.Controllers.Util
         //    return new string[] { "value1", "value2" };
         //}
 
-        [HttpGet]
-        public HttpResponseMessage Get()
-        {
-            MediaTypeHeaderValue mediaType = MediaTypeHeaderValue.Parse("application/octet-stream");
-            byte[] excelFile = Negocios.Util.GatewayExportar.Excel();
-            string fileName = "Orders.xlsx";
-            MemoryStream memoryStream = new MemoryStream(excelFile);
-            HttpResponseMessage response = response = Request.CreateResponse(HttpStatusCode.OK);
-            response.Content = new StreamContent(memoryStream);
-            response.Content.Headers.ContentType = mediaType;
-            response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("fileName") { FileName = fileName };
-            return response;
-        }
+        //[HttpGet]
+        //public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
+        //{
+        //    Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
+
+        //    MediaTypeHeaderValue mediaType = MediaTypeHeaderValue.Parse("application/octet-stream");
+        //    List<Models.pessoa> list = Negocios.Administracao.GatewayPessoa.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+        //    byte[] excelFile = Negocios.Util.GatewayExportar.Excel();
+        //    string fileName = "Orders.xlsx";
+        //    MemoryStream memoryStream = new MemoryStream(excelFile);
+        //    HttpResponseMessage response = response = Request.CreateResponse(HttpStatusCode.OK);
+        //    response.Content = new StreamContent(memoryStream);
+        //    response.Content.Headers.ContentType = mediaType;
+        //    response.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("fileName") { FileName = fileName };
+        //    return response;
+        //}
 
         // GET api/<controller>/5
         public string Get(int id)

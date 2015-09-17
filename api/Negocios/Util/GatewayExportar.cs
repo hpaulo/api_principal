@@ -13,9 +13,9 @@ namespace api.Negocios.Util
     public class GatewayExportar
     {
 
-        public static Byte[] Excel(List<IList<object>> ListDados)
+        public static Byte[] Excel(DataSet dataSet)//List<IList<object>> ListDados)
         {
-            DataSet dataSet = Bibliotecas.Converter.ConvertToDataSet(ListDados);
+            //DataSet dataSet = Bibliotecas.Converter.ConvertToDataSet(ListDados);
 
             Dictionary<String, List<OpenXmlElement>> sets = (from dt in dataSet.Tables.OfType<DataTable>()
                      select new
