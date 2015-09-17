@@ -134,6 +134,8 @@ namespace api.Controllers.Util
                                 cipherText.IndexOf("p = Lançamento Provisionado") < 0 &&
                                 cipherText.IndexOf("Superlinha") < 0 &&
                                 cipherText.IndexOf("Saldo Bloqueado") < 0 &&
+                                cipherText.IndexOf("Saldo Bloqueio Dia") < 0 &&
+                                cipherText.IndexOf("Saldo Total de Conta Corrente") < 0 &&
                                 cipherText.IndexOf("Saldo de Conta Corrente") < 0 &&
                                 cipherText.IndexOf("Saldo em Investimentos com Resgate") < 0 &&
                                 cipherText.IndexOf("Saldo Disponível (") < 0 &&
