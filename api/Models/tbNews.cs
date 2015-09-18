@@ -17,7 +17,7 @@ namespace api.Models
         public Nullable<int> cdEmpresaGrupo { get; set; }
         public short cdCatalogo { get; set; }
         public short cdCanal { get; set; }
-        public string cdReporter { get; set; }
+        public string dsReporter { get; set; }
         public Nullable<System.DateTime> dtEnvio { get; set; }
         public virtual tbCanal tbCanal { get; set; }
         public virtual tbCatalogo tbCatalogo { get; set; }
