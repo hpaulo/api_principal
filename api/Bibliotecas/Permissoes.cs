@@ -362,6 +362,8 @@ namespace api.Bibliotecas
             controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesCashFlowRelatorios, new string[] { "GET" }));
             // [PORTAL] CARD SERVICES > CONSOLIDAÇÃO > RELATÓRIOS
             controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesConsolidacaoRelatorios, new string[] { "GET" }));
+            // [PORTAL] TAX SERVICES > NOTA FISCAL ELETRÔNICA > IMPORTAÇÃO XML
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalTaxServicesImportacaoXML, new string[] { "GET" }));
             // MOBILE......
             acessoMetodosAPIs.Add(UrlAPIs.CLIENTE_EMPRESA, controllersOrigem);
             /*                               GRUPOEMPRESA                                          */
