@@ -184,18 +184,20 @@ namespace api.Negocios.Administracao
                 }
                 else if (colecao == 2)
                 {
-                    IEnumerable<object> CollectionPersonalizada = query.Select(e => new
-                      {
+                    IEnumerable<dynamic> CollectionPersonalizada = query.Select(e => new
+                    {
 
-                          e.id_pesssoa,
-                          e.nm_pessoa
-                      }).AsEnumerable();
+                        id_pesssoa = e.id_pesssoa,
+                        nm_pessoa = e.nm_pessoa,
+                        dt_nascimento = e.dt_nascimento,
+                        nu_telefone = e.nu_telefone,
+                        nu_ramal = e.nu_ramal,
+                    }).AsEnumerable();
 
                     ReportViewer ReportViewer1 = new ReportViewer();
                     ReportViewer1.ProcessingMode = ProcessingMode.Local;
-                    ReportViewer1.LocalReport.ReportPath = @"D:\WorkDir\api.atoscapital.com.br\WebApi\api\Report1.rdlc";
-                    DataTable dt = new DataTable(); //Bibliotecas.Converter.ToDataTable<pessoa>(CollectionPersonalizada);
-                    //dt.LoadDataRow(CollectionPersonalizada,true);
+                    //ReportViewer1.LocalReport.ReportPath = @"D:\WorkDir\api.atoscapital.com.br\WebApi\api\Report1.rdlc";
+                    DataTable dt = new DataTable();
                     ReportViewer1.LocalReport.DataSources.Add( new ReportDataSource("DataSet1", CollectionPersonalizada));
 
                     Warning[] warnings;
@@ -203,34 +205,19 @@ namespace api.Negocios.Administracao
                     string mimeType;
                     string encoding;
                     string extension;
+                    byte[] bytes;
 
-                    IEnumerable<object> CollectionPersonalizar = query.Select(e => new
-                    {
+                    bytes = Bibliotecas.Converter.SaveArrayAsCSV(CollectionPersonalizada.ToArray());
 
-                        e.id_pesssoa,
-                        e.nm_pessoa
-                    }).AsEnumerable();
-
-                    IEnumerable<string> lines = CollectionPersonalizada.Select(x => String.Format("{0},{1}", r.Name, r.Count));
-                    System.IO.File.WriteAllLines(path, lines);
-                    //Bibliotecas.Converter.SaveArrayAsCSV(CollectionPersonalizada.ToArray(), @"C:\Users\Elton Nunes\Desktop\output.csv");
-
-                    byte[] bytes = ReportViewer1.LocalReport.Render("EXCEL", null, out mimeType, out encoding, out extension, out streamids, out warnings);
+                    bytes = ReportViewer1.LocalReport.Render("EXCEL", null, out mimeType, out encoding, out extension, out streamids, out warnings);
                     FileStream fs = new FileStream(@"C:\Users\Elton Nunes\Desktop\output.xls", FileMode.Create);
                     fs.Write(bytes, 0, bytes.Length);
                     fs.Close();
-
-                    /*bytes = ReportViewer1.LocalReport.Render("MHTML", null, out mimeType, out encoding, out extension, out streamids, out warnings);
-                    new FileStream(@"C:\Users\Elton Nunes\Desktop\output.MHTML", FileMode.Create);
-                    fs.Write(bytes, 0, bytes.Length);
-                    fs.Close();
-                    */
 
                     bytes = ReportViewer1.LocalReport.Render("Word", null, out mimeType, out encoding, out extension, out streamids, out warnings);
                     fs = new FileStream(@"C:\Users\Elton Nunes\Desktop\output.doc", FileMode.Create);
                     fs.Write(bytes, 0, bytes.Length);
                     fs.Close();
-
 
                     bytes = ReportViewer1.LocalReport.Render("PDF", null, out mimeType, out encoding, out extension, out streamids, out warnings);
                     fs = new FileStream(@"C:\Users\Elton Nunes\Desktop\output.pdf", FileMode.Create);

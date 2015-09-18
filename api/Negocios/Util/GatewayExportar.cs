@@ -13,6 +13,8 @@ namespace api.Negocios.Util
     public class GatewayExportar
     {
 
+
+
         public static Byte[] Excel(DataSet dataSet)//List<IList<object>> ListDados)
         {
             //DataSet dataSet = Bibliotecas.Converter.ConvertToDataSet(ListDados);

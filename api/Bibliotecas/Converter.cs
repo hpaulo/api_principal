@@ -13,19 +13,57 @@ namespace api.Bibliotecas
     public static class Converter
     {
 
-        public static void SaveArrayAsCSV<T>(T[] jaggedArrayToSave, string fileName)
+        public static byte[] SaveArrayAsCSV<T>(T[]ArrayToSave)
         {
-            using (StreamWriter file = new StreamWriter(fileName))
+            MemoryStream stream = new MemoryStream();
+            using (StreamWriter file = new StreamWriter(stream))
             {
-                //foreach (T[] array in jaggedArrayToSave)
-                //{
-                    foreach (T item in jaggedArrayToSave)
+                    string line = String.Empty;
+                    string head = String.Empty;
+                    bool header = true;
+                    int l = 0;
+                    foreach (T item in ArrayToSave)
                     {
-                        var teste = item.ToString();
-                        file.Write(item + ",");
-                    }
-                    file.Write(Environment.NewLine);
-                //}
+
+
+                        var obj = item.ToString();
+                        var prop = obj.Replace("{", "").Replace("}", "").Split(',');
+                        
+                        foreach (var itemProp in prop)
+                        {
+
+
+                            var collection = itemProp.Split('=');
+                            int i = 0;
+                            foreach (var itemCollection in collection)
+                            {
+                                if (i == 0)
+                                {
+                                    if (header)
+                                        head = (head.Length == 0) ? itemCollection : head + ";" + itemCollection;
+                                }
+                                else
+                                {
+                                    line = (l == 0 ) ? itemCollection : line + ";" + itemCollection;
+                                    l++;
+                                }
+                                i++;
+                            }
+                        
+                        }
+                        
+                        
+                        if (header)
+                            head = head + Environment.NewLine;
+                        header = false;
+
+                        line = line + Environment.NewLine;
+                }
+                file.Write(head.Replace(" ",""));
+                file.Write(line.Replace("\r\n;", "\r\n").Replace(" ", ""));
+                //file.Write(Environment.NewLine);
+
+                return stream.GetBuffer();
             }
         }
 
