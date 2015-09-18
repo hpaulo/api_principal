@@ -530,6 +530,7 @@ namespace api.Negocios.Tax
                             {
                                 idManifesto = x.idManifesto,
                                 dtEmissao = x.dtEmissao,
+                                dtEntrega = x.dtEntrega,
                                 vlNFe = x.vlNFe,
                                 xmlNFe = x.xmlNFe
 
