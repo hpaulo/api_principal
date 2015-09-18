@@ -49,7 +49,7 @@ namespace api.Negocios.Card
 
         private static string TIPO_EXTRATO = "E";
         private static string TIPO_RECEBIMENTO = "R";
-        private static decimal TOLERANCIA = new decimal(0.01); // R$0.01 de tolerância para avaliar pré-conciliação
+        private static decimal TOLERANCIA = new decimal(0.03); // R$0.03 de tolerância para avaliar pré-conciliação
 
 
         /// <summary>
