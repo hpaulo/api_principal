@@ -583,6 +583,7 @@ namespace api.Negocios.Tax
                                     serie = xmlNFe.ide.serie,
                                     numero = xmlNFe.ide.nNF,
                                     dtEmissao = nota.dtEmissao,//xmlNFe.ide.dEmi,
+                                    dtEntrega = nota.dtEntrega,
                                     dtSaiEnt = xmlNFe.ide.dSaiEnt,
                                     vlNFe = nota.vlNFe,
                                     #region FORMATO DE IMPRESSÃO DO DANFE
@@ -1323,6 +1324,7 @@ namespace api.Negocios.Tax
                             var e = new
                             {
                                 dtEmissao = notas.dtEmissao,
+                                dtEntrega = notas.dtEntrega,
                                 idManifesto = notas.idManifesto,
                                 modelo = (int)xmlNFe.ide.mod,
                                 serie = xmlNFe.ide.serie,
