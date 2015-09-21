@@ -877,11 +877,6 @@
     <Compile Include="Negocios\Util\GatewayBancos.cs" />
     <Compile Include="Negocios\Util\GatewayExportar.cs" />
     <Compile Include="Negocios\Util\GatewayUtilNfe.cs" />
-    <Compile Include="painel_taxservices_dbDataSet.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>painel_taxservices_dbDataSet.xsd</DependentUpon>
-    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -941,17 +936,6 @@
     <Content Include="Areas\HelpPage\Views\Help\DisplayTemplates\ApiGroup.cshtml" />
     <Content Include="Areas\HelpPage\Views\Help\Api.cshtml" />
     <Content Include="ClassDiagram.cd" />
-    <Content Include="painel_taxservices_dbDataSet.xsc">
-      <DependentUpon>painel_taxservices_dbDataSet.xsd</DependentUpon>
-    </Content>
-    <None Include="painel_taxservices_dbDataSet.xsd">
-      <Generator>MSDataSetGenerator</Generator>
-      <LastGenOutput>painel_taxservices_dbDataSet.Designer.cs</LastGenOutput>
-      <SubType>Designer</SubType>
-    </None>
-    <Content Include="painel_taxservices_dbDataSet.xss">
-      <DependentUpon>painel_taxservices_dbDataSet.xsd</DependentUpon>
-    </Content>
     <None Include="Properties\PublishProfiles\Api.AtosCapital-V2.pubxml" />
     <None Include="Properties\PublishProfiles\Api.AtosCpaital.pubxml" />
     <None Include="Properties\PublishProfiles\ApiPortal.pubxml" />
@@ -1025,9 +1009,6 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Report1.rdlc" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

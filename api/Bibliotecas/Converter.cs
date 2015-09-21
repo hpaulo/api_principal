@@ -12,58 +12,62 @@ namespace api.Bibliotecas
 {
     public static class Converter
     {
-        public static byte[] ListToCSV<T>(T[]ArrayToSave)
+        public static byte[] ListToCSV<T>(T[] ArrayToSave)
         {
             MemoryStream stream = new MemoryStream();
-            using (StreamWriter file = new StreamWriter(stream))
-            {
-                    string line = String.Empty;
-                    string head = String.Empty;
-                    bool header = true;
-                    int l = 0;
-                    foreach (T item in ArrayToSave)
+                string line = String.Empty;
+                string head = String.Empty;
+                bool header = true;
+                int l = 0;
+                foreach (T item in ArrayToSave)
+                {
+                    foreach (var itemProp in item.GetType().GetProperties())
                     {
+                        string chave = itemProp.Name;
+                        string valor = itemProp.GetValue(item, null).ToString();
 
-
-                        var obj = item.ToString();
-                        var prop = obj.Replace("{", "").Replace("}", "").Split(',');
-                        
-                        foreach (var itemProp in prop)
-                        {
-
-
-                            var collection = itemProp.Split('=');
-                            int i = 0;
-                            foreach (var itemCollection in collection)
-                            {
-                                if (i == 0)
-                                {
-                                    if (header)
-                                        head = (head.Length == 0) ? itemCollection : head + ";" + itemCollection;
-                                }
-                                else
-                                {
-                                    line = (l == 0 ) ? itemCollection : line + ";" + itemCollection;
-                                    l++;
-                                }
-                                i++;
-                            }
-                        
-                        }
-                        
-                        
-                        if (header)
-                            head = head + Environment.NewLine;
-                        header = false;
-
-                        line = line + Environment.NewLine;
+                        if(header)
+                            head = head.Length > 0 ? head + ";" + chave : chave;
+                        line = line.Length > 0 ? line + ";" + valor : valor;
+                    }
+                    if (header)
+                        head = head + Environment.NewLine;
+                    header = false;
+                    line = line + Environment.NewLine;
                 }
-                file.Write(head.Replace(" ",""));
-                file.Write(line.Replace("\r\n;", "\r\n").Replace(" ", ""));
-                //file.Write(Environment.NewLine);
 
+                StreamWriter file = new StreamWriter(stream, Encoding.UTF8, 512);
+                file.Write(head.Replace("\r\n;", "\r\n"));
+                file.Write(line.Replace("\r\n;", "\r\n"));
+                file.Flush();
+                file.Close();
                 return stream.GetBuffer();
-            }
         }
+
+        public static DataTable ConvertToDataTable<T>(IList<T> data)
+        {
+            PropertyDescriptorCollection properties =
+            TypeDescriptor.GetProperties(typeof(T));
+            DataTable table = new DataTable();
+            
+            foreach (T item in data)
+            {
+                foreach (var itemProp in item.GetType().GetProperties())
+                    table.Columns.Add(itemProp.Name, Nullable.GetUnderlyingType(itemProp.PropertyType) ?? itemProp.PropertyType);
+                break;
+            }
+
+            foreach (T item in data)
+            {
+                DataRow row = table.NewRow();
+
+                foreach (var itemProp in item.GetType().GetProperties())
+                    row[itemProp.Name] = itemProp.GetValue(item, null) ?? DBNull.Value;
+
+                table.Rows.Add(row);
+            }
+            return table;
+        }
+
     }
 }

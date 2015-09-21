@@ -58,6 +58,9 @@ namespace api.Negocios.Pos
             // TERMINAL LÓGICO
             DSTERMINALLOGICO = 601,
 
+            //EXPORTAR
+            EXPORTAR = 9999
+
         };
 
         public enum MES
@@ -388,15 +391,15 @@ namespace api.Negocios.Pos
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                var queryTotal = query;
 
+                bool exportar = queryString.TryGetValue("9999", out outValue);
 
                 // PAGINAÇÃO
                 if (colecao != 3 && colecao != 4 && // relatório terminal lógico e relatório sintético => Por causa do GroupBy
                     colecao != 11 && colecao != 12) // NSUS e Cod Autorizador de todo o filtro (sem paginação)
                 {
                     // TOTAL DE REGISTROS
-                    retorno.TotalDeRegistros = queryTotal.Count();
+                    retorno.TotalDeRegistros = query.Count();
 
                     retorno.Totais.Add("valorVendaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorVendaBruta)) : 0);
 
@@ -469,7 +472,7 @@ namespace api.Negocios.Pos
                         });
 
                     // TOTAL DE REGISTROS
-                    retorno.TotalDeRegistros = queryTotal.Count();
+                    retorno.TotalDeRegistros = subQuery.Count();
 
                     // PAGINAÇÃO
                     int skipRows = (pageNumber - 1) * pageSize;
@@ -530,6 +533,37 @@ namespace api.Negocios.Pos
 
                     CollectionRecebimento = subQuery.ToList<dynamic>();
                 }
+                else if (colecao == -3) // Portal/RelatorioTerminalLogico
+                {
+                    var subQuery = query
+                    .GroupBy(e => new { e.empresa, e.TerminalLogico, e.BandeiraPos })
+                    .OrderBy(e => e.Key.empresa.ds_fantasia)
+                    .ThenBy(e => e.Key.empresa.filial)
+                    .ThenBy(e => e.Key.TerminalLogico.dsTerminalLogico)
+                    .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                    .Select(e => new
+                    {
+                        empresa = e.Key.empresa.ds_fantasia,
+                        terminal = e.Key.TerminalLogico.dsTerminalLogico.Equals("0") ? "-" : e.Key.TerminalLogico.dsTerminalLogico,
+                        bandeira = e.Key.BandeiraPos.desBandeira,
+                        totalTransacoes = e.Count(),
+                        valorBruto = e.Sum(p => p.valorVendaBruta)
+                    });
+
+                    retorno.TotalDeRegistros = subQuery.Count();
+
+                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToInt32(subQuery.Sum(r => r.totalTransacoes)) : 0);
+                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        subQuery = subQuery.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    CollectionRecebimento = subQuery.ToList<dynamic>();
+                }
                 else if (colecao == 4) // Portal/RelatorioSintetico
                 {
                     var subQuery = query
@@ -539,18 +573,48 @@ namespace api.Negocios.Pos
                      .ThenBy(e => e.Key.BandeiraPos.desBandeira)
                      .Select(e => new
                      {
-                         empresa = new
+                         empresa = /*exportar ? (dynamic) (e.Key.empresa.ds_fantasia + " - " + e.Key.empresa.filial) :*/ new
                          {
                              nu_cnpj = e.Key.empresa.nu_cnpj,
                              ds_fantasia = e.Key.empresa.ds_fantasia,
                              filial = e.Key.empresa.filial
                          },
-                         bandeira = new
+                         bandeira = /*exportar ? (dynamic)(e.Key.BandeiraPos.desBandeira) :*/ new
                          {
                              e.Key.BandeiraPos.id,
                              e.Key.BandeiraPos.desBandeira
                          },
-                         idOperadora = e.Key.BandeiraPos.idOperadora,
+                         idOperadora = /*exportar ? (dynamic)(e.Key.BandeiraPos.Operadora.nmOperadora) :*/ e.Key.BandeiraPos.idOperadora,
+                         totalTransacoes = e.Count(),
+                         valorBruto = e.Sum(p => p.valorVendaBruta)
+
+                     });
+
+                    retorno.TotalDeRegistros = subQuery.Count();
+
+                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToInt32(subQuery.Sum(r => r.totalTransacoes)) : 0);
+                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        subQuery = subQuery.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    CollectionRecebimento = subQuery.ToList<dynamic>();
+                }
+                else if (colecao == -4) // Portal/RelatorioSintetico
+                {
+                    var subQuery = query
+                     .GroupBy(e => new { e.empresa, e.BandeiraPos })
+                     .OrderBy(e => e.Key.empresa.ds_fantasia)
+                     .ThenBy(e => e.Key.empresa.filial)
+                     .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                     .Select(e => new
+                     {
+                         empresa = e.Key.empresa.ds_fantasia + " - " + e.Key.empresa.filial,
+                         bandeira = e.Key.BandeiraPos.desBandeira,
                          totalTransacoes = e.Count(),
                          valorBruto = e.Sum(p => p.valorVendaBruta)
 
@@ -571,6 +635,24 @@ namespace api.Negocios.Pos
                     CollectionRecebimento = subQuery.ToList<dynamic>();
                 }
                 else if (colecao == 5) // Portal/RelatorioAnalitico
+                {
+                    CollectionRecebimento = query
+
+                     .Select(e => new
+                     {
+                         e.cnpj,
+                         e.dtaVenda,
+                         dsFantasia = e.empresa.ds_fantasia + (e.empresa.filial != null ? e.empresa.filial : ""),
+                         dsTerminalLogico = e.TerminalLogico.dsTerminalLogico.Equals("0") ? "-" : e.TerminalLogico.dsTerminalLogico,
+                         e.BandeiraPos.desBandeira,
+                         e.nsu,
+                         e.cdAutorizador,
+                         e.valorVendaBruta
+                     }).ToList<dynamic>();
+
+
+                }
+                else if (colecao == -5) // Portal/RelatorioAnalitico
                 {
                     CollectionRecebimento = query
 

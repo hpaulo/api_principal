@@ -10,6 +10,9 @@ using api.Bibliotecas;
 using api.Models.Object;
 using Newtonsoft.Json;
 using api.Models;
+using System.IO;
+using System.Net.Http.Headers;
+using System.Data;
 
 namespace api.Controllers.Pos
 {
@@ -24,13 +27,26 @@ namespace api.Controllers.Pos
             {
                 log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
 
+                HttpResponseMessage result = null;
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
+                string outValue = null;
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
                     Retorno dados = GatewayRecebimentoParcela.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
+                    if (queryString.TryGetValue("9999", out outValue))
+                    {
+
+                        //DataTable teste = Bibliotecas.Converter.ConvertToDataTable(dados.Registros);
+                        result = Request.CreateResponse(HttpStatusCode.OK);
+                        result.Content = new StreamContent(new MemoryStream(Negocios.Util.GatewayExportar.CSV(dados.Registros.ToArray())));
+                        result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
+                        result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                        result.Content.Headers.ContentDisposition.FileName = "file" + DateTime.Now.ToString();
+                        return result;
+                    }
                     return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
                 }
                 else

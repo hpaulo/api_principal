@@ -54,6 +54,10 @@ namespace api.Negocios.Pos
             NSU = 603,
             DTAVENDA = 605,
             CODRESUMOVENDA = 613,
+
+            //EXPORTAR
+            EXPORTAR = 9999
+
         };
 
         public enum MES
@@ -79,7 +83,7 @@ namespace api.Negocios.Pos
 
             #region WHERE - ADICIONA OS FILTROS A QUERY
 
-                // ADICIONA OS FILTROS A QUERY
+            // ADICIONA OS FILTROS A QUERY
             foreach (var item in queryString)
             {
                 int key = Convert.ToInt16(item.Key);
@@ -106,8 +110,8 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.IDEXTRATO:
                         Int32 idExtrato = Convert.ToInt32(item.Value);
-                        if(idExtrato == -1) entity = entity.Where(e => e.idExtrato == null);
-                        else if(idExtrato == 0) entity = entity.Where(e => e.idExtrato != null);
+                        if (idExtrato == -1) entity = entity.Where(e => e.idExtrato == null);
+                        else if (idExtrato == 0) entity = entity.Where(e => e.idExtrato != null);
                         else entity = entity.Where(e => e.idExtrato == idExtrato);
                         break;
 
@@ -190,7 +194,7 @@ namespace api.Negocios.Pos
                     case CAMPOS.IDBANDEIRA:
                         Int32 idBandeira = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.Recebimento.BandeiraPos.id == idBandeira);
-                        break; 
+                        break;
 
                     case CAMPOS.DESBANDEIRA:
                         string desBandeira = Convert.ToString(item.Value).ToUpper();
@@ -257,11 +261,11 @@ namespace api.Negocios.Pos
                             entity = entity.Where(e => e.Recebimento.codResumoVenda.StartsWith(busca));
                         }
                         else
-                        entity = entity.Where(e => e.Recebimento.codResumoVenda.Equals(codResumoVenda)).AsQueryable();
+                            entity = entity.Where(e => e.Recebimento.codResumoVenda.Equals(codResumoVenda)).AsQueryable();
                         break;
                 }
             }
-            
+
             #endregion
 
             #region ORDER BY - ADICIONA A ORDENAÇÃO A QUERY
@@ -668,6 +672,26 @@ namespace api.Negocios.Pos
                         valorDescontado = e.valorDescontado
                     }).ToList<dynamic>();
                 }
+                else if (colecao == -8) // [web]cashflow/Analitico
+                {
+                    CollectionRecebimentoParcela = query
+                    .Select(e => new
+                    {
+
+                        cnpj = e.Recebimento.cnpj,
+                        dsFantasia = e.Recebimento.empresa.ds_fantasia + (e.Recebimento.empresa.filial != null ? e.Recebimento.empresa.filial : ""),
+                        desBandeira = e.Recebimento.BandeiraPos.desBandeira,
+                        dtaVenda = e.Recebimento.dtaVenda,
+                        dtaRecebimento = e.dtaRecebimento,
+                        codResumoVenda = e.Recebimento.codResumoVenda,
+                        nsu = e.Recebimento.nsu,
+                        numParcela = e.numParcela + " de " + e.Recebimento.numParcelaTotal,
+                        valorBruto = e.Recebimento.valorVendaBruta,
+                        valorParcela = e.valorParcelaBruta,
+                        valorLiquida = e.valorParcelaLiquida,
+                        valorDescontado = e.valorDescontado
+                    }).ToList<dynamic>();
+                }
                 else if (colecao == 9) // [web]/cashflow/Sintético
                 {
                     var subQuery = query
@@ -689,6 +713,43 @@ namespace api.Negocios.Pos
                                 id = e.Key.BandeiraPos.id,
                                 idOperadora = e.Key.BandeiraPos.idOperadora
                             },
+                            valorBruto = e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta),
+                            valorParcela = e.Sum(p => p.valorParcelaBruta),
+                            valorLiquida = e.Sum(p => p.valorParcelaLiquida),
+                            valorDescontado = e.Sum(p => p.valorDescontado),
+                            totalTransacoes = e.Count()
+                        });
+
+                    retorno.TotalDeRegistros = subQuery.Count();
+
+                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
+                    retorno.Totais.Add("valorDescontado", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorDescontado)) : 0);
+                    retorno.Totais.Add("valorLiquida", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorLiquida)) : 0);
+                    retorno.Totais.Add("valorParcela", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorParcela)) : 0);
+                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.totalTransacoes)) : 0);
+
+
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        subQuery = subQuery.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+
+                    CollectionRecebimentoParcela = subQuery.ToList<dynamic>();
+                }
+                else if (colecao == -9) // [web]/cashflow/Sintético
+                {
+                    var subQuery = query
+                        .GroupBy(x => new { x.Recebimento.empresa, x.Recebimento.BandeiraPos })
+                        .OrderBy(e => e.Key.empresa.ds_fantasia)
+                        .ThenBy(e => e.Key.empresa.filial)
+                        .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                        .Select(e => new
+                        {
+                            empresa = e.Key.empresa.ds_fantasia + " - " + e.Key.empresa.filial,
+                            bandeira = e.Key.BandeiraPos.desBandeira,
                             valorBruto = e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta),
                             valorParcela = e.Sum(p => p.valorParcelaBruta),
                             valorLiquida = e.Sum(p => p.valorParcelaLiquida),
@@ -800,7 +861,7 @@ namespace api.Negocios.Pos
             try
             {
 
-                if (param == null || param.DtaRecebimentoAtual == null || 
+                if (param == null || param.DtaRecebimentoAtual == null ||
                     param.DtaRecebimentoNova == null || param.IdsRecebimento == null)
                     throw new Exception("Argumento inválido");
 
@@ -813,7 +874,7 @@ namespace api.Negocios.Pos
                                                             .Where(e => e.dtaRecebimento.Day == param.DtaRecebimentoAtual.Day)
                                                             .FirstOrDefault();
 
-                    if(recebimento != null && recebimento.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
+                    if (recebimento != null && recebimento.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
                     {
                         recebimento.dtaRecebimento = param.DtaRecebimentoNova;
                         _db.SaveChanges();
