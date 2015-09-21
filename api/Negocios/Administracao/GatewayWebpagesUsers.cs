@@ -451,25 +451,32 @@ namespace api.Negocios.Administracao
                 // Cria a conta com o login informado e a senha padrão "atos123"
                 try
                 {
-                    WebSecurity.CreateUserAndAccount(param.Webpagesusers.ds_login, "atos123", null, false);
+                    //WebSecurity.CreateAccount(param.Webpagesusers.ds_login, "atos123", false);
+                    WebSecurity.CreateUserAndAccount(param.Webpagesusers.ds_login, "atos123", 
+                                                     propertyValues : new
+                                                     {
+                                                        ds_email = param.Webpagesusers.ds_email,
+                                                        fl_ativo = true
+                                                     },
+                                                     requireConfirmationToken: false);
                 }
-                catch
+                catch(Exception e)
                 {
                     // Remove a pessoa criada
                     GatewayPessoa.Delete(token, param.Pessoa.id_pesssoa);
                     // Reporta a falha
-                    throw new Exception("500");
+                    throw new Exception("Falha ao criar conta. " + e.Message);
                 }
                 param.Webpagesusers.id_users = WebSecurity.GetUserId(param.Webpagesusers.ds_login);
 
                 // Cria o usuário
                 webpages_Users usr = _db.webpages_Users.Find(param.Webpagesusers.id_users);
-                usr.ds_email = param.Webpagesusers.ds_email;
+                //usr.ds_email = param.Webpagesusers.ds_email;
                 usr.id_grupo = param.Webpagesusers.id_grupo;
                 usr.nu_cnpjBaseEmpresa = param.Webpagesusers.nu_cnpjBaseEmpresa;
                 usr.nu_cnpjEmpresa = param.Webpagesusers.nu_cnpjEmpresa;
                 usr.id_pessoa = param.Pessoa.id_pesssoa;
-                usr.fl_ativo = true;
+                //usr.fl_ativo = true;
                 try
                 {
                     _db.SaveChanges();

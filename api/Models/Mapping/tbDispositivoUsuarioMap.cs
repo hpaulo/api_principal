@@ -27,7 +27,7 @@ namespace api.Models.Mapping
                 .HasMaxLength(50);
 
             this.Property(t => t.cdTokenValido)
-                .HasMaxLength(50);
+                .HasMaxLength(255);
 
             // Table & Column Mappings
             this.ToTable("tbDispositivoUsuario", "admin");
