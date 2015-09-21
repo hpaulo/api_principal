@@ -8,25 +8,13 @@ namespace api.Models.Object
 {
     public class RecebimentosParcela
     {
-        private DateTime dtaRecebimentoAtual;
-        public DateTime DtaRecebimentoAtual
-        {
-            get { return dtaRecebimentoAtual; }
-            set { dtaRecebimentoAtual = value; }
-        }
+        public DateTime dtaRecebimentoEfetivo;
+        public List<RecebParcela> recebimentosParcela;
 
-        private DateTime dtaRecebimentoNova;
-        public DateTime DtaRecebimentoNova
+        public class RecebParcela
         {
-            get { return dtaRecebimentoNova; }
-            set { dtaRecebimentoNova = value; }
-        }
-
-        private List<Int32> idsRecebimento;
-        public List<Int32> IdsRecebimento
-        {
-            get { return idsRecebimento; }
-            set { idsRecebimento = value; }
+            public Int32 idRecebimento;
+            public Int32 numParcela;
         }
     }
 }

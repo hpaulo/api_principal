@@ -7,26 +7,21 @@ namespace api.Models.Object
 {
     public class ConciliaRecebimentoParcela
     {
-        private Int32 idExtrato;
-        public Int32 IdExtrato
-        {
-            get { return idExtrato; }
-            set { idExtrato = value; }
-        }
+        public Int32 idExtrato;
 
-        private DateTime data;
+        /*private DateTime data;
         public DateTime Data
         {
             get { return data; }
             set { data = value; }
-        }
+        }*/
 
-        private List<Int32> idsRecebimento;
+        public List<RecebParcela> recebimentosParcela;
 
-        public List<Int32> IdsRecebimento
+        public class RecebParcela
         {
-            get { return idsRecebimento; }
-            set { idsRecebimento = value; }
+            public Int32 idRecebimento;
+            public Int32 numParcela;
         }
 
     }

@@ -111,6 +111,13 @@ namespace api.Models.Object
                 get { return dataVenda; }
                 set { dataVenda = value; }
             }
+
+            private Nullable<int> numParcela;
+            public Nullable<int> NumParcela
+            {
+                get { return numParcela; }
+                set { numParcela = value; }
+            }
         }
 
 

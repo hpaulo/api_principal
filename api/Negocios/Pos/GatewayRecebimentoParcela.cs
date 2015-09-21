@@ -791,7 +791,7 @@ namespace api.Negocios.Pos
 
 
         /// <summary>
-        /// Altera data de Recebimento do RecebimentoParcela
+        /// Altera data de Recebimento Efetivo do RecebimentoParcela
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
@@ -800,22 +800,19 @@ namespace api.Negocios.Pos
             try
             {
 
-                if (param == null || param.DtaRecebimentoAtual == null || 
-                    param.DtaRecebimentoNova == null || param.IdsRecebimento == null)
+                if (param == null || param.dtaRecebimentoEfetivo == null || param.recebimentosParcela == null)
                     throw new Exception("Argumento inválido");
 
-                foreach (Int32 idRecebimento in param.IdsRecebimento)
+                foreach (RecebimentosParcela.RecebParcela recebimentosParcela in param.recebimentosParcela)
                 {
                     RecebimentoParcela recebimento = _db.RecebimentoParcelas
-                                                            .Where(e => e.idRecebimento == idRecebimento)
-                                                            .Where(e => e.dtaRecebimento.Year == param.DtaRecebimentoAtual.Year)
-                                                            .Where(e => e.dtaRecebimento.Month == param.DtaRecebimentoAtual.Month)
-                                                            .Where(e => e.dtaRecebimento.Day == param.DtaRecebimentoAtual.Day)
+                                                            .Where(e => e.idRecebimento == recebimentosParcela.idRecebimento)
+                                                            .Where(e => e.numParcela == recebimentosParcela.numParcela)
                                                             .FirstOrDefault();
 
                     if(recebimento != null && recebimento.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
                     {
-                        recebimento.dtaRecebimento = param.DtaRecebimentoNova;
+                        recebimento.dtaRecebimentoEfetivo = param.dtaRecebimentoEfetivo;
                         _db.SaveChanges();
                     }
 
