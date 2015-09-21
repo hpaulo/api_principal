@@ -10,9 +10,6 @@ using api.Bibliotecas;
 using api.Models.Object;
 using Newtonsoft.Json;
 using System.Data.Entity.Validation;
-using System.IO;
-using System.Net.Http.Headers;
-using System.Data;
 
 namespace api.Controllers.Dbo
 {
@@ -32,32 +29,10 @@ namespace api.Controllers.Dbo
 
                 if (Permissoes.Autenticado(token))
                 {
-                    /*string outValue = null;
-                    if (queryString.TryGetValue("" + 9999, out outValue))
-                    {
-                        Models.painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
-                        IList<pessoa> itens = _db.pessoas.Select(e => e).ToList<pessoa>();
-                        //Retorno dados = GatewayPessoa.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                        DataSet dataSet = Bibliotecas.Converter.ToDataSet<pessoa>(itens);// dados.Registros);
-
-                        byte[] arquivo = Negocios.Util.GatewayExportar.Excel(dataSet);//ListDados);
-                        string nmArquivo = "Relátorio de Pessoa.xlsx";
-
-                        HttpResponseMessage result = Request.CreateResponse(HttpStatusCode.OK);
-                        result.Content = new StreamContent(new MemoryStream(arquivo));
-                        result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
-                        result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                        result.Content.Headers.ContentDisposition.FileName = nmArquivo;
-                        result.Content.Headers.Add("x-filename", nmArquivo);
-                        return result;
-                    }
-                    else
-                    {*/
-                        Retorno dados = GatewayPessoa.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                        log.codResposta = (int)HttpStatusCode.OK;
-                        Bibliotecas.LogAcaoUsuario.Save(log);
-                        return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
-                    //}
+                    Retorno dados = GatewayPessoa.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
                 }
                 else
                 {
@@ -67,7 +42,7 @@ namespace api.Controllers.Dbo
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
-            catch( Exception e)
+            catch (Exception e)
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
@@ -99,7 +74,7 @@ namespace api.Controllers.Dbo
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
@@ -165,7 +140,7 @@ namespace api.Controllers.Dbo
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;

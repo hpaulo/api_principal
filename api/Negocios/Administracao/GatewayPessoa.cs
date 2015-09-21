@@ -7,11 +7,6 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml;
-using Microsoft.Reporting.WebForms;
-using System.IO;
-using System.Data;
 
 namespace api.Negocios.Administracao
 {
@@ -182,50 +177,7 @@ namespace api.Negocios.Administracao
                         nu_ramal = e.nu_ramal,
                     }).ToList<dynamic>();
                 }
-                else if (colecao == 2)
-                {
-                    IEnumerable<dynamic> CollectionPersonalizada = query.Select(e => new
-                    {
 
-                        id_pesssoa = e.id_pesssoa,
-                        nm_pessoa = e.nm_pessoa,
-                        dt_nascimento = e.dt_nascimento,
-                        nu_telefone = e.nu_telefone,
-                        nu_ramal = e.nu_ramal,
-                    }).AsEnumerable();
-
-                    ReportViewer ReportViewer1 = new ReportViewer();
-                    ReportViewer1.ProcessingMode = ProcessingMode.Local;
-                    //ReportViewer1.LocalReport.ReportPath = @"D:\WorkDir\api.atoscapital.com.br\WebApi\api\Report1.rdlc";
-                    DataTable dt = new DataTable();
-                    ReportViewer1.LocalReport.DataSources.Add( new ReportDataSource("DataSet1", CollectionPersonalizada));
-
-                    Warning[] warnings;
-                    string[] streamids;
-                    string mimeType;
-                    string encoding;
-                    string extension;
-                    byte[] bytes;
-
-                    bytes = Bibliotecas.Converter.SaveArrayAsCSV(CollectionPersonalizada.ToArray());
-
-                    bytes = ReportViewer1.LocalReport.Render("EXCEL", null, out mimeType, out encoding, out extension, out streamids, out warnings);
-                    FileStream fs = new FileStream(@"C:\Users\Elton Nunes\Desktop\output.xls", FileMode.Create);
-                    fs.Write(bytes, 0, bytes.Length);
-                    fs.Close();
-
-                    bytes = ReportViewer1.LocalReport.Render("Word", null, out mimeType, out encoding, out extension, out streamids, out warnings);
-                    fs = new FileStream(@"C:\Users\Elton Nunes\Desktop\output.doc", FileMode.Create);
-                    fs.Write(bytes, 0, bytes.Length);
-                    fs.Close();
-
-                    bytes = ReportViewer1.LocalReport.Render("PDF", null, out mimeType, out encoding, out extension, out streamids, out warnings);
-                    fs = new FileStream(@"C:\Users\Elton Nunes\Desktop\output.pdf", FileMode.Create);
-                    fs.Write(bytes, 0, bytes.Length);
-                    fs.Close();
-
-                    return retorno;
-                }
                 retorno.Registros = CollectionPessoa;
 
                 return retorno;
@@ -250,11 +202,13 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, pessoa param)
         {
-            try {
+            try
+            {
                 _db.pessoas.Add(param);
                 _db.SaveChanges();
                 return param.id_pesssoa;
-            }catch (Exception e)
+            }
+            catch (Exception e)
             {
                 if (e is DbEntityValidationException)
                 {
