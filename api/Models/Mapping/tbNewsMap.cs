@@ -17,7 +17,7 @@ namespace api.Models.Mapping
             this.Property(t => t.dsNews)
                 .IsRequired();
 
-            this.Property(t => t.cdReporter)
+            this.Property(t => t.dsReporter)
                 .HasMaxLength(30);
 
             // Table & Column Mappings
@@ -28,7 +28,7 @@ namespace api.Models.Mapping
             this.Property(t => t.cdEmpresaGrupo).HasColumnName("cdEmpresaGrupo");
             this.Property(t => t.cdCatalogo).HasColumnName("cdCatalogo");
             this.Property(t => t.cdCanal).HasColumnName("cdCanal");
-            this.Property(t => t.cdReporter).HasColumnName("cdReporter");
+            this.Property(t => t.dsReporter).HasColumnName("dsReporter");
             this.Property(t => t.dtEnvio).HasColumnName("dtEnvio");
 
             // Relationships

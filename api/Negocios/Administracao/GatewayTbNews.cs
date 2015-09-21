@@ -35,7 +35,7 @@ namespace api.Negocios.Admin
             CDEMPRESAGRUPO = 103,
             CDCATALOGO = 104,
             CDCANAL = 105,
-            CDREPORTER = 106,
+            DSREPORTER = 106,
             DTENVIO = 107,
 
             // PERSONALIZADO
@@ -93,9 +93,9 @@ namespace api.Negocios.Admin
                         short cdCanal = short.Parse(item.Value);
                         entity = entity.Where(e => e.cdCanal.Equals(cdCanal)).AsQueryable<tbNews>();
                         break;
-                    case CAMPOS.CDREPORTER:
-                        string cdReporter = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.cdReporter.Equals(cdReporter)).AsQueryable<tbNews>();
+                    case CAMPOS.DSREPORTER:
+                        string dsReporter = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.dsReporter.Equals(dsReporter)).AsQueryable<tbNews>();
                         break;
                     case CAMPOS.DTENVIO:
                         DateTime dtEnvio = Convert.ToDateTime(item.Value);
@@ -149,9 +149,9 @@ namespace api.Negocios.Admin
                     if (orderby == 0) entity = entity.OrderBy(e => e.cdCanal).AsQueryable<tbNews>();
                     else entity = entity.OrderByDescending(e => e.cdCanal).AsQueryable<tbNews>();
                     break;
-                case CAMPOS.CDREPORTER:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdReporter).AsQueryable<tbNews>();
-                    else entity = entity.OrderByDescending(e => e.cdReporter).AsQueryable<tbNews>();
+                case CAMPOS.DSREPORTER:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsReporter).AsQueryable<tbNews>();
+                    else entity = entity.OrderByDescending(e => e.dsReporter).AsQueryable<tbNews>();
                     break;
                 case CAMPOS.DTENVIO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.dtEnvio).AsQueryable<tbNews>();
@@ -187,7 +187,7 @@ namespace api.Negocios.Admin
                 //if(Permissoes.isAtosRole(token))
                 if (queryString.TryGetValue("" + (int)CAMPOS.ID_USERS, out outValue))
                     queryString["" + (int)CAMPOS.ID_USERS] = idUsers.ToString();
-                else
+                else if(idUsers != 330) // Força o usuário IMESSENGER a acesso a todos os registros
                     queryString.Add("" + (int)CAMPOS.ID_USERS, idUsers.ToString());
 
                 // GET QUERY
@@ -219,7 +219,7 @@ namespace api.Negocios.Admin
                         cdEmpresaGrupo = e.cdEmpresaGrupo,
                         cdCatalogo = e.cdCatalogo,
                         cdCanal = e.cdCanal,
-                        cdReporter = e.cdReporter,
+                        dsReporter = e.dsReporter,
                         dtEnvio = e.dtEnvio,
                     }).ToList<dynamic>();
                 }
@@ -234,7 +234,7 @@ namespace api.Negocios.Admin
                         cdEmpresaGrupo = e.cdEmpresaGrupo,
                         cdCatalogo = e.cdCatalogo,
                         cdCanal = e.cdCanal,
-                        cdReporter = e.cdReporter,
+                        dsReporter = e.dsReporter,
                         dtEnvio = e.dtEnvio,
                     }).ToList<dynamic>();
                 }
@@ -355,12 +355,12 @@ namespace api.Negocios.Admin
                     value.dtNews = param.dtNews;
                 if (param.cdEmpresaGrupo != null && param.cdEmpresaGrupo != value.cdEmpresaGrupo)
                     value.cdEmpresaGrupo = param.cdEmpresaGrupo;
-                if (param.cdCatalogo != null && param.cdCatalogo != value.cdCatalogo)
+                if (param.cdCatalogo != 0 && param.cdCatalogo != value.cdCatalogo)
                     value.cdCatalogo = param.cdCatalogo;
-                if (param.cdCanal != null && param.cdCanal != value.cdCanal)
+                if (param.cdCanal != 0 && param.cdCanal != value.cdCanal)
                     value.cdCanal = param.cdCanal;
-                if (param.cdReporter != null && param.cdReporter != value.cdReporter)
-                    value.cdReporter = param.cdReporter;
+                if (param.dsReporter != null && param.dsReporter != value.dsReporter)
+                    value.dsReporter = param.dsReporter;
                 if (param.dtEnvio != null && param.dtEnvio != value.dtEnvio)
                     value.dtEnvio = param.dtEnvio;
                 _db.SaveChanges();

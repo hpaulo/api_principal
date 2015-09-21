@@ -36,6 +36,7 @@ namespace api.Negocios.Pos
             DTARECEBIMENTO = 104,
             VALORDESCONTADO = 105,
             IDEXTRATO = 106, // -1 para = null, 0 para != null
+            DTARECEBIMENTOEFETIVO = 107,
 
             // EMPRESA
             NU_CNPJ = 300,
@@ -158,6 +159,52 @@ namespace api.Negocios.Pos
                     case CAMPOS.VALORDESCONTADO:
                         decimal valorDescontado = Convert.ToDecimal(item.Value);
                         entity = entity.Where(e => e.valorDescontado.Equals(valorDescontado));
+                        break;
+                    case CAMPOS.DTARECEBIMENTOEFETIVO: // Para os que este campo for null, pega o dtaRecebimento
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null &&
+                                                        (e.dtaRecebimentoEfetivo.Value.Year > dtaIni.Year || (e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month > dtaIni.Month) || (e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaIni.Month && e.dtaRecebimentoEfetivo.Value.Day >= dtaIni.Day)) && 
+                                                        (e.dtaRecebimentoEfetivo.Value.Year < dtaFim.Year || (e.dtaRecebimentoEfetivo.Value.Year == dtaFim.Year && e.dtaRecebimentoEfetivo.Value.Month < dtaFim.Month) || (e.dtaRecebimentoEfetivo.Value.Year == dtaFim.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaFim.Month && e.dtaRecebimentoEfetivo.Value.Day <= dtaFim.Day))
+                                                       ) ||
+                                                       (e.dtaRecebimentoEfetivo == null && 
+                                                        (e.dtaRecebimento.Year > dtaIni.Year || (e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month > dtaIni.Month) || (e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Day >= dtaIni.Day)) && 
+                                                        (e.dtaRecebimento.Year < dtaFim.Year || (e.dtaRecebimento.Year == dtaFim.Year && e.dtaRecebimento.Month < dtaFim.Month) || (e.dtaRecebimento.Year == dtaFim.Year && e.dtaRecebimento.Month == dtaFim.Month && e.dtaRecebimento.Day <= dtaFim.Day))
+                                                       ));
+                        }
+                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value >= dta) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento >= dta));
+                        }
+                        else if (item.Value.Contains("<")) // MENOR IGUAL
+                        {
+                            string busca = item.Value.Replace("<", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value <= dta) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento <= dta));
+                        }
+                        else if (item.Value.Length == 4)
+                        {
+                            string busca = item.Value + "0101";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento.Year == dtaIni.Year));
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaIni.Month) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month));
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaIni.Month && e.dtaRecebimentoEfetivo.Value.Day == dtaIni.Day) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Day == dtaIni.Day));
+                        }
                         break;
 
 
@@ -659,6 +706,7 @@ namespace api.Negocios.Pos
                         desBandeira = e.Recebimento.BandeiraPos.desBandeira,
                         dtaVenda = e.Recebimento.dtaVenda,
                         dtaRecebimento = e.dtaRecebimento,
+                        dtaRecebimentoEfetivo = e.dtaRecebimentoEfetivo,
                         codResumoVenda = e.Recebimento.codResumoVenda,
                         nsu = e.Recebimento.nsu,
                         numParcela = e.numParcela + " de " + e.Recebimento.numParcelaTotal,
