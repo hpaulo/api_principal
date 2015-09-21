@@ -13,6 +13,7 @@ namespace api.Models
             this.tbLogAcessoUsuarios = new List<tbLogAcessoUsuario>();
             this.grupo_empresa_vendedor = new List<grupo_empresa>();
             this.tbNewsStatus = new List<tbNewsStatus>();
+            this.tbAssinantes = new List<tbAssinante>();
         }
 
         public int id_users { get; set; }
@@ -33,6 +34,7 @@ namespace api.Models
         public virtual ICollection<LoginAutenticacao> LoginAutenticacaos { get; set; }
         public virtual ICollection<tbLogAcessoUsuario> tbLogAcessoUsuarios { get; set; }
         public virtual ICollection<tbNewsStatus> tbNewsStatus { get; set; }
-        public virtual ICollection<tbNewsGrupos> tbNewsGrupos { get; set; }
+        public virtual ICollection<tbNewsGrupo> tbNewsGrupos { get; set; }
+        public virtual ICollection<tbAssinante> tbAssinantes { get; set; }
     }
 }

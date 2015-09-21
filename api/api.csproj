@@ -239,6 +239,7 @@
     <Compile Include="Bibliotecas\CertificadoDigital.cs" />
     <Compile Include="Bibliotecas\CodigoCompensacaoBancos.cs" />
     <Compile Include="Bibliotecas\Device.cs" />
+    <Compile Include="Bibliotecas\iMessenger.cs" />
     <Compile Include="Bibliotecas\LogAcaoUsuario.cs" />
     <Compile Include="Bibliotecas\LogAcesso.cs" />
     <Compile Include="Bibliotecas\MensagemErro.cs" />
@@ -334,9 +335,13 @@
     </Compile>
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
+    <Compile Include="Models\Mapping\tbAssinanteMap.cs" />
+    <Compile Include="Models\Mapping\tbCatalogoNewsGrupoMap.cs" />
     <Compile Include="Models\Mapping\tbDispositivoUsuarioMap.cs" />
     <Compile Include="Models\Object\Ionic.cs" />
     <Compile Include="Models\Object\Login.cs" />
+    <Compile Include="Models\tbAssinante.cs" />
+    <Compile Include="Models\tbCatalogoNewsGrupo.cs" />
     <Compile Include="Models\tbDispositivoUsuario.cs" />
     <Compile Include="Models\Mapping\tbNewsGrupoMap.cs" />
     <Compile Include="Models\Object\AcessoMetodoAPI.cs" />
@@ -969,6 +974,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\iMessenger\" />
     <Folder Include="Views\TbEmpresaFilial\" />
     <Folder Include="Views\TbEmpresaGrupo\" />
     <Folder Include="Views\TbEmpresa\" />
