@@ -55,6 +55,10 @@ namespace api.Negocios.Pos
             NSU = 603,
             DTAVENDA = 605,
             CODRESUMOVENDA = 613,
+
+            //EXPORTAR
+            EXPORTAR = 9999
+
         };
 
         public enum MES
@@ -107,8 +111,8 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.IDEXTRATO:
                         Int32 idExtrato = Convert.ToInt32(item.Value);
-                        if(idExtrato == -1) entity = entity.Where(e => e.idExtrato == null);
-                        else if(idExtrato == 0) entity = entity.Where(e => e.idExtrato != null);
+                        if (idExtrato == -1) entity = entity.Where(e => e.idExtrato == null);
+                        else if (idExtrato == 0) entity = entity.Where(e => e.idExtrato != null);
                         else entity = entity.Where(e => e.idExtrato == idExtrato);
                         break;
 
@@ -402,11 +406,11 @@ namespace api.Negocios.Pos
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
 
+                bool exportar = queryString.TryGetValue("" + (int)CAMPOS.EXPORTAR, out outValue);
 
-                var queryTotal = query;
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
                 if (colecao != 9) // relatório sintético
                 {
@@ -698,59 +702,80 @@ namespace api.Negocios.Pos
                 else if (colecao == 8) // [web]cashflow/Analitico
                 {
                     CollectionRecebimentoParcela = query
-                    .Select(e => new
-                    {
+                        .Select(e => new
+                        {
 
-                        cnpj = e.Recebimento.cnpj,
-                        dsFantasia = e.Recebimento.empresa.ds_fantasia + (e.Recebimento.empresa.filial != null ? e.Recebimento.empresa.filial : ""),
-                        desBandeira = e.Recebimento.BandeiraPos.desBandeira,
-                        dtaVenda = e.Recebimento.dtaVenda,
-                        dtaRecebimento = e.dtaRecebimento,
-                        dtaRecebimentoEfetivo = e.dtaRecebimentoEfetivo,
-                        codResumoVenda = e.Recebimento.codResumoVenda,
-                        nsu = e.Recebimento.nsu,
-                        numParcela = e.numParcela + " de " + e.Recebimento.numParcelaTotal,
-                        valorBruto = e.Recebimento.valorVendaBruta,
-                        valorParcela = e.valorParcelaBruta,
-                        valorLiquida = e.valorParcelaLiquida,
-                        valorDescontado = e.valorDescontado
-                    }).ToList<dynamic>();
+                            cnpj = e.Recebimento.cnpj,
+                            dsFantasia = e.Recebimento.empresa.ds_fantasia + (e.Recebimento.empresa.filial ?? ""),
+                            desBandeira = e.Recebimento.BandeiraPos.desBandeira,
+                            dtaVenda = e.Recebimento.dtaVenda,
+                            dtaRecebimento = e.dtaRecebimento,
+                            dtaRecebimentoEfetivo = e.dtaRecebimentoEfetivo,
+                            codResumoVenda = e.Recebimento.codResumoVenda,
+                            nsu = e.Recebimento.nsu,
+                            numParcela = e.numParcela + " de " + e.Recebimento.numParcelaTotal,
+                            valorBruto = e.Recebimento.valorVendaBruta,
+                            valorParcela = e.valorParcelaBruta,
+                            valorLiquida = e.valorParcelaLiquida,
+                            valorDescontado = e.valorDescontado
+                        }).ToList<dynamic>();
                 }
                 else if (colecao == 9) // [web]/cashflow/Sintético
                 {
-                    var subQuery = query
-                        .GroupBy(x => new { x.Recebimento.empresa, x.Recebimento.BandeiraPos })
-                        .OrderBy(e => e.Key.empresa.ds_fantasia)
-                        .ThenBy(e => e.Key.empresa.filial)
-                        .ThenBy(e => e.Key.BandeiraPos.desBandeira)
-                        .Select(e => new
-                        {
-                            empresa = new
-                            {
-                                nu_cnpj = e.Key.empresa.nu_cnpj,
-                                ds_fantasia = e.Key.empresa.ds_fantasia,
-                                filial = e.Key.empresa.filial
-                            },
-                            bandeira = new
-                            {
-                                desBandeira = e.Key.BandeiraPos.desBandeira,
-                                id = e.Key.BandeiraPos.id,
-                                idOperadora = e.Key.BandeiraPos.idOperadora
-                            },
-                            valorBruto = e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta),
-                            valorParcela = e.Sum(p => p.valorParcelaBruta),
-                            valorLiquida = e.Sum(p => p.valorParcelaLiquida),
-                            valorDescontado = e.Sum(p => p.valorDescontado),
-                            totalTransacoes = e.Count()
-                        });
+                    IEnumerable<dynamic> subQuery;
+
+                    if (exportar)
+                    {
+                        subQuery = query.GroupBy(x => new { x.Recebimento.empresa, x.Recebimento.BandeiraPos })
+                                        .OrderBy(e => e.Key.empresa.ds_fantasia)
+                                        .ThenBy(e => e.Key.empresa.filial)
+                                        .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                                        .Select(e => new
+                                        {
+                                            empresa = e.Key.empresa.ds_fantasia + (e.Key.empresa.filial ?? ""),
+                                            bandeira = e.Key.BandeiraPos.desBandeira,
+                                            valorBruto = e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta),
+                                            valorParcela = e.Sum(p => p.valorParcelaBruta),
+                                            valorLiquida = e.Sum(p => p.valorParcelaLiquida),
+                                            valorDescontado = e.Sum(p => p.valorDescontado),
+                                            totalTransacoes = e.Count()
+                                        });
+                    }
+                    else
+                    {
+                        subQuery = query.GroupBy(x => new { x.Recebimento.empresa, x.Recebimento.BandeiraPos })
+                                        .OrderBy(e => e.Key.empresa.ds_fantasia)
+                                        .ThenBy(e => e.Key.empresa.filial)
+                                        .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                                        .Select(e => new
+                                        {
+                                            empresa = new
+                                            {
+                                                nu_cnpj = e.Key.empresa.nu_cnpj,
+                                                ds_fantasia = e.Key.empresa.ds_fantasia,
+                                                filial = e.Key.empresa.filial
+                                            },
+                                            bandeira = new
+                                            {
+                                                desBandeira = e.Key.BandeiraPos.desBandeira,
+                                                id = e.Key.BandeiraPos.id,
+                                                idOperadora = e.Key.BandeiraPos.idOperadora
+                                            },
+                                            valorBruto = e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta),
+                                            valorParcela = e.Sum(p => p.valorParcelaBruta),
+                                            valorLiquida = e.Sum(p => p.valorParcelaLiquida),
+                                            valorDescontado = e.Sum(p => p.valorDescontado),
+                                            totalTransacoes = e.Count()
+                                        });
+                    }
 
                     retorno.TotalDeRegistros = subQuery.Count();
 
-                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
-                    retorno.Totais.Add("valorDescontado", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorDescontado)) : 0);
-                    retorno.Totais.Add("valorLiquida", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorLiquida)) : 0);
-                    retorno.Totais.Add("valorParcela", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorParcela)) : 0);
-                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.totalTransacoes)) : 0);
+                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorBruto).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("valorDescontado", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorDescontado).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("valorLiquida", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorLiquida).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("valorParcela", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorParcela).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.totalTransacoes).Cast<int>().Sum()) : 0);
 
 
 
@@ -763,6 +788,7 @@ namespace api.Negocios.Pos
 
                     CollectionRecebimentoParcela = subQuery.ToList<dynamic>();
                 }
+                
 
 
 
@@ -858,7 +884,7 @@ namespace api.Negocios.Pos
                                                             .Where(e => e.numParcela == recebimentosParcela.numParcela)
                                                             .FirstOrDefault();
 
-                    if(recebimento != null && recebimento.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
+                    if (recebimento != null && recebimento.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
                     {
                         recebimento.dtaRecebimentoEfetivo = param.dtaRecebimentoEfetivo;
                         _db.SaveChanges();

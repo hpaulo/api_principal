@@ -42,7 +42,7 @@ namespace api.Controllers.Dbo
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
-            catch( Exception e)
+            catch (Exception e)
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
@@ -74,7 +74,7 @@ namespace api.Controllers.Dbo
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
@@ -140,7 +140,7 @@ namespace api.Controllers.Dbo
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;

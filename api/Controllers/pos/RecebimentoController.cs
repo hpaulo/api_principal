@@ -8,6 +8,9 @@ using api.Models;
 using api.Negocios.Pos;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.IO;
+using System.Net.Http.Headers;
+using System.Data;
 
 namespace api.Controllers.Pos
 {
@@ -21,14 +24,26 @@ namespace api.Controllers.Pos
             try
             {
                 log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
-
+                HttpResponseMessage result = null;
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
-                HttpResponseMessage retorno = new HttpResponseMessage();
+                string outValue = null;
+                
+
+                    HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
                     Retorno dados = GatewayRecebimento.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
+                    if (queryString.TryGetValue("" + (int)GatewayRecebimento.CAMPOS.EXPORTAR, out outValue))
+                    {
+                        result = Request.CreateResponse(HttpStatusCode.OK);
+                        result.Content = new StreamContent(new MemoryStream(Negocios.Util.GatewayExportar.CSV(dados.Registros.ToArray())));
+                        result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
+                        result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                        result.Content.Headers.ContentDisposition.FileName = "file" + DateTime.Now.ToString();
+                        return result;
+                    }
                     return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
                 }
                 else
