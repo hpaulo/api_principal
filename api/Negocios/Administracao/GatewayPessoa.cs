@@ -202,11 +202,13 @@ namespace api.Negocios.Administracao
         /// <returns></returns>
         public static Int32 Add(string token, pessoa param)
         {
-            try {
+            try
+            {
                 _db.pessoas.Add(param);
                 _db.SaveChanges();
                 return param.id_pesssoa;
-            }catch (Exception e)
+            }
+            catch (Exception e)
             {
                 if (e is DbEntityValidationException)
                 {
