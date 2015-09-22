@@ -86,6 +86,7 @@ namespace api.Models
         public virtual ICollection<tbContaCorrente> tbContaCorrentes { get; set; }
         public virtual ICollection<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
         public virtual ICollection<tbBancoParametro> tbBancoParametros { get; set; }
+        public virtual ICollection<tbLogCarga> tbLogCargas { get; set; }
         //public virtual ICollection<tbRecebimento> tbRecebimentos { get; set; }
     }
 }

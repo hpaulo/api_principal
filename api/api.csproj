@@ -268,8 +268,10 @@
     <Compile Include="Controllers\Administracao\WebpagesRolesController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersInRolesController.cs" />
+    <Compile Include="Controllers\Card\TbLogCargaController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoBancariaController.cs" />
     <Compile Include="Controllers\Card\tbBancoParametroController.cs" />
+    <Compile Include="Controllers\Card\TbLogCargaDetalheController.cs" />
     <Compile Include="Controllers\Card\TbLoginAdquirenteEmpresaController.cs" />
     <Compile Include="Controllers\Card\TbAdquirenteController.cs" />
     <Compile Include="Controllers\Card\TbRebimentoResumoController.cs" />
@@ -334,6 +336,10 @@
     </Compile>
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
+    <Compile Include="Models\Mapping\tbLogCargaMap.cs" />
+    <Compile Include="Models\tbLogCarga.cs" />
+    <Compile Include="Models\Mapping\tbLogCargaDetalheMap.cs" />
+    <Compile Include="Models\tbLogCargaDetalhe.cs" />
     <Compile Include="Models\Mapping\tbDispositivoUsuarioMap.cs" />
     <Compile Include="Models\Object\Ionic.cs" />
     <Compile Include="Models\Object\Login.cs" />
@@ -802,8 +808,10 @@
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsersInRoles.cs" />
     <Compile Include="Controllers\Card\TbModoEntradaTefController.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbCanal.cs" />
+    <Compile Include="Negocios\Card\GatewayTbLogCarga.cs" />
     <Compile Include="Negocios\Card\GatewayConciliacaoBancaria.cs" />
     <Compile Include="Negocios\Card\GatewayTbBancoParametro.cs" />
+    <Compile Include="Negocios\Card\GatewayTbLogCargaDetalhe.cs" />
     <Compile Include="Negocios\Card\GatewayTbLoginAdquirenteEmpresa.cs" />
     <Compile Include="Negocios\Card\GatewayTbAdquirente.cs" />
     <Compile Include="Negocios\Card\GatewayTbRebimentoResumo.cs" />
