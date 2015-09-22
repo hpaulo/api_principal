@@ -118,7 +118,15 @@ namespace api.Negocios.Admin
                         if (noticia == null)
                             continue;
                         List<int> ids = iMessenger.getIdUsersFromNews(noticia);
-                        entity = entity.Where(e => ids.Contains(e.idUser)).OrderByDescending(e => e.idDispositivoUsuario).Take(1).AsQueryable<tbDispositivoUsuario>();
+
+                        List<int> listFilter = _db.tbDispositivoUsuarios
+                                            .GroupBy(e => new { e.idUser })
+                                            .Select(e => e.Max(l => l.idDispositivoUsuario)
+                                            ).ToList<int>();
+                        entity = entity
+                                        .Where(e => listFilter.Contains(e.idDispositivoUsuario))
+                                        .Where(e => ids.Contains(e.idUser))
+                                        .AsQueryable<tbDispositivoUsuario>();
                         break;
 
                 }
