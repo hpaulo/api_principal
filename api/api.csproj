@@ -261,6 +261,7 @@
     <Compile Include="Bibliotecas\CodigoCompensacaoBancos.cs" />
     <Compile Include="Bibliotecas\Converter.cs" />
     <Compile Include="Bibliotecas\Device.cs" />
+    <Compile Include="Bibliotecas\iMessenger.cs" />
     <Compile Include="Bibliotecas\LogAcaoUsuario.cs" />
     <Compile Include="Bibliotecas\LogAcesso.cs" />
     <Compile Include="Bibliotecas\MensagemErro.cs" />
@@ -358,7 +359,11 @@
     </Compile>
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
+    <Compile Include="Models\Mapping\tbAssinanteMap.cs" />
+    <Compile Include="Models\Mapping\tbCatalogoNewsGrupoMap.cs" />
     <Compile Include="Models\Mapping\tbLogCargaMap.cs" />
+    <Compile Include="Models\tbAssinante.cs" />
+    <Compile Include="Models\tbCatalogoNewsGrupo.cs" />
     <Compile Include="Models\tbLogCarga.cs" />
     <Compile Include="Models\Mapping\tbLogCargaDetalheMap.cs" />
     <Compile Include="Models\tbLogCargaDetalhe.cs" />
@@ -370,7 +375,7 @@
     <Compile Include="Models\Object\AcessoMetodoAPI.cs" />
     <Compile Include="Models\Object\Mensagem.cs" />
     <Compile Include="Models\Object\ParametrosBancarios.cs" />
-    <Compile Include="Models\tbNewsGrupos.cs" />
+    <Compile Include="Models\tbNewsGrupo.cs" />
     <Compile Include="Models\Mapping\tbNewsStatusMap.cs" />
     <Compile Include="Models\tbNewsStatus.cs" />
     <Compile Include="Models\Mapping\tbCatalogoMap.cs" />
