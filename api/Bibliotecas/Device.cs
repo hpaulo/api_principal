@@ -17,7 +17,7 @@ namespace api.Bibliotecas
             if (userAgent == null)
                 return false;
 
-            if (userAgent.Contains("Mobile"))
+            if (userAgent.Contains("Mobile") || userAgent.Contains("Android"))
                 return true;
             else
                 return false;

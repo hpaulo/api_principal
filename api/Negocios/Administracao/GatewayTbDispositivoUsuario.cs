@@ -40,6 +40,7 @@ namespace api.Negocios.Admin
             TMLARGURA = 108,
             TMALTURA = 109,
 
+            IDNEWS = 700,            
         };
 
         /// <summary>
@@ -107,6 +108,25 @@ namespace api.Negocios.Admin
                     case CAMPOS.TMALTURA:
                         short tmAltura = short.Parse(item.Value);
                         entity = entity.Where(e => e.tmAltura.Equals(tmAltura)).AsQueryable<tbDispositivoUsuario>();
+                        break;
+
+
+                    // RELACIONAMENTOS
+                    case CAMPOS.IDNEWS:
+                        Int32 idNews = Convert.ToInt32(item.Value);
+                        tbNews noticia = _db.tbNewss.Where(n => n.idNews == idNews).FirstOrDefault();
+                        if (noticia == null)
+                            continue;
+                        List<int> ids = iMessenger.getIdUsersFromNews(noticia);
+
+                        List<int> listFilter = _db.tbDispositivoUsuarios
+                                            .GroupBy(e => new { e.idUser })
+                                            .Select(e => e.Max(l => l.idDispositivoUsuario)
+                                            ).ToList<int>();
+                        entity = entity
+                                        .Where(e => listFilter.Contains(e.idDispositivoUsuario))
+                                        .Where(e => ids.Contains(e.idUser))
+                                        .AsQueryable<tbDispositivoUsuario>();
                         break;
 
                 }
