@@ -35,7 +35,7 @@ namespace api.Negocios.Admin
             CDEMPRESAGRUPO = 103,
             CDCATALOGO = 104,
             CDCANAL = 105,
-            dsReporter = 106,
+            DSREPORTER = 106,
             DTENVIO = 107,
 
             // PERSONALIZADO
@@ -93,7 +93,7 @@ namespace api.Negocios.Admin
                         short cdCanal = short.Parse(item.Value);
                         entity = entity.Where(e => e.cdCanal.Equals(cdCanal)).AsQueryable<tbNews>();
                         break;
-                    case CAMPOS.dsReporter:
+                    case CAMPOS.DSREPORTER:
                         string dsReporter = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.dsReporter.Equals(dsReporter)).AsQueryable<tbNews>();
                         break;
@@ -149,7 +149,7 @@ namespace api.Negocios.Admin
                     if (orderby == 0) entity = entity.OrderBy(e => e.cdCanal).AsQueryable<tbNews>();
                     else entity = entity.OrderByDescending(e => e.cdCanal).AsQueryable<tbNews>();
                     break;
-                case CAMPOS.dsReporter:
+                case CAMPOS.DSREPORTER:
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsReporter).AsQueryable<tbNews>();
                     else entity = entity.OrderByDescending(e => e.dsReporter).AsQueryable<tbNews>();
                     break;
@@ -355,9 +355,9 @@ namespace api.Negocios.Admin
                     value.dtNews = param.dtNews;
                 if (param.cdEmpresaGrupo != null && param.cdEmpresaGrupo != value.cdEmpresaGrupo)
                     value.cdEmpresaGrupo = param.cdEmpresaGrupo;
-                if (param.cdCatalogo != null && param.cdCatalogo != value.cdCatalogo)
+                if (param.cdCatalogo != 0 && param.cdCatalogo != value.cdCatalogo)
                     value.cdCatalogo = param.cdCatalogo;
-                if (param.cdCanal != null && param.cdCanal != value.cdCanal)
+                if (param.cdCanal != 0 && param.cdCanal != value.cdCanal)
                     value.cdCanal = param.cdCanal;
                 if (param.dsReporter != null && param.dsReporter != value.dsReporter)
                     value.dsReporter = param.dsReporter;

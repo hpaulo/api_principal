@@ -348,6 +348,8 @@ namespace api.Bibliotecas
             // ================================ CLIENTE ========================================== //
             /*                                  EMPRESA                                            */
             controllersOrigem.Clear();
+            // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > CONTAS CORRENTES
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoContasCorrentes, new string[] { "GET" }));
             // [PORTAL] ADMINISTRATIVO > DADOS BANCÁRIOS > PARÂMETROS BANCÁRIOS
             controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoParametrosBancarios, new string[] { "GET" }));
             // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > USUÁRIOS
@@ -360,8 +362,12 @@ namespace api.Bibliotecas
             controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoMonitorCargas, new string[] { "GET" }));
             // [PORTAL] CARD SERVICES > CASH FLOW > RELATÓRIOS
             controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesCashFlowRelatorios, new string[] { "GET" }));
+            // [PORTAL] CARD SERVICES > CONCILIAÇÃO > CONCILIAÇÃO BANCÁRIA
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesConciliacaoBancaria, new string[] { "GET" }));
             // [PORTAL] CARD SERVICES > CONSOLIDAÇÃO > RELATÓRIOS
             controllersOrigem.Add(new ControllersOrigem(idControllerPortalCardServicesConsolidacaoRelatorios, new string[] { "GET" }));
+            // [PORTAL] TAX SERVICES > NOTA FISCAL ELETRÔNICA > IMPORTAÇÃO XML
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalTaxServicesImportacaoXML, new string[] { "GET" }));
             // MOBILE......
             acessoMetodosAPIs.Add(UrlAPIs.CLIENTE_EMPRESA, controllersOrigem);
             /*                               GRUPOEMPRESA                                          */

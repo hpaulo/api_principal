@@ -36,6 +36,7 @@ namespace api.Negocios.Pos
             DTARECEBIMENTO = 104,
             VALORDESCONTADO = 105,
             IDEXTRATO = 106, // -1 para = null, 0 para != null
+            DTARECEBIMENTOEFETIVO = 107,
 
             // EMPRESA
             NU_CNPJ = 300,
@@ -54,6 +55,10 @@ namespace api.Negocios.Pos
             NSU = 603,
             DTAVENDA = 605,
             CODRESUMOVENDA = 613,
+
+            //EXPORTAR
+            EXPORTAR = 9999
+
         };
 
         public enum MES
@@ -106,8 +111,8 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.IDEXTRATO:
                         Int32 idExtrato = Convert.ToInt32(item.Value);
-                        if(idExtrato == -1) entity = entity.Where(e => e.idExtrato == null);
-                        else if(idExtrato == 0) entity = entity.Where(e => e.idExtrato != null);
+                        if (idExtrato == -1) entity = entity.Where(e => e.idExtrato == null);
+                        else if (idExtrato == 0) entity = entity.Where(e => e.idExtrato != null);
                         else entity = entity.Where(e => e.idExtrato == idExtrato);
                         break;
 
@@ -158,6 +163,52 @@ namespace api.Negocios.Pos
                     case CAMPOS.VALORDESCONTADO:
                         decimal valorDescontado = Convert.ToDecimal(item.Value);
                         entity = entity.Where(e => e.valorDescontado.Equals(valorDescontado));
+                        break;
+                    case CAMPOS.DTARECEBIMENTOEFETIVO: // Para os que este campo for null, pega o dtaRecebimento
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null &&
+                                                        (e.dtaRecebimentoEfetivo.Value.Year > dtaIni.Year || (e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month > dtaIni.Month) || (e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaIni.Month && e.dtaRecebimentoEfetivo.Value.Day >= dtaIni.Day)) && 
+                                                        (e.dtaRecebimentoEfetivo.Value.Year < dtaFim.Year || (e.dtaRecebimentoEfetivo.Value.Year == dtaFim.Year && e.dtaRecebimentoEfetivo.Value.Month < dtaFim.Month) || (e.dtaRecebimentoEfetivo.Value.Year == dtaFim.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaFim.Month && e.dtaRecebimentoEfetivo.Value.Day <= dtaFim.Day))
+                                                       ) ||
+                                                       (e.dtaRecebimentoEfetivo == null && 
+                                                        (e.dtaRecebimento.Year > dtaIni.Year || (e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month > dtaIni.Month) || (e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Day >= dtaIni.Day)) && 
+                                                        (e.dtaRecebimento.Year < dtaFim.Year || (e.dtaRecebimento.Year == dtaFim.Year && e.dtaRecebimento.Month < dtaFim.Month) || (e.dtaRecebimento.Year == dtaFim.Year && e.dtaRecebimento.Month == dtaFim.Month && e.dtaRecebimento.Day <= dtaFim.Day))
+                                                       ));
+                        }
+                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value >= dta) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento >= dta));
+                        }
+                        else if (item.Value.Contains("<")) // MENOR IGUAL
+                        {
+                            string busca = item.Value.Replace("<", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value <= dta) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento <= dta));
+                        }
+                        else if (item.Value.Length == 4)
+                        {
+                            string busca = item.Value + "0101";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento.Year == dtaIni.Year));
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaIni.Month) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month));
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaIni.Month && e.dtaRecebimentoEfetivo.Value.Day == dtaIni.Day) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Day == dtaIni.Day));
+                        }
                         break;
 
 
@@ -355,11 +406,11 @@ namespace api.Negocios.Pos
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
 
+                bool exportar = queryString.TryGetValue("" + (int)CAMPOS.EXPORTAR, out outValue);
 
-                var queryTotal = query;
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
                 if (colecao != 9) // relatório sintético
                 {
@@ -651,58 +702,80 @@ namespace api.Negocios.Pos
                 else if (colecao == 8) // [web]cashflow/Analitico
                 {
                     CollectionRecebimentoParcela = query
-                    .Select(e => new
-                    {
+                        .Select(e => new
+                        {
 
-                        cnpj = e.Recebimento.cnpj,
-                        dsFantasia = e.Recebimento.empresa.ds_fantasia + (e.Recebimento.empresa.filial != null ? e.Recebimento.empresa.filial : ""),
-                        desBandeira = e.Recebimento.BandeiraPos.desBandeira,
-                        dtaVenda = e.Recebimento.dtaVenda,
-                        dtaRecebimento = e.dtaRecebimento,
-                        codResumoVenda = e.Recebimento.codResumoVenda,
-                        nsu = e.Recebimento.nsu,
-                        numParcela = e.numParcela + " de " + e.Recebimento.numParcelaTotal,
-                        valorBruto = e.Recebimento.valorVendaBruta,
-                        valorParcela = e.valorParcelaBruta,
-                        valorLiquida = e.valorParcelaLiquida,
-                        valorDescontado = e.valorDescontado
-                    }).ToList<dynamic>();
+                            cnpj = e.Recebimento.cnpj,
+                            dsFantasia = e.Recebimento.empresa.ds_fantasia + (e.Recebimento.empresa.filial ?? ""),
+                            desBandeira = e.Recebimento.BandeiraPos.desBandeira,
+                            dtaVenda = e.Recebimento.dtaVenda,
+                            dtaRecebimento = e.dtaRecebimento,
+                            dtaRecebimentoEfetivo = e.dtaRecebimentoEfetivo,
+                            codResumoVenda = e.Recebimento.codResumoVenda,
+                            nsu = e.Recebimento.nsu,
+                            numParcela = e.numParcela + " de " + e.Recebimento.numParcelaTotal,
+                            valorBruto = e.Recebimento.valorVendaBruta,
+                            valorParcela = e.valorParcelaBruta,
+                            valorLiquida = e.valorParcelaLiquida,
+                            valorDescontado = e.valorDescontado
+                        }).ToList<dynamic>();
                 }
                 else if (colecao == 9) // [web]/cashflow/Sintético
                 {
-                    var subQuery = query
-                        .GroupBy(x => new { x.Recebimento.empresa, x.Recebimento.BandeiraPos })
-                        .OrderBy(e => e.Key.empresa.ds_fantasia)
-                        .ThenBy(e => e.Key.empresa.filial)
-                        .ThenBy(e => e.Key.BandeiraPos.desBandeira)
-                        .Select(e => new
-                        {
-                            empresa = new
-                            {
-                                nu_cnpj = e.Key.empresa.nu_cnpj,
-                                ds_fantasia = e.Key.empresa.ds_fantasia,
-                                filial = e.Key.empresa.filial
-                            },
-                            bandeira = new
-                            {
-                                desBandeira = e.Key.BandeiraPos.desBandeira,
-                                id = e.Key.BandeiraPos.id,
-                                idOperadora = e.Key.BandeiraPos.idOperadora
-                            },
-                            valorBruto = e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta),
-                            valorParcela = e.Sum(p => p.valorParcelaBruta),
-                            valorLiquida = e.Sum(p => p.valorParcelaLiquida),
-                            valorDescontado = e.Sum(p => p.valorDescontado),
-                            totalTransacoes = e.Count()
-                        });
+                    IEnumerable<dynamic> subQuery;
+
+                    if (exportar)
+                    {
+                        subQuery = query.GroupBy(x => new { x.Recebimento.empresa, x.Recebimento.BandeiraPos })
+                                        .OrderBy(e => e.Key.empresa.ds_fantasia)
+                                        .ThenBy(e => e.Key.empresa.filial)
+                                        .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                                        .Select(e => new
+                                        {
+                                            empresa = e.Key.empresa.ds_fantasia + (e.Key.empresa.filial ?? ""),
+                                            bandeira = e.Key.BandeiraPos.desBandeira,
+                                            valorBruto = e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta),
+                                            valorParcela = e.Sum(p => p.valorParcelaBruta),
+                                            valorLiquida = e.Sum(p => p.valorParcelaLiquida),
+                                            valorDescontado = e.Sum(p => p.valorDescontado),
+                                            totalTransacoes = e.Count()
+                                        });
+                    }
+                    else
+                    {
+                        subQuery = query.GroupBy(x => new { x.Recebimento.empresa, x.Recebimento.BandeiraPos })
+                                        .OrderBy(e => e.Key.empresa.ds_fantasia)
+                                        .ThenBy(e => e.Key.empresa.filial)
+                                        .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                                        .Select(e => new
+                                        {
+                                            empresa = new
+                                            {
+                                                nu_cnpj = e.Key.empresa.nu_cnpj,
+                                                ds_fantasia = e.Key.empresa.ds_fantasia,
+                                                filial = e.Key.empresa.filial
+                                            },
+                                            bandeira = new
+                                            {
+                                                desBandeira = e.Key.BandeiraPos.desBandeira,
+                                                id = e.Key.BandeiraPos.id,
+                                                idOperadora = e.Key.BandeiraPos.idOperadora
+                                            },
+                                            valorBruto = e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta),
+                                            valorParcela = e.Sum(p => p.valorParcelaBruta),
+                                            valorLiquida = e.Sum(p => p.valorParcelaLiquida),
+                                            valorDescontado = e.Sum(p => p.valorDescontado),
+                                            totalTransacoes = e.Count()
+                                        });
+                    }
 
                     retorno.TotalDeRegistros = subQuery.Count();
 
-                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorBruto)) : 0);
-                    retorno.Totais.Add("valorDescontado", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorDescontado)) : 0);
-                    retorno.Totais.Add("valorLiquida", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorLiquida)) : 0);
-                    retorno.Totais.Add("valorParcela", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.valorParcela)) : 0);
-                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Sum(r => r.totalTransacoes)) : 0);
+                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorBruto).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("valorDescontado", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorDescontado).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("valorLiquida", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorLiquida).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("valorParcela", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorParcela).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.totalTransacoes).Cast<int>().Sum()) : 0);
 
 
 
@@ -715,6 +788,7 @@ namespace api.Negocios.Pos
 
                     CollectionRecebimentoParcela = subQuery.ToList<dynamic>();
                 }
+                
 
 
 
@@ -791,7 +865,7 @@ namespace api.Negocios.Pos
 
 
         /// <summary>
-        /// Altera data de Recebimento do RecebimentoParcela
+        /// Altera data de Recebimento Efetivo do RecebimentoParcela
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
@@ -800,22 +874,19 @@ namespace api.Negocios.Pos
             try
             {
 
-                if (param == null || param.DtaRecebimentoAtual == null || 
-                    param.DtaRecebimentoNova == null || param.IdsRecebimento == null)
+                if (param == null || param.dtaRecebimentoEfetivo == null || param.recebimentosParcela == null)
                     throw new Exception("Argumento inválido");
 
-                foreach (Int32 idRecebimento in param.IdsRecebimento)
+                foreach (RecebimentosParcela.RecebParcela recebimentosParcela in param.recebimentosParcela)
                 {
                     RecebimentoParcela recebimento = _db.RecebimentoParcelas
-                                                            .Where(e => e.idRecebimento == idRecebimento)
-                                                            .Where(e => e.dtaRecebimento.Year == param.DtaRecebimentoAtual.Year)
-                                                            .Where(e => e.dtaRecebimento.Month == param.DtaRecebimentoAtual.Month)
-                                                            .Where(e => e.dtaRecebimento.Day == param.DtaRecebimentoAtual.Day)
+                                                            .Where(e => e.idRecebimento == recebimentosParcela.idRecebimento)
+                                                            .Where(e => e.numParcela == recebimentosParcela.numParcela)
                                                             .FirstOrDefault();
 
-                    if(recebimento != null && recebimento.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
+                    if (recebimento != null && recebimento.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
                     {
-                        recebimento.dtaRecebimento = param.DtaRecebimentoNova;
+                        recebimento.dtaRecebimentoEfetivo = param.dtaRecebimentoEfetivo;
                         _db.SaveChanges();
                     }
 

@@ -49,7 +49,7 @@ namespace api.Negocios.Card
 
         private static string TIPO_EXTRATO = "E";
         private static string TIPO_RECEBIMENTO = "R";
-        private static decimal TOLERANCIA = new decimal(0.01); // R$0.01 de tolerância para avaliar pré-conciliação
+        private static decimal TOLERANCIA = new decimal(0.03); // R$0.03 de tolerância para avaliar pré-conciliação
 
 
         /// <summary>
@@ -545,7 +545,7 @@ namespace api.Negocios.Card
                             Int32 idExtrato = Convert.ToInt32(extrato.idExtrato);
                             ConciliacaoBancaria recebimento = _db.RecebimentoParcelas
                                                                     .Where(e => e.idExtrato == idExtrato)
-                                                                    .OrderBy(r => r.dtaRecebimento)
+                                                                    .OrderBy(r => r.dtaRecebimentoEfetivo ?? r.dtaRecebimento)
                                                                     .ThenBy(r => r.Recebimento.dtaVenda)
                                                                     .GroupBy(r => r.tbExtrato) // agrupa pelo mesmo extrato para se tornar um único registro
                                                                     .Select(r => new ConciliacaoBancaria
@@ -555,6 +555,7 @@ namespace api.Negocios.Card
                                                                             new ConciliacaoBancaria.ConciliacaoGrupo
                                                                             {
                                                                                 Id = x.idRecebimento,
+                                                                                NumParcela = x.numParcela,
                                                                                 Documento = x.Recebimento.nsu,
                                                                                 Valor = x.valorParcelaLiquida ?? new decimal(0.0),
                                                                                 Bandeira = x.Recebimento.BandeiraPos.desBandeira.ToUpper(),
@@ -563,7 +564,7 @@ namespace api.Negocios.Card
                                                                             .OrderBy(x => x.Bandeira).ThenByDescending(x => x.DataVenda).ThenBy(x => x.Valor)
                                                                             .ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                         ValorTotal = r.Select(x => x.valorParcelaLiquida ?? new decimal(0.0)).Sum(),
-                                                                        Data = r.Select(x => x.dtaRecebimento).FirstOrDefault(),
+                                                                        Data = r.Select(x => x.dtaRecebimentoEfetivo ?? x.dtaRecebimento).FirstOrDefault(),
                                                                         Adquirente = r.Select(x => x.Recebimento.BandeiraPos.Operadora.nmOperadora.ToUpper()).FirstOrDefault(),
                                                                         Bandeira = r.Select(x => x.Recebimento.BandeiraPos.desBandeira.ToUpper()).FirstOrDefault(),
                                                                     }).FirstOrDefault<ConciliacaoBancaria>();
@@ -617,6 +618,7 @@ namespace api.Negocios.Card
                                                             Grupo = new List<ConciliacaoBancaria.ConciliacaoGrupo> {
                                                                 new ConciliacaoBancaria.ConciliacaoGrupo {
                                                                     Id = r.idRecebimento,
+                                                                    NumParcela = r.numParcela,
                                                                     Documento = r.Recebimento.nsu,
                                                                     Valor = r.valorParcelaLiquida ?? new decimal(0.0),
                                                                     Bandeira = r.Recebimento.BandeiraPos.desBandeira.ToUpper(),
@@ -624,7 +626,7 @@ namespace api.Negocios.Card
                                                                 }
                                                             },
                                                             ValorTotal = r.valorParcelaLiquida ?? new decimal(0.0),
-                                                            Data = r.dtaRecebimento,
+                                                            Data = r.dtaRecebimentoEfetivo ?? r.dtaRecebimento,
                                                             DataVenda = r.Recebimento.dtaVenda,
                                                             Adquirente = r.Recebimento.BandeiraPos.Operadora.nmOperadora.ToUpper(),
                                                             Bandeira = r.Recebimento.BandeiraPos.desBandeira.ToUpper(),
@@ -1142,7 +1144,7 @@ namespace api.Negocios.Card
                                                                 .ThenBy(c => c.Data.Month)
                                                                 .ThenBy(c => c.Data.Day)
                                                                 .ThenBy(c => c.Adquirente)
-                                                                .ThenBy(c => c.ValorTotalExtrato) // mais confiável
+                                                                .ThenBy(c => c.RecebimentosParcela != null ? c.ValorTotalRecebimento : c.ValorTotalExtrato)
                                                                 .ThenBy(c => c.Bandeira)
                                                                 .ToList<dynamic>();
 
@@ -1193,20 +1195,31 @@ namespace api.Negocios.Card
             {
                 foreach (ConciliaRecebimentoParcela grupoExtrato in param)
                 {
-                    if (grupoExtrato.IdsRecebimento != null)
+                    if (grupoExtrato.recebimentosParcela != null)
                     {
-                        foreach (Int32 idRecebimento in grupoExtrato.IdsRecebimento)
+                        // Avalia o extrato
+                        tbExtrato extrato = null;
+                        if (grupoExtrato.idExtrato > 0)
+                        {
+                            extrato = _db.tbExtratos.Where(e => e.idExtrato == grupoExtrato.idExtrato).FirstOrDefault();
+                            if (extrato == null) continue; // extrato inválido!
+                        }
+
+
+                        foreach (ConciliaRecebimentoParcela.RecebParcela recebimentoParcela in grupoExtrato.recebimentosParcela)
                         {
                             RecebimentoParcela value = _db.RecebimentoParcelas
-                                                                        .Where(e => e.idRecebimento == idRecebimento)
-                                                                        .Where(e => e.dtaRecebimento.Year == grupoExtrato.Data.Year)
-                                                                        .Where(e => e.dtaRecebimento.Month == grupoExtrato.Data.Month)
-                                                                        .Where(e => e.dtaRecebimento.Day == grupoExtrato.Data.Day)
+                                                                        .Where(e => e.idRecebimento == recebimentoParcela.idRecebimento)
+                                                                        .Where(e => e.numParcela == recebimentoParcela.numParcela)
                                                                         .FirstOrDefault();
                             if (value != null)
                             {
-                                if (grupoExtrato.IdExtrato == -1) value.idExtrato = null;
-                                else value.idExtrato = grupoExtrato.IdExtrato;
+                                if (grupoExtrato.idExtrato == -1) value.idExtrato = null;
+                                else
+                                {
+                                    value.idExtrato = extrato.idExtrato;
+                                    value.dtaRecebimentoEfetivo = extrato.dtExtrato; // atualiza data efetiva de recebimento
+                                }
                                 _db.SaveChanges();
                             }
                         }

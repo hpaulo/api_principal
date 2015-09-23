@@ -5,39 +5,37 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using api.Models;
-using api.Negocios.Administracao;
+using api.Negocios.Card;
 using api.Bibliotecas;
 using api.Models.Object;
 using Newtonsoft.Json;
-using System.Data.Entity.Validation;
 
-namespace api.Controllers.Dbo
+namespace api.Controllers.Card
 {
-    public class PessoaController : ApiController
+    public class TbLogCargaDetalheController : ApiController
     {
 
-        // GET /pessoa/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
+        // GET /tbLogCargaDetalhe/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "GET");
+
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
-
-                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
-
                 if (Permissoes.Autenticado(token))
                 {
-                    Retorno dados = GatewayPessoa.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                    Retorno dados = GatewayTbLogCargaDetalhe.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+
                 }
                 else
                 {
                     log.codResposta = (int)HttpStatusCode.Unauthorized;
-                    log.msgErro = "Unauthorized";
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
@@ -51,18 +49,18 @@ namespace api.Controllers.Dbo
             }
         }
 
-        // POST /pessoa/token/
-        public HttpResponseMessage Post(string token, [FromBody]pessoa param)
+        // POST /tbLogCargaDetalhe/token/
+        public HttpResponseMessage Post(string token, [FromBody]tbLogCargaDetalhe param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "POST");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    Int32 dados = GatewayPessoa.Add(token, param);
+                    Int32 dados = GatewayTbLogCargaDetalhe.Add(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
@@ -81,22 +79,20 @@ namespace api.Controllers.Dbo
                 Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-
-
         }
 
-        // PUT /pessoa/token/
-        public HttpResponseMessage Put(string token, [FromBody]pessoa param)
+        // PUT /tbLogCargaDetalhe/token/
+        public HttpResponseMessage Put(string token, [FromBody]tbLogCargaDetalhe param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put");
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "PUT");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayPessoa.Update(token, param);
+                    GatewayTbLogCargaDetalhe.Update(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
@@ -117,18 +113,18 @@ namespace api.Controllers.Dbo
             }
         }
 
-        // DELETE /pessoa/token/id_pesssoa
-        public HttpResponseMessage Delete(string token, Int32 id_pesssoa)
+        // DELETE /tbLogCargaDetalhe/token/idLogCargaDetalhe
+        public HttpResponseMessage Delete(string token, Int32 idLogCargaDetalhe)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("id_pesssoa : " + id_pesssoa), "Delete");
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("idLogCargaDetalhe : " + idLogCargaDetalhe), "DELETE");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayPessoa.Delete(token, id_pesssoa);
+                    GatewayTbLogCargaDetalhe.Delete(token, idLogCargaDetalhe);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);

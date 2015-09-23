@@ -22,5 +22,6 @@ namespace api.Models
         //public virtual ICollection<tbRecebimento> tbRecebimento { get; set; }
         public virtual ICollection<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
         public virtual ICollection<tbBancoParametro> tbBancoParametros { get; set; }
+        public virtual ICollection<tbLogCarga> tbLogCargas { get; set; }
     }
 }

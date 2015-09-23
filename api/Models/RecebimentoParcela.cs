@@ -12,6 +12,7 @@ namespace api.Models
         public System.DateTime dtaRecebimento { get; set; }
         public decimal valorDescontado { get; set; }
         public Nullable<int> idExtrato { get; set; }
+        public Nullable<DateTime> dtaRecebimentoEfetivo { get; set; }
         public virtual Recebimento Recebimento { get; set; }
         public virtual tbExtrato tbExtrato { get; set; }
     }

@@ -35,6 +35,7 @@ namespace api.Models.Mapping
             this.Property(t => t.dtaRecebimento).HasColumnName("dtaRecebimento");
             this.Property(t => t.valorDescontado).HasColumnName("valorDescontado");
             this.Property(t => t.idExtrato).HasColumnName("idExtrato");
+            this.Property(t => t.dtaRecebimentoEfetivo).HasColumnName("dtaRecebimentoEfetivo");
 
             // Relationships
             this.HasRequired(t => t.Recebimento)
