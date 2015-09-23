@@ -249,7 +249,7 @@ namespace api.Negocios.Admin
                         //cdEmpresaGrupo = e.cdEmpresaGrupo,
                         //cdCatalogo = e.cdCatalogo,
                         //cdCanal = e.cdCanal,
-                        //dsReporter = e.dsReporter,
+                        //cdReporter = e.cdReporter,
                         //dtEnvio = e.dtEnvio,
                         flLido = e.tbNewsStatus.Where(s => s.id_users == idUsers).Select(s => s.flLido).FirstOrDefault()
                     }).ToList<dynamic>();
