@@ -5,33 +5,33 @@ using System.Net;
 using System.Net.Http;
 using System.Web.Http;
 using api.Models;
-using api.Negocios.Admin;
+using api.Negocios.Card;
 using api.Bibliotecas;
 using api.Models.Object;
 using Newtonsoft.Json;
 
-namespace api.Controllers.Admin
+namespace api.Controllers.Card
 {
-    public class TbNewsGrupoController : ApiController
+    public class TbLogCargaDetalheController : ApiController
     {
-    
-        // GET /tbNewsGrupos/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
+
+        // GET /tbLogCargaDetalhe/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "GET");
 
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-					Retorno dados = GatewayTbNewsGrupo.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
-					log.codResposta = (int)HttpStatusCode.OK;
+                    Retorno dados = GatewayTbLogCargaDetalhe.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                    log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK,dados);
-                
+                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+
                 }
                 else
                 {
@@ -49,19 +49,19 @@ namespace api.Controllers.Admin
             }
         }
 
-        // POST /tbNewsGrupos/token/
-        public HttpResponseMessage Post(string token, [FromBody]tbNewsGrupo param)
+        // POST /tbLogCargaDetalhe/token/
+        public HttpResponseMessage Post(string token, [FromBody]tbLogCargaDetalhe param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "POST");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-					Int32 dados = GatewayTbNewsGrupo.Add(token, param);
-					log.codResposta = (int)HttpStatusCode.OK;
+                    Int32 dados = GatewayTbLogCargaDetalhe.Add(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
                 }
@@ -81,18 +81,18 @@ namespace api.Controllers.Admin
             }
         }
 
-        // PUT /tbNewsGrupos/token/
-        public HttpResponseMessage Put(string token, [FromBody]tbNewsGrupo param)
+        // PUT /tbLogCargaDetalhe/token/
+        public HttpResponseMessage Put(string token, [FromBody]tbLogCargaDetalhe param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put");
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "PUT");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbNewsGrupo.Update(token, param);
+                    GatewayTbLogCargaDetalhe.Update(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
@@ -113,18 +113,18 @@ namespace api.Controllers.Admin
             }
         }
 
-        // DELETE /tbNewsGrupos/token/cdNewsGrupo
-        public HttpResponseMessage Delete(string token, Int32 cdNewsGrupo)
+        // DELETE /tbLogCargaDetalhe/token/idLogCargaDetalhe
+        public HttpResponseMessage Delete(string token, Int32 idLogCargaDetalhe)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("cdNewsGrupo : " + cdNewsGrupo), "Delete");
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("idLogCargaDetalhe : " + idLogCargaDetalhe), "DELETE");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    GatewayTbNewsGrupo.Delete(token, cdNewsGrupo);
+                    GatewayTbLogCargaDetalhe.Delete(token, idLogCargaDetalhe);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);

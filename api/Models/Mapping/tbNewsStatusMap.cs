@@ -12,11 +12,7 @@ namespace api.Models.Mapping
             this.HasKey(t => new { t.idNews, t.id_users });
 
             // Properties
-            this.Property(t => t.idNews)
-                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);
-
-            this.Property(t => t.id_users)
-                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);
+            
 
             // Table & Column Mappings
             this.ToTable("tbNewsStatus", "admin");
