@@ -75,8 +75,8 @@ namespace api.Negocios.Admin
 									entity = entity.Where(e => e.flRecebido.Equals(flRecebido)).AsQueryable<tbNewsStatus>();
 								break;
 								case CAMPOS.FLLIDO:
-									Boolean flLido = Convert.ToBoolean(item.Value);
-									entity = entity.Where(e => e.flLido.Equals(flLido)).AsQueryable<tbNewsStatus>();
+									Boolean flLido = item.Value.ToString() == "1" ? true : false;
+                                    entity = entity.Where(e => e.flLido == flLido).AsQueryable<tbNewsStatus>();
 								break;
 
                     }
@@ -128,10 +128,18 @@ namespace api.Negocios.Admin
 				Retorno retorno = new Retorno();
 
                 // Atualiza o contexto
-                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+                //((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
 
-				// GET QUERY
-				var query = getQuery( colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                string outValue = null;
+                Int32 idUsers = Permissoes.GetIdUser(token);
+                //if(Permissoes.isAtosRole(token))
+                if (queryString.TryGetValue("" + (int)CAMPOS.ID_USERS, out outValue))
+                    queryString["" + (int)CAMPOS.ID_USERS] = idUsers.ToString();
+                else if (idUsers != 330) // Força o usuário IMESSENGER a acesso a todos os registros
+                    queryString.Add("" + (int)CAMPOS.ID_USERS, idUsers.ToString());
+
+                // GET QUERY
+                var query = getQuery( colecao, campo, orderBy, pageSize, pageNumber, queryString);
 				var queryTotal = query;
 
 				// TOTAL DE REGISTROS
