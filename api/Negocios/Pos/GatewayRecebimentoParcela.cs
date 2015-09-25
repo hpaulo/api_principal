@@ -444,7 +444,8 @@ namespace api.Negocios.Pos
                         valorParcelaBruta = e.valorParcelaBruta,
                         valorParcelaLiquida = e.valorParcelaLiquida,
                         dtaRecebimento = e.dtaRecebimento,
-                        valorDescontado = e.valorDescontado
+                        valorDescontado = e.valorDescontado,
+                        vlDescontadoAntecipacao = e.vlDescontadoAntecipacao
 
                     }).ToList<dynamic>();
                 }
@@ -476,7 +477,7 @@ namespace api.Negocios.Pos
                         valorParcelaLiquida = e.valorParcelaLiquida,
                         dtaRecebimento = e.dtaRecebimento,
                         valorDescontado = e.valorDescontado,
-
+                        vlDescontadoAntecipacao = e.vlDescontadoAntecipacao
 
                     }).ToList<dynamic>();
                 }
@@ -493,6 +494,7 @@ namespace api.Negocios.Pos
                             vlParcela = (e.Sum(p => p.valorParcelaBruta)),
                             vlDescontado = (e.Sum(p => p.valorDescontado)),
                             vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
+                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
 
@@ -523,6 +525,7 @@ namespace api.Negocios.Pos
                             nrDia = e.Key.Day,
                             vlParcela = (e.Sum(p => p.valorParcelaBruta)),
                             vlDescontado = (e.Sum(p => p.valorDescontado)),
+                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
                             vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
@@ -554,6 +557,7 @@ namespace api.Negocios.Pos
                             nrDia = e.Key.Day,
                             vlParcela = (e.Sum(p => p.valorParcelaBruta)),
                             vlDescontado = (e.Sum(p => p.valorDescontado)),
+                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
                             vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
@@ -584,6 +588,7 @@ namespace api.Negocios.Pos
                             dsAdquirente = e.Key.nmOperadora,
                             vlParcela = (e.Sum(p => p.valorParcelaBruta)),
                             vlDescontado = (e.Sum(p => p.valorDescontado)),
+                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
                             vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
@@ -616,6 +621,7 @@ namespace api.Negocios.Pos
                             dsAdquirente = e.Key.nmOperadora,
                             vlParcela = (e.Sum(p => p.valorParcelaBruta)),
                             vlDescontado = (e.Sum(p => p.valorDescontado)),
+                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
                             vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
@@ -648,6 +654,7 @@ namespace api.Negocios.Pos
                             nrFilial = e.Key.filial,
                             vlParcela = (e.Sum(p => p.valorParcelaBruta)),
                             vlDescontado = (e.Sum(p => p.valorDescontado)),
+                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
                             vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
@@ -679,6 +686,7 @@ namespace api.Negocios.Pos
                             nuCnpj = e.Key.cnpj,
                             vlParcela = (e.Sum(p => p.valorParcelaBruta)),
                             vlDescontado = (e.Sum(p => p.valorDescontado)),
+                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
                             vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
@@ -717,7 +725,8 @@ namespace api.Negocios.Pos
                             valorBruto = e.Recebimento.valorVendaBruta,
                             valorParcela = e.valorParcelaBruta,
                             valorLiquida = e.valorParcelaLiquida,
-                            valorDescontado = e.valorDescontado
+                            valorDescontado = e.valorDescontado,
+                            vlDescontadoAntecipacao = e.vlDescontadoAntecipacao,
                         }).ToList<dynamic>();
                 }
                 else if (colecao == 9) // [web]/cashflow/Sintético
@@ -738,6 +747,7 @@ namespace api.Negocios.Pos
                                             valorParcela = e.Sum(p => p.valorParcelaBruta),
                                             valorLiquida = e.Sum(p => p.valorParcelaLiquida),
                                             valorDescontado = e.Sum(p => p.valorDescontado),
+                                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
                                             totalTransacoes = e.Count()
                                         });
                     }
@@ -765,6 +775,7 @@ namespace api.Negocios.Pos
                                             valorParcela = e.Sum(p => p.valorParcelaBruta),
                                             valorLiquida = e.Sum(p => p.valorParcelaLiquida),
                                             valorDescontado = e.Sum(p => p.valorDescontado),
+                                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
                                             totalTransacoes = e.Count()
                                         });
                     }

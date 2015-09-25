@@ -11,12 +11,6 @@ namespace api.Models.Mapping
             this.HasKey(t => new { t.idRecebimento, t.numParcela });
 
             // Properties
-            /*this.Property(t => t.idRecebimento)
-                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);
-
-            this.Property(t => t.numParcela)
-                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.None);*/
-            // Properties
             this.Property(t => t.dtaRecebimento)
                 .IsRequired();
 
@@ -25,6 +19,9 @@ namespace api.Models.Mapping
 
             this.Property(t => t.valorParcelaLiquida)
                 .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
+
+            this.Property(t => t.vlDescontadoAntecipacao)
+                .IsRequired();
 
             // Table & Column Mappings
             this.ToTable("RecebimentoParcela", "pos");
@@ -36,6 +33,7 @@ namespace api.Models.Mapping
             this.Property(t => t.valorDescontado).HasColumnName("valorDescontado");
             this.Property(t => t.idExtrato).HasColumnName("idExtrato");
             this.Property(t => t.dtaRecebimentoEfetivo).HasColumnName("dtaRecebimentoEfetivo");
+            this.Property(t => t.vlDescontadoAntecipacao).HasColumnName("vlDescontadoAntecipacao");
 
             // Relationships
             this.HasRequired(t => t.Recebimento)
