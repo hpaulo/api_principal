@@ -675,11 +675,20 @@ namespace api.Negocios.Card
                                 foreach (var old in olds)
                                 {
                                     old.dsArquivo = extrato.dsArquivo;
-                                    old.dsTipo = extrato.dsTipo;
+                                    old.dsTipo = extrato.dsTipo; // Ajusta o tipo, que poderia estar como OTHER
                                     _db.SaveChanges();
                                 }
                                 // Ainda tem movimentações referenciando o arquivo antigo?
                                 if (totalTransacoesOld <= 1) File.Delete(arquivoAntigo); // Deleta o arquivo antigo
+                            }
+                            else
+                            {
+                                // Ajusta o tipo, que poderia estar como OTHER
+                                foreach (var old in olds)
+                                {
+                                    old.dsTipo = extrato.dsTipo;
+                                    _db.SaveChanges();
+                                }
                             }
                             #endregion
                         }
