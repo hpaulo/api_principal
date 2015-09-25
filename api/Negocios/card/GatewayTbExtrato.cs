@@ -626,8 +626,11 @@ namespace api.Negocios.Card
                         extrato.dtExtrato = new DateTime(transacao.Date.Year, transacao.Date.Month, transacao.Date.Day);
                         extrato.vlMovimento = transacao.Amount;
                         extrato.nrDocumento = transacao.CheckNum;
-                        extrato.dsTipo = transacao.TransType.ToString();
                         extrato.dsArquivo = filePath;
+                        // OTHER => TRANSFORMA PARA CREDIT OU DEBIT
+                        if (transacao.TransType.Equals(OFXTransactionType.OTHER))
+                            transacao.TransType = extrato.vlMovimento < 0 ? OFXTransactionType.DEBIT : OFXTransactionType.CREDIT;
+                        extrato.dsTipo = transacao.TransType.ToString();
 
                         bool memo = true;
                         extrato.dsDocumento = "";
@@ -668,12 +671,15 @@ namespace api.Negocios.Card
                             // Verifica se o extrato atual possui mais movimentações que o anterior
                             if (ofxDocument.Transactions.Count > totalTransacoesOld)
                             {
-
                                 // Atualiza o arquivo
-                                foreach (var old in olds) old.dsArquivo = extrato.dsArquivo;
+                                foreach (var old in olds)
+                                {
+                                    old.dsArquivo = extrato.dsArquivo;
+                                    old.dsTipo = extrato.dsTipo;
+                                    _db.SaveChanges();
+                                }
                                 // Ainda tem movimentações referenciando o arquivo antigo?
                                 if (totalTransacoesOld <= 1) File.Delete(arquivoAntigo); // Deleta o arquivo antigo
-
                             }
                             #endregion
                         }
