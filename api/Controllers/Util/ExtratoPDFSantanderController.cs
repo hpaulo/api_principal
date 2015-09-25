@@ -35,6 +35,26 @@ namespace api.Controllers.Util
         }*/
 
 
+        private static bool iniciaComData(string text)
+        {
+            if (!text.Contains("/")) return false;
+
+            text = text.TrimStart();
+
+            string data = text.TrimStart().Substring(0, 10);
+
+            try
+            {
+                DateTime.ParseExact(data.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+
         public static OFXDocument Import(string pathFilename)
         {
             //DadosSantander dados = new DadosSantander();
@@ -78,7 +98,7 @@ namespace api.Controllers.Util
             bool head = false;
             for (int i = 0; i < temp.Count; i++)
             {
-                if(i == 201)
+                if (i == 65)
                     Console.WriteLine("Line: " + i + " Total: " + temp.Count + " | " + temp[i].ToString());
                 string value = String.Empty;
 
@@ -147,7 +167,7 @@ namespace api.Controllers.Util
 
                                 if (cipherText.IndexOf("IOF") < 0 && iof == 0)
                                 {
-                                    if (cipherText.Contains("/") && !tratamento)
+                                    if (iniciaComData(cipherText) && !tratamento)
                                     {
                                         //row.row = cipherText;
 
@@ -175,11 +195,20 @@ namespace api.Controllers.Util
                                         //row.nrDocumento = nrDocumento;
                                         transaction.CheckNum = nrDocumento;
 
-                                        string val = (cipherText.Substring(cipherText.IndexOf(nrDocumento) + nrDocumento.Length, (cipherText.Length - (cipherText.IndexOf(nrDocumento) + nrDocumento.Length)))).Trim().TrimStart().TrimEnd().Replace(" ", "");
+                                        //string val = (cipherText.Substring(cipherText.IndexOf(nrDocumento) + nrDocumento.Length, (cipherText.Length - (cipherText.IndexOf(nrDocumento) + nrDocumento.Length)))).Trim().TrimStart().TrimEnd().Replace(" ", "");
+                                        string val = cipherText.Substring(cipherText.IndexOf(nrDocumento) + nrDocumento.Length).TrimStart();
+                                        if (val.Contains(" ")) val = val.Substring(0, val.IndexOf(" "));
                                         //row.vlMovimento = Convert.ToDecimal(val);
                                         transaction.Amount = Convert.ToDecimal(val);
                                         //row.dsDocumento = cipherText.Substring(11, cipherText.IndexOf(row.nrDocumento) - 11);
                                         transaction.Memo = cipherText.Substring(11, cipherText.IndexOf(nrDocumento) - 11);
+                                        // Legenda?
+                                        if (transaction.Memo.EndsWith(" a ")) // Bloqueio Dia / ADM
+                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a "));
+                                        else if (transaction.Memo.EndsWith(" b ")) // Bloqueado
+                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b "));
+                                        else if (transaction.Memo.EndsWith(" p ")) // Lançamento Provisionado
+                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p "));
                                         //row.dsTipo = row.vlMovimento > 0 ? "CREDIT" : "DEBIT";
                                         transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
 
@@ -207,9 +236,10 @@ namespace api.Controllers.Util
                                                 string filter = String.Empty;
                                                 filter = cipherText.Replace(stringTratamento3, " ");
 
-                                                string[] verify = filter.Split(',');
-                                                if (verify.Length > 2)
+                                                /*string[] verify = filter.Split(',');
+                                                if (verify.Length > 2) 
                                                     filter = cipherText.Replace(filter.Substring((filter.IndexOf(',') + 3), filter.Length - (filter.IndexOf(',') + 3)), "");
+                                                */
 
                                                 string[] verify2 = filter.Split('/');
                                                 if (verify2.Length > 4)
@@ -227,9 +257,18 @@ namespace api.Controllers.Util
                                                 //row.nrDocumento = Regex.Match(filter.Substring(10, filter.Length - 10), @"\d+").Value;
                                                 transaction.CheckNum = Regex.Match(filter.Substring(10, filter.Length - 10), @"\d+").Value;
                                                 //row.vlMovimento = Convert.ToDecimal(filter.Substring(filter.IndexOf(row.nrDocumento) + row.nrDocumento.Length, (filter.Length - (filter.IndexOf(row.nrDocumento) + row.nrDocumento.Length))).Trim().TrimStart().TrimEnd());
-                                                transaction.Amount = Convert.ToDecimal(filter.Substring(filter.IndexOf(transaction.CheckNum) + transaction.CheckNum.Length, (filter.Length - (filter.IndexOf(transaction.CheckNum) + transaction.CheckNum.Length))).Trim().TrimStart().TrimEnd());
+                                                string amount = filter.Substring(filter.IndexOf(transaction.CheckNum) + transaction.CheckNum.Length).TrimStart();
+                                                if (amount.Contains(" ")) amount = amount.Substring(0, amount.IndexOf(" "));
+                                                transaction.Amount = Convert.ToDecimal(amount);//filter.Substring(filter.IndexOf(transaction.CheckNum) + transaction.CheckNum.Length, (filter.Length - (filter.IndexOf(transaction.CheckNum) + transaction.CheckNum.Length))).Trim().TrimStart().TrimEnd());
                                                 //row.dsDocumento = cipherText.Substring(11, cipherText.IndexOf(row.nrDocumento) - 11);
                                                 transaction.Memo = cipherText.Substring(11, cipherText.IndexOf(transaction.CheckNum) - 11);
+                                                // Legenda?
+                                                if(transaction.Memo.EndsWith(" a ")) // Bloqueio Dia / ADM
+                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a "));
+                                                else if (transaction.Memo.EndsWith(" b ")) // Bloqueado
+                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b "));
+                                                else if (transaction.Memo.EndsWith(" p ")) // Lançamento Provisionado
+                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p "));
                                                 //row.dsTipo = row.vlMovimento > 0 ? "CREDIT" : "DEBIT";
                                                 transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
 

@@ -50,7 +50,7 @@ namespace api.Controllers.Admin
         }
 
         // POST /tbNewsGrupos/token/
-        public HttpResponseMessage Post(string token, [FromBody]tbNewsGrupos param)
+        public HttpResponseMessage Post(string token, [FromBody]tbNewsGrupo param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
@@ -82,7 +82,7 @@ namespace api.Controllers.Admin
         }
 
         // PUT /tbNewsGrupos/token/
-        public HttpResponseMessage Put(string token, [FromBody]tbNewsGrupos param)
+        public HttpResponseMessage Put(string token, [FromBody]tbNewsGrupo param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
