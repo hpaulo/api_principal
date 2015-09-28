@@ -37,6 +37,7 @@ namespace api.Negocios.Pos
             VALORDESCONTADO = 105,
             IDEXTRATO = 106, // -1 para = null, 0 para != null
             DTARECEBIMENTOEFETIVO = 107,
+            VLDESCONTADOANTECIPACAO = 108,
 
             // EMPRESA
             NU_CNPJ = 300,
@@ -162,7 +163,11 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.VALORDESCONTADO:
                         decimal valorDescontado = Convert.ToDecimal(item.Value);
-                        entity = entity.Where(e => e.valorDescontado.Equals(valorDescontado));
+                        entity = entity.Where(e => e.valorDescontado == valorDescontado);
+                        break;
+                    case CAMPOS.VLDESCONTADOANTECIPACAO:
+                        decimal vlDescontadoAntecipacao = Convert.ToDecimal(item.Value);
+                        entity = entity.Where(e => e.vlDescontadoAntecipacao == vlDescontadoAntecipacao);
                         break;
                     case CAMPOS.DTARECEBIMENTOEFETIVO: // Para os que este campo for null, pega o dtaRecebimento
                         if (item.Value.Contains("|")) // BETWEEN
@@ -345,7 +350,10 @@ namespace api.Negocios.Pos
                     if (orderby == 0) entity = entity.OrderBy(e => e.valorDescontado);
                     else entity = entity.OrderByDescending(e => e.valorDescontado);
                     break;
-
+                case CAMPOS.VLDESCONTADOANTECIPACAO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.vlDescontadoAntecipacao);
+                    else entity = entity.OrderByDescending(e => e.vlDescontadoAntecipacao);
+                    break;
 
                 // PERSONALIZADO
                 case CAMPOS.DTAVENDA:
@@ -416,6 +424,7 @@ namespace api.Negocios.Pos
                 {
                     retorno.Totais.Add("valorBruto", query.Count() > 0 ? Convert.ToDecimal(query.GroupBy(r => r.Recebimento).Sum(r => r.Key.valorVendaBruta)) : 0);
                     retorno.Totais.Add("valorDescontado", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorDescontado)) : 0);
+                    retorno.Totais.Add("vlDescontadoAntecipacao", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.vlDescontadoAntecipacao)) : 0);
                     retorno.Totais.Add("valorParcelaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaBruta)) : 0);
                     retorno.Totais.Add("valorParcelaLiquida", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaLiquida)) : 0);
                 }
@@ -784,6 +793,7 @@ namespace api.Negocios.Pos
 
                     retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorBruto).Cast<decimal>().Sum()) : 0);
                     retorno.Totais.Add("valorDescontado", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorDescontado).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("vlDescontadoAntecipacao", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.vlDescontadoAntecipacao).Cast<decimal>().Sum()) : 0);
                     retorno.Totais.Add("valorLiquida", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorLiquida).Cast<decimal>().Sum()) : 0);
                     retorno.Totais.Add("valorParcela", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorParcela).Cast<decimal>().Sum()) : 0);
                     retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.totalTransacoes).Cast<int>().Sum()) : 0);

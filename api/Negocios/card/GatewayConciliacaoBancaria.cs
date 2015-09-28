@@ -67,7 +67,7 @@ namespace api.Negocios.Card
                 {
                     Conciliado = (int)TIPO_CONCILIADO.NAO_CONCILIADO,
                     ExtratoBancario = item.Tipo != TIPO_EXTRATO ? null : item.Grupo,
-                    RecebimentosParcela = item.Tipo != TIPO_RECEBIMENTO ? null : item.Grupo,
+                    RecebimentosParcela = item.Tipo != TIPO_RECEBIMENTO ? null : item.Grupo.OrderBy(x => x.Bandeira).ThenBy(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                     Adquirente = item.Adquirente,
                     Bandeira = item.Bandeira,
                     Data = item.Data,
@@ -110,7 +110,7 @@ namespace api.Negocios.Card
                 {
                     Conciliado = (int)tipo,
                     ExtratoBancario = movimentacao.Grupo,
-                    RecebimentosParcela = recebimento.Grupo,
+                    RecebimentosParcela = recebimento.Grupo.OrderBy(x => x.Bandeira).ThenBy(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                     Adquirente = movimentacao.Adquirente,
                     Bandeira = recebimento.Bandeira,
                     Memo = movimentacao.Memo,
@@ -414,7 +414,7 @@ namespace api.Negocios.Card
                 if (queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
                 {
                     data = queryString["" + (int)CAMPOS.DATA];
-                    queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, data);
+                    queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, data);
                     queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, data);
                 }
                 // GRUPO EMPRESA
@@ -560,8 +560,12 @@ namespace api.Negocios.Card
                                                                                 Valor = x.valorParcelaLiquida ?? new decimal(0.0),
                                                                                 Bandeira = x.Recebimento.BandeiraPos.desBandeira.ToUpper(),
                                                                                 DataVenda = x.Recebimento.dtaVenda,
+                                                                                DataPrevista = x.dtaRecebimento,
                                                                             })
-                                                                            .OrderBy(x => x.Bandeira).ThenByDescending(x => x.DataVenda).ThenBy(x => x.Valor)
+                                                                            .OrderBy(x => x.Bandeira)
+                                                                            .ThenByDescending(x => x.DataVenda)
+                                                                            .ThenBy(x => x.DataPrevista)
+                                                                            .ThenBy(x => x.Valor)
                                                                             .ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                         ValorTotal = r.Select(x => x.valorParcelaLiquida ?? new decimal(0.0)).Sum(),
                                                                         Data = r.Select(x => x.dtaRecebimentoEfetivo ?? x.dtaRecebimento).FirstOrDefault(),
@@ -572,7 +576,7 @@ namespace api.Negocios.Card
                             recebimento = new ConciliacaoBancaria
                             {
                                 Tipo = TIPO_RECEBIMENTO, // recebimento
-                                Grupo = recebimento.Grupo.OrderBy(x => x.Bandeira).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(), // ordena
+                                Grupo = recebimento.Grupo.OrderBy(x => x.Bandeira).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(), // ordena
                                 ValorTotal = recebimento.ValorTotal,
                                 Data = recebimento.Data,
                                 Adquirente = recebimento.Adquirente,
@@ -623,6 +627,7 @@ namespace api.Negocios.Card
                                                                     Valor = r.valorParcelaLiquida ?? new decimal(0.0),
                                                                     Bandeira = r.Recebimento.BandeiraPos.desBandeira.ToUpper(),
                                                                     DataVenda = r.Recebimento.dtaVenda,
+                                                                    DataPrevista = r.dtaRecebimento,
                                                                 }
                                                             },
                                                             ValorTotal = r.valorParcelaLiquida ?? new decimal(0.0),
@@ -683,7 +688,7 @@ namespace api.Negocios.Card
                                                                     .Select(r => new ConciliacaoBancaria
                                                                     {
                                                                         Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                        Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Bandeira).ThenByDescending(x => x.DataVenda).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                        Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Bandeira).ThenByDescending(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                         Data = r.Key.Data,
                                                                         ValorTotal = r.Sum(x => x.Grupo[0].Valor),
                                                                         Adquirente = r.Key.Adquirente,
@@ -754,7 +759,7 @@ namespace api.Negocios.Card
                                                                     .Select(r => new ConciliacaoBancaria
                                                                     {
                                                                         Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                        Grupo = r.Select(x => x.Grupo[0]).OrderByDescending(x => x.DataVenda).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                        Grupo = r.Select(x => x.Grupo[0]).OrderByDescending(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                         Data = r.Key.Data,
                                                                         ValorTotal = r.Sum(x => x.Grupo[0].Valor),
                                                                         Adquirente = r.Key.Adquirente,
@@ -853,7 +858,7 @@ namespace api.Negocios.Card
                                                                                 .Select(r => new ConciliacaoBancaria
                                                                                 {
                                                                                     Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderByDescending(x => x.DataVenda).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderByDescending(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                                     Data = r.Key.Data,
                                                                                     ValorTotal = r.Sum(x => x.Grupo[0].Valor),
                                                                                     Adquirente = r.Key.Adquirente,
@@ -874,7 +879,7 @@ namespace api.Negocios.Card
                                                                 .Select(r => new ConciliacaoBancaria
                                                                 {
                                                                     Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.DataVenda).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                     Data = r.Key.Data,
                                                                     ValorTotal = r.Sum(x => x.Grupo[0].Valor),
                                                                     Adquirente = r.Key.Adquirente,
@@ -979,7 +984,7 @@ namespace api.Negocios.Card
                                                                                         .Select(r => new ConciliacaoBancaria
                                                                                         {
                                                                                             Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                                            Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Bandeira).ThenBy(x => x.DataVenda).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                            Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Bandeira).ThenBy(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                                             Data = r.Key.Data,
                                                                                             ValorTotal = r.Sum(x => x.Grupo[0].Valor),
                                                                                             Adquirente = r.Key.Adquirente,
@@ -1036,7 +1041,7 @@ namespace api.Negocios.Card
                                                                             .Select(r => new ConciliacaoBancaria
                                                                             {
                                                                                 Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                                Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.DataVenda).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                                 Data = r.Key.Data,
                                                                                 ValorTotal = r.Sum(x => x.Grupo[0].Valor),
                                                                                 Adquirente = r.Key.Adquirente,
@@ -1075,7 +1080,7 @@ namespace api.Negocios.Card
                                                                                     .Select(r => new ConciliacaoBancaria
                                                                                     {
                                                                                         Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                                        Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.DataVenda).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                        Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                                         Data = r.Key.Data,
                                                                                         ValorTotal = r.Sum(x => x.Grupo[0].Valor),
                                                                                         Adquirente = r.Key.Adquirente,
@@ -1111,7 +1116,7 @@ namespace api.Negocios.Card
                                                                                 .Select(r => new ConciliacaoBancaria
                                                                                 {
                                                                                     Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.DataVenda).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                                     Data = r.Key.Data,
                                                                                     ValorTotal = r.Sum(x => x.Grupo[0].Valor),
                                                                                     Adquirente = r.Key.Adquirente,
