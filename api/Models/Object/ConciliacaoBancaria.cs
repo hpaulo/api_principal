@@ -112,6 +112,13 @@ namespace api.Models.Object
                 set { dataVenda = value; }
             }
 
+            private Nullable<DateTime> dataPrevista; // data de recebimento prevista
+            public Nullable<DateTime> DataPrevista
+            {
+                get { return dataPrevista; }
+                set { dataPrevista = value; }
+            }
+
             private Nullable<int> numParcela;
             public Nullable<int> NumParcela
             {

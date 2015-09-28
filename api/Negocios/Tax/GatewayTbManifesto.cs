@@ -1532,9 +1532,10 @@ namespace api.Negocios.Tax
 
                     CollectionTbManifesto.Clear();
                     CollectionTbManifesto = lista;
+
                 }
 
-                retorno.TotalDeRegistros = CollectionTbManifesto.Count();
+                //retorno.TotalDeRegistros = CollectionTbManifesto.Count;
                 retorno.Registros = CollectionTbManifesto;
 
                 return retorno;

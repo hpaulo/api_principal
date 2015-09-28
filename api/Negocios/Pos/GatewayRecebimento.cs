@@ -540,19 +540,21 @@ namespace api.Negocios.Pos
                                         });
                     }
 
-                    retorno.TotalDeRegistros = subQuery.Count();
+                    CollectionRecebimento = subQuery.ToList<dynamic>();
 
-                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToInt32(subQuery.Select(r => r.totalTransacoes).Cast<int>().Sum()) : 0);
-                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorBruto).Cast<decimal>().Sum()) : 0);
+                    retorno.TotalDeRegistros = CollectionRecebimento.Count;
+
+                    retorno.Totais.Add("totalTransacoes", CollectionRecebimento.Count > 0 ? Convert.ToInt32(CollectionRecebimento.Select(r => r.totalTransacoes).Cast<int>().Sum()) : 0);
+                    retorno.Totais.Add("valorBruto", CollectionRecebimento.Count > 0 ? Convert.ToDecimal(CollectionRecebimento.Select(r => r.valorBruto).Cast<decimal>().Sum()) : 0);
 
                     // PAGINAÇÃO
                     int skipRows = (pageNumber - 1) * pageSize;
                     if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                        subQuery = subQuery.Skip(skipRows).Take(pageSize);
+                        CollectionRecebimento = CollectionRecebimento.Skip(skipRows).Take(pageSize).ToList<dynamic>();
                     else
                         pageNumber = 1;
 
-                    CollectionRecebimento = subQuery.ToList<dynamic>();
+                    
                 }
                 else if (colecao == 4) // Portal/RelatorioSintetico
                 {
@@ -599,39 +601,21 @@ namespace api.Negocios.Pos
                                          });
                     }
 
-                    retorno.TotalDeRegistros = subQuery.Count();
+                    CollectionRecebimento = subQuery.ToList<dynamic>();
 
-                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToInt32(subQuery.Select(r => r.totalTransacoes).Cast<int>().Sum()) : 0);
-                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorBruto).Cast<decimal>().Sum()) : 0);
+                    retorno.TotalDeRegistros = CollectionRecebimento.Count;
+
+                    retorno.Totais.Add("totalTransacoes", CollectionRecebimento.Count > 0 ? Convert.ToInt32(CollectionRecebimento.Select(r => r.totalTransacoes).Cast<int>().Sum()) : 0);
+                    retorno.Totais.Add("valorBruto", CollectionRecebimento.Count > 0 ? Convert.ToDecimal(CollectionRecebimento.Select(r => r.valorBruto).Cast<decimal>().Sum()) : 0);
 
                     // PAGINAÇÃO
                     int skipRows = (pageNumber - 1) * pageSize;
                     if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                        subQuery = subQuery.Skip(skipRows).Take(pageSize);
+                        CollectionRecebimento = CollectionRecebimento.Skip(skipRows).Take(pageSize).ToList<dynamic>();
                     else
                         pageNumber = 1;
-
-                    CollectionRecebimento = subQuery.ToList<dynamic>();
                 }
                 else if (colecao == 5) // Portal/RelatorioAnalitico
-                {
-                    CollectionRecebimento = query
-
-                     .Select(e => new
-                     {
-                         e.cnpj,
-                         e.dtaVenda,
-                         dsFantasia = e.empresa.ds_fantasia + (e.empresa.filial != null ? e.empresa.filial : ""),
-                         dsTerminalLogico = e.TerminalLogico.dsTerminalLogico.Equals("0") ? "-" : e.TerminalLogico.dsTerminalLogico,
-                         e.BandeiraPos.desBandeira,
-                         e.nsu,
-                         e.cdAutorizador,
-                         e.valorVendaBruta
-                     }).ToList<dynamic>();
-
-
-                }
-                else if (colecao == -5) // Portal/RelatorioAnalitico
                 {
                     CollectionRecebimento = query
 

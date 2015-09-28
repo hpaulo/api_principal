@@ -871,6 +871,10 @@ namespace api.Bibliotecas
         /// <returns></returns>
         public static bool usuarioTemPermissaoController(string token, Int32 idController)
         {
+            Int32 idControllerPortalMinhaConta = 91;
+
+            if (idController == idControllerPortalMinhaConta) return true; // Minha conta => todos tem acesso
+
             Int32 idRole = GetRoleId(token);
             if (idRole == 0) return false;
 
