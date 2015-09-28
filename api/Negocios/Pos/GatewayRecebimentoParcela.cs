@@ -789,25 +789,25 @@ namespace api.Negocios.Pos
                                         });
                     }
 
-                    retorno.TotalDeRegistros = subQuery.Count();
+                    CollectionRecebimentoParcela = subQuery.ToList<dynamic>();
 
-                    retorno.Totais.Add("valorBruto", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorBruto).Cast<decimal>().Sum()) : 0);
-                    retorno.Totais.Add("valorDescontado", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorDescontado).Cast<decimal>().Sum()) : 0);
-                    retorno.Totais.Add("vlDescontadoAntecipacao", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.vlDescontadoAntecipacao).Cast<decimal>().Sum()) : 0);
-                    retorno.Totais.Add("valorLiquida", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorLiquida).Cast<decimal>().Sum()) : 0);
-                    retorno.Totais.Add("valorParcela", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.valorParcela).Cast<decimal>().Sum()) : 0);
-                    retorno.Totais.Add("totalTransacoes", subQuery.Count() > 0 ? Convert.ToDecimal(subQuery.Select(r => r.totalTransacoes).Cast<int>().Sum()) : 0);
+                    retorno.TotalDeRegistros = CollectionRecebimentoParcela.Count;
+
+                    retorno.Totais.Add("valorBruto", CollectionRecebimentoParcela.Count > 0 ? Convert.ToDecimal(CollectionRecebimentoParcela.Select(r => r.valorBruto).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("valorDescontado", CollectionRecebimentoParcela.Count > 0 ? Convert.ToDecimal(CollectionRecebimentoParcela.Select(r => r.valorDescontado).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("vlDescontadoAntecipacao", CollectionRecebimentoParcela.Count > 0 ? Convert.ToDecimal(CollectionRecebimentoParcela.Select(r => r.vlDescontadoAntecipacao).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("valorLiquida", CollectionRecebimentoParcela.Count > 0 ? Convert.ToDecimal(CollectionRecebimentoParcela.Select(r => r.valorLiquida).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("valorParcela", CollectionRecebimentoParcela.Count > 0 ? Convert.ToDecimal(CollectionRecebimentoParcela.Select(r => r.valorParcela).Cast<decimal>().Sum()) : 0);
+                    retorno.Totais.Add("totalTransacoes", CollectionRecebimentoParcela.Count > 0 ? Convert.ToDecimal(CollectionRecebimentoParcela.Select(r => r.totalTransacoes).Cast<int>().Sum()) : 0);
 
 
 
                     // PAGINAÇÃO
                     int skipRows = (pageNumber - 1) * pageSize;
                     if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                        subQuery = subQuery.Skip(skipRows).Take(pageSize);
+                        CollectionRecebimentoParcela = CollectionRecebimentoParcela.Skip(skipRows).Take(pageSize).ToList<dynamic>();
                     else
                         pageNumber = 1;
-
-                    CollectionRecebimentoParcela = subQuery.ToList<dynamic>();
                 }
                 
 
