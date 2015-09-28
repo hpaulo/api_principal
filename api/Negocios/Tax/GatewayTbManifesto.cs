@@ -1510,6 +1510,7 @@ namespace api.Negocios.Tax
                         vlNFe = e.vlNFe,
                         nrChave = e.nrChave,
                         cdGrupo = e.cdGrupo,
+                        flEntrega = e.flEntrega == null ? false : e.flEntrega,
                     }).ToList<dynamic>();
 
                     List<dynamic> lista = new List<dynamic>();
@@ -1525,6 +1526,7 @@ namespace api.Negocios.Tax
                             vlNFe = item.vlNFe,
                             nrChave = item.nrChave,
                             cdGrupo = item.cdGrupo,
+                            flEntrega = item.flEntrega,
                         };
 
                         lista.Add(e);
