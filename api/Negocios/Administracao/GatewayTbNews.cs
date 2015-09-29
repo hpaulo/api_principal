@@ -347,11 +347,11 @@ namespace api.Negocios.Admin
                 // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-                if (param.idNews != null && param.idNews != value.idNews)
-                    value.idNews = param.idNews;
+                //if (param.idNews != null && param.idNews != value.idNews)
+                //    value.idNews = param.idNews;
                 if (param.dsNews != null && param.dsNews != value.dsNews)
                     value.dsNews = param.dsNews;
-                if (param.dtNews != null && param.dtNews != value.dtNews)
+                if (param.dtNews.Year > 1900 && param.dtNews != value.dtNews)
                     value.dtNews = param.dtNews;
                 if (param.cdEmpresaGrupo != null && param.cdEmpresaGrupo != value.cdEmpresaGrupo)
                     value.cdEmpresaGrupo = param.cdEmpresaGrupo;
