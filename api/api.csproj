@@ -271,7 +271,6 @@
     <Compile Include="Bibliotecas\UrlAPIs.cs" />
     <Compile Include="Controllers\Administracao\TbDispositivoUsuarioController.cs" />
     <Compile Include="Controllers\Administracao\TbNewsStatusController.cs" />
-    <Compile Include="Controllers\Administracao\TbNewsGrupoController.cs" />
     <Compile Include="Controllers\Administracao\TbCatalogoController.cs" />
     <Compile Include="Controllers\Administracao\TbNewsController.cs" />
     <Compile Include="Controllers\Administracao\TbCanalController.cs" />
@@ -360,10 +359,8 @@
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbAssinanteMap.cs" />
-    <Compile Include="Models\Mapping\tbCatalogoNewsGrupoMap.cs" />
     <Compile Include="Models\Mapping\tbLogCargaMap.cs" />
     <Compile Include="Models\tbAssinante.cs" />
-    <Compile Include="Models\tbCatalogoNewsGrupo.cs" />
     <Compile Include="Models\tbLogCarga.cs" />
     <Compile Include="Models\Mapping\tbLogCargaDetalheMap.cs" />
     <Compile Include="Models\tbLogCargaDetalhe.cs" />
@@ -371,11 +368,9 @@
     <Compile Include="Models\Object\Ionic.cs" />
     <Compile Include="Models\Object\Login.cs" />
     <Compile Include="Models\tbDispositivoUsuario.cs" />
-    <Compile Include="Models\Mapping\tbNewsGrupoMap.cs" />
     <Compile Include="Models\Object\AcessoMetodoAPI.cs" />
     <Compile Include="Models\Object\Mensagem.cs" />
     <Compile Include="Models\Object\ParametrosBancarios.cs" />
-    <Compile Include="Models\tbNewsGrupo.cs" />
     <Compile Include="Models\Mapping\tbNewsStatusMap.cs" />
     <Compile Include="Models\tbNewsStatus.cs" />
     <Compile Include="Models\Mapping\tbCatalogoMap.cs" />
@@ -813,7 +808,6 @@
     <Compile Include="Models\webpages_UsersInRoles.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbDispositivoUsuario.cs" />
     <Compile Include="Negocios\Administracao\GatewaytbNewsStatus.cs" />
-    <Compile Include="Negocios\Administracao\GatewayTbNewsGrupo.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbCatalogo.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbNews.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbEmpresa.cs" />
