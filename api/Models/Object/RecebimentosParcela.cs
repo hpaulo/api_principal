@@ -15,6 +15,18 @@ namespace api.Models.Object
         {
             public Int32 idRecebimento;
             public Int32 numParcela;
+
+            public RecebParcela()
+            {
+                this.idRecebimento = 0;
+                this.numParcela = 0;
+            }
+
+            public RecebParcela(Int32 idRecebimento, Int32 numParcela)
+            {
+                this.idRecebimento = idRecebimento;
+                this.numParcela = numParcela;
+            }
         }
     }
 }

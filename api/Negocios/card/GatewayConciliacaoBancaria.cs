@@ -294,7 +294,8 @@ namespace api.Negocios.Card
                 #region PROCESSA COMBINAÇÕES E CONCILIA EVITANDO DUPLICIDADES
                 // Ordena por total de combinações encontradas
                 gruposExtrato = gruposExtrato.OrderBy(g => g.recebimento.Count).ToList<dynamic>();
-                Dictionary<Int32, bool> recebimentosPreConciliados = new Dictionary<Int32, bool>();
+                //Dictionary<Int32, bool> recebimentosPreConciliados = new Dictionary<Int32, bool>();
+                List<RecebimentosParcela.RecebParcela> recebimentosPreConciliados = new List<RecebimentosParcela.RecebParcela>();
                 // Com os grupos que combinados resultam no valor do extrato, 
                 // usar combinações que não gerem inconsistências e duplicidades
                 foreach (var grupoExtrato in gruposExtrato)
@@ -308,10 +309,10 @@ namespace api.Negocios.Card
                         bool grupovalido = true;
 
                         #region AVALIA SE CADA ELEMENTO DO GRUPO NÃO FOI ADICIONADO EM UMA COMBINAÇÃO ANTERIOR
-                        bool value = true;
+                        //bool value = true;
                         foreach (ConciliacaoBancaria.ConciliacaoGrupo g in grupo)
                         {
-                            if (recebimentosPreConciliados.TryGetValue(g.Id, out value))
+                            if (recebimentosPreConciliados.Any(r => r.idRecebimento == g.Id && r.numParcela == g.NumParcela.Value))
                             {
                                 grupovalido = false;
                                 break;
@@ -325,7 +326,8 @@ namespace api.Negocios.Card
 
                             #region ADICIONA OS IDS DOS RECEBIMENTOSPARCELA NA LISTA DE PRÉ-CONCILIADOS
                             foreach (ConciliacaoBancaria.ConciliacaoGrupo g in grupo)
-                                recebimentosPreConciliados.Add(g.Id, true);
+                                //recebimentosPreConciliados.Add(g.Id, true);
+                                recebimentosPreConciliados.Add(new RecebimentosParcela.RecebParcela(g.Id, g.NumParcela.Value));
                             #endregion
 
                             #region ADICIONA COMO PRÉ-CONCILIADO
@@ -347,13 +349,13 @@ namespace api.Negocios.Card
                             #endregion
 
                             #region REMOVE OS RECEBIMENTOS PARCELAS DO AGRUPAMENTO
-                            ConciliacaoBancaria rp = recebimentosParcelaAgrupados.Where(r => r.Grupo.Any(g => g.Id == grupo[0].Id)).FirstOrDefault();
+                            ConciliacaoBancaria rp = recebimentosParcelaAgrupados.Where(r => r.Grupo.Any(g => g.Id == grupo[0].Id && g.NumParcela.Value == grupo[0].NumParcela.Value)).FirstOrDefault();
 
                             // O novo grupo é composto pelos elementos que estavam lá e não foram envolvidos na conciliação corrente
                             List<ConciliacaoBancaria.ConciliacaoGrupo> newGrupo = new List<ConciliacaoBancaria.ConciliacaoGrupo>();
                             foreach (ConciliacaoBancaria.ConciliacaoGrupo gp in rp.Grupo)
                             {
-                                if (!grupo.Any(g => g.Id == gp.Id)) newGrupo.Add(gp);
+                                if (!grupo.Any(g => g.Id == gp.Id && g.NumParcela.Value == gp.NumParcela.Value)) newGrupo.Add(gp);
                             }
                             recebimentosParcelaAgrupados.Remove(rp);
 
