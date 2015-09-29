@@ -134,8 +134,13 @@ namespace api.Negocios.Admin
                 Int32 idUsers = Permissoes.GetIdUser(token);
                 //if(Permissoes.isAtosRole(token))
                 if (queryString.TryGetValue("" + (int)CAMPOS.ID_USERS, out outValue))
-                    queryString["" + (int)CAMPOS.ID_USERS] = idUsers.ToString();
-                else if (idUsers != 330) // Força o usuário IMESSENGER a acesso a todos os registros
+                {
+                    if (idUsers == 330) // Força o usuário IMESSENGER a acesso a todos os registros
+                        queryString["" + (int)CAMPOS.ID_USERS] = outValue.ToString();
+                    else
+                        queryString["" + (int)CAMPOS.ID_USERS] = idUsers.ToString();
+                }                
+                else if (idUsers != 330) 
                     queryString.Add("" + (int)CAMPOS.ID_USERS, idUsers.ToString());
 
                 // GET QUERY
@@ -207,7 +212,7 @@ namespace api.Negocios.Admin
 			try
 			{
 			     // Atualiza o contexto
-                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+                //((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
                 
 				_db.tbNewsStatuss.Add(param);
 				_db.SaveChanges();
@@ -267,11 +272,22 @@ namespace api.Negocios.Admin
 
                 // token
                 Int32 idUsers = Permissoes.GetIdUser(token);
+                tbNewsStatus value;
+                if (idUsers != 330)
+                {
+                    value = _db.tbNewsStatuss
+                           .Where(e => e.idNews == param.idNews && e.id_users == idUsers)
+                           .First<tbNewsStatus>();
+                }
+                else
+                {
+                    value = _db.tbNewsStatuss
+                               .Where(e => e.idNews == param.idNews && e.id_users == param.id_users)
+                               .First<tbNewsStatus>();
+                }
+                                 
 
-               
-				tbNewsStatus value = _db.tbNewsStatuss
-						.Where(e => e.idNews == param.idNews && e.id_users == idUsers)
-						.First<tbNewsStatus>();
+				
 
 				// OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 	            

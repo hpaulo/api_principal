@@ -8,20 +8,20 @@ namespace api.Models.Mapping
         public tbAssinanteMap()
         {
             // Primary Key
-            this.HasKey(t => new { t.cdNewsGrupo, t.cdUser });
+            this.HasKey(t => new { t.cdCatalogo, t.id_users });
 
             // Table & Column Mappings
             this.ToTable("tbAssinante", "admin");
-            this.Property(t => t.cdNewsGrupo).HasColumnName("cdNewsGrupo");
-            this.Property(t => t.cdUser).HasColumnName("cdUser");
+            this.Property(t => t.cdCatalogo).HasColumnName("cdCatalogo");
+            this.Property(t => t.id_users).HasColumnName("id_users");
             
             // Relationships
             this.HasRequired(t => t.webpages_Users)
                 .WithMany(t => t.tbAssinantes)
-                .HasForeignKey(d => d.cdUser);
-            this.HasRequired(t => t.tbNewsGrupos)
+                .HasForeignKey(d => d.id_users);
+            this.HasRequired(t => t.tbCatalogo)
                 .WithMany(t => t.tbAssinantes)
-                .HasForeignKey(d => d.cdNewsGrupo);
+                .HasForeignKey(d => d.cdCatalogo);
 
         }
     }
