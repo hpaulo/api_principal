@@ -211,12 +211,16 @@ namespace api.Negocios.Admin
         {
 			try
 			{
-			     // Atualiza o contexto
+                // Atualiza o contexto
                 //((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
-                
-				_db.tbNewsStatuss.Add(param);
-				_db.SaveChanges();
-				return param.idNews;
+                using (var db = new painel_taxservices_dbContext())
+                {
+                    db.tbNewsStatuss.Add(param);
+				    db.SaveChanges();
+                    db.Dispose();
+				    return param.idNews;
+                }
+                    
             }
             catch (Exception e)
             {

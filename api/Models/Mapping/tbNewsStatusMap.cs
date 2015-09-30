@@ -20,6 +20,7 @@ namespace api.Models.Mapping
             this.Property(t => t.id_users).HasColumnName("id_users");
             this.Property(t => t.flRecebido).HasColumnName("flRecebido");
             this.Property(t => t.flLido).HasColumnName("flLido");
+            this.Property(t => t.idStatusEnvio).HasColumnName("idStatusEnvio");
 
             // Relationships
             this.HasRequired(t => t.tbNews)
