@@ -269,6 +269,7 @@
     <Compile Include="Bibliotecas\Permissoes.cs" />
     <Compile Include="Bibliotecas\Token.cs" />
     <Compile Include="Bibliotecas\UrlAPIs.cs" />
+    <Compile Include="Controllers\Administracao\TbAssinanteController.cs" />
     <Compile Include="Controllers\Administracao\TbDispositivoUsuarioController.cs" />
     <Compile Include="Controllers\Administracao\TbNewsStatusController.cs" />
     <Compile Include="Controllers\Administracao\TbCatalogoController.cs" />
@@ -360,6 +361,7 @@
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbAssinanteMap.cs" />
     <Compile Include="Models\Mapping\tbLogCargaMap.cs" />
+    <Compile Include="Models\Object\Assinante.cs" />
     <Compile Include="Models\tbAssinante.cs" />
     <Compile Include="Models\tbLogCarga.cs" />
     <Compile Include="Models\Mapping\tbLogCargaDetalheMap.cs" />
@@ -806,6 +808,7 @@
     <Compile Include="Models\webpages_Roles.cs" />
     <Compile Include="Models\webpages_Users.cs" />
     <Compile Include="Models\webpages_UsersInRoles.cs" />
+    <Compile Include="Negocios\Administracao\GatewayTbAssinante.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbDispositivoUsuario.cs" />
     <Compile Include="Negocios\Administracao\GatewaytbNewsStatus.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbCatalogo.cs" />
