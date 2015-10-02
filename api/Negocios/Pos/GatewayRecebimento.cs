@@ -152,7 +152,14 @@ namespace api.Negocios.Pos
                         else if (item.Value.Contains("<")) // MENOR IGUAL
                         {
                             string busca;
-                            if (item.Value.Length == 8)
+                            if (item.Value.Length == 10)
+                            {                               
+                                string ano = item.Value.Substring(0, 4);
+                                string mes = item.Value.Substring(5, 2);
+                                string dia = item.Value.Substring(7, 2);
+                                busca = ano + mes + dia;
+                            }
+                            else if (item.Value.Length == 8)
                             {
                                 string dia = item.Value.Substring(6, 1);
                                 string anoMes = item.Value.Substring(0, 6);
