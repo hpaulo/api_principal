@@ -233,13 +233,22 @@ namespace api.Negocios.Admin
             try
             {
                 // Atualiza o contexto
-                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+                //((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
                 
                 foreach (Assinante p in param)
                 {
+                    int iduser;
+                    if (p.id_users == 0)
+                    {
+                        iduser = Permissoes.GetIdUser(token);
+                    }
+                    else
+                    {
+                        iduser = p.id_users;
+                    }
                     // Se encontrar no banco e o usuário desabilitar, delete o registro
                     tbAssinante valor = _db.tbAssinantes
-                                                    .Where(a => a.cdCatalogo == p.cdCatalogo && a.id_users == p.id_users)
+                                                    .Where(a => a.cdCatalogo == p.cdCatalogo && a.id_users == iduser)
                                                     .FirstOrDefault();
                     if (valor != null)
                     {
@@ -253,7 +262,7 @@ namespace api.Negocios.Admin
                     else if(p.flInscrito)
                     {
                         valor = new tbAssinante();
-                        valor.id_users = p.id_users;
+                        valor.id_users = iduser;
                         valor.cdCatalogo = p.cdCatalogo;
 
                         _db.tbAssinantes.Add(valor);
