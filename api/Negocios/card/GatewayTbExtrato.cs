@@ -575,9 +575,9 @@ namespace api.Negocios.Card
                     */
 
                     #region VALIDA A CONTA QUE CONSTA NO EXTRATO
-                    string banco = ofxDocument.Account.BankID;
-                    string nrAgencia = ofxDocument.Account.BranchID;
-                    string nrConta = ofxDocument.Account.AccountID;
+                    string banco = ofxDocument.Account.BankID.Trim();
+                    string nrAgencia = ofxDocument.Account.BranchID.Trim();
+                    string nrConta = ofxDocument.Account.AccountID.Trim();
 
                     #region VALIDA CÓDIGO DO BANCO
                     if (banco.Length > 3) banco = banco.Substring(banco.Length - 3, 3); // pega somente os últimos 3 dígitos
@@ -821,7 +821,8 @@ namespace api.Negocios.Card
                 if (!contaBDSemZeros.Contains("-")) return false; 
                 // Remove o hífen e o dígito verificador
                 string contaBDSemHifenEDigito = contaBDSemZeros.Substring(0, contaBDSemZeros.IndexOf('-'));
-                return contaDocumento.EndsWith(contaBDSemHifenEDigito);
+                string contaBDSemHifen = contaBDSemZeros.Substring(0, contaBDSemZeros.IndexOf('-')) + contaBDSemZeros.Substring(contaBDSemZeros.IndexOf('-') + 1);
+                return contaDocumento.EndsWith(contaBDSemHifenEDigito) || contaDocumento.EndsWith(contaBDSemHifen);
             }
 
             // ITAU => COM DÍGITO VERIFICADOR, MAS SEM HIFEN
