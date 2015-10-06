@@ -628,9 +628,9 @@ namespace api.Negocios.Card
                         extrato.nrDocumento = transacao.CheckNum;
                         extrato.dsArquivo = filePath;
                         // OTHER => TRANSFORMA PARA CREDIT OU DEBIT
-                        if (transacao.TransType.Equals(OFXTransactionType.OTHER))
-                            transacao.TransType = extrato.vlMovimento < 0 ? OFXTransactionType.DEBIT : OFXTransactionType.CREDIT;
-                        extrato.dsTipo = transacao.TransType.ToString();
+                        //if (transacao.TransType.Equals(OFXTransactionType.OTHER))
+                        //    transacao.TransType = extrato.vlMovimento < 0 ? OFXTransactionType.DEBIT : OFXTransactionType.CREDIT;
+                        extrato.dsTipo = extrato.vlMovimento < 0 ? OFXTransactionType.DEBIT.ToString() : OFXTransactionType.CREDIT.ToString();//transacao.TransType.ToString();
 
                         bool memo = true;
                         extrato.dsDocumento = "";
@@ -646,8 +646,8 @@ namespace api.Negocios.Card
 
                         #region OBTÉM O TOTAL DE MOVIMENTAÇÕES REPETIDAS PARA A MOVIMENTAÇÃO CORRENTE
                         IEnumerable<Transaction> trans = ofxDocument.Transactions.Where(t => t.Amount == extrato.vlMovimento)
-                                                                                 .Where(t => t.CheckNum.Equals(extrato.nrDocumento))
-                                                                                 .Where(t => t.TransType.ToString().Equals(extrato.dsTipo));
+                                                                                 //.Where(t => t.TransType.ToString().Equals(extrato.dsTipo))
+                                                                                 .Where(t => t.CheckNum.Equals(extrato.nrDocumento));
                         if (!memo) trans = trans.Where(t => t.Name.Equals(extrato.dsDocumento));
                         else trans = trans.Where(t => t.Memo.Equals(extrato.dsDocumento));
                         Int32 contMovimentacoesRepetidas = trans.Count();
@@ -658,8 +658,8 @@ namespace api.Negocios.Card
                                                              .Where(e => e.dtExtrato.Equals(extrato.dtExtrato))
                                                              .Where(e => e.nrDocumento.Equals(extrato.nrDocumento))
                                                              .Where(e => e.vlMovimento == extrato.vlMovimento)
-                                                             .Where(e => e.dsDocumento.Equals(extrato.dsDocumento))
-                                                             .Where(e => e.dsTipo.Equals(extrato.dsTipo));
+                                                             //.Where(e => e.dsTipo.Equals(extrato.dsTipo))
+                                                             .Where(e => e.dsDocumento.Equals(extrato.dsDocumento));
                         #endregion
 
                         if (olds.Count() >= contMovimentacoesRepetidas)
@@ -675,7 +675,7 @@ namespace api.Negocios.Card
                                 foreach (var old in olds)
                                 {
                                     old.dsArquivo = extrato.dsArquivo;
-                                    old.dsTipo = extrato.dsTipo; // Ajusta o tipo, que poderia estar como OTHER
+                                    old.dsTipo = extrato.dsTipo; // Ajusta o tipo, que poderia estar como OTHER ou DEP
                                     _db.SaveChanges();
                                 }
                                 // Ainda tem movimentações referenciando o arquivo antigo?
@@ -683,7 +683,7 @@ namespace api.Negocios.Card
                             }
                             else
                             {
-                                // Ajusta o tipo, que poderia estar como OTHER
+                                // Ajusta o tipo, que poderia estar como OTHER ou DEP
                                 foreach (var old in olds)
                                 {
                                     old.dsTipo = extrato.dsTipo;
