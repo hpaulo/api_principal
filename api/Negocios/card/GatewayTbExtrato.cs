@@ -654,39 +654,50 @@ namespace api.Negocios.Card
                         #endregion
 
                         #region OBTÉM AS MOVIMENTAÇÕES JÁ ARMAZENADAS NA BASE QUE POSSUEM MESMAS INFORMAÇÕES DA MOVIMENTAÇÃO CORRENTE
-                        var olds = _db.tbExtratos.Where(e => e.cdContaCorrente == extrato.cdContaCorrente)
+                        IQueryable<tbExtrato> olds = _db.tbExtratos.Where(e => e.cdContaCorrente == extrato.cdContaCorrente)
                                                              .Where(e => e.dtExtrato.Equals(extrato.dtExtrato))
                                                              .Where(e => e.nrDocumento.Equals(extrato.nrDocumento))
                                                              .Where(e => e.vlMovimento == extrato.vlMovimento)
                                                              //.Where(e => e.dsTipo.Equals(extrato.dsTipo))
-                                                             .Where(e => e.dsDocumento.Equals(extrato.dsDocumento));
+                                                             .Where(e => e.dsDocumento.Equals(extrato.dsDocumento))
+                                                             .OrderBy(e => e.dtExtrato);
+                        Int32 contExtratosBD = olds.Count();
                         #endregion
 
-                        if (olds.Count() >= contMovimentacoesRepetidas)
+                        if (contExtratosBD >= contMovimentacoesRepetidas)
                         {
                             // Já existe o(s) registro(s) com essas informações!
                             #region SE O ARQUIVO ATUAL TEM MAIS MOVIMENTAÇÕES, ATUALIZA A REFERÊNCIA DE ARQUIVO DOS EXTRATOS QUE JÁ ESTÃO NA BASE
                             string arquivoAntigo = olds.Select(o => o.dsArquivo).FirstOrDefault();
                             int totalTransacoesOld = _db.tbExtratos.Where(e => e.dsArquivo.Equals(arquivoAntigo)).Count();
                             // Verifica se o extrato atual possui mais movimentações que o anterior
-                            if (ofxDocument.Transactions.Count > totalTransacoesOld)
+                            if (ofxDocument.Transactions.Count >= totalTransacoesOld)
                             {
                                 // Atualiza o arquivo
-                                foreach (var old in olds)
+                                for (int k = 0; k < contExtratosBD; k++)
                                 {
-                                    old.dsArquivo = extrato.dsArquivo;
-                                    old.dsTipo = extrato.dsTipo; // Ajusta o tipo, que poderia estar como OTHER ou DEP
+                                    tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
+                                    ext.dsArquivo = extrato.dsArquivo;
+                                    ext.dsTipo = extrato.dsTipo;
                                     _db.SaveChanges();
                                 }
                                 // Ainda tem movimentações referenciando o arquivo antigo?
-                                if (totalTransacoesOld <= 1) File.Delete(arquivoAntigo); // Deleta o arquivo antigo
+                                if (totalTransacoesOld <= 1)
+                                {
+                                    try
+                                    {
+                                        File.Delete(arquivoAntigo); // Deleta o arquivo antigo
+                                    }
+                                    catch { }
+                                }
                             }
                             else
                             {
                                 // Ajusta o tipo, que poderia estar como OTHER ou DEP
-                                foreach (var old in olds)
+                                for (int k = 0; k < contExtratosBD; k++)
                                 {
-                                    old.dsTipo = extrato.dsTipo;
+                                    tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
+                                    ext.dsTipo = extrato.dsTipo;
                                     _db.SaveChanges();
                                 }
                             }

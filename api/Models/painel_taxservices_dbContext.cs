@@ -237,7 +237,7 @@ namespace api.Models
         public DbSet<tbBandeira> tbBandeiras { get; set; }
         public DbSet<tbRecebimentoAjuste> tbRecebimentoAjustes { get; set; }
         public DbSet<tbTerminalLogico> tbTerminalLogicos { get; set; }
-        public DbSet<tbRecebimentoResumoManualMap> tbRecebimentoResumoManuals { get; set; }
+        public DbSet<tbRecebimentoResumoManual> tbRecebimentoResumoManuals { get; set; }
 
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
