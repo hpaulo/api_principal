@@ -701,24 +701,24 @@ namespace api.Negocios.Card
                             if (dataArmazenada == null) dataArmazenada = extrato.dtExtrato;
                         }
 
-                        if (transacao.TransType.Equals(OFXTransactionType.CREDIT) ||
-                           transacao.TransType.Equals(OFXTransactionType.DEBIT))
+                        //if (transacao.TransType.Equals(OFXTransactionType.CREDIT) ||
+                        //   transacao.TransType.Equals(OFXTransactionType.DEBIT))
+                        //{
+                        #region SALVA PARÂMETRO BANCÁRIO
+                        tbBancoParametro parametro = new tbBancoParametro();
+                        parametro.cdAdquirente = null;
+                        parametro.cdBanco = conta.cdBanco;
+                        parametro.dsMemo = extrato.dsDocumento;
+                        parametro.dsTipo = extrato.dsTipo;
+                        parametro.flVisivel = true;
+                        try
                         {
-                            #region SALVA PARÂMETRO BANCÁRIO
-                            tbBancoParametro parametro = new tbBancoParametro();
-                            parametro.cdAdquirente = null;
-                            parametro.cdBanco = conta.cdBanco;
-                            parametro.dsMemo = extrato.dsDocumento;
-                            parametro.dsTipo = extrato.dsTipo;
-                            parametro.flVisivel = true;
-                            try
-                            {
-                                GatewayTbBancoParametro.Add(token, parametro);
-                            }
-                            catch (Exception e)
-                            { }
-                            #endregion
+                            GatewayTbBancoParametro.Add(token, parametro);
                         }
+                        catch (Exception e)
+                        { }
+                        #endregion
+                        //}
                     }
                     #endregion
 
