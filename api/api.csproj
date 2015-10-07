@@ -360,9 +360,14 @@
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbAssinanteMap.cs" />
+    <Compile Include="Models\Mapping\tbBandeiraMap.cs" />
     <Compile Include="Models\Mapping\tbLogCargaMap.cs" />
+    <Compile Include="Models\Mapping\tbRecebimentoAjusteMap.cs" />
+    <Compile Include="Models\Mapping\tbRecebimentoResumoManualMap.cs" />
+    <Compile Include="Models\Mapping\tbTerminalLogicoMap.cs" />
     <Compile Include="Models\Object\Assinante.cs" />
     <Compile Include="Models\tbAssinante.cs" />
+    <Compile Include="Models\tbBandeira.cs" />
     <Compile Include="Models\tbLogCarga.cs" />
     <Compile Include="Models\Mapping\tbLogCargaDetalheMap.cs" />
     <Compile Include="Models\tbLogCargaDetalhe.cs" />
@@ -784,9 +789,12 @@
     <Compile Include="Models\tbModoEntradaTef.cs" />
     <Compile Include="Models\tbNotaDaGente.cs" />
     <Compile Include="Models\tbProdutoTef.cs" />
+    <Compile Include="Models\tbRecebimentoAjuste.cs" />
+    <Compile Include="Models\tbRecebimentoResumoManual.cs" />
     <Compile Include="Models\tbRecebimentoTEF.cs" />
     <Compile Include="Models\tbRedeTef.cs" />
     <Compile Include="Models\tbSituacaoRedeTef.cs" />
+    <Compile Include="Models\tbTerminalLogico.cs" />
     <Compile Include="Models\tbTipoProdutoTef.cs" />
     <Compile Include="Models\tbTransacaoTef.cs" />
     <Compile Include="Models\TerminalLogico.cs" />

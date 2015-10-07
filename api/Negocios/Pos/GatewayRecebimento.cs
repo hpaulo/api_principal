@@ -43,6 +43,7 @@ namespace api.Negocios.Pos
             CODVENDAERP = 112,
             CODRESUMOVENDA = 113,
             NUMPARCELATOTAL = 114,
+            CDBANDEIRA = 115,
 
             // OPERADORA (ADQUIRENTE)
             IDOPERADORA = 300,
@@ -236,6 +237,10 @@ namespace api.Negocios.Pos
                         Int32 numParcelaTotal = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.numParcelaTotal.Equals(numParcelaTotal)).AsQueryable();
                         break;
+                    case CAMPOS.CDBANDEIRA:
+                        Int32 cdBandeira = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.cdBandeira == cdBandeira).AsQueryable();
+                        break;
 
 
                     // PERSONALIZADO
@@ -328,6 +333,10 @@ namespace api.Negocios.Pos
                 case CAMPOS.NUMPARCELATOTAL:
                     if (orderby == 0) entity = entity.OrderBy(e => e.numParcelaTotal).AsQueryable();
                     else entity = entity.OrderByDescending(e => e.numParcelaTotal).AsQueryable();
+                    break;
+                case CAMPOS.CDBANDEIRA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdBandeira).AsQueryable();
+                    else entity = entity.OrderByDescending(e => e.cdBandeira).AsQueryable();
                     break;
 
 
@@ -440,6 +449,7 @@ namespace api.Negocios.Pos
                         codVendaERP = e.codVendaERP,
                         codResumoVenda = e.codResumoVenda,
                         numParcelaTotal = e.numParcelaTotal,
+                        cdBandeira = e.cdBandeira
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -462,6 +472,7 @@ namespace api.Negocios.Pos
                         codVendaERP = e.codVendaERP,
                         codResumoVenda = e.codResumoVenda,
                         numParcelaTotal = e.numParcelaTotal,
+                        cdBandeira = e.cdBandeira
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2)
@@ -924,6 +935,8 @@ namespace api.Negocios.Pos
                     value.codResumoVenda = param.codResumoVenda;
                 if (param.numParcelaTotal != null && param.numParcelaTotal != value.numParcelaTotal)
                     value.numParcelaTotal = param.numParcelaTotal;
+                if (param.cdBandeira != null && param.cdBandeira != value.cdBandeira)
+                    value.cdBandeira = param.cdBandeira;
                 _db.SaveChanges();
             }
             catch (Exception e)

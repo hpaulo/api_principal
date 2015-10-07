@@ -14,7 +14,10 @@ namespace api.Models.Object
         public string dsTipo { get; set; }
         public bool flVisivel { get; set; }
         public string nrCnpj { get; set; }
+        public string dsTipoCartao { get; set; }
+        public Nullable<int> cdBandeira { get; set; }
         public virtual tbAdquirente tbAdquirente { get; set; }
         public virtual empresa empresa { get; set; }
+        public virtual tbBandeira tbBandeira { get; set; }
     }
 }

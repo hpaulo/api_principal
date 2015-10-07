@@ -707,6 +707,9 @@ namespace api.Negocios.Card
                         #region SALVA PARÂMETRO BANCÁRIO
                         tbBancoParametro parametro = new tbBancoParametro();
                         parametro.cdAdquirente = null;
+                        parametro.cdBandeira = null;
+                        parametro.dsTipoCartao = null;
+                        parametro.nrCnpj = null;
                         parametro.cdBanco = conta.cdBanco;
                         parametro.dsMemo = extrato.dsDocumento;
                         parametro.dsTipo = extrato.dsTipo;
