@@ -575,9 +575,9 @@ namespace api.Negocios.Card
                     */
 
                     #region VALIDA A CONTA QUE CONSTA NO EXTRATO
-                    string banco = ofxDocument.Account.BankID;
-                    string nrAgencia = ofxDocument.Account.BranchID;
-                    string nrConta = ofxDocument.Account.AccountID;
+                    string banco = ofxDocument.Account.BankID.Trim();
+                    string nrAgencia = ofxDocument.Account.BranchID.Trim();
+                    string nrConta = ofxDocument.Account.AccountID.Trim();
 
                     #region VALIDA CÓDIGO DO BANCO
                     if (banco.Length > 3) banco = banco.Substring(banco.Length - 3, 3); // pega somente os últimos 3 dígitos
@@ -628,9 +628,9 @@ namespace api.Negocios.Card
                         extrato.nrDocumento = transacao.CheckNum;
                         extrato.dsArquivo = filePath;
                         // OTHER => TRANSFORMA PARA CREDIT OU DEBIT
-                        if (transacao.TransType.Equals(OFXTransactionType.OTHER))
-                            transacao.TransType = extrato.vlMovimento < 0 ? OFXTransactionType.DEBIT : OFXTransactionType.CREDIT;
-                        extrato.dsTipo = transacao.TransType.ToString();
+                        //if (transacao.TransType.Equals(OFXTransactionType.OTHER))
+                        //    transacao.TransType = extrato.vlMovimento < 0 ? OFXTransactionType.DEBIT : OFXTransactionType.CREDIT;
+                        extrato.dsTipo = extrato.vlMovimento < 0 ? OFXTransactionType.DEBIT.ToString() : OFXTransactionType.CREDIT.ToString();//transacao.TransType.ToString();
 
                         bool memo = true;
                         extrato.dsDocumento = "";
@@ -646,47 +646,58 @@ namespace api.Negocios.Card
 
                         #region OBTÉM O TOTAL DE MOVIMENTAÇÕES REPETIDAS PARA A MOVIMENTAÇÃO CORRENTE
                         IEnumerable<Transaction> trans = ofxDocument.Transactions.Where(t => t.Amount == extrato.vlMovimento)
-                                                                                 .Where(t => t.CheckNum.Equals(extrato.nrDocumento))
-                                                                                 .Where(t => t.TransType.ToString().Equals(extrato.dsTipo));
+                                                                                 //.Where(t => t.TransType.ToString().Equals(extrato.dsTipo))
+                                                                                 .Where(t => t.CheckNum.Equals(extrato.nrDocumento));
                         if (!memo) trans = trans.Where(t => t.Name.Equals(extrato.dsDocumento));
                         else trans = trans.Where(t => t.Memo.Equals(extrato.dsDocumento));
                         Int32 contMovimentacoesRepetidas = trans.Count();
                         #endregion
 
                         #region OBTÉM AS MOVIMENTAÇÕES JÁ ARMAZENADAS NA BASE QUE POSSUEM MESMAS INFORMAÇÕES DA MOVIMENTAÇÃO CORRENTE
-                        var olds = _db.tbExtratos.Where(e => e.cdContaCorrente == extrato.cdContaCorrente)
+                        IQueryable<tbExtrato> olds = _db.tbExtratos.Where(e => e.cdContaCorrente == extrato.cdContaCorrente)
                                                              .Where(e => e.dtExtrato.Equals(extrato.dtExtrato))
                                                              .Where(e => e.nrDocumento.Equals(extrato.nrDocumento))
                                                              .Where(e => e.vlMovimento == extrato.vlMovimento)
+                                                             //.Where(e => e.dsTipo.Equals(extrato.dsTipo))
                                                              .Where(e => e.dsDocumento.Equals(extrato.dsDocumento))
-                                                             .Where(e => e.dsTipo.Equals(extrato.dsTipo));
+                                                             .OrderBy(e => e.dtExtrato);
+                        Int32 contExtratosBD = olds.Count();
                         #endregion
 
-                        if (olds.Count() >= contMovimentacoesRepetidas)
+                        if (contExtratosBD >= contMovimentacoesRepetidas)
                         {
                             // Já existe o(s) registro(s) com essas informações!
                             #region SE O ARQUIVO ATUAL TEM MAIS MOVIMENTAÇÕES, ATUALIZA A REFERÊNCIA DE ARQUIVO DOS EXTRATOS QUE JÁ ESTÃO NA BASE
                             string arquivoAntigo = olds.Select(o => o.dsArquivo).FirstOrDefault();
                             int totalTransacoesOld = _db.tbExtratos.Where(e => e.dsArquivo.Equals(arquivoAntigo)).Count();
                             // Verifica se o extrato atual possui mais movimentações que o anterior
-                            if (ofxDocument.Transactions.Count > totalTransacoesOld)
+                            if (ofxDocument.Transactions.Count >= totalTransacoesOld)
                             {
                                 // Atualiza o arquivo
-                                foreach (var old in olds)
+                                for (int k = 0; k < contExtratosBD; k++)
                                 {
-                                    old.dsArquivo = extrato.dsArquivo;
-                                    old.dsTipo = extrato.dsTipo; // Ajusta o tipo, que poderia estar como OTHER
+                                    tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
+                                    ext.dsArquivo = extrato.dsArquivo;
+                                    ext.dsTipo = extrato.dsTipo;
                                     _db.SaveChanges();
                                 }
                                 // Ainda tem movimentações referenciando o arquivo antigo?
-                                if (totalTransacoesOld <= 1) File.Delete(arquivoAntigo); // Deleta o arquivo antigo
+                                if (totalTransacoesOld <= 1)
+                                {
+                                    try
+                                    {
+                                        File.Delete(arquivoAntigo); // Deleta o arquivo antigo
+                                    }
+                                    catch { }
+                                }
                             }
                             else
                             {
-                                // Ajusta o tipo, que poderia estar como OTHER
-                                foreach (var old in olds)
+                                // Ajusta o tipo, que poderia estar como OTHER ou DEP
+                                for (int k = 0; k < contExtratosBD; k++)
                                 {
-                                    old.dsTipo = extrato.dsTipo;
+                                    tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
+                                    ext.dsTipo = extrato.dsTipo;
                                     _db.SaveChanges();
                                 }
                             }
@@ -701,24 +712,27 @@ namespace api.Negocios.Card
                             if (dataArmazenada == null) dataArmazenada = extrato.dtExtrato;
                         }
 
-                        if (transacao.TransType.Equals(OFXTransactionType.CREDIT) ||
-                           transacao.TransType.Equals(OFXTransactionType.DEBIT))
+                        //if (transacao.TransType.Equals(OFXTransactionType.CREDIT) ||
+                        //   transacao.TransType.Equals(OFXTransactionType.DEBIT))
+                        //{
+                        #region SALVA PARÂMETRO BANCÁRIO
+                        tbBancoParametro parametro = new tbBancoParametro();
+                        parametro.cdAdquirente = null;
+                        parametro.cdBandeira = null;
+                        parametro.dsTipoCartao = null;
+                        parametro.nrCnpj = null;
+                        parametro.cdBanco = conta.cdBanco;
+                        parametro.dsMemo = extrato.dsDocumento;
+                        parametro.dsTipo = extrato.dsTipo;
+                        parametro.flVisivel = true;
+                        try
                         {
-                            #region SALVA PARÂMETRO BANCÁRIO
-                            tbBancoParametro parametro = new tbBancoParametro();
-                            parametro.cdAdquirente = null;
-                            parametro.cdBanco = conta.cdBanco;
-                            parametro.dsMemo = extrato.dsDocumento;
-                            parametro.dsTipo = extrato.dsTipo;
-                            parametro.flVisivel = true;
-                            try
-                            {
-                                GatewayTbBancoParametro.Add(token, parametro);
-                            }
-                            catch (Exception e)
-                            { }
-                            #endregion
+                            GatewayTbBancoParametro.Add(token, parametro);
                         }
+                        catch (Exception e)
+                        { }
+                        #endregion
+                        //}
                     }
                     #endregion
 
@@ -821,7 +835,8 @@ namespace api.Negocios.Card
                 if (!contaBDSemZeros.Contains("-")) return false; 
                 // Remove o hífen e o dígito verificador
                 string contaBDSemHifenEDigito = contaBDSemZeros.Substring(0, contaBDSemZeros.IndexOf('-'));
-                return contaDocumento.EndsWith(contaBDSemHifenEDigito);
+                string contaBDSemHifen = contaBDSemZeros.Substring(0, contaBDSemZeros.IndexOf('-')) + contaBDSemZeros.Substring(contaBDSemZeros.IndexOf('-') + 1);
+                return contaDocumento.EndsWith(contaBDSemHifenEDigito) || contaDocumento.EndsWith(contaBDSemHifen);
             }
 
             // ITAU => COM DÍGITO VERIFICADOR, MAS SEM HIFEN

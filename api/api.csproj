@@ -291,6 +291,7 @@
     <Compile Include="Controllers\Administracao\WebpagesRolesController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersInRolesController.cs" />
+    <Compile Include="Controllers\Card\TbBandeiraController.cs" />
     <Compile Include="Controllers\Card\TbLogCargaController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoBancariaController.cs" />
     <Compile Include="Controllers\Card\tbBancoParametroController.cs" />
@@ -301,6 +302,8 @@
     <Compile Include="Controllers\Card\TbExtratoController.cs" />
     <Compile Include="Controllers\Card\TbContaCorrenteTbLoginAdquirenteEmpresaController.cs" />
     <Compile Include="Controllers\Card\TbContaCorrenteController.cs" />
+    <Compile Include="Controllers\Card\TbRecebimentoResumoManualController.cs" />
+    <Compile Include="Controllers\Card\TbTerminalLogicoController.cs" />
     <Compile Include="Controllers\Card\TbTransacaoTefController.cs" />
     <Compile Include="Controllers\Card\TbTipoProdutoTefController.cs" />
     <Compile Include="Controllers\Card\TbSituacaoRedeTefController.cs" />
@@ -360,9 +363,14 @@
     <Compile Include="Models\Adquirente.cs" />
     <Compile Include="Models\agendamento_finalizado.cs" />
     <Compile Include="Models\Mapping\tbAssinanteMap.cs" />
+    <Compile Include="Models\Mapping\tbBandeiraMap.cs" />
     <Compile Include="Models\Mapping\tbLogCargaMap.cs" />
+    <Compile Include="Models\Mapping\tbRecebimentoAjusteMap.cs" />
+    <Compile Include="Models\Mapping\tbRecebimentoResumoManualMap.cs" />
+    <Compile Include="Models\Mapping\tbTerminalLogicoMap.cs" />
     <Compile Include="Models\Object\Assinante.cs" />
     <Compile Include="Models\tbAssinante.cs" />
+    <Compile Include="Models\tbBandeira.cs" />
     <Compile Include="Models\tbLogCarga.cs" />
     <Compile Include="Models\Mapping\tbLogCargaDetalheMap.cs" />
     <Compile Include="Models\tbLogCargaDetalhe.cs" />
@@ -784,9 +792,12 @@
     <Compile Include="Models\tbModoEntradaTef.cs" />
     <Compile Include="Models\tbNotaDaGente.cs" />
     <Compile Include="Models\tbProdutoTef.cs" />
+    <Compile Include="Models\tbRecebimentoAjuste.cs" />
+    <Compile Include="Models\tbRecebimentoResumoManual.cs" />
     <Compile Include="Models\tbRecebimentoTEF.cs" />
     <Compile Include="Models\tbRedeTef.cs" />
     <Compile Include="Models\tbSituacaoRedeTef.cs" />
+    <Compile Include="Models\tbTerminalLogico.cs" />
     <Compile Include="Models\tbTipoProdutoTef.cs" />
     <Compile Include="Models\tbTransacaoTef.cs" />
     <Compile Include="Models\TerminalLogico.cs" />
@@ -832,6 +843,7 @@
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsersInRoles.cs" />
     <Compile Include="Controllers\Card\TbModoEntradaTefController.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbCanal.cs" />
+    <Compile Include="Negocios\Card\GatewayTbBandeira.cs" />
     <Compile Include="Negocios\Card\GatewayTbLogCarga.cs" />
     <Compile Include="Negocios\Card\GatewayConciliacaoBancaria.cs" />
     <Compile Include="Negocios\Card\GatewayTbBancoParametro.cs" />
@@ -841,6 +853,8 @@
     <Compile Include="Negocios\Card\GatewayTbRebimentoResumo.cs" />
     <Compile Include="Negocios\Card\GatewayTbExtrato.cs" />
     <Compile Include="Negocios\Card\GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.cs" />
+    <Compile Include="Negocios\Card\GatewayTbRecebimentoResumoManual.cs" />
+    <Compile Include="Negocios\Card\GatewayTbTerminalLogico.cs" />
     <Compile Include="Negocios\Card\GatewayTbTransacaoTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbTipoProdutoTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbSituacaoRedeTef.cs" />

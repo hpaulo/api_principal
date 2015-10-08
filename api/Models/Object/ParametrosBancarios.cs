@@ -44,6 +44,20 @@ namespace api.Models.Object
             set { nrCnpj = value; }
         }
 
+        private string dsTipoCartao;
+        public string DsTipoCartao
+        {
+            get { return dsTipoCartao; }
+            set { dsTipoCartao = value; }
+        }
+
+        private Nullable<int> cdBandeira;
+        public Nullable<int> CdBandeira
+        {
+            get { return cdBandeira; }
+            set { cdBandeira = value; }
+        }
+
         private bool flVisivel;
         public bool FlVisivel
         {

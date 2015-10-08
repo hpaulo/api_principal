@@ -32,6 +32,9 @@ namespace api.Models.Mapping
                 .IsFixedLength()
                 .HasMaxLength(14);
 
+            this.Property(t => t.dsTipoCartao)
+                .HasMaxLength(10);
+
 
             // Table & Column Mappings
             this.ToTable("tbBancoParametro", "card");
@@ -41,6 +44,8 @@ namespace api.Models.Mapping
             this.Property(t => t.dsTipo).HasColumnName("dsTipo");
             this.Property(t => t.flVisivel).HasColumnName("flVisivel");
             this.Property(t => t.nrCnpj).HasColumnName("nrCnpj");
+            this.Property(t => t.dsTipoCartao).HasColumnName("dsTipoCartao");
+            this.Property(t => t.cdBandeira).HasColumnName("cdBandeira");
 
             // Relationships
             this.HasOptional(t => t.tbAdquirente)
@@ -49,6 +54,9 @@ namespace api.Models.Mapping
             this.HasOptional(t => t.empresa)
                 .WithMany(t => t.tbBancoParametros)
                 .HasForeignKey(d => d.nrCnpj);
+            this.HasOptional(t => t.tbBandeira)
+                .WithMany(t => t.tbBancoParametros)
+                .HasForeignKey(d => d.cdBandeira);
 
         }
     }

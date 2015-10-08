@@ -52,6 +52,7 @@ namespace api.Models.Mapping
             this.Property(t => t.codVendaERP).HasColumnName("codVendaERP");
             this.Property(t => t.codResumoVenda).HasColumnName("codResumoVenda");
             this.Property(t => t.numParcelaTotal).HasColumnName("numParcelaTotal");
+            this.Property(t => t.cdBandeira).HasColumnName("cdBandeira");
 
             // Relationships
             this.HasRequired(t => t.empresa)
@@ -63,6 +64,9 @@ namespace api.Models.Mapping
             this.HasRequired(t => t.TerminalLogico)
                 .WithMany(t => t.Recebimentoes)
                 .HasForeignKey(d => d.idLogicoTerminal);
+            this.HasOptional(t => t.tbBandeira)
+                .WithMany(t => t.Recebimentos)
+                .HasForeignKey(d => d.cdBandeira);
 
         }
     }

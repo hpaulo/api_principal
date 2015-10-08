@@ -98,8 +98,8 @@ namespace api.Controllers.Util
             bool head = false;
             for (int i = 0; i < temp.Count; i++)
             {
-                if (i == 65)
-                    Console.WriteLine("Line: " + i + " Total: " + temp.Count + " | " + temp[i].ToString());
+                //if (i == 65)
+                //    Console.WriteLine("Line: " + i + " Total: " + temp.Count + " | " + temp[i].ToString());
                 string value = String.Empty;
 
                 switch (i)
@@ -134,7 +134,7 @@ namespace api.Controllers.Util
                         }
                         break;
                     case 4: // [ Início do Extrato]
-                        if (temp[i].ToString().Contains("Data Histórico Docto. Valor R$ Saldo R$"))
+                        if (temp[i].ToString().Contains("Data Histórico Docto. Valor R$"))// Saldo R$"))
                             head = true;
                         break;
                     default: // [ Linhas do Extrato]

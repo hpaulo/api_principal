@@ -33,6 +33,8 @@ namespace api.Negocios.Card
             DSTIPO = 103,
             FLVISIVEL = 104,
             NRCNPJ = 105,
+            DSTIPOCARTAO = 106,
+            CDBANDEIRA = 107,
 
             // RELACIONAMENTOS
             DSADQUIRENTE = 201,
@@ -94,6 +96,20 @@ namespace api.Negocios.Card
                         if(nrCnpj.Equals("")) entity = entity.Where(e => e.nrCnpj == null).AsQueryable<tbBancoParametro>();
                         else entity = entity.Where(e => e.nrCnpj != null && e.nrCnpj.Equals(nrCnpj)).AsQueryable<tbBancoParametro>();
                         break;
+                    case CAMPOS.DSTIPOCARTAO:
+                        string dsTipoCartao = Convert.ToString(item.Value);
+                        if (dsTipoCartao.Equals("")) entity = entity.Where(e => e.dsTipoCartao == null).AsQueryable<tbBancoParametro>();
+                        else entity = entity.Where(e => e.dsTipoCartao != null && e.dsTipoCartao.Equals(dsTipoCartao)).AsQueryable<tbBancoParametro>();
+                        break;
+                    case CAMPOS.CDBANDEIRA:
+                        Int32 cdBandeira = Convert.ToInt32(item.Value);
+                        if (cdBandeira == -1)
+                            // Somente os registros sem adquirentes associados
+                            entity = entity.Where(e => e.cdBandeira == null).AsQueryable<tbBancoParametro>();
+                        else
+                            entity = entity.Where(e => e.cdBandeira == cdBandeira).AsQueryable<tbBancoParametro>();
+                        break;
+                        
 
                     // PERSONALIZADO
                     case CAMPOS.DSADQUIRENTE:
@@ -142,6 +158,14 @@ namespace api.Negocios.Card
                 case CAMPOS.NRCNPJ:
                     if (orderby == 0) entity = entity.OrderBy(e => e.nrCnpj).AsQueryable<tbBancoParametro>();
                     else entity = entity.OrderByDescending(e => e.nrCnpj).AsQueryable<tbBancoParametro>();
+                    break;
+                case CAMPOS.DSTIPOCARTAO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsTipoCartao).AsQueryable<tbBancoParametro>();
+                    else entity = entity.OrderByDescending(e => e.dsTipoCartao).AsQueryable<tbBancoParametro>();
+                    break;
+                case CAMPOS.CDBANDEIRA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdBandeira).AsQueryable<tbBancoParametro>();
+                    else entity = entity.OrderByDescending(e => e.cdBandeira).AsQueryable<tbBancoParametro>();
                     break;
 
                 // PERSONALIZADO
@@ -223,7 +247,9 @@ namespace api.Negocios.Card
                     cdAdquirente = e.cdAdquirente,
                     dsTipo = e.dsTipo,
                     flVisivel = e.flVisivel,
-                    nrCnpj = e.nrCnpj
+                    nrCnpj = e.nrCnpj,
+                    dsTipoCartao = e.dsTipoCartao,
+                    cdBandeira = e.cdBandeira
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -236,7 +262,9 @@ namespace api.Negocios.Card
                     cdAdquirente = e.cdAdquirente,
                     dsTipo = e.dsTipo,
                     flVisivel = e.flVisivel,
-                    nrCnpj = e.nrCnpj
+                    nrCnpj = e.nrCnpj,
+                    dsTipoCartao = e.dsTipoCartao,
+                    cdBandeira = e.cdBandeira
                 }).ToList<dynamic>();
             }
             else if (colecao == 2) // [WEB] 
@@ -253,6 +281,7 @@ namespace api.Negocios.Card
                                     },
                     dsTipo = e.dsTipo,
                     flVisivel = e.flVisivel,
+                    dsTipoCartao = e.dsTipoCartao,
                     empresa = e.nrCnpj == null ? null : new
                     {
                         nu_cnpj = e.empresa.nu_cnpj,
@@ -264,7 +293,14 @@ namespace api.Negocios.Card
                         id_grupo = e.empresa.id_grupo,
                         ds_nome = e.empresa.grupo_empresa.ds_nome
                     },
+                    bandeira = e.cdBandeira == null ? null : new
+                    {
+                        cdBandeira = e.tbBandeira.cdBandeira,
+                        dsBandeira = e.tbBandeira.dsBandeira,
+                        dsTipo = e.tbBandeira.dsTipo
+                    },
                     banco = new { Codigo = e.cdBanco, NomeExtenso = "" }, // Não dá para chamar a função direto daqui pois esse código é convertido em SQL e não acessa os dados de um objeto em memória
+
                 }).ToList<dynamic>();
 
                 // Após transformar em lista (isto é, trazer para a memória), atualiza o valor do NomeExtenso associado ao banco
@@ -278,6 +314,7 @@ namespace api.Negocios.Card
                         flVisivel = bancoParametro.flVisivel,
                         empresa = bancoParametro.empresa,
                         grupoempresa = bancoParametro.grupoempresa,
+                        bandeira = bancoParametro.bandeira,
                         banco = new { Codigo = bancoParametro.banco.Codigo, NomeExtenso = GatewayBancos.Get(bancoParametro.banco.Codigo) },
                     });
                 }
@@ -302,6 +339,8 @@ namespace api.Negocios.Card
 
             if (param.cdAdquirente == -1) param.cdAdquirente = null;
             if (param.nrCnpj != null && param.nrCnpj.Equals("")) param.nrCnpj = null;
+            if (param.dsTipoCartao != null && param.dsTipoCartao.Equals("")) param.dsTipoCartao = null;
+            if (param.cdBandeira == -1) param.cdBandeira = null;
 
             param.flVisivel = true;
 
@@ -364,6 +403,18 @@ namespace api.Negocios.Card
                             if (param.NrCnpj.Equals("")) value.nrCnpj = null;
                             else value.nrCnpj = param.NrCnpj;
                         }
+                        // Tipo Cartão
+                        if (param.DsTipoCartao != null && (value.dsTipoCartao == null || !param.DsTipoCartao.Equals(value.dsTipoCartao)))
+                        {
+                            if (param.DsTipoCartao.Equals("")) value.dsTipoCartao = null;
+                            else value.dsTipoCartao = param.DsTipoCartao;
+                        }
+                        // Bandeira
+                        if (param.CdBandeira != null && param.CdBandeira != value.cdBandeira)
+                        {
+                            if (param.CdBandeira == -1) value.cdBandeira = null;
+                            else value.cdBandeira = param.CdBandeira;
+                        }
                         // Visibilidade
                         if (param.FlVisivel != value.flVisivel) value.flVisivel = param.FlVisivel;
                         // Salva
@@ -371,33 +422,6 @@ namespace api.Negocios.Card
                     }
                 }
             }
-
-            /*tbBancoParametro value = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(param.cdBanco))
-                                                             .Where(e => e.dsMemo.Equals(param.dsMemo))
-                                                             .FirstOrDefault();
-
-            if (value == null) throw new Exception("Parâmetro bancário inexistente");
-
-
-            //if (param.cdBanco != null && param.cdBanco != value.cdBanco)
-            //    value.cdBanco = param.cdBanco;
-            //if (param.dsMemo != null && param.dsMemo != value.dsMemo)
-            //    value.dsMemo = param.dsMemo;
-            if (param.cdAdquirente != null && param.cdAdquirente != value.cdAdquirente)
-            {
-                if (param.cdAdquirente == -1) value.cdAdquirente = null;
-                else value.cdAdquirente = param.cdAdquirente;
-            }
-            if (param.NrCnpj != null && param.nrCnpj != value.nrCnpj)
-            {
-                if (param.nrCnpj.Equals("")) value.nrCnpj = null;
-                else value.nrCnpj = param.nrCnpj;
-            }
-            if (param.dsTipo != null && param.dsTipo != value.dsTipo)
-                value.dsTipo = param.dsTipo;
-            if (param.flVisivel != value.flVisivel)
-                value.flVisivel = param.flVisivel;
-            _db.SaveChanges();*/
 
         }
 

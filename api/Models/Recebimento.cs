@@ -25,9 +25,11 @@ namespace api.Models
         public string codVendaERP { get; set; }
         public string codResumoVenda { get; set; }
         public Nullable<int> numParcelaTotal { get; set; }
+        public Nullable<int> cdBandeira { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual BandeiraPos BandeiraPos { get; set; }
         public virtual TerminalLogico TerminalLogico { get; set; }
         public virtual ICollection<RecebimentoParcela> RecebimentoParcelas { get; set; }
+        public virtual tbBandeira tbBandeira { get; set; }
     }
 }
