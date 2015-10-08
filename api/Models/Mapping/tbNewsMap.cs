@@ -18,7 +18,7 @@ namespace api.Models.Mapping
                 .IsRequired();
 
             this.Property(t => t.dsReporter)
-                .HasMaxLength(30);
+                .HasMaxLength(50);
 
             // Table & Column Mappings
             this.ToTable("tbNews", "admin");
