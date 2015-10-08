@@ -9,5 +9,6 @@
         public string dsMotivo { get; set; }
         public decimal vlAjuste { get; set; }
         public virtual tbBandeira tbBandeira { get; set; }
+        public virtual empresa empresa { get; set; }
     }
 }

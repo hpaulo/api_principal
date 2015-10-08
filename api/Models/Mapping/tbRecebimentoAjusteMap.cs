@@ -42,6 +42,9 @@ namespace api.Models.Mapping
             this.HasRequired(t => t.tbBandeira)
                 .WithMany(t => t.tbRecebimentoAjustes)
                 .HasForeignKey(d => d.cdBandeira);
+            this.HasRequired(t => t.empresa)
+                .WithMany(t => t.tbRecebimentoAjustes)
+                .HasForeignKey(d => d.nrCNPJ);
         }
     }
 }

@@ -37,6 +37,7 @@ namespace api.Models
             this.tbLoginAdquirenteEmpresas = new List<tbLoginAdquirenteEmpresa>();
             this.tbBancoParametros = new List<tbBancoParametro>();
             this.tbTerminalLogicos = new List<tbTerminalLogico>();
+            this.tbRecebimentoAjustes = new List<tbRecebimentoAjuste>();
         }
 
         public string nu_cnpj { get; set; }
@@ -90,5 +91,6 @@ namespace api.Models
         public virtual ICollection<tbLogCarga> tbLogCargas { get; set; }
         public virtual ICollection<tbTerminalLogico> tbTerminalLogicos { get; set; }
         //public virtual ICollection<tbRecebimento> tbRecebimentos { get; set; }
+        public virtual ICollection<tbRecebimentoAjuste> tbRecebimentoAjustes { get; set; }
     }
 }
