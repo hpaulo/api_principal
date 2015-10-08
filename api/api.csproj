@@ -291,6 +291,7 @@
     <Compile Include="Controllers\Administracao\WebpagesRolesController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersInRolesController.cs" />
+    <Compile Include="Controllers\Card\TbBandeiraController.cs" />
     <Compile Include="Controllers\Card\TbLogCargaController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoBancariaController.cs" />
     <Compile Include="Controllers\Card\tbBancoParametroController.cs" />
@@ -301,6 +302,8 @@
     <Compile Include="Controllers\Card\TbExtratoController.cs" />
     <Compile Include="Controllers\Card\TbContaCorrenteTbLoginAdquirenteEmpresaController.cs" />
     <Compile Include="Controllers\Card\TbContaCorrenteController.cs" />
+    <Compile Include="Controllers\Card\TbRecebimentoResumoManualController.cs" />
+    <Compile Include="Controllers\Card\TbTerminalLogicoController.cs" />
     <Compile Include="Controllers\Card\TbTransacaoTefController.cs" />
     <Compile Include="Controllers\Card\TbTipoProdutoTefController.cs" />
     <Compile Include="Controllers\Card\TbSituacaoRedeTefController.cs" />
@@ -840,6 +843,7 @@
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsersInRoles.cs" />
     <Compile Include="Controllers\Card\TbModoEntradaTefController.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbCanal.cs" />
+    <Compile Include="Negocios\Card\GatewayTbBandeira.cs" />
     <Compile Include="Negocios\Card\GatewayTbLogCarga.cs" />
     <Compile Include="Negocios\Card\GatewayConciliacaoBancaria.cs" />
     <Compile Include="Negocios\Card\GatewayTbBancoParametro.cs" />
@@ -849,6 +853,8 @@
     <Compile Include="Negocios\Card\GatewayTbRebimentoResumo.cs" />
     <Compile Include="Negocios\Card\GatewayTbExtrato.cs" />
     <Compile Include="Negocios\Card\GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.cs" />
+    <Compile Include="Negocios\Card\GatewayTbRecebimentoResumoManual.cs" />
+    <Compile Include="Negocios\Card\GatewayTbTerminalLogico.cs" />
     <Compile Include="Negocios\Card\GatewayTbTransacaoTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbTipoProdutoTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbSituacaoRedeTef.cs" />
