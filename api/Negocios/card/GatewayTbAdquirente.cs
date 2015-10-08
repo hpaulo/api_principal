@@ -33,6 +33,9 @@ namespace api.Negocios.Card
             STADQUIRENTE = 103,
             HREXECUCAO = 104,
 
+            // Relacionamento
+            CNPJ = 305
+
         };
 
         /// <summary>
@@ -78,6 +81,18 @@ namespace api.Negocios.Card
                     case CAMPOS.HREXECUCAO:
                         DateTime hrExecucao = Convert.ToDateTime(item.Value);
                         entity = entity.Where(e => e.hrExecucao.Equals(hrExecucao)).AsQueryable<tbAdquirente>();
+                        break;
+
+                    // Relacionamento
+                    case CAMPOS.CNPJ:
+                        string cnpj = Convert.ToString(item.Value);
+                        //entity = entity.Where(e => e.tbEmpresaGrupo.dsEmpresaGrupo.Contains(busca)).AsQueryable<tbEmpresa>();                        
+                        List<string> nmOperadoras = _db.Operadoras.Where(o => o.LoginOperadoras.Where(l => l.cnpj.Equals(cnpj)).Count() > 0).Select(o => o.nmOperadora).ToList<string>();
+                        /*
+                        List<int> operadoras = _db.LoginOperadoras.Where(l => l.cnpj == cnpj).Select(l => l.idOperadora).ToList();
+                        List<string> nmOperadoras = _db.Operadoras.Where(o => operadoras.Contains(o.id)).Select(o => o.nmOperadora).ToList();
+                        */
+                        entity = entity.Where(e => nmOperadoras.Contains(e.dsAdquirente)).AsQueryable<tbAdquirente>();
                         break;
                 }
             }
