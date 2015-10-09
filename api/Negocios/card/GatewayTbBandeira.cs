@@ -191,7 +191,7 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 cdBandeira)
         {
-            _db.tbBandeiras.Remove(_db.tbBandeiras.Where(e => e.cdBandeira.Equals(cdBandeira)).First());
+            _db.tbBandeiras.Remove(_db.tbBandeiras.Where(e => e.cdBandeira == cdBandeira).First());
             _db.SaveChanges();
         }
 
@@ -205,7 +205,7 @@ namespace api.Negocios.Card
         public static void Update(string token, tbBandeira param)
         {
             tbBandeira value = _db.tbBandeiras
-                    .Where(e => e.cdBandeira.Equals(param.cdBandeira))
+                    .Where(e => e.cdBandeira == param.cdBandeira)
                     .First<tbBandeira>();
 
 

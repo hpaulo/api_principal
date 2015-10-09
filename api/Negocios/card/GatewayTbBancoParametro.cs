@@ -315,6 +315,7 @@ namespace api.Negocios.Card
                         empresa = bancoParametro.empresa,
                         grupoempresa = bancoParametro.grupoempresa,
                         bandeira = bancoParametro.bandeira,
+                        dsTipoCartao = bancoParametro.dsTipoCartao,
                         banco = new { Codigo = bancoParametro.banco.Codigo, NomeExtenso = GatewayBancos.Get(bancoParametro.banco.Codigo) },
                     });
                 }
