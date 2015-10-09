@@ -128,7 +128,7 @@ namespace api.Negocios.Pos
                         {
                             string busca = item.Value.Replace(">", "");
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtaRecebimento >= dta);
+                            entity = entity.Where(e => e.dtaRecebimento >= dta && e.dtaRecebimentoEfetivo == null);
                         }
                         else if (item.Value.Contains("<")) // MENOR IGUAL
                         {
