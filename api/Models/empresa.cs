@@ -38,6 +38,7 @@ namespace api.Models
             this.tbBancoParametros = new List<tbBancoParametro>();
             this.tbTerminalLogicos = new List<tbTerminalLogico>();
             this.tbRecebimentoAjustes = new List<tbRecebimentoAjuste>();
+            this.tbLogCargas = new List<tbLogCarga>();
         }
 
         public string nu_cnpj { get; set; }

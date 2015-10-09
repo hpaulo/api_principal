@@ -20,6 +20,5 @@ namespace api.Models
         public virtual tbAdquirente tbAdquirente { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual ICollection<tbLogCargaDetalhe> tbLogCargaDetalhes { get; set; }
-        public virtual tbAdquirente tbAdquirentes { get; set; }
     }
 }

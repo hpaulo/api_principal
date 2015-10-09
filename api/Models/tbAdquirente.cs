@@ -14,6 +14,7 @@ namespace api.Models
             this.tbBandeiras = new List<tbBandeira>();
             this.tbTerminalLogicos = new List<tbTerminalLogico>();
             this.tbRecebimentoResumoManuals = new List<tbRecebimentoResumoManual>();
+            this.tbLogCargas = new List<tbLogCarga>();
         }
 
         public int cdAdquirente { get; set; }

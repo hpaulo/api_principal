@@ -11,6 +11,15 @@ namespace api.Models.Mapping
             this.HasKey(t => t.idLogCargaDetalhe);
 
             // Properties
+            this.Property(t => t.idLogCarga)
+                .IsRequired();
+
+            this.Property(t => t.dtExecucaoIni)
+                .IsRequired();
+
+            this.Property(t => t.flStatus)
+                .IsRequired();
+
             this.Property(t => t.dsMensagem)
                 .HasMaxLength(250);
 
