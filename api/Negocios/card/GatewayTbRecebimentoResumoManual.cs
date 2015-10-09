@@ -207,6 +207,24 @@ namespace api.Negocios.Card
                     cdBandeira = e.cdBandeira,
                 }).ToList<dynamic>();
             }
+            else if (colecao == 2) // [Portal] Preencher cupons
+            {
+                CollectionTbRecebimentoResumoManual = query.Select(e => new
+                    {
+
+                        idRecebimentoResumoManual = e.idRecebimentoResumoManual,
+                        dtVenda = e.dtVenda,
+                        vlVenda = e.vlVenda,
+                        qtTracacao = e.qtTracacao,
+                        tpOperacao = e.tpOperacao,
+                        cdBandeira = e.cdBandeira,
+
+                        ds_fantasia = e.tbTerminalLogico.empresa.ds_fantasia,
+                        ds_endereco = e.tbTerminalLogico.empresa.ds_endereco,
+                        ds_cidade = e.tbTerminalLogico.empresa.ds_cidade,
+                        sg_uf = e.tbTerminalLogico.empresa.sg_uf,
+                    }).ToList<dynamic>();
+            }
 
             retorno.Registros = CollectionTbRecebimentoResumoManual;
 
