@@ -37,6 +37,7 @@ namespace api.Models.Mapping
             this.Property(t => t.cdBandeira).HasColumnName("cdBandeira");
             this.Property(t => t.dsMotivo).HasColumnName("dsMotivo");
             this.Property(t => t.vlAjuste).HasColumnName("vlAjuste");
+            this.Property(t => t.idExtrato).HasColumnName("idExtrato");
 
             // Relationships
             this.HasRequired(t => t.tbBandeira)
@@ -45,6 +46,9 @@ namespace api.Models.Mapping
             this.HasRequired(t => t.empresa)
                 .WithMany(t => t.tbRecebimentoAjustes)
                 .HasForeignKey(d => d.nrCNPJ);
+            this.HasOptional(t => t.tbExtrato)
+                .WithMany(t => t.tbRecebimentoAjustes)
+                .HasForeignKey(d => d.idExtrato);
         }
     }
 }

@@ -33,7 +33,8 @@ namespace api.Negocios.Card
             HREXECUCAO = 104,
 
             // Relacionamento
-            CNPJ = 305
+            CNPJ = 305,
+            ID_GRUPO = 316
 
         };
 
@@ -95,6 +96,11 @@ namespace api.Negocios.Card
                         */
                         entity = entity.Where(e => nmOperadoras.Contains(e.dsAdquirente)).AsQueryable<tbAdquirente>();
                         break;
+                    case CAMPOS.ID_GRUPO:
+                        int id_grupo = Convert.ToInt32(item.Value);
+                        List<string> nmOperadorasG = _db.Operadoras.Where(o => o.LoginOperadoras.Where(l => l.empresa.id_grupo == id_grupo).Count() > 0).Select(o => o.nmOperadora).ToList<string>();
+                        entity = entity.Where(e => nmOperadorasG.Contains(e.dsAdquirente)).AsQueryable<tbAdquirente>();
+                        break;
                 }
             }
             #endregion
@@ -143,6 +149,23 @@ namespace api.Negocios.Card
             //DECLARAÇÕES
             List<dynamic> CollectionTbAdquirente = new List<dynamic>();
             Retorno retorno = new Retorno();
+
+            string outValue = null;
+            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+            if (IdGrupo != 0) {
+                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                else
+                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+            }
+            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+            if (!CnpjEmpresa.Equals(""))
+            {
+                if (queryString.TryGetValue("" + (int)CAMPOS.CNPJ, out outValue))
+                    queryString["" + (int)CAMPOS.CNPJ] = CnpjEmpresa;
+                else
+                    queryString.Add("" + (int)CAMPOS.CNPJ, CnpjEmpresa);
+            }
 
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);

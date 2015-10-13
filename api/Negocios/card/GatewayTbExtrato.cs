@@ -163,7 +163,7 @@ namespace api.Negocios.Card
                         string[] vigencia = item.Value.Split('!');
                         if (vigencia.Length < 1) continue;
 
-                        string cnpj = vigencia[0];
+                        string cnpj = vigencia[0].Trim();
                         string dt = vigencia.Length > 1 ? vigencia[1] : "null";
 
                         if (dt.Equals("null"))
@@ -172,11 +172,17 @@ namespace api.Negocios.Card
                             if (vigencia.Length > 2)
                             {
                                 int cdadquirente = Convert.ToInt32(vigencia[2]);
-                                entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                if(cnpj.Equals(""))
+                                    // Todas as filiais, com a adquirente
+                                    entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                                .Where(v => v.tbLoginAdquirenteEmpresa.cdAdquirente == cdadquirente).Count() > 0).AsQueryable<tbExtrato>();
+                                else
+                                    // Filial e adquirente específicas
+                                    entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
                                                                                 .Where(v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(cnpj))
                                                                                 .Where(v => v.tbLoginAdquirenteEmpresa.cdAdquirente == cdadquirente).Count() > 0).AsQueryable<tbExtrato>();
                             }
-                            else
+                            else if(!cnpj.Equals(""))
                             {
                                 entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
                                                                                 .Where(v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(cnpj)).Count() > 0).AsQueryable<tbExtrato>();
@@ -193,7 +199,17 @@ namespace api.Negocios.Card
                             if (vigencia.Length > 2)
                             {
                                 int cdadquirente = Convert.ToInt32(vigencia[2]);
-                                entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                if (cnpj.Equals(""))
+                                    // Período e adquirente específicos
+                                    entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                                .Where(v => v.tbLoginAdquirenteEmpresa.cdAdquirente == cdadquirente)
+                                                                                .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtIni.Year || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month > dtIni.Month) || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month == dtIni.Month && v.dtFim.Value.Day >= dtIni.Day)))
+                                                                                     && (v.dtInicio.Year < dtFim.Year || (v.dtInicio.Year == dtFim.Year && v.dtInicio.Month < dtFim.Month) || (v.dtInicio.Year == dtFim.Year && v.dtInicio.Month == dtFim.Month && v.dtInicio.Day <= dtFim.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtFim.Year || (v.dtFim.Value.Year == dtFim.Year && v.dtFim.Value.Month > dtFim.Month) || (v.dtFim.Value.Year == dtFim.Year && v.dtFim.Value.Month == dtFim.Month && v.dtFim.Value.Day >= dtFim.Day)))).Count() > 0).AsQueryable<tbExtrato>();
+                                else
+                                    // Filial, período e adquirente específicos
+                                    entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
                                                                                 .Where(v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(cnpj))
                                                                                 .Where(v => v.tbLoginAdquirenteEmpresa.cdAdquirente == cdadquirente)
                                                                                 .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
@@ -201,8 +217,18 @@ namespace api.Negocios.Card
                                                                                      && (v.dtInicio.Year < dtFim.Year || (v.dtInicio.Year == dtFim.Year && v.dtInicio.Month < dtFim.Month) || (v.dtInicio.Year == dtFim.Year && v.dtInicio.Month == dtFim.Month && v.dtInicio.Day <= dtFim.Day))
                                                                                      && (v.dtFim == null || (v.dtFim.Value.Year > dtFim.Year || (v.dtFim.Value.Year == dtFim.Year && v.dtFim.Value.Month > dtFim.Month) || (v.dtFim.Value.Year == dtFim.Year && v.dtFim.Value.Month == dtFim.Month && v.dtFim.Value.Day >= dtFim.Day)))).Count() > 0).AsQueryable<tbExtrato>();
                             }
+                            else if(cnpj.Equals(""))
+                            {
+                                // Somente período específico
+                                entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                                .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtIni.Year || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month > dtIni.Month) || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month == dtIni.Month && v.dtFim.Value.Day >= dtIni.Day)))
+                                                                                     && (v.dtInicio.Year < dtFim.Year || (v.dtInicio.Year == dtFim.Year && v.dtInicio.Month < dtFim.Month) || (v.dtInicio.Year == dtFim.Year && v.dtInicio.Month == dtFim.Month && v.dtInicio.Day <= dtFim.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtFim.Year || (v.dtFim.Value.Year == dtFim.Year && v.dtFim.Value.Month > dtFim.Month) || (v.dtFim.Value.Year == dtFim.Year && v.dtFim.Value.Month == dtFim.Month && v.dtFim.Value.Day >= dtFim.Day)))).Count() > 0).AsQueryable<tbExtrato>();
+                            }
                             else
                             {
+                                // Considera filial e período específicos
                                 entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
                                                                                 .Where(v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(cnpj))
                                                                                 .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
@@ -219,14 +245,31 @@ namespace api.Negocios.Card
                             if (vigencia.Length > 2)
                             {
                                 int cdadquirente = Convert.ToInt32(vigencia[2]);
-                                entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                if (cnpj.Equals(""))
+                                    // Data e adquirente específicas
+                                    entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                                                                .Where(v => v.tbLoginAdquirenteEmpresa.cdAdquirente == cdadquirente)
+                                                                                .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtIni.Year || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month > dtIni.Month) || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month == dtIni.Month && v.dtFim.Value.Day >= dtIni.Day)))).Count() > 0).AsQueryable<tbExtrato>();
+                                else
+                                    // Filial, data e adquirente específicas
+                                    entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
                                                                                 .Where(v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(cnpj))
                                                                                 .Where(v => v.tbLoginAdquirenteEmpresa.cdAdquirente == cdadquirente)
+                                                                                .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
+                                                                                     && (v.dtFim == null || (v.dtFim.Value.Year > dtIni.Year || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month > dtIni.Month) || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month == dtIni.Month && v.dtFim.Value.Day >= dtIni.Day)))).Count() > 0).AsQueryable<tbExtrato>();
+
+                            }
+                            else if(cnpj.Equals(""))
+                            {
+                                // Considera apenas a data
+                                entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
                                                                                 .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
                                                                                      && (v.dtFim == null || (v.dtFim.Value.Year > dtIni.Year || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month > dtIni.Month) || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month == dtIni.Month && v.dtFim.Value.Day >= dtIni.Day)))).Count() > 0).AsQueryable<tbExtrato>();
                             }
                             else
                             {
+                                // Data e filial específicas
                                 entity = entity.Where(e => e.tbContaCorrente.tbContaCorrente_tbLoginAdquirenteEmpresas
                                                                                 .Where(v => v.tbLoginAdquirenteEmpresa.nrCnpj.Equals(cnpj))
                                                                                 .Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))

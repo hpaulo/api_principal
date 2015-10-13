@@ -38,6 +38,13 @@ namespace api.Models.Object
             set { grupo = value; }
         }
 
+        private string filial;
+        public string Filial
+        {
+            get { return filial; }
+            set { filial = value; }
+        }
+
         private string adquirente; 
         public string Adquirente
         {
@@ -50,6 +57,13 @@ namespace api.Models.Object
         {
             get { return bandeira; }
             set { bandeira = value; }
+        }
+
+        private string tipoCartao;
+        public string TipoCartao
+        {
+            get { return tipoCartao; }
+            set { tipoCartao = value; }
         }
 
         private string memo;
@@ -98,11 +112,25 @@ namespace api.Models.Object
                 set { documento = value; }
             }
 
+            private string filial;
+            public string Filial
+            {
+                get { return filial; }
+                set { filial = value; }
+            }
+
             private string bandeira;
             public string Bandeira
             {
                 get { return bandeira; }
                 set { bandeira = value; }
+            }
+
+            private string tipoCartao;
+            public string TipoCartao
+            {
+                get { return tipoCartao; }
+                set { tipoCartao = value; }
             }
 
             private Nullable<DateTime> dataVenda; // data do extrato ou do recebimento

@@ -8,6 +8,7 @@ namespace api.Models
         public tbExtrato()
         {
             this.RecebimentoParcelas = new List<RecebimentoParcela>();
+            this.tbRecebimentoAjustes = new List<tbRecebimentoAjuste>();
         }
 
         public int idExtrato { get; set; }
@@ -20,5 +21,6 @@ namespace api.Models
         public string dsArquivo { get; set; }
         public virtual tbContaCorrente tbContaCorrente { get; set; }
         public virtual ICollection<RecebimentoParcela> RecebimentoParcelas { get; set; }
+        public virtual ICollection<tbRecebimentoAjuste> tbRecebimentoAjustes { get; set; }
     }
 }

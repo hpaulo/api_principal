@@ -99,7 +99,7 @@ namespace api.Negocios.Card
                     case CAMPOS.DSTIPOCARTAO:
                         string dsTipoCartao = Convert.ToString(item.Value);
                         if (dsTipoCartao.Equals("")) entity = entity.Where(e => e.dsTipoCartao == null).AsQueryable<tbBancoParametro>();
-                        else entity = entity.Where(e => e.dsTipoCartao != null && e.dsTipoCartao.Equals(dsTipoCartao)).AsQueryable<tbBancoParametro>();
+                        else entity = entity.Where(e => e.dsTipoCartao != null && e.dsTipoCartao.TrimEnd().Equals(dsTipoCartao)).AsQueryable<tbBancoParametro>();
                         break;
                     case CAMPOS.CDBANDEIRA:
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
@@ -124,7 +124,31 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.ID_GRUPO:
                         Int32 id_grupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.nrCnpj == null || (e.nrCnpj != null && e.empresa.id_grupo == id_grupo)).AsQueryable<tbBancoParametro>();
+                        grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == id_grupo).FirstOrDefault();
+                        if (grupo == null) continue;
+                        // Armazena todos os parâmetros existentes para o grupo, baseado nos extratos "upados"
+                        //List<ParametroBancario> parametros = new List<ParametroBancario>();
+                        List<string> memos = new List<string>();
+                        foreach (tbContaCorrente tbContaCorrente in grupo.tbContaCorrentes) {
+                            foreach (tbExtrato tbExtrato in tbContaCorrente.tbExtratos)
+                            {
+                                //if (!parametros.Any(p => p.CdBanco.Equals(tbExtrato.tbContaCorrente.cdBanco) && 
+                                                         //p.DsMemo.Equals(tbExtrato.dsDocumento)))
+                                if(!memos.Contains(tbExtrato.dsDocumento))
+                                {
+                                    memos.Add(tbExtrato.dsDocumento);
+                                    /*parametros.Add(new ParametroBancario()
+                                    {
+                                        CdBanco = tbExtrato.tbContaCorrente.cdBanco,
+                                        DsMemo = tbExtrato.dsDocumento,
+                                        DsTipo = tbExtrato.dsTipo
+                                    });*/
+                                }
+                            }
+                        }
+                        // Para os parâmetros que não estão associados à uma filial, só são exibidos os que constam nos extratos bancários associados ao grupo
+                        entity = entity.Where(e => (e.nrCnpj == null && memos.Contains(e.dsMemo))//grupo.tbContaCorrentes.Where(c => c.tbExtratos.Where(x => x.tbContaCorrente.cdBanco.Equals(e.cdBanco) && x.dsDocumento.Equals(e.dsMemo)).Count() > 0).Count() > 0) 
+                                                   || (e.nrCnpj != null && e.empresa.id_grupo == id_grupo)).AsQueryable<tbBancoParametro>();
                         break;
                 }
             }
@@ -248,7 +272,7 @@ namespace api.Negocios.Card
                     dsTipo = e.dsTipo,
                     flVisivel = e.flVisivel,
                     nrCnpj = e.nrCnpj,
-                    dsTipoCartao = e.dsTipoCartao,
+                    dsTipoCartao = e.dsTipoCartao.TrimEnd(),
                     cdBandeira = e.cdBandeira
                 }).ToList<dynamic>();
             }
@@ -263,7 +287,7 @@ namespace api.Negocios.Card
                     dsTipo = e.dsTipo,
                     flVisivel = e.flVisivel,
                     nrCnpj = e.nrCnpj,
-                    dsTipoCartao = e.dsTipoCartao,
+                    dsTipoCartao = e.dsTipoCartao.TrimEnd(),
                     cdBandeira = e.cdBandeira
                 }).ToList<dynamic>();
             }
@@ -281,7 +305,7 @@ namespace api.Negocios.Card
                                     },
                     dsTipo = e.dsTipo,
                     flVisivel = e.flVisivel,
-                    dsTipoCartao = e.dsTipoCartao,
+                    dsTipoCartao = e.dsTipoCartao.TrimEnd(),
                     empresa = e.nrCnpj == null ? null : new
                     {
                         nu_cnpj = e.empresa.nu_cnpj,
@@ -405,7 +429,7 @@ namespace api.Negocios.Card
                             else value.nrCnpj = param.NrCnpj;
                         }
                         // Tipo Cartão
-                        if (param.DsTipoCartao != null && (value.dsTipoCartao == null || !param.DsTipoCartao.Equals(value.dsTipoCartao)))
+                        if (param.DsTipoCartao != null && (value.dsTipoCartao == null || !param.DsTipoCartao.Equals(value.dsTipoCartao.TrimEnd())))
                         {
                             if (param.DsTipoCartao.Equals("")) value.dsTipoCartao = null;
                             else value.dsTipoCartao = param.DsTipoCartao;

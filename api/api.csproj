@@ -302,6 +302,7 @@
     <Compile Include="Controllers\Card\TbExtratoController.cs" />
     <Compile Include="Controllers\Card\TbContaCorrenteTbLoginAdquirenteEmpresaController.cs" />
     <Compile Include="Controllers\Card\TbContaCorrenteController.cs" />
+    <Compile Include="Controllers\Card\TbRecebimentoAjusteController.cs" />
     <Compile Include="Controllers\Card\TbRecebimentoResumoManualController.cs" />
     <Compile Include="Controllers\Card\TbTerminalLogicoController.cs" />
     <Compile Include="Controllers\Card\TbTransacaoTefController.cs" />
@@ -853,6 +854,7 @@
     <Compile Include="Negocios\Card\GatewayTbRebimentoResumo.cs" />
     <Compile Include="Negocios\Card\GatewayTbExtrato.cs" />
     <Compile Include="Negocios\Card\GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.cs" />
+    <Compile Include="Negocios\Card\GatewayTbRecebimentoAjuste.cs" />
     <Compile Include="Negocios\Card\GatewayTbRecebimentoResumoManual.cs" />
     <Compile Include="Negocios\Card\GatewayTbTerminalLogico.cs" />
     <Compile Include="Negocios\Card\GatewayTbTransacaoTef.cs" />

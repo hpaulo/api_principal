@@ -57,6 +57,9 @@ namespace api.Negocios.Pos
             DTAVENDA = 605,
             CODRESUMOVENDA = 613,
 
+            // TBADQUIRENTE
+            CDADQUIRENTE = 700,
+
             //EXPORTAR
             EXPORTAR = 9999
 
@@ -314,6 +317,10 @@ namespace api.Negocios.Pos
                         }
                         else
                         entity = entity.Where(e => e.Recebimento.codResumoVenda.Equals(codResumoVenda)).AsQueryable();
+                        break;
+                    case CAMPOS.CDADQUIRENTE:
+                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.Recebimento.cdBandeira != null && e.Recebimento.tbBandeira.cdAdquirente == cdAdquirente).AsQueryable();
                         break;
                 }
             }
