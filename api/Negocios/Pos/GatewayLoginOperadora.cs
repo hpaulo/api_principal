@@ -376,11 +376,12 @@ namespace api.Negocios.Pos
 
                     // Procura pela operadora
                     Operadora operadora = _db.Operadoras
-                                                .Where(e => _db.LoginOperadoras
+                                                /*.Where(e => _db.LoginOperadoras
                                                                     .Where(l => l.cnpj.Equals(param.cnpj))
                                                                     .Select(l => l.idOperadora)
                                                                     .ToList().Contains(e.id)
-                                                      )
+                                                      )*/
+                                                .Where(e => e.idGrupoEmpresa == param.idGrupo)
                                                 .Where(e => e.nmOperadora.Equals(param.Operadora.nmOperadora))
                                                 .FirstOrDefault();
 
@@ -407,7 +408,7 @@ namespace api.Negocios.Pos
                         _db.LoginOperadoras.Add(param);
                         _db.SaveChanges();
                     }
-                    catch
+                    catch(Exception e)
                     {
                         // Remove a operadora criada
                         GatewayOperadora.Delete(token, param.idOperadora);
