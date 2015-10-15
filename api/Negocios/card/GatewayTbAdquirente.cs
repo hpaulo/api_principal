@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web;
 using api.Models;
 using System.Linq.Expressions;
+using System.Globalization;
 using api.Bibliotecas;
 using api.Models.Object;
 
@@ -32,10 +33,16 @@ namespace api.Negocios.Card
             STADQUIRENTE = 103,
             HREXECUCAO = 104,
 
-            // Relacionamento
-            CNPJ = 305,
-            ID_GRUPO = 316
+            /**
+              * Relacionamentos
+              */
 
+            // pos.LoginOperadoras
+            CNPJ = 305,
+            ID_GRUPO = 316,
+
+            // Várias Tabelas
+            DATA = 904
         };
 
         /// <summary>
@@ -62,8 +69,6 @@ namespace api.Negocios.Card
                 CAMPOS filtroEnum = (CAMPOS)key;
                 switch (filtroEnum)
                 {
-
-
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdAdquirente.Equals(cdAdquirente)).AsQueryable<tbAdquirente>();
@@ -88,18 +93,53 @@ namespace api.Negocios.Card
                     // Relacionamento
                     case CAMPOS.CNPJ:
                         string cnpj = Convert.ToString(item.Value);
-                        //entity = entity.Where(e => e.tbEmpresaGrupo.dsEmpresaGrupo.Contains(busca)).AsQueryable<tbEmpresa>();                        
                         List<string> nmOperadoras = _db.Operadoras.Where(o => o.LoginOperadoras.Where(l => l.cnpj.Equals(cnpj)).Count() > 0).Select(o => o.nmOperadora).ToList<string>();
-                        /*
-                        List<int> operadoras = _db.LoginOperadoras.Where(l => l.cnpj == cnpj).Select(l => l.idOperadora).ToList();
-                        List<string> nmOperadoras = _db.Operadoras.Where(o => operadoras.Contains(o.id)).Select(o => o.nmOperadora).ToList();
-                        */
                         entity = entity.Where(e => nmOperadoras.Contains(e.dsAdquirente)).AsQueryable<tbAdquirente>();
                         break;
                     case CAMPOS.ID_GRUPO:
                         int id_grupo = Convert.ToInt32(item.Value);
                         List<string> nmOperadorasG = _db.Operadoras.Where(o => o.LoginOperadoras.Where(l => l.empresa.id_grupo == id_grupo).Count() > 0).Select(o => o.nmOperadora).ToList<string>();
                         entity = entity.Where(e => nmOperadorasG.Contains(e.dsAdquirente)).AsQueryable<tbAdquirente>();
+                        break;
+
+                    case CAMPOS.DATA:                        
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            
+                        }
+                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaRecebimento >= dta && e.dtaRecebimentoEfetivo == null);
+                        }
+                        else if (item.Value.Contains("<")) // MENOR IGUAL
+                        {
+                            string busca = item.Value.Replace("<", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaRecebimento <= dta);
+                        }
+                        else if (item.Value.Length == 4)
+                        {
+                            string busca = item.Value + "0101";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaRecebimento.Year == dtaIni.Year);
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month);
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Day == dtaIni.Day);
+                        }                        
                         break;
                 }
             }
@@ -130,7 +170,7 @@ namespace api.Negocios.Card
                 case CAMPOS.HREXECUCAO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.hrExecucao).AsQueryable<tbAdquirente>();
                     else entity = entity.OrderByDescending(e => e.hrExecucao).AsQueryable<tbAdquirente>();
-                    break;                
+                    break;
             }
             #endregion
 
@@ -152,7 +192,8 @@ namespace api.Negocios.Card
 
             string outValue = null;
             Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-            if (IdGrupo != 0) {
+            if (IdGrupo != 0)
+            {
                 if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
                     queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
                 else
@@ -208,6 +249,29 @@ namespace api.Negocios.Card
                     dsAdquirente = e.dsAdquirente,
                     stAdquirente = e.stAdquirente,
                     hrExecucao = e.hrExecucao,
+                }).ToList<dynamic>();
+            }
+            else if (colecao == 2) // Conciliação Relatórios
+            {
+                CollectionTbAdquirente = query.Select(e => new
+                {
+
+                    cdAdquirente = e.cdAdquirente,
+                    nmAdquirente = e.nmAdquirente,
+                    bandeiras = e.tbBandeiras.Select(b => new
+                    {
+                        cdBandeira = b.cdBandeira,
+                        dsBandeira = b.dsBandeira,
+
+                        ajustesCredito = b.tbRecebimentoAjustes.Where(a => a.vlAjuste > new decimal(0.0)).Count() > 0 ?
+                                        b.tbRecebimentoAjustes
+                                            .Where(a => a.vlAjuste > new decimal(0.0))
+                                            .Sum(a => a.vlAjuste) : new decimal(0.0),
+                        ajustesDebito = b.tbRecebimentoAjustes.Where(a => a.vlAjuste > new decimal(0.0)).Count() > 0 ?
+                                        b.tbRecebimentoAjustes
+                                            .Where(a => a.vlAjuste < new decimal(0.0))
+                                            .Sum(a => a.vlAjuste) : new decimal(0.0),                        
+                    }),                    
                 }).ToList<dynamic>();
             }
 
