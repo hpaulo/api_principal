@@ -31,9 +31,8 @@ namespace api.Negocios.Card
             CDADQUIRENTE = 102,
             DTVENDA = 103,
             VLVENDA = 104,
-            QTTRACACAO = 105,
-            TPOPERACAO = 106,
-            CDBANDEIRA = 107,
+            QTTRACACAO = 105,            
+            CDBANDEIRA = 106,
 
         };
 
@@ -69,11 +68,11 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDTERMINALLOGICO:
                         string cdTerminalLogico = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.cdTerminalLogico.Equals(cdTerminalLogico)).AsQueryable<tbRecebimentoResumoManual>();
+                        entity = entity.Where(e => e.cdTerminalLogico != null && e.cdTerminalLogico.Equals(cdTerminalLogico)).AsQueryable<tbRecebimentoResumoManual>();
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdAdquirente.Equals(cdAdquirente)).AsQueryable<tbRecebimentoResumoManual>();
+                        entity = entity.Where(e => e.cdAdquirente == cdAdquirente).AsQueryable<tbRecebimentoResumoManual>();
                         break;
                     case CAMPOS.DTVENDA:
                         DateTime dtVenda = Convert.ToDateTime(item.Value);
@@ -86,11 +85,7 @@ namespace api.Negocios.Card
                     case CAMPOS.QTTRACACAO:
                         byte qtTracacao = Convert.ToByte(item.Value);
                         entity = entity.Where(e => e.qtTracacao.Equals(qtTracacao)).AsQueryable<tbRecebimentoResumoManual>();
-                        break;
-                    case CAMPOS.TPOPERACAO:
-                        byte tpOperacao = Convert.ToByte(item.Value);
-                        entity = entity.Where(e => e.tpOperacao.Equals(tpOperacao)).AsQueryable<tbRecebimentoResumoManual>();
-                        break;
+                        break;                    
                     case CAMPOS.CDBANDEIRA:
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdBandeira.Equals(cdBandeira)).AsQueryable<tbRecebimentoResumoManual>();
@@ -129,11 +124,7 @@ namespace api.Negocios.Card
                 case CAMPOS.QTTRACACAO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.qtTracacao).AsQueryable<tbRecebimentoResumoManual>();
                     else entity = entity.OrderByDescending(e => e.qtTracacao).AsQueryable<tbRecebimentoResumoManual>();
-                    break;
-                case CAMPOS.TPOPERACAO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.tpOperacao).AsQueryable<tbRecebimentoResumoManual>();
-                    else entity = entity.OrderByDescending(e => e.tpOperacao).AsQueryable<tbRecebimentoResumoManual>();
-                    break;
+                    break;                
                 case CAMPOS.CDBANDEIRA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.cdBandeira).AsQueryable<tbRecebimentoResumoManual>();
                     else entity = entity.OrderByDescending(e => e.cdBandeira).AsQueryable<tbRecebimentoResumoManual>();
@@ -187,9 +178,9 @@ namespace api.Negocios.Card
                     cdAdquirente = e.cdAdquirente,
                     dtVenda = e.dtVenda,
                     vlVenda = e.vlVenda,
-                    qtTracacao = e.qtTracacao,
-                    tpOperacao = e.tpOperacao,
+                    qtTransacao = e.qtTracacao,                    
                     cdBandeira = e.cdBandeira,
+                    bandeiraTipo = e.tbBandeira.dsTipo,
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -202,9 +193,10 @@ namespace api.Negocios.Card
                     cdAdquirente = e.cdAdquirente,
                     dtVenda = e.dtVenda,
                     vlVenda = e.vlVenda,
-                    qtTracacao = e.qtTracacao,
-                    tpOperacao = e.tpOperacao,
+                    qtTransacao = e.qtTracacao,                    
                     cdBandeira = e.cdBandeira,
+                    dsBandeira = e.tbBandeira.dsBandeira,
+                    bandeiraTipo = e.tbBandeira.dsTipo,
                 }).ToList<dynamic>();
             }
             else if (colecao == 2) // [Portal] Preencher cupons
@@ -215,9 +207,11 @@ namespace api.Negocios.Card
                         idRecebimentoResumoManual = e.idRecebimentoResumoManual,
                         dtVenda = e.dtVenda,
                         vlVenda = e.vlVenda,
-                        qtTracacao = e.qtTracacao,
-                        tpOperacao = e.tpOperacao,
+                        qtTransacao = e.qtTracacao,                        
                         cdBandeira = e.cdBandeira,
+
+                        dsBandeira = e.tbBandeira.dsBandeira,
+                        bandeiraTipo = e.tbBandeira.dsTipo,
 
                         ds_fantasia = e.tbTerminalLogico.empresa.ds_fantasia,
                         ds_endereco = e.tbTerminalLogico.empresa.ds_endereco,
@@ -282,9 +276,7 @@ namespace api.Negocios.Card
             if (param.vlVenda != value.vlVenda)
                 value.vlVenda = param.vlVenda;
             if (param.qtTracacao != null && param.qtTracacao != value.qtTracacao)
-                value.qtTracacao = param.qtTracacao;
-            if (param.tpOperacao != value.tpOperacao)
-                value.tpOperacao = param.tpOperacao;
+                value.qtTracacao = param.qtTracacao;            
             if (param.cdBandeira != null && param.cdBandeira != value.cdBandeira)
                 value.cdBandeira = param.cdBandeira;
             _db.SaveChanges();
