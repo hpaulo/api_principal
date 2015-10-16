@@ -92,6 +92,49 @@ namespace api.Negocios.Card
                 IQueryable<tbRecebimentoAjuste> queryTbRecebimentoAjuste = GatewayTbRecebimentoAjuste.getQuery(0, (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, 0, 0, queryStringTbRecebimentoAjuste);
                 IQueryable<tbExtrato> queryExtrato = GatewayTbExtrato.getQuery(0, (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, 0, 0, 0, queryStringExtrato);
 
+
+                List<ConciliacaoBancaria> rps = queryRecebimentoParcela.Select(t => new ConciliacaoBancaria
+                {
+                    Tipo = "R",
+                    Bandeira = t.Recebimento.tbBandeira.dsBandeira,
+                    Data = t.dtaRecebimentoEfetivo != null ? t.dtaRecebimentoEfetivo.Value : t.dtaRecebimento,
+                     
+                }).OrderBy(t => t.Data).ToList<ConciliacaoBancaria>();
+
+                List<ConciliacaoBancaria> ajustes = queryTbRecebimentoAjuste.Select(t => new ConciliacaoBancaria
+                {
+                    Tipo = "A",
+                    Bandeira = t.tbBandeira.dsBandeira,
+                    Data = t.dtAjuste,
+                    ValorTotal = t.vlAjuste
+                }).OrderBy(t => t.Data).ToList<ConciliacaoBancaria>();
+
+                List<ConciliacaoBancaria> listCompleta = rps.Concat(ajustes).OrderBy(t => t.Data).ToList<ConciliacaoBancaria>();
+
+                List<dynamic> listaCompleta2 = listCompleta.GroupBy(t => t.Data)
+                                                           .Select(t => new
+                                                           {
+                                                               competencia = t.Key.Data,
+                                                               taxaMedia = t.Select(x => (x.ValorDescontado * new decimal(100.0))/x.ValorBruto).Sum() / t.Count(),
+                                                               vendas = t.Where(x => x.Tipo.Equals("R")).Sum(x => x.ValorBruto),
+                                                               taxaADM = new decimal(0.0),
+                                                               ajustesCredito = t.Where(x => x.Tipo.Equals("A")).Where(x => x.Valor > new decimal(0.0)).Sum(x => x.Valor),
+                                                               ajustesDebito = t.Where(x => x.Tipo.Equals("A")).Where(x => x.Valor < new decimal(0.0)).Sum(x => x.Valor),
+                                                               valorLiquido = t.Sum(x => x.ValorLiquido),
+                                                               extratos = t.Where(x => x.Tipo.Equals("E")).Sum(x => x.Valor),
+                                                               diferenca = new decimal(0.0),
+                                                               conciliados = t.Where(x => x.Tipo.Equals("R")).Where(x => x.idExtrato != null).Count(),
+                                                               totalRps = t.Where(x => x.Tipo.Equals("R")).Count(),
+                                                           })
+                                                           .ToList<dynamic>();
+                //for(int n = 0; n < listCompleta.Count; n++)
+                //{
+                //    ConciliacaoBancaria item1 = listCompleta[n];
+                //    ConciliacaoBancaria item1 = listCompleta[n];
+                //    if ()
+                //}
+
+
                 // Ordena
                 CollectionConciliacaoRelatorios = CollectionConciliacaoRelatorios
                                                                 .OrderBy(c => c.Data.Year)
