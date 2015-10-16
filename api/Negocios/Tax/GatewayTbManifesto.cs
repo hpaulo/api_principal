@@ -59,6 +59,7 @@ namespace api.Negocios.Tax
             DTENTREGA = 120,
             IDUSERS = 121,
             FLENTREGA = 122,
+            DTIMPORTACAO = 123,
 
         };
 
@@ -1427,7 +1428,7 @@ namespace api.Negocios.Tax
                                 vlNFe = x.vlNFe,
                                 nrChave = x.nrChave,
                                 dsSituacaoManifesto = x.dsSituacaoManifesto,
-                                dsSituacaoErp = "Não Importado",
+                                dsSituacaoErp = x.dtImportacao != null? "Importada": "Não Importado",
                                 xmlNFe = x.xmlNFe,
                                 nrCNPJ = x.nrCNPJ,
 
