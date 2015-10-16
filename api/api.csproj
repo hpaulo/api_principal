@@ -844,6 +844,7 @@
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsersInRoles.cs" />
     <Compile Include="Controllers\Card\TbModoEntradaTefController.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbCanal.cs" />
+    <Compile Include="Negocios\Card\GatewayConciliacaoRelatorios.cs" />
     <Compile Include="Negocios\Card\GatewayTbBandeira.cs" />
     <Compile Include="Negocios\Card\GatewayTbLogCarga.cs" />
     <Compile Include="Negocios\Card\GatewayConciliacaoBancaria.cs" />

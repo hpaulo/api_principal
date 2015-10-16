@@ -102,7 +102,8 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => nmOperadorasG.Contains(e.dsAdquirente)).AsQueryable<tbAdquirente>();
                         break;
 
-                    case CAMPOS.DATA:                        
+                    case CAMPOS.DATA:
+                        /*                        
                         if (item.Value.Contains("|")) // BETWEEN
                         {
                             string[] busca = item.Value.Split('|');
@@ -139,7 +140,8 @@ namespace api.Negocios.Card
                             string busca = item.Value;
                             DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Day == dtaIni.Day);
-                        }                        
+                        }
+                        */                        
                         break;
                 }
             }
