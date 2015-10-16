@@ -31,6 +31,10 @@ namespace api.Negocios.Pos
             DSTERMINALLOGICO = 101,
             IDOPERADORA = 102,
 
+            // RELACIONAMENTOS
+            IDGRUPOEMPRESA = 200,
+
+            CDADQUIRENTE = 300
         };
 
         /// <summary>
@@ -68,6 +72,22 @@ namespace api.Negocios.Pos
                     case CAMPOS.IDOPERADORA:
                         Int32 idOperadora = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.idOperadora.Equals(idOperadora)).AsQueryable<TerminalLogico>();
+                        break;
+
+                    // RELACIONAMENTOS
+                    case CAMPOS.CDADQUIRENTE: // Não vem a correta!
+                    //    string outValue = null;
+                    //    // tem que estar associado a um grupo empresa
+                    //    if (!queryString.TryGetValue("" + (int)CAMPOS.IDGRUPOEMPRESA, out outValue)) continue;
+                    //    Int32 idGrupoEmpresa = Convert.ToInt32(queryString["" + (int)CAMPOS.IDGRUPOEMPRESA]);
+                    //    Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                    //    tbAdquirente tbAdquirente = _db.tbAdquirentes.Where(a => a.cdAdquirente == cdAdquirente).FirstOrDefault();
+                    //    if (tbAdquirente == null) continue;
+                    //    Operadora operadora = _db.Operadoras.Where(o => o.idGrupoEmpresa == idGrupoEmpresa)
+                    //                                        .Where(o => o.nmOperadora.Equals(tbAdquirente.nmAdquirente))
+                    //                                        .FirstOrDefault();
+                    //    if (operadora == null) continue;
+                    //    entity = entity.Where(e => e.idOperadora == operadora.id).AsQueryable<TerminalLogico>();
                         break;
                 }
             }
@@ -111,12 +131,21 @@ namespace api.Negocios.Pos
                 List<dynamic> CollectionTerminalLogico = new List<dynamic>();
                 Retorno retorno = new Retorno();
 
+                string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.IDGRUPOEMPRESA, out outValue))
+                        queryString["" + (int)CAMPOS.IDGRUPOEMPRESA] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.IDGRUPOEMPRESA, IdGrupo.ToString());
+                }
+
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                var queryTotal = query;
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
 
                 // PAGINAÇÃO

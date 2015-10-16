@@ -291,6 +291,7 @@
     <Compile Include="Controllers\Administracao\WebpagesRolesController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersInRolesController.cs" />
+    <Compile Include="Controllers\Card\ConciliacaoRelatoriosController.cs" />
     <Compile Include="Controllers\Card\TbBandeiraController.cs" />
     <Compile Include="Controllers\Card\TbLogCargaController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoBancariaController.cs" />
