@@ -381,6 +381,19 @@ namespace api.Negocios.Card
                         cdEstabelecimentoHost = e.cdEstabelecimentoHost,
                     }).ToList<dynamic>();
                 }
+                else if (colecao == 3)
+                {
+                    CollectionTbRecebimentoTEF = query
+                        .GroupBy(x => new { x.cdBandeira, x.cdTrasacaoTEF})
+                        .Select(e => new
+                    {
+                        
+                        quantidade = e.Count(),
+                        vlVenda = (e.Sum(p => p.vlVenda)),
+                        cdBandeira = e.Key.cdBandeira,
+                        cdTrasacaoTEF = e.Key.cdTrasacaoTEF,
+                    }).ToList<dynamic>();
+                }
                 else if (colecao == 2)
                 {
                     CollectionTbRecebimentoTEF = query
@@ -407,6 +420,7 @@ namespace api.Negocios.Card
                     retorno.ItensPorPagina = pageSize;
 
                 }
+                
 
                 retorno.Registros = CollectionTbRecebimentoTEF;
 
