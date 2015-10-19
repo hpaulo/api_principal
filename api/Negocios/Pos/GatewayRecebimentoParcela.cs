@@ -63,6 +63,7 @@ namespace api.Negocios.Pos
 
             // TBBANDEIRA
             CDBANDEIRA = 800,
+            DSTIPO = 803,
 
             //EXPORTAR
             EXPORTAR = 9999
@@ -177,7 +178,10 @@ namespace api.Negocios.Pos
                         entity = entity.Where(e => e.vlDescontadoAntecipacao == vlDescontadoAntecipacao);
                         break;
                     case CAMPOS.DTARECEBIMENTOEFETIVO: // Para os que este campo for null, pega o dtaRecebimento
-                        if (item.Value.Contains("|")) // BETWEEN
+                        if (item.Value.Trim().Equals("")){
+                            entity = entity.Where(e => e.dtaRecebimentoEfetivo == null);
+                        }
+                        else if (item.Value.Contains("|")) // BETWEEN
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
@@ -329,6 +333,10 @@ namespace api.Negocios.Pos
                     case CAMPOS.CDBANDEIRA:
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.Recebimento.cdBandeira == cdBandeira).AsQueryable();
+                        break;
+                    case CAMPOS.DSTIPO:
+                        string dsTipo = Convert.ToString(item.Value).TrimEnd();
+                        entity = entity.Where(e => e.Recebimento.cdBandeira != null && e.Recebimento.tbBandeira.dsTipo.TrimEnd().Equals(dsTipo)).AsQueryable();
                         break;
                 }
             }
@@ -499,7 +507,7 @@ namespace api.Negocios.Pos
                     retorno.Totais.Add("vlDescontadoAntecipacao", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.vlDescontadoAntecipacao)) : 0);
                     retorno.Totais.Add("valorParcelaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaBruta)) : 0);
                     retorno.Totais.Add("valorParcelaLiquida", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaLiquida)) : 0);
-                    retorno.Totais.Add("taxaCashFlow", query.Count() > 0 ? Convert.ToDecimal((query.Select(r => (r.valorDescontado * new decimal(100.0))/ r.valorParcelaLiquida).Sum()) / (decimal)query.Count()) : 0);
+                    retorno.Totais.Add("taxaCashFlow", query.Count() > 0 ? Convert.ToDecimal((query.Select(r => (r.valorDescontado * new decimal(100.0))/ r.valorParcelaBruta).Sum()) / (decimal)query.Count()) : 0);
                 }
 
                 if (colecao == 0 || colecao == 8)
