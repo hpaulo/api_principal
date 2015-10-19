@@ -59,6 +59,7 @@ namespace api.Negocios.Tax
             DTENTREGA = 120,
             IDUSERS = 121,
             FLENTREGA = 122,
+            DTIMPORTACAO = 123,
 
         };
 
@@ -90,7 +91,7 @@ namespace api.Negocios.Tax
 
                     case CAMPOS.IDMANIFESTO:
                         Int32 idManifesto = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idManifesto.Equals(idManifesto)).AsQueryable<tbManifesto>();
+                        entity = entity.Where(e => e.idManifesto == idManifesto).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.NRCHAVE:
                         string nrChave = Convert.ToString(item.Value);
@@ -1427,8 +1428,9 @@ namespace api.Negocios.Tax
                                 vlNFe = x.vlNFe,
                                 nrChave = x.nrChave,
                                 dsSituacaoManifesto = x.dsSituacaoManifesto,
-                                dsSituacaoErp = "Não Importado",
-                                xmlNFe = x.xmlNFe
+                                dsSituacaoErp = x.dtImportacao != null? "Importada": "Não Importado",
+                                xmlNFe = x.xmlNFe,
+                                nrCNPJ = x.nrCNPJ,
 
                             })
                             .OrderBy(x => x.dtEmissao.Value.Year)
@@ -1476,7 +1478,8 @@ namespace api.Negocios.Tax
                                 nrChave = notas.nrChave,
                                 nfe = xmlNFe.protNFe.xMotivo,
                                 dsSituacaoManifesto = notas.dsSituacaoManifesto,
-                                dsSituacaoErp = notas.dsSituacaoErp
+                                dsSituacaoErp = notas.dsSituacaoErp,
+                                nrCNPJ = notas.nrCNPJ
                             };
 
                             n.Add(e);
