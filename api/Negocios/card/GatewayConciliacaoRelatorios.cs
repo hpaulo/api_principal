@@ -59,10 +59,12 @@ namespace api.Negocios.Card
                 if (queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
                 {
                     data = queryString["" + (int)CAMPOS.DATA];                    
-                    queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, data);
+                    queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, data);
+                    queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.CDBANDEIRA, "0");
                     queryStringTbRecebimentoAjuste.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, data);
                     queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, data);
                 }
+                else throw new Exception("Uma data deve ser selecionada como filtro de conciliação bancária!");
                 // GRUPO EMPRESA => OBRIGATÓRIO!
                 Int32 IdGrupo = Permissoes.GetIdGrupo(token);
                 if (IdGrupo == 0 && queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
@@ -88,43 +90,49 @@ namespace api.Negocios.Card
 
 
                 // OBTÉM AS QUERIES                
-                IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(0, (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, 0, 0, 0, queryStringRecebimentoParcela);
+                IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(0, (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, 0, 0, 0, queryStringRecebimentoParcela);
                 IQueryable<tbRecebimentoAjuste> queryTbRecebimentoAjuste = GatewayTbRecebimentoAjuste.getQuery(0, (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, 0, 0, queryStringTbRecebimentoAjuste);
                 IQueryable<tbExtrato> queryExtrato = GatewayTbExtrato.getQuery(0, (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, 0, 0, 0, queryStringExtrato);
 
 
-                List<ConciliacaoBancaria> rps = queryRecebimentoParcela.Select(t => new ConciliacaoBancaria
+                List<ConciliacaoRelatorios> rRecebimentoParcela = queryRecebimentoParcela.Select(t => new ConciliacaoRelatorios
                 {
-                    Tipo = "R",
-                    Bandeira = t.Recebimento.tbBandeira.dsBandeira,
-                    Data = t.dtaRecebimentoEfetivo != null ? t.dtaRecebimentoEfetivo.Value : t.dtaRecebimento,
-                     
-                }).OrderBy(t => t.Data).ToList<ConciliacaoBancaria>();
+                    tipo = "R",
+                    adquirente = t.Recebimento.tbBandeira.tbAdquirente.nmAdquirente,
+                    bandeira = t.Recebimento.tbBandeira.dsBandeira,
+                    competencia = t.dtaRecebimentoEfetivo != null ? t.dtaRecebimentoEfetivo.Value : t.dtaRecebimento,
+                    valorDescontado = t.valorDescontado,
+                    valorParcelaBruta = t.valorParcelaBruta,
+                    idExtrato = t.idExtrato                     
+                }).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
 
-                List<ConciliacaoBancaria> ajustes = queryTbRecebimentoAjuste.Select(t => new ConciliacaoBancaria
+                List<ConciliacaoRelatorios> rRecebimentoAjuste = queryTbRecebimentoAjuste.Select(t => new ConciliacaoRelatorios
                 {
-                    Tipo = "A",
-                    Bandeira = t.tbBandeira.dsBandeira,
-                    Data = t.dtAjuste,
-                    ValorTotal = t.vlAjuste
-                }).OrderBy(t => t.Data).ToList<ConciliacaoBancaria>();
+                    tipo = "A",
+                    adquirente = t.tbBandeira.tbAdquirente.nmAdquirente,
+                    bandeira = t.tbBandeira.dsBandeira,
+                    competencia = t.dtAjuste,
+                    vlAjuste = t.vlAjuste
+                }).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
 
-                List<ConciliacaoBancaria> listCompleta = rps.Concat(ajustes).OrderBy(t => t.Data).ToList<ConciliacaoBancaria>();
+                List<ConciliacaoRelatorios> listaCompleta = rRecebimentoParcela.Concat(rRecebimentoAjuste).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
 
-                List<dynamic> listaCompleta2 = listCompleta.GroupBy(t => t.Data)
+                List<dynamic> listaFinal = listaCompleta.GroupBy(t => new { t.adquirente, t.bandeira, t.competencia })
                                                            .Select(t => new
                                                            {
-                                                               competencia = t.Key.Data,
-                                                               taxaMedia = t.Select(x => (x.ValorDescontado * new decimal(100.0))/x.ValorBruto).Sum() / t.Count(),
-                                                               vendas = t.Where(x => x.Tipo.Equals("R")).Sum(x => x.ValorBruto),
+                                                               adquirente = t.Key.adquirente,
+                                                               bandeira = t.Key.bandeira,
+                                                               competencia = t.Key.competencia,
+                                                               //taxaMedia = t.Select(x => (x.valorDescontado * new decimal(100.0))/x.valorParcelaBruta).Sum() / t.Count(),
+                                                               vendas = t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorParcelaBruta),
                                                                taxaADM = new decimal(0.0),
-                                                               ajustesCredito = t.Where(x => x.Tipo.Equals("A")).Where(x => x.Valor > new decimal(0.0)).Sum(x => x.Valor),
-                                                               ajustesDebito = t.Where(x => x.Tipo.Equals("A")).Where(x => x.Valor < new decimal(0.0)).Sum(x => x.Valor),
-                                                               valorLiquido = t.Sum(x => x.ValorLiquido),
-                                                               extratos = t.Where(x => x.Tipo.Equals("E")).Sum(x => x.Valor),
+                                                               ajustesCredito = t.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste > new decimal(0.0)).Sum(x => x.vlAjuste),
+                                                               ajustesDebito = t.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste < new decimal(0.0)).Sum(x => x.vlAjuste),
+                                                               valorLiquido = t.Sum(x => x.valorLiquido),
+                                                               //extratoBancario = t.Where(x => x.tipo.Equals('E')).Sum(x => x.Valor),
                                                                diferenca = new decimal(0.0),
-                                                               conciliados = t.Where(x => x.Tipo.Equals("R")).Where(x => x.idExtrato != null).Count(),
-                                                               totalRps = t.Where(x => x.Tipo.Equals("R")).Count(),
+                                                               numConciliados = t.Where(x => x.tipo.Equals("R")).Where(x => x.idExtrato != null).Count(),
+                                                               totalRPs = t.Where(x => x.tipo.Equals("R")).Count(),
                                                            })
                                                            .ToList<dynamic>();
                 //for(int n = 0; n < listCompleta.Count; n++)
@@ -136,13 +144,13 @@ namespace api.Negocios.Card
 
 
                 // Ordena
-                CollectionConciliacaoRelatorios = CollectionConciliacaoRelatorios
-                                                                .OrderBy(c => c.Data.Year)
-                                                                .ThenBy(c => c.Data.Month)
-                                                                .ThenBy(c => c.Data.Day)
-                                                                .ThenBy(c => c.Adquirente)
-                                                                .ThenBy(c => c.RecebimentosParcela != null ? c.ValorTotalRecebimento : c.ValorTotalExtrato)
-                                                                .ThenBy(c => c.Bandeira)
+                CollectionConciliacaoRelatorios = listaCompleta
+                                                                .OrderBy(c => c.competencia.Year)
+                                                                .ThenBy(c => c.competencia.Month)
+                                                                .ThenBy(c => c.competencia.Day)
+                                                                .ThenBy(c => c.adquirente)
+                                                                //.ThenBy(c => c.RecebimentosParcela != null ? c.ValorTotalRecebimento : c.ValorTotalExtrato)
+                                                                .ThenBy(c => c.bandeira)
                                                                 .ToList<dynamic>();
 
                 // TOTAL DE REGISTROS

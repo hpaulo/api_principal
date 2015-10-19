@@ -371,6 +371,7 @@
     <Compile Include="Models\Mapping\tbRecebimentoResumoManualMap.cs" />
     <Compile Include="Models\Mapping\tbTerminalLogicoMap.cs" />
     <Compile Include="Models\Object\Assinante.cs" />
+    <Compile Include="Models\Object\ConciliacaoRelatorios.cs" />
     <Compile Include="Models\tbAssinante.cs" />
     <Compile Include="Models\tbBandeira.cs" />
     <Compile Include="Models\tbLogCarga.cs" />
