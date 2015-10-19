@@ -38,9 +38,7 @@ namespace api.Negocios.Card
             // RELACIONAMENTOS
             ID_GRUPO = 216,
 
-            CDADQUIRENTE = 302,
-
-            DSTIPO = 403,
+            CDADQUIRENTE = 302
         };
 
         /// <summary>
@@ -82,11 +80,11 @@ namespace api.Negocios.Card
                                                     && (e.dtAjuste.Year < dtaFim.Year || (e.dtAjuste.Year == dtaFim.Year && e.dtAjuste.Month < dtaFim.Month) ||
                                                                                           (e.dtAjuste.Year == dtaFim.Year && e.dtAjuste.Month == dtaFim.Month && e.dtAjuste.Day <= dtaFim.Day)));
                         }
-                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        else if (item.Value.Length == 6)
                         {
-                            string busca = item.Value.Replace(">", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtAjuste >= dta);
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtAjuste.Year == dtaIni.Year && e.dtAjuste.Month == dtaIni.Month);
                         }
                         else // IGUAL
                         {
@@ -124,10 +122,6 @@ namespace api.Negocios.Card
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.tbBandeira.cdAdquirente == cdAdquirente).AsQueryable<tbRecebimentoAjuste>();
-                        break;
-                    case CAMPOS.DSTIPO:
-                        string dsTipo = Convert.ToString(item.Value).TrimEnd();
-                        entity = entity.Where(e => e.tbBandeira.dsTipo.TrimEnd().Equals(dsTipo)).AsQueryable<tbRecebimentoAjuste>();
                         break;
                 }
             }

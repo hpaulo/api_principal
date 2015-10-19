@@ -18,11 +18,7 @@ namespace api.Models.Mapping
                 .IsRequired();
 
             this.Property(t => t.vlVenda)
-                .IsRequired();
-
-            this.Property(t => t.tpOperacao)
-                .IsRequired();
-            
+                .IsRequired();                        
 
             // Table & Column Mappings
             this.ToTable("tbRecebimentoResumoManual", "card");
@@ -31,8 +27,7 @@ namespace api.Models.Mapping
             this.Property(t => t.cdAdquirente).HasColumnName("cdAdquirente");
             this.Property(t => t.dtVenda).HasColumnName("dtVenda");
             this.Property(t => t.vlVenda).HasColumnName("vlVenda");
-            this.Property(t => t.qtTracacao).HasColumnName("qtTracacao");
-            this.Property(t => t.tpOperacao).HasColumnName("tpOperacao");
+            this.Property(t => t.qtTracacao).HasColumnName("qtTracacao");            
             this.Property(t => t.cdBandeira).HasColumnName("cdBandeira");
 
             // Relationships
