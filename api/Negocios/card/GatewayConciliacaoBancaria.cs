@@ -744,6 +744,17 @@ namespace api.Negocios.Card
                                                             Filial = r.Recebimento.empresa.ds_fantasia + (r.Recebimento.empresa.filial != null ? " " + r.Recebimento.empresa.filial : "")
                                                         }).ToList<ConciliacaoBancaria>();
 
+                    Util.GatewayProxy proxy = new GatewayProxy();
+
+                    foreach (var itemrecebimentosParcela in recebimentosParcela)
+                    {
+                        foreach (var itemGrupo in itemrecebimentosParcela.Grupo)
+                        {
+                            var numTitulo = Util.GatewayProxy.Get("http://localhost:50939/pgsql/tabtituloreceber/eNR59cwLDBMqiSvY6qvasoFFXTZAStWKfVq88zMlZVQVShkOHmEMurHbiYZYyKgAlDEexUxtiiQU7Cy54WMrQlNc0aBAFWtKciZhnCcVdznEIqPoObptiGLh57oA/0?177=" + itemGrupo.Documento + "&106=" + itemGrupo.DataVenda.Value.ToString("yyyyMMdd") + "|" + itemGrupo.DataVenda.Value.ToString("yyyyMMdd"));
+                            itemGrupo.NumTituloErp = numTitulo.ToString();
+                        }
+                    }
+
                     List<ConciliacaoBancaria> ajustes = queryAjustes
                                                         .Where(r => r.idExtrato == null)
                                                         .Select(r => new ConciliacaoBancaria
@@ -759,7 +770,8 @@ namespace api.Negocios.Card
                                                                     TipoCartao = r.tbBandeira.dsTipo.ToUpper().TrimEnd(),
                                                                     DataVenda = r.dtAjuste,
                                                                     DataPrevista = r.dtAjuste,
-                                                                    Filial = r.empresa.ds_fantasia + (r.empresa.filial != null ? " " + r.empresa.filial : "")
+                                                                    Filial = r.empresa.ds_fantasia + (r.empresa.filial != null ? " " + r.empresa.filial : ""),
+                                                                    NumTituloErp = ""
                                                                 }
                                                             },
                                                             ValorTotal = r.vlAjuste,

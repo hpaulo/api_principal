@@ -153,6 +153,13 @@ namespace api.Models.Object
                 get { return numParcela; }
                 set { numParcela = value; }
             }
+
+            private string numTituloErp;
+            public string NumTituloErp
+            {
+                get { return numTituloErp; }
+                set { numTituloErp = value; }
+            }
         }
 
 
@@ -207,6 +214,31 @@ namespace api.Models.Object
                 DateTime d = new DateTime(c.Data.Year, c.Data.Month, c.Data.Day);
                 return ((int)d.Ticks) + c.Adquirente.GetHashCode() + ((int)c.ValorTotal);
             }
+        }
+
+        public class TituloErp
+        {
+            public int seq_titulo;
+            public int cod_empresa;
+            public int cod_pessoa_sacado;
+            public string ind_marcado;
+            public string num_titulo;
+            public DateTime dta_emissao;
+            public DateTime dta_vencimento;
+            public double val_original;
+            public double val_juros_original;
+            public double val_juros;
+            public double val_multa;
+            public double val_desconto;
+            public double val_taxa_cobranca;
+            public double val_outros_acrescimos;
+            public double val_despesa_acessoria;
+            public string ind_tipo_titulo;
+            public string des_observacao;
+            public string num_placa;
+            public int qtd_parcelas;
+            public string num_autorizacao_tef;
+            public string num_nsu_tef;
         }
 
     }
