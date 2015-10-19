@@ -72,8 +72,8 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.cdAdquirente.Equals(cdAdquirente)).AsQueryable<tbBandeira>();
                         break;
                     case CAMPOS.DSTIPO:
-                        string dsTipo = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.dsTipo.Equals(dsTipo)).AsQueryable<tbBandeira>();
+                        string dsTipo = Convert.ToString(item.Value).TrimEnd();
+                        entity = entity.Where(e => e.dsTipo.TrimEnd().Equals(dsTipo)).AsQueryable<tbBandeira>();
                         break;
 
                 }

@@ -63,6 +63,7 @@ namespace api.Negocios.Pos
 
             // TBBANDEIRA
             CDBANDEIRA = 800,
+            DSTIPO = 803,
 
             //EXPORTAR
             EXPORTAR = 9999
@@ -177,7 +178,10 @@ namespace api.Negocios.Pos
                         entity = entity.Where(e => e.vlDescontadoAntecipacao == vlDescontadoAntecipacao);
                         break;
                     case CAMPOS.DTARECEBIMENTOEFETIVO: // Para os que este campo for null, pega o dtaRecebimento
-                        if (item.Value.Contains("|")) // BETWEEN
+                        if (item.Value.Trim().Equals("")){
+                            entity = entity.Where(e => e.dtaRecebimentoEfetivo == null);
+                        }
+                        else if (item.Value.Contains("|")) // BETWEEN
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
@@ -329,6 +333,10 @@ namespace api.Negocios.Pos
                     case CAMPOS.CDBANDEIRA:
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.Recebimento.cdBandeira == cdBandeira).AsQueryable();
+                        break;
+                    case CAMPOS.DSTIPO:
+                        string dsTipo = Convert.ToString(item.Value).TrimEnd();
+                        entity = entity.Where(e => e.Recebimento.cdBandeira != null && e.Recebimento.tbBandeira.dsTipo.TrimEnd().Equals(dsTipo)).AsQueryable();
                         break;
                 }
             }
