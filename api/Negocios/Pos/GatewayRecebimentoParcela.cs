@@ -499,7 +499,7 @@ namespace api.Negocios.Pos
                     retorno.Totais.Add("vlDescontadoAntecipacao", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.vlDescontadoAntecipacao)) : 0);
                     retorno.Totais.Add("valorParcelaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaBruta)) : 0);
                     retorno.Totais.Add("valorParcelaLiquida", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaLiquida)) : 0);
-                    retorno.Totais.Add("taxaCashFlow", query.Count() > 0 ? Convert.ToDecimal((query.Select(r => (r.valorDescontado * new decimal(100.0))/ r.valorParcelaLiquida).Sum()) / (decimal)query.Count()) : 0);
+                    retorno.Totais.Add("taxaCashFlow", query.Count() > 0 ? Convert.ToDecimal((query.Select(r => (r.valorDescontado * new decimal(100.0))/ r.valorParcelaBruta).Sum()) / (decimal)query.Count()) : 0);
                 }
 
                 if (colecao == 0 || colecao == 8)
