@@ -746,12 +746,15 @@ namespace api.Negocios.Card
 
                     Util.GatewayProxy proxy = new GatewayProxy();
 
-                    foreach (var itemrecebimentosParcela in recebimentosParcela)
+                    if (IdGrupo == 6)
                     {
-                        foreach (var itemGrupo in itemrecebimentosParcela.Grupo)
+                        foreach (var itemrecebimentosParcela in recebimentosParcela)
                         {
-                            var numTitulo = Util.GatewayProxy.Get("http://localhost:50939/pgsql/tabtituloreceber/eNR59cwLDBMqiSvY6qvasoFFXTZAStWKfVq88zMlZVQVShkOHmEMurHbiYZYyKgAlDEexUxtiiQU7Cy54WMrQlNc0aBAFWtKciZhnCcVdznEIqPoObptiGLh57oA/0?177=" + itemGrupo.Documento + "&106=" + itemGrupo.DataVenda.Value.ToString("yyyyMMdd") + "|" + itemGrupo.DataVenda.Value.ToString("yyyyMMdd"));
-                            itemGrupo.NumTituloErp = numTitulo.ToString();
+                            foreach (var itemGrupo in itemrecebimentosParcela.Grupo)
+                            {
+                                var numTitulo = Util.GatewayProxy.Get("http://localhost:50939/pgsql/tabtituloreceber/eNR59cwLDBMqiSvY6qvasoFFXTZAStWKfVq88zMlZVQVShkOHmEMurHbiYZYyKgAlDEexUxtiiQU7Cy54WMrQlNc0aBAFWtKciZhnCcVdznEIqPoObptiGLh57oA/0?177=" + itemGrupo.Documento + "&106=" + itemGrupo.DataVenda.Value.ToString("yyyyMMdd") + "|" + itemGrupo.DataVenda.Value.ToString("yyyyMMdd"));
+                                itemGrupo.NumTituloErp = numTitulo.ToString();
+                            }
                         }
                     }
 
