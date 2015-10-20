@@ -148,19 +148,18 @@ namespace api.Negocios.Card
 
                 if (ajustes.Count > 0) recebiveisFuturos = recebiveisFuturos.Concat(ajustes).OrderBy(r => r.data).ToList<RecebiveisFuturos>();
 
-                CollectionRecebiveisFuturos = recebiveisFuturos.GroupBy(r => r.adquirente)
-                                                               .OrderBy(r => r.Key)
+                CollectionRecebiveisFuturos = recebiveisFuturos.GroupBy(r => new { r.data.Value.Month, r.data.Value.Year })
                                                                .Select(r => new
                                                                {
-                                                                   adquirente = r.Key,
+                                                                   competencia = CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(r.Key.Month) + "/" + r.Key.Year,
                                                                    valorBruto = r.Sum(f => f.valorBruto),
                                                                    valorDescontado = r.Sum(f => f.valorDescontado),
                                                                    valorLiquido = r.Sum(f => f.valorLiquido),
-                                                                   meses = r.GroupBy(f => new { f.data.Value.Month, f.data.Value.Year })
+                                                                   adquirentes = r.GroupBy(f => f.adquirente)
+                                                                   .OrderBy(f => f.Key)
                                                                    .Select(f => new
                                                                    {
-                                                                       competencia = CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(f.Key.Month) + "/" + f.Key.Year,
-                                                                       //data = Convert.ToDateTime("01/" + (f.Key.Month < 10 ? "0" : "") + f.Key.Month + "/" + f.Key.Year),
+                                                                       adquirente = f.Key,
                                                                        valorBruto = f.Sum(x => x.valorBruto),
                                                                        valorDescontado = f.Sum(x => x.valorDescontado),
                                                                        valorLiquido = f.Sum(x => x.valorLiquido),
