@@ -83,7 +83,7 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.idRecebimentoTEF.Equals(idRecebimentoTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDGRUPO:
-                        byte cdGrupo = Convert.ToByte(item.Value);
+                        Int32 cdGrupo = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdGrupo.Equals(cdGrupo)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.NRCNPJ:
@@ -127,7 +127,7 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.vlVenda.Equals(vlVenda)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.QTPARCELAS:
-                        byte qtParcelas = Convert.ToByte(item.Value);
+                        Int32 qtParcelas = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.qtParcelas.Equals(qtParcelas)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.NRCARTAO:
@@ -135,7 +135,7 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.nrCartao.Equals(nrCartao)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDBANDEIRA:
-                        short cdBandeira = short.Parse(item.Value);
+                        Int32 cdBandeira = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdBandeira.Equals(cdBandeira)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.NMOPERADORA:
@@ -147,7 +147,7 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.dthrVenda.Equals(dthrVenda)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDESTADOTRANSACAOTEF:
-                        byte cdEstadoTransacaoTEF = Convert.ToByte(item.Value);
+                        Int32 cdEstadoTransacaoTEF = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdEstadoTransacaoTEF.Equals(cdEstadoTransacaoTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDTRASACAOTEF:
@@ -155,19 +155,19 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.cdTrasacaoTEF.Equals(cdTrasacaoTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDMODOENTRADATEF:
-                        short cdModoEntradaTEF = short.Parse(item.Value);
+                        Int32 cdModoEntradaTEF = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdModoEntradaTEF.Equals(cdModoEntradaTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDREDETEF:
-                        short cdRedeTEF = short.Parse(item.Value);
+                        Int32 cdRedeTEF = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdRedeTEF.Equals(cdRedeTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDPRODUTOTEF:
-                        short cdProdutoTEF = short.Parse(item.Value);
+                        Int32 cdProdutoTEF = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdProdutoTEF.Equals(cdProdutoTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDBANDEIRATEF:
-                        short cdBandeiraTEF = short.Parse(item.Value);
+                        Int32 cdBandeiraTEF = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdBandeiraTEF.Equals(cdBandeiraTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDESTABELECIMENTOHOST:

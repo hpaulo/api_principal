@@ -108,7 +108,7 @@ namespace api.Negocios.Card
                     Data = t.dtAjuste,
                     ValorTotal = t.vlAjuste
                 }).OrderBy(t => t.Data).ToList<ConciliacaoBancaria>();
-
+                /*
                 List<ConciliacaoBancaria> listCompleta = rps.Concat(ajustes).OrderBy(t => t.Data).ToList<ConciliacaoBancaria>();
 
                 List<dynamic> listaCompleta2 = listCompleta.GroupBy(t => t.Data)
@@ -126,7 +126,7 @@ namespace api.Negocios.Card
                                                                conciliados = t.Where(x => x.Tipo.Equals("R")).Where(x => x.idExtrato != null).Count(),
                                                                totalRps = t.Where(x => x.Tipo.Equals("R")).Count(),
                                                            })
-                                                           .ToList<dynamic>();
+                                                           .ToList<dynamic>();*/
                 //for(int n = 0; n < listCompleta.Count; n++)
                 //{
                 //    ConciliacaoBancaria item1 = listCompleta[n];
