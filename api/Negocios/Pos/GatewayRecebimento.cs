@@ -59,6 +59,9 @@ namespace api.Negocios.Pos
             // TERMINAL LÓGICO
             DSTERMINALLOGICO = 601,
 
+            // TBADQUIRENTE
+            CDADQUIRENTE = 700,
+
             //EXPORTAR
             EXPORTAR = 9999
 
@@ -262,8 +265,11 @@ namespace api.Negocios.Pos
                         string dsfantasia = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.empresa.ds_fantasia.Equals(dsfantasia)).AsQueryable();
                         break;
+                    case CAMPOS.CDADQUIRENTE:
+                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.cdBandeira != null && e.tbBandeira.cdAdquirente == cdAdquirente).AsQueryable();
+                        break;
 
-                    
                 }
             }
             #endregion
@@ -512,27 +518,29 @@ namespace api.Negocios.Pos
                     if (exportar)
                     {
 
-                        subQuery = query.GroupBy(e => new { e.empresa, e.TerminalLogico, e.BandeiraPos })
+                        subQuery = query.GroupBy(e => new { e.empresa, e.TerminalLogico, /*e.tbBandeira*/e.BandeiraPos })
                                         .OrderBy(e => e.Key.empresa.ds_fantasia)
                                         .ThenBy(e => e.Key.empresa.filial)
                                         .ThenBy(e => e.Key.TerminalLogico.dsTerminalLogico)
                                         .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                                        //.ThenBy(e => e.Key.tbBandeira.dsBandeira)
                                         .Select(e => new
                                         {
-                                            empresa = e.Key.empresa.ds_fantasia + (e.Key.empresa.filial ?? ""),
+                                            empresa = e.Key.empresa.ds_fantasia + (e.Key.empresa.filial != null ? " " + e.Key.empresa.filial : ""),
                                             terminal = e.Key.TerminalLogico.dsTerminalLogico.Equals("0") ? "-" : e.Key.TerminalLogico.dsTerminalLogico,
-                                            bandeira = e.Key.BandeiraPos.desBandeira,
+                                            bandeira = e.Key.BandeiraPos.desBandeira,//e.Key.tbBandeira.dsBandeira,
                                             totalTransacoes = e.Count(),
                                             valorBruto = e.Sum(p => p.valorVendaBruta)
                                         });
                     }
                     else
                     {
-                        subQuery = query.GroupBy(e => new { e.empresa, e.TerminalLogico, e.BandeiraPos })
+                        subQuery = query.GroupBy(e => new { e.empresa, e.TerminalLogico, e.BandeiraPos/*e.tbBandeira*/ })
                                         .OrderBy(e => e.Key.empresa.ds_fantasia)
                                         .ThenBy(e => e.Key.empresa.filial)
                                         .ThenBy(e => e.Key.TerminalLogico.dsTerminalLogico)
                                         .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                                        //.ThenBy(e => e.Key.tbBandeira.dsBandeira)
                                         .Select(e => new
                                         {
                                             empresa = new
@@ -546,12 +554,19 @@ namespace api.Negocios.Pos
                                                 idTerminalLogico = e.Key.TerminalLogico.idTerminalLogico,
                                                 dsTerminalLogico = e.Key.TerminalLogico.dsTerminalLogico.Equals("0") ? "-" : e.Key.TerminalLogico.dsTerminalLogico,
                                             },
-                                            idOperadora = e.Key.TerminalLogico.idOperadora,
+                                            idOperadora = e.Key.BandeiraPos.idOperadora,
                                             bandeira = new
                                             {
                                                 e.Key.BandeiraPos.id,
                                                 e.Key.BandeiraPos.desBandeira
                                             },
+                                            /*idOperadora = e.Select(x => x.BandeiraPos.idOperadora).FirstOrDefault(),
+                                            bandeira = new
+                                            {
+                                                e.Key.tbBandeira.cdBandeira,
+                                                e.Key.tbBandeira.dsBandeira,
+                                                e.Key.tbBandeira.cdAdquirente
+                                            },*/
                                             totalTransacoes = e.Count(),
                                             valorBruto = e.Sum(p => p.valorVendaBruta)
 
@@ -580,14 +595,16 @@ namespace api.Negocios.Pos
 
                     if (exportar)
                     {
-                        subQuery = query.GroupBy(e => new { e.empresa, e.BandeiraPos })
+                        subQuery = query.GroupBy(e => new { e.empresa, e.BandeiraPos/*e.tbBandeira*/ })
                                         .OrderBy(e => e.Key.empresa.ds_fantasia)
                                         .ThenBy(e => e.Key.empresa.filial)
                                         .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                                        //.ThenBy(e => e.Key.tbBandeira.dsBandeira)
                                         .Select(e => new
                                          {
-                                             empresa = e.Key.empresa.ds_fantasia + " - " + e.Key.empresa.filial,
-                                             bandeira = e.Key.BandeiraPos.desBandeira,
+                                             empresa = e.Key.empresa.ds_fantasia + (e.Key.empresa.filial != null ? " " + e.Key.empresa.filial : ""),
+                                             bandeira = e.Key.BandeiraPos.desBandeira,//e.Key.tbBandeira.dsBandeira,
+                                             idOperadora = e.Select(x => x.BandeiraPos.idOperadora).FirstOrDefault(),
                                              totalTransacoes = e.Count(),
                                              valorBruto = e.Sum(p => p.valorVendaBruta)
 
@@ -595,10 +612,11 @@ namespace api.Negocios.Pos
                     }
                     else
                     {
-                        subQuery = query.GroupBy(e => new { e.empresa, e.BandeiraPos })
+                        subQuery = query.GroupBy(e => new { e.empresa, e.BandeiraPos/*e.tbBandeira*/ })
                                         .OrderBy(e => e.Key.empresa.ds_fantasia)
                                         .ThenBy(e => e.Key.empresa.filial)
                                         .ThenBy(e => e.Key.BandeiraPos.desBandeira)
+                                        //.ThenBy(e => e.Key.tbBandeira.dsBandeira)
                                         .Select(e => new
                                          {
                                              empresa = new
@@ -607,13 +625,20 @@ namespace api.Negocios.Pos
                                                  ds_fantasia = e.Key.empresa.ds_fantasia,
                                                  filial = e.Key.empresa.filial
                                              },
+                                             idOperadora = e.Key.BandeiraPos.idOperadora,
                                              bandeira = new
                                              {
-                                                 e.Key.BandeiraPos.id,
-                                                 e.Key.BandeiraPos.desBandeira
+                                                e.Key.BandeiraPos.id,
+                                                e.Key.BandeiraPos.desBandeira
                                              },
-                                             idOperadora = e.Key.BandeiraPos.idOperadora,
-                                             totalTransacoes = e.Count(),
+                                            /*bandeira = new
+                                            {
+                                                e.Key.tbBandeira.cdBandeira,
+                                                e.Key.tbBandeira.dsBandeira,
+                                                e.Key.tbBandeira.cdAdquirente
+                                            },
+                                            idOperadora = e.Select(x => x.BandeiraPos.idOperadora).FirstOrDefault(),*/
+                                            totalTransacoes = e.Count(),
                                              valorBruto = e.Sum(p => p.valorVendaBruta)
 
                                          });
@@ -643,7 +668,7 @@ namespace api.Negocios.Pos
                          e.dtaVenda,
                          dsFantasia = e.empresa.ds_fantasia + (e.empresa.filial != null ? e.empresa.filial : ""),
                          dsTerminalLogico = e.TerminalLogico.dsTerminalLogico.Equals("0") ? "-" : e.TerminalLogico.dsTerminalLogico,
-                         e.BandeiraPos.desBandeira,
+                         e.BandeiraPos.desBandeira,//e.tbBandeira.dsBandeira
                          e.nsu,
                          e.cdAutorizador,
                          e.valorVendaBruta
