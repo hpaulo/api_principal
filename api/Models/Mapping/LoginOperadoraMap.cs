@@ -27,6 +27,10 @@ namespace api.Models.Mapping
             this.Property(t => t.estabelecimento)
                 .HasMaxLength(255);
 
+            this.Property(t => t.nrCNPJCentralizadora)
+                .IsFixedLength()
+                .HasMaxLength(14);
+
             // Table & Column Mappings
             this.ToTable("LoginOperadora", "pos");
             this.Property(t => t.id).HasColumnName("id");
@@ -38,6 +42,7 @@ namespace api.Models.Mapping
             this.Property(t => t.idOperadora).HasColumnName("idOperadora");
             this.Property(t => t.idGrupo).HasColumnName("idGrupo");
             this.Property(t => t.estabelecimento).HasColumnName("estabelecimento");
+            this.Property(t => t.nrCNPJCentralizadora).HasColumnName("nrCNPJCentralizadora");
 
             // Relationships
             this.HasRequired(t => t.empresa)
@@ -49,7 +54,9 @@ namespace api.Models.Mapping
             this.HasRequired(t => t.Operadora)
                 .WithMany(t => t.LoginOperadoras)
                 .HasForeignKey(d => d.idOperadora);
-
+            this.HasOptional(t => t.empresaCentralizadora)
+                .WithMany(t => t.LoginOperadorasCentralizador)
+                .HasForeignKey(d => d.nrCNPJCentralizadora);
         }
     }
 }
