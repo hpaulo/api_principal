@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
+using System.Globalization;
 
 namespace api.Negocios.Card
 {
@@ -115,9 +116,81 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.cdSituacaoRedeTEF.Equals(cdSituacaoRedeTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.DTVENDA:
-                        DateTime dtVenda = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtVenda.Equals(dtVenda)).AsQueryable<tbRecebimentoTEF>();
+                        //DateTime dtVenda = Convert.ToDateTime(item.Value);
+                        //DateTime dtVenda = Convert.ToDateTime(item.Value);
+                        //entity = entity.Where(e => e.dtVenda.Equals(dtVenda)).AsQueryable();
+                        //break;
+
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            //entity = entity.Where(e => e.dtVenda >= dtaIni && e.dtVenda <= dtaFim);
+                            entity = entity.Where(e => (e.dtVenda.Year > dtaIni.Year || (e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month > dtaIni.Month) ||
+                                                                                          (e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month == dtaIni.Month && e.dtVenda.Day >= dtaIni.Day))
+                                                    && (e.dtVenda.Year < dtaFim.Year || (e.dtVenda.Year == dtaFim.Year && e.dtVenda.Month < dtaFim.Month) ||
+                                                                                          (e.dtVenda.Year == dtaFim.Year && e.dtVenda.Month == dtaFim.Month && e.dtVenda.Day <= dtaFim.Day)));
+                        }
+                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda >= dta);
+                        }
+                        else if (item.Value.Contains("<")) // MENOR IGUAL
+                        {
+                            string busca;
+                            if (item.Value.Length == 10)
+                            {
+                                string ano = item.Value.Substring(0, 4);
+                                string mes = item.Value.Substring(5, 2);
+                                string dia = item.Value.Substring(7, 2);
+                                busca = ano + mes + dia;
+                            }
+                            else if (item.Value.Length == 8)
+                            {
+                                string dia = item.Value.Substring(6, 1);
+                                string anoMes = item.Value.Substring(0, 6);
+                                busca = anoMes + "0" + dia;
+                            }
+                            else
+                            {
+                                busca = item.Value.Replace("<", "");
+                            }
+                            //busca = item.Value.Replace("<", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda <= dta);
+                        }
+                        else if (item.Value.Length == 4)
+                        {
+                            string busca = item.Value + "0101";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda.Year == dtaIni.Year);
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month == dtaIni.Month);
+                        }
+                        else if (item.Value.Length == 7)
+                        {
+                            string dia = item.Value.Substring(6, 1);
+                            string anoMes = item.Value.Substring(0, 6);
+                            string busca = anoMes + "0" + dia;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month == dtaIni.Month && e.dtVenda.Day == dtaIni.Day);
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month == dtaIni.Month && e.dtVenda.Day == dtaIni.Day);
+                        }
                         break;
+                        //entity = entity.Where(e => e.dtVenda.Equals(dtVenda)).AsQueryable<tbRecebimentoTEF>();
+                        //break;
                     case CAMPOS.HRVENDA:
                         TimeSpan hrVenda = TimeSpan.Parse(item.Value);
                         entity = entity.Where(e => e.hrVenda.Equals(hrVenda)).AsQueryable<tbRecebimentoTEF>();
