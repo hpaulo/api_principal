@@ -118,7 +118,15 @@ namespace api.Negocios.Card
                 List<ConciliacaoRelatorios> rRecebimentoExtrato = queryExtrato.Select(t => new ConciliacaoRelatorios
                 {
                     tipo = "E",
-                    extratoBancario = t.vlMovimento ?? new decimal(0.0), //!= null ? t.tbExtrato.vlMovimento : new decimal(0.0),                    
+                    adquirente = _db.tbBancoParametro.Where(p => p.dsMemo.Equals(t.dsDocumento))
+                                                                                                 .Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco))
+                                                                                                 .Select(p => p.tbAdquirente.nmAdquirente.ToUpper())
+                                                                                                 .FirstOrDefault() ?? "",
+                    bandeira = _db.tbBancoParametro.
+                                                    Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco) 
+                                                    && p.dsMemo.Equals(t.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? ""
+                                                    ).FirstOrDefault() ?? "",
+                    extratoBancario = t.vlMovimento ?? new decimal(0.0),                  
                     competencia = t.dtExtrato
                 }).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
 
