@@ -248,7 +248,6 @@ namespace api.Negocios.Pos
                             entity = entity.Where(e => e.cdBandeira != null).AsQueryable();
                         else                        
                             entity = entity.Where(e => e.cdBandeira == cdBandeira).AsQueryable();                        
-
                         break;
 
 

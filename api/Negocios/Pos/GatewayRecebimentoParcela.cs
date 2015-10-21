@@ -331,7 +331,12 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.CDBANDEIRA:
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.Recebimento.cdBandeira == cdBandeira).AsQueryable();
+                        if (cdBandeira == -1)
+                            entity = entity.Where(e => e.Recebimento.cdBandeira == null).AsQueryable();
+                        else if (cdBandeira == 0)
+                            entity = entity.Where(e => e.Recebimento.cdBandeira != null).AsQueryable();
+                        else
+                            entity = entity.Where(e => e.Recebimento.cdBandeira == cdBandeira).AsQueryable();                                                
                         break;
                 }
             }

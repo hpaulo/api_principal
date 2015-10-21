@@ -108,11 +108,18 @@ namespace api.Negocios.Card
 
                 List<ConciliacaoRelatorios> rRecebimentoAjuste = queryTbRecebimentoAjuste.Select(t => new ConciliacaoRelatorios
                 {
-                    tipo = "A",
+                    tipo = "A",                    
                     adquirente = t.tbBandeira.tbAdquirente.nmAdquirente,
                     bandeira = t.tbBandeira.dsBandeira,
                     competencia = t.dtAjuste,
                     vlAjuste = t.vlAjuste
+                }).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
+
+                List<ConciliacaoRelatorios> rRecebimentoExtrato = queryExtrato.Select(t => new ConciliacaoRelatorios
+                {
+                    tipo = "E",
+                    extratoBancario = t.vlMovimento ?? new decimal(0.0), //!= null ? t.tbExtrato.vlMovimento : new decimal(0.0),                    
+                    competencia = t.dtExtrato
                 }).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
 
                 List<ConciliacaoRelatorios> listaCompleta = rRecebimentoParcela.Concat(rRecebimentoAjuste).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
@@ -129,7 +136,7 @@ namespace api.Negocios.Card
                                                                ajustesCredito = t.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste > new decimal(0.0)).Sum(x => x.vlAjuste),
                                                                ajustesDebito = t.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste < new decimal(0.0)).Sum(x => x.vlAjuste),
                                                                valorLiquido = t.Sum(x => x.valorLiquido),
-                                                               //extratoBancario = t.Where(x => x.tipo.Equals('E')).Sum(x => x.Valor),
+                                                               extratoBancario = t.Where(x => x.tipo.Equals('E')).Sum(x => x.extratoBancario),
                                                                diferenca = new decimal(0.0),
                                                                numConciliados = t.Where(x => x.tipo.Equals("R")).Where(x => x.idExtrato != null).Count(),
                                                                totalRPs = t.Where(x => x.tipo.Equals("R")).Count(),
@@ -144,7 +151,7 @@ namespace api.Negocios.Card
 
 
                 // Ordena
-                CollectionConciliacaoRelatorios = listaCompleta
+                CollectionConciliacaoRelatorios = listaFinal
                                                                 .OrderBy(c => c.competencia.Year)
                                                                 .ThenBy(c => c.competencia.Month)
                                                                 .ThenBy(c => c.competencia.Day)
