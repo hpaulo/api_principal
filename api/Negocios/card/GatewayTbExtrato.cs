@@ -725,7 +725,7 @@ namespace api.Negocios.Card
                                 for (int k = 0; k < contExtratosBD; k++)
                                 {
                                     tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
-                                    ext.dsArquivo = extrato.dsArquivo;
+                                    //ext.dsArquivo = extrato.dsArquivo;
                                     ext.dsTipo = extrato.dsTipo;
                                     _db.SaveChanges();
                                 }
@@ -742,12 +742,12 @@ namespace api.Negocios.Card
                             else
                             {
                                 // Ajusta o tipo, que poderia estar como OTHER ou DEP
-                                for (int k = 0; k < contExtratosBD; k++)
-                                {
-                                    tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
-                                    ext.dsTipo = extrato.dsTipo;
-                                    _db.SaveChanges();
-                                }
+                                //for (int k = 0; k < contExtratosBD; k++)
+                                //{
+                                //    tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
+                                //    ext.dsTipo = extrato.dsTipo;
+                                //    _db.SaveChanges();
+                                //}
                             }
                             #endregion
                         }
@@ -823,6 +823,7 @@ namespace api.Negocios.Card
             string codBanese = "047"; // conta + hífen + dígito
             string codCaixa = "104";  // conta precedidas de zeros
             string codItau = "341";   // agencia + conta
+            string codBradesco = "237";
             //string codSantander = "033"; // conta + hífen + dígito
 
             string contaDocumento = contaOFX;
@@ -876,8 +877,8 @@ namespace api.Negocios.Card
                 return contaDocumento.EndsWith(contaBDComHifen);
             }
 
-            // CAIXA => SEM HÍFEN E DÍGITO VERIFICADOR
-            if (codBanco.Equals(codCaixa))
+            // CAIXA E BRADESCO => SEM HÍFEN E DÍGITO VERIFICADOR
+            if (codBanco.Equals(codCaixa) || codBradesco.Equals(codBradesco))
             {
                 // Se a conta já não tem hifen, então de fato está errada
                 if (!contaBDSemZeros.Contains("-")) return false; 
