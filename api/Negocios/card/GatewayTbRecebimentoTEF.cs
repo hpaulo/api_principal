@@ -454,7 +454,7 @@ namespace api.Negocios.Card
                         cdEstabelecimentoHost = e.cdEstabelecimentoHost,
                     }).ToList<dynamic>();
                 }
-                else if (colecao == 3)
+                else if (colecao == 3) // Resumo Movimento
                 {
                     CollectionTbRecebimentoTEF = query
                         .GroupBy(x => new { x.cdBandeira, x.cdTrasacaoTEF})
@@ -466,6 +466,24 @@ namespace api.Negocios.Card
                         cdBandeira = e.Key.cdBandeira,
                         cdTrasacaoTEF = e.Key.cdTrasacaoTEF,
                     }).ToList<dynamic>();
+                }
+                else if (colecao == 4) // Movimento
+                {
+                    CollectionTbRecebimentoTEF = query
+                         //.GroupBy(x => new { x.cdGrupo })
+                        .Select(e => new
+                        {
+
+                            hrVenda = e.hrVenda,
+                            filial = e.grupo_empresa.ds_nome,
+                            nmOperadora = e.nmOperadora,
+                            nrCartao = e.nrCartao,
+                            vlVenda = e.vlVenda,
+                            qtParcelas = e.qtParcelas,
+                            tipoProtuto = e.tbProdutoTef.tbTipoProdutoTef.dsTipoProdutoTef,
+                            nrNSUTEF = e.nrNSUTEF,
+                            Status = e.tbEstadoTransacaoTef.dsEstadoTransacaoTef,
+                        }).ToList<dynamic>();
                 }
                 else if (colecao == 2)
                 {

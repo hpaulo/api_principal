@@ -29,5 +29,8 @@ namespace api.Models
         public Nullable<int> cdProdutoTEF { get; set; }
         public Nullable<int> cdBandeiraTEF { get; set; }
         public string cdEstabelecimentoHost { get; set; }
+        public virtual tbEstadoTransacaoTef tbEstadoTransacaoTef { get; set; }
+        public virtual tbProdutoTef tbProdutoTef { get; set; }
+        public virtual grupo_empresa grupo_empresa { get; set; }
     }
 }
