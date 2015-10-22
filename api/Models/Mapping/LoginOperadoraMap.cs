@@ -31,6 +31,9 @@ namespace api.Models.Mapping
                 .IsFixedLength()
                 .HasMaxLength(14);
 
+            this.Property(t => t.cdEstabelecimentoConsulta)
+                .HasMaxLength(255);
+
             // Table & Column Mappings
             this.ToTable("LoginOperadora", "pos");
             this.Property(t => t.id).HasColumnName("id");
@@ -43,6 +46,7 @@ namespace api.Models.Mapping
             this.Property(t => t.idGrupo).HasColumnName("idGrupo");
             this.Property(t => t.estabelecimento).HasColumnName("estabelecimento");
             this.Property(t => t.nrCNPJCentralizadora).HasColumnName("nrCNPJCentralizadora");
+            this.Property(t => t.cdEstabelecimentoConsulta).HasColumnName("cdEstabelecimentoConsulta");
 
             // Relationships
             this.HasRequired(t => t.empresa)
