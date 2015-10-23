@@ -810,6 +810,7 @@ namespace api.Negocios.Pos
                             dtaRecebimentoEfetivo = e.dtaRecebimentoEfetivo,
                             codResumoVenda = e.Recebimento.codResumoVenda,
                             nsu = e.Recebimento.nsu,
+                            cdAutorizador = e.Recebimento.cdAutorizador,
                             numParcela = e.numParcela + " de " + e.Recebimento.numParcelaTotal,
                             valorBruto = e.Recebimento.valorVendaBruta,
                             valorParcela = e.valorParcelaBruta,
@@ -818,64 +819,68 @@ namespace api.Negocios.Pos
                             vlDescontadoAntecipacao = e.vlDescontadoAntecipacao,
                         }).ToList<dynamic>();
 
-                    // Obtém os ajustes
-                    List<dynamic> ajustes = GatewayTbRecebimentoAjuste.getQuery(1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
-                                            .Select(e => new
-                                             {
-                                                 cnpj = e.nrCNPJ,
-                                                 dsFantasia = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
-                                                 dsBandeira = e.tbBandeira.dsBandeira,
-                                                 dtaVenda = e.dtAjuste,
-                                                 dtaRecebimento = e.dtAjuste,
-                                                 dtaRecebimentoEfetivo = e.dtAjuste,
-                                                 codResumoVenda = String.Empty,
-                                                 nsu = e.dsMotivo,
-                                                 numParcela = 0,
-                                                 valorBruto = new decimal(0.0),
-                                                 valorParcela = e.vlAjuste > new decimal(0.0) ? e.vlAjuste : new decimal(0.0),
-                                                 valorLiquida = e.vlAjuste,
-                                                 valorDescontado = e.vlAjuste < new decimal(0.0) ? new decimal(-1.0) * e.vlAjuste : new decimal(0.0),
-                                                 vlDescontadoAntecipacao = new decimal(0.0),
-                                             }).ToList<dynamic>();
-
-                    if (ajustes.Count > 0)
+                    // Obtém os ajustes se teve filtro de data de recebimento
+                    if (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
+                        queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue))
                     {
-                        // Atualiza total líquido de parcela
-                        retorno.Totais["valorParcelaBruta"] = (decimal)retorno.Totais["valorParcelaBruta"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorParcela).Cast<decimal>().Sum()) : new decimal(0.0));
-                        retorno.Totais["valorParcelaLiquida"] = (decimal)retorno.Totais["valorParcelaLiquida"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorLiquida).Cast<decimal>().Sum()) : new decimal(0.0));
-                        retorno.Totais["valorDescontado"] = (decimal)retorno.Totais["valorDescontado"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorDescontado).Cast<decimal>().Sum()) : new decimal(0.0));
+                        List<dynamic> ajustes = GatewayTbRecebimentoAjuste.getQuery(1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
+                                            .Select(e => new
+                                            {
+                                                cnpj = e.nrCNPJ,
+                                                dsFantasia = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
+                                                dsBandeira = e.tbBandeira.dsBandeira,
+                                                dtaVenda = e.dtAjuste,
+                                                dtaRecebimento = e.dtAjuste,
+                                                dtaRecebimentoEfetivo = e.dtAjuste,
+                                                codResumoVenda = String.Empty,
+                                                nsu = e.dsMotivo,
+                                                numParcela = 0,
+                                                valorBruto = new decimal(0.0),
+                                                valorParcela = e.vlAjuste > new decimal(0.0) ? e.vlAjuste : new decimal(0.0),
+                                                valorLiquida = e.vlAjuste,
+                                                valorDescontado = e.vlAjuste < new decimal(0.0) ? new decimal(-1.0) * e.vlAjuste : new decimal(0.0),
+                                                vlDescontadoAntecipacao = new decimal(0.0),
+                                            }).ToList<dynamic>();
 
-                        // Armazena os ajustes
-
-                        foreach (var ajuste in ajustes) CollectionRecebimentoParcela.Add(ajuste);
-
-                        // Ordena e refaz a paginação
-                        CAMPOS filtro = (CAMPOS)campo;
-                        if (filtro.Equals(CAMPOS.DTARECEBIMENTOEFETIVO))
+                        if (ajustes.Count > 0)
                         {
-                            if (orderBy == 0)
-                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(e => e.dtaRecebimentoEfetivo).ToList<dynamic>();
-                            else
-                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderByDescending(e => e.dtaRecebimentoEfetivo).ToList<dynamic>();
-                        }
-                        else if (filtro.Equals(CAMPOS.DTARECEBIMENTO))
-                        {
-                            if (orderBy == 0)
-                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(e => e.dtaRecebimento).ToList<dynamic>();
-                            else
-                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderByDescending(e => e.dtaRecebimento).ToList<dynamic>();
-                        }
-                        else if (filtro.Equals(CAMPOS.DTAVENDA))
-                        {
-                            if (orderBy == 0)
-                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(e => e.dtaVenda).ToList<dynamic>();
-                            else
-                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderByDescending(e => e.dtaVenda).ToList<dynamic>();
-                        }
+                            // Atualiza total líquido de parcela
+                            retorno.Totais["valorParcelaBruta"] = (decimal)retorno.Totais["valorParcelaBruta"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorParcela).Cast<decimal>().Sum()) : new decimal(0.0));
+                            retorno.Totais["valorParcelaLiquida"] = (decimal)retorno.Totais["valorParcelaLiquida"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorLiquida).Cast<decimal>().Sum()) : new decimal(0.0));
+                            retorno.Totais["valorDescontado"] = (decimal)retorno.Totais["valorDescontado"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorDescontado).Cast<decimal>().Sum()) : new decimal(0.0));
 
-                        int skipRows = (pageNumber - 1) * pageSize;
-                        if (CollectionRecebimentoParcela.Count > pageSize && pageNumber > 0 && pageSize > 0)
-                            CollectionRecebimentoParcela = CollectionRecebimentoParcela.Skip(skipRows).Take(pageSize).ToList<dynamic>();
+                            // Armazena os ajustes
+
+                            foreach (var ajuste in ajustes) CollectionRecebimentoParcela.Add(ajuste);
+
+                            // Ordena e refaz a paginação
+                            CAMPOS filtro = (CAMPOS)campo;
+                            if (filtro.Equals(CAMPOS.DTARECEBIMENTOEFETIVO))
+                            {
+                                if (orderBy == 0)
+                                    CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(e => e.dtaRecebimentoEfetivo).ToList<dynamic>();
+                                else
+                                    CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderByDescending(e => e.dtaRecebimentoEfetivo).ToList<dynamic>();
+                            }
+                            else if (filtro.Equals(CAMPOS.DTARECEBIMENTO))
+                            {
+                                if (orderBy == 0)
+                                    CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(e => e.dtaRecebimento).ToList<dynamic>();
+                                else
+                                    CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderByDescending(e => e.dtaRecebimento).ToList<dynamic>();
+                            }
+                            /*else if (filtro.Equals(CAMPOS.DTAVENDA))
+                            {
+                                if (orderBy == 0)
+                                    CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(e => e.dtaVenda).ToList<dynamic>();
+                                else
+                                    CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderByDescending(e => e.dtaVenda).ToList<dynamic>();
+                            }*/
+
+                            int skipRows = (pageNumber - 1) * pageSize;
+                            if (CollectionRecebimentoParcela.Count > pageSize && pageNumber > 0 && pageSize > 0)
+                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.Skip(skipRows).Take(pageSize).ToList<dynamic>();
+                        }
                     }
                 }
                 else if (colecao == 9) // [web]/cashflow/Sintético
@@ -902,7 +907,11 @@ namespace api.Negocios.Pos
                                         });
 
                         // Obtém os ajustes
-                        ajustes = GatewayTbRecebimentoAjuste.getQuery(1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
+                        // Obtém os ajustes se teve filtro de data de recebimento
+                        if (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
+                            queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue))
+                        {
+                            ajustes = GatewayTbRecebimentoAjuste.getQuery(1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
                                                     .GroupBy(x => new { x.empresa, x.tbBandeira })
                                                     .OrderBy(e => e.Key.empresa.ds_fantasia)
                                                     .ThenBy(e => e.Key.empresa.filial)
@@ -918,6 +927,7 @@ namespace api.Negocios.Pos
                                                         vlDescontadoAntecipacao = new decimal(0.0),
                                                         totalTransacoes = e.Count()
                                                     }).ToList<dynamic>();
+                        }
                     }
                     else
                     {
@@ -952,8 +962,11 @@ namespace api.Negocios.Pos
                                             totalTransacoes = e.Count()
                                         });
 
-                        // Obtém os ajustes
-                        ajustes = GatewayTbRecebimentoAjuste.getQuery(1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
+                        // Obtém os ajustes se teve filtro de data de recebimento
+                        if (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
+                            queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue))
+                        {
+                            ajustes = GatewayTbRecebimentoAjuste.getQuery(1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
                                                     .GroupBy(x => new { x.empresa, x.tbBandeira })
                                                     .OrderBy(e => e.Key.empresa.ds_fantasia)
                                                     .ThenBy(e => e.Key.empresa.filial)
@@ -979,6 +992,7 @@ namespace api.Negocios.Pos
                                                         vlDescontadoAntecipacao = new decimal(0.0),
                                                         totalTransacoes = e.Count()
                                                     }).ToList<dynamic>();
+                        }
                     }
 
                     CollectionRecebimentoParcela = subQuery.ToList<dynamic>();

@@ -35,7 +35,7 @@ namespace api.Negocios.Cliente
             FL_CARDSERVICES = 104,
             FL_TAXSERVICES = 105,
             FL_PROINFO = 106,
-
+            CDPRIORIDADE = 107,
 
         };
 
@@ -99,7 +99,10 @@ namespace api.Negocios.Cliente
                         Boolean fl_proinfo = Convert.ToBoolean(item.Value);
                         entity = entity.Where(e => e.fl_proinfo.Equals(fl_proinfo)).AsQueryable<grupo_empresa>();
                         break;
-
+                    case CAMPOS.CDPRIORIDADE:
+                        byte cdPrioridade = Convert.ToByte(item.Value);
+                        entity = entity.Where(e => e.cdPrioridade == cdPrioridade).AsQueryable<grupo_empresa>();
+                        break;
                 }
             }
             #endregion
@@ -137,6 +140,10 @@ namespace api.Negocios.Cliente
                 case CAMPOS.FL_PROINFO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.fl_proinfo).AsQueryable<grupo_empresa>();
                     else entity = entity.OrderByDescending(e => e.fl_proinfo).AsQueryable<grupo_empresa>();
+                    break;
+                case CAMPOS.CDPRIORIDADE:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdPrioridade).AsQueryable<grupo_empresa>();
+                    else entity = entity.OrderByDescending(e => e.cdPrioridade).AsQueryable<grupo_empresa>();
                     break;
 
             }
@@ -228,6 +235,7 @@ namespace api.Negocios.Cliente
                         fl_taxservices = e.fl_taxservices,
                         fl_proinfo = e.fl_proinfo,
                         vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
+                        cdPrioridade = e.cdPrioridade
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -243,6 +251,7 @@ namespace api.Negocios.Cliente
                         fl_taxservices = e.fl_taxservices,
                         fl_proinfo = e.fl_proinfo,
                         id_vendedor = e.id_vendedor,
+                        cdPrioridade = e.cdPrioridade
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2 || colecao == 3)
@@ -260,7 +269,8 @@ namespace api.Negocios.Cliente
                         vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
                         login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
                         dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
-                        podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).Count() == 0
+                        podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).Count() == 0,
+                        cdPrioridade = e.cdPrioridade
                     }
 
                     ).ToList<dynamic>();
@@ -384,6 +394,8 @@ namespace api.Negocios.Cliente
                     value.fl_taxservices = param.fl_taxservices;
                 if (param.fl_proinfo != value.fl_proinfo)
                     value.fl_proinfo = param.fl_proinfo;
+                //if (param.cdPrioridade != value.cdPrioridade) // não faz alterações pela API!
+                //    value.cdPrioridade = param.cdPrioridade;
                 _db.SaveChanges();
             }
             catch (Exception e)

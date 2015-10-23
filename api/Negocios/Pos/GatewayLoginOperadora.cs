@@ -36,6 +36,8 @@ namespace api.Negocios.Pos
             IDOPERADORA = 106,
             IDGRUPO = 107,
             ESTABELECIMENTO = 108,
+            NRCNPJCENTRALIZADORA = 109,
+            CDESTABELECIMENTOCONSULTA = 110,
 
             // PERSONALIZADO
             NMOPERADORA = 201,
@@ -110,6 +112,23 @@ namespace api.Negocios.Pos
                         }
                         else
                             entity = entity.Where(e => e.estabelecimento.Equals(estabelecimento)).AsQueryable<LoginOperadora>();
+                        break;
+                    case CAMPOS.NRCNPJCENTRALIZADORA:
+                        string nrCNPJCentralizadora = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.nrCNPJCentralizadora != null && e.nrCNPJCentralizadora.Equals(nrCNPJCentralizadora)).AsQueryable<LoginOperadora>();
+                        break;
+                    case CAMPOS.CDESTABELECIMENTOCONSULTA:
+                        string cdEstabelecimentoConsulta = Convert.ToString(item.Value);
+                        if (cdEstabelecimentoConsulta.Contains("%")) // usa LIKE
+                        {
+                            string busca = cdEstabelecimentoConsulta.Replace("%", "").ToString();
+                            // Remove os zeros a esquerda
+                            while (busca.StartsWith("0")) busca = busca.Substring(1);
+                            // Consult
+                            entity = entity.Where(e => e.cdEstabelecimentoConsulta != null && e.cdEstabelecimentoConsulta.Contains(busca)).AsQueryable<LoginOperadora>();
+                        }
+                        else
+                            entity = entity.Where(e => e.cdEstabelecimentoConsulta != null && e.cdEstabelecimentoConsulta.Equals(cdEstabelecimentoConsulta)).AsQueryable<LoginOperadora>();
                         break;
                 }
             }
@@ -254,6 +273,8 @@ namespace api.Negocios.Pos
                         idOperadora = e.idOperadora,
                         idGrupo = e.idGrupo,
                         estabelecimento = e.estabelecimento,
+                        nrCNPJCentralizadora = e.nrCNPJCentralizadora,
+                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -270,6 +291,8 @@ namespace api.Negocios.Pos
                         idOperadora = e.idOperadora,
                         idGrupo = e.idGrupo,
                         estabelecimento = e.estabelecimento,
+                        nrCNPJCentralizadora = e.nrCNPJCentralizadora,
+                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2) // [mobile]
@@ -283,7 +306,9 @@ namespace api.Negocios.Pos
                         status = e.status,
                         estabelecimento = e.estabelecimento,
                         operadora = e.Operadora.nmOperadora,
-                        idOperadora = e.idOperadora
+                        idOperadora = e.idOperadora,
+                        nrCNPJCentralizadora = e.nrCNPJCentralizadora,
+                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 3) // [web]/Dados de Acesso/Grid
@@ -295,11 +320,13 @@ namespace api.Negocios.Pos
                         login = e.login,
                         senha = e.senha,
                         status = e.status,
-                        empresa = new { cnpj = e.empresa.nu_cnpj, ds_fantasia = e.empresa.ds_fantasia, filial = e.empresa.filial },
+                        empresa = new { nu_cnpj = e.empresa.nu_cnpj, ds_fantasia = e.empresa.ds_fantasia, filial = e.empresa.filial },
                         grupoempresa = new { id_grupo = e.empresa.id_grupo, ds_nome = e.empresa.grupo_empresa.ds_nome },
                         //operadora = new { id = e.Operadora.id ,desOperadora = e.Operadora.nmOperadora },
                         operadora = new { id = e.Operadora.id, desOperadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault() },
-                        estabelecimento = e.estabelecimento
+                        estabelecimento = e.estabelecimento,
+                        empresaCentralizadora = e.nrCNPJCentralizadora == null ? null : new { nu_cnpj = e.empresaCentralizadora.nu_cnpj, ds_fantasia = e.empresaCentralizadora.ds_fantasia, filial = e.empresaCentralizadora.filial },
+                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta
                     }).ToList<dynamic>();
 
                     CollectionLoginOperadora = CollectionLoginOperadora.OrderBy(l => l.operadora.desOperadora).ToList();
@@ -316,11 +343,13 @@ namespace api.Negocios.Pos
                                         login = e.login,
                                         senha = e.senha,
                                         status = e.status,
-                                        empresa = e.empresa.ds_fantasia,
+                                        empresa = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
                                         grupoempresa = e.grupo_empresa.ds_nome,
                                         //operadora = e.Operadora.nmOperadora,
                                         operadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault(),
-                                        estabelecimento = e.estabelecimento
+                                        estabelecimento = e.estabelecimento,
+                                        empresaCentralizadora = e.nrCNPJCentralizadora == null ? null : new { nu_cnpj = e.empresaCentralizadora.nu_cnpj, ds_fantasia = e.empresaCentralizadora.ds_fantasia, filial = e.empresaCentralizadora.filial },
+                                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta
                                     });
 
                     retorno.TotalDeRegistros = subQuery.Count();
@@ -517,6 +546,23 @@ namespace api.Negocios.Pos
                 }
                 if (param.estabelecimento != null && param.estabelecimento != value.estabelecimento)
                     value.estabelecimento = param.estabelecimento;
+                if (param.cdEstabelecimentoConsulta != null && param.cdEstabelecimentoConsulta != value.cdEstabelecimentoConsulta)
+                {
+                    if (param.nrCNPJCentralizadora != null && param.nrCNPJCentralizadora != value.nrCNPJCentralizadora)
+                    {
+                        if (param.cdEstabelecimentoConsulta.Equals(""))
+                            value.cdEstabelecimentoConsulta = null;
+                        else
+                            value.cdEstabelecimentoConsulta = param.cdEstabelecimentoConsulta;
+                    }
+                }
+                if (param.nrCNPJCentralizadora != null && param.nrCNPJCentralizadora != value.nrCNPJCentralizadora)
+                {
+                    if (param.nrCNPJCentralizadora.Equals(""))
+                        value.nrCNPJCentralizadora = null;
+                    else
+                        value.nrCNPJCentralizadora = param.nrCNPJCentralizadora;
+                }
                 _db.SaveChanges();
 
                 try

@@ -20,6 +20,7 @@ namespace api.Models
         public int idGrupo { get; set; }
         public string estabelecimento { get; set; }
         public string nrCNPJCentralizadora { get; set; }
+        public string cdEstabelecimentoConsulta { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual grupo_empresa grupo_empresa { get; set; }
         public virtual ICollection<LogExecution> LogExecutions { get; set; }
