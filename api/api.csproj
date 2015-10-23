@@ -292,6 +292,7 @@
     <Compile Include="Controllers\Administracao\WebpagesUsersController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersInRolesController.cs" />
     <Compile Include="Controllers\Card\RecebiveisFuturosController.cs" />
+    <Compile Include="Controllers\Card\RelatorioVendasController.cs" />
     <Compile Include="Controllers\Card\TbBandeiraController.cs" />
     <Compile Include="Controllers\Card\TbLogCargaController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoBancariaController.cs" />
@@ -372,6 +373,7 @@
     <Compile Include="Models\Mapping\tbTerminalLogicoMap.cs" />
     <Compile Include="Models\Object\Assinante.cs" />
     <Compile Include="Models\Object\RecebiveisFuturos.cs" />
+    <Compile Include="Models\Object\RelatorioVendas.cs" />
     <Compile Include="Models\tbAssinante.cs" />
     <Compile Include="Models\tbBandeira.cs" />
     <Compile Include="Models\tbLogCarga.cs" />
@@ -847,6 +849,7 @@
     <Compile Include="Controllers\Card\TbModoEntradaTefController.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbCanal.cs" />
     <Compile Include="Negocios\Card\GatewayRecebiveisFuturos.cs" />
+    <Compile Include="Negocios\Card\GatewayRelatorioVendas.cs" />
     <Compile Include="Negocios\Card\GatewayTbBandeira.cs" />
     <Compile Include="Negocios\Card\GatewayTbLogCarga.cs" />
     <Compile Include="Negocios\Card\GatewayConciliacaoBancaria.cs" />

@@ -810,6 +810,7 @@ namespace api.Negocios.Pos
                             dtaRecebimentoEfetivo = e.dtaRecebimentoEfetivo,
                             codResumoVenda = e.Recebimento.codResumoVenda,
                             nsu = e.Recebimento.nsu,
+                            cdAutorizador = e.Recebimento.cdAutorizador,
                             numParcela = e.numParcela + " de " + e.Recebimento.numParcelaTotal,
                             valorBruto = e.Recebimento.valorVendaBruta,
                             valorParcela = e.valorParcelaBruta,
