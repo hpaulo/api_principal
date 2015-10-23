@@ -26,7 +26,5 @@ namespace api.Models.Object
         public decimal valorLiquido { get; set; }
         public decimal extratoBancario { get; set; }
         public decimal diferença { get; set; }
-        public int numConciliados { get; set; }
-        public int totalRPs { get; set; }
     }
 }
