@@ -196,12 +196,12 @@ namespace api.Negocios.Card
                                                                                                 .Select(b => new {
                                                                                                     bandeira = b.Key,
                                                                                                     taxaMedia = b.Select(x => (x.valorDescontado * new decimal(100.0)) / (x.valorParcelaBruta > new decimal(0.0) ? x.valorParcelaBruta : new decimal(1.0))).Sum() / (b.Count() > 0 ? b.Count() : 1),
-                                                                                                    vendas = c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorParcelaBruta),
+                                                                                                    vendas = b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorParcelaBruta),
                                                                                                     taxaADM = new decimal(0.0),
-                                                                                                    ajustesCredito = c.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste > new decimal(0.0)).Sum(x => x.vlAjuste),
-                                                                                                    ajustesDebito = c.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste < new decimal(0.0)).Sum(x => x.vlAjuste),
-                                                                                                    valorLiquido = c.Sum(x => x.valorLiquido),
-                                                                                                    extratoBancario = c.Where(x => x.tipo.Equals("E")).Sum(x => x.extratoBancario),
+                                                                                                    ajustesCredito = b.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste > new decimal(0.0)).Sum(x => x.vlAjuste),
+                                                                                                    ajustesDebito = b.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste < new decimal(0.0)).Sum(x => x.vlAjuste),
+                                                                                                    valorLiquido = b.Sum(x => x.valorLiquido),
+                                                                                                    extratoBancario = b.Where(x => x.tipo.Equals("E")).Sum(x => x.extratoBancario),
                                                                                                     diferenca = new decimal(0.0),                                                                                                    
                                                                                                 }).ToList<dynamic>()
                                                                                }).ToList<dynamic>(),
