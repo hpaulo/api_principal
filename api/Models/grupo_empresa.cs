@@ -34,6 +34,7 @@ namespace api.Models
         public bool fl_proinfo { get; set; }
         public Nullable<int> id_vendedor { get; set; }
         public bool fl_ativo { get; set; }
+        public byte cdPrioridade { get; set; }
         public virtual ICollection<ConnectionString> ConnectionStrings { get; set; }
         public virtual ICollection<LogExceptionWinApp> LogExceptionWinApps { get; set; }
         public virtual ICollection<Bandeira> Bandeiras { get; set; }
