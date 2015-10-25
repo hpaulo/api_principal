@@ -9,8 +9,7 @@ namespace api.Models
         public Nullable<int> cdAdquirente { get; set; }
         public DateTime dtVenda { get; set; }
         public decimal vlVenda { get; set; }
-        public Nullable<byte> qtTracacao { get; set; }
-        public byte tpOperacao { get; set; }
+        public Nullable<byte> qtTracacao { get; set; }        
         public Nullable<int> cdBandeira { get; set; }
         public virtual tbAdquirente tbAdquirente { get; set; }
         public virtual tbBandeira tbBandeira { get; set; }

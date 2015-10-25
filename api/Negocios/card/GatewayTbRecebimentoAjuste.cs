@@ -55,7 +55,7 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static IQueryable<tbRecebimentoAjuste> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
-            // DEFINE A QUERY PRINCIPAL 
+            // DEFINE A QUERY PRINCIPAL
             var entity = _db.tbRecebimentoAjustes.AsQueryable<tbRecebimentoAjuste>();
 
             #region WHERE - ADICIONA OS FILTROS A QUERY
@@ -81,6 +81,12 @@ namespace api.Negocios.Card
                                                                                           (e.dtAjuste.Year == dtaIni.Year && e.dtAjuste.Month == dtaIni.Month && e.dtAjuste.Day >= dtaIni.Day))
                                                     && (e.dtAjuste.Year < dtaFim.Year || (e.dtAjuste.Year == dtaFim.Year && e.dtAjuste.Month < dtaFim.Month) ||
                                                                                           (e.dtAjuste.Year == dtaFim.Year && e.dtAjuste.Month == dtaFim.Month && e.dtAjuste.Day <= dtaFim.Day)));
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtAjuste.Year == dtaIni.Year && e.dtAjuste.Month == dtaIni.Month);
                         }
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
                         {
