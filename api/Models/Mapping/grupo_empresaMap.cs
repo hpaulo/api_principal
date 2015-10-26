@@ -40,9 +40,6 @@ namespace api.Models.Mapping
             this.HasOptional(t => t.Vendedor)
                 .WithMany(t => t.grupo_empresa_vendedor)
                 .HasForeignKey(d => d.id_vendedor);
-            this.HasOptional(t => t.tbRecebimentoTEFs)
-                .WithMany(t => t.grupo_empresa)
-                .HasForeignKey(d => d.id_grupo);
         }
     }
 }
