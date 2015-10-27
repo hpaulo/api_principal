@@ -57,8 +57,8 @@ namespace api.Negocios.Card
                 switch (filtroEnum)
                 {
                     case CAMPOS.CDESTADOTRANSACAOTEF:
-                        short cdEstadoTransacaoTef = short.Parse(item.Value);
-                        entity = entity.Where(e => e.cdEstadoTransacaoTef.Equals(cdEstadoTransacaoTef)).AsQueryable<tbEstadoTransacaoTef>();
+                        Int32 cdEstadoTransacaoTef = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.cdEstadoTransacaoTef == cdEstadoTransacaoTef).AsQueryable<tbEstadoTransacaoTef>();
                         break;
                     case CAMPOS.DSESTADOTRANSACAOTEF:
                         string dsEstadoTransacaoTef = Convert.ToString(item.Value);
@@ -159,7 +159,7 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static short Add(string token, tbEstadoTransacaoTef param)
+        public static Int32 Add(string token, tbEstadoTransacaoTef param)
         {
             try
             {

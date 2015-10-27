@@ -84,7 +84,7 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.idRecebimentoTEF.Equals(idRecebimentoTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDGRUPO:
-                        byte cdGrupo = Convert.ToByte(item.Value);
+                        Int32 cdGrupo = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdGrupo.Equals(cdGrupo)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.NRCNPJ:
@@ -117,22 +117,80 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.DTVENDA:
                         //DateTime dtVenda = Convert.ToDateTime(item.Value);
-                        //entity = entity.Where(e => e.dtVenda.Equals(dtVenda)).AsQueryable<tbRecebimentoTEF>();
+                        //DateTime dtVenda = Convert.ToDateTime(item.Value);
+                        //entity = entity.Where(e => e.dtVenda.Equals(dtVenda)).AsQueryable();
+                        //break;
+
                         if (item.Value.Contains("|")) // BETWEEN
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtVenda >= dtaIni && e.dtVenda <= dtaFim).AsQueryable<tbRecebimentoTEF>();
+                            //entity = entity.Where(e => e.dtVenda >= dtaIni && e.dtVenda <= dtaFim);
+                            entity = entity.Where(e => (e.dtVenda.Year > dtaIni.Year || (e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month > dtaIni.Month) ||
+                                                                                          (e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month == dtaIni.Month && e.dtVenda.Day >= dtaIni.Day))
+                                                    && (e.dtVenda.Year < dtaFim.Year || (e.dtVenda.Year == dtaFim.Year && e.dtVenda.Month < dtaFim.Month) ||
+                                                                                          (e.dtVenda.Year == dtaFim.Year && e.dtVenda.Month == dtaFim.Month && e.dtVenda.Day <= dtaFim.Day)));
+                        }
+                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda >= dta);
+                        }
+                        else if (item.Value.Contains("<")) // MENOR IGUAL
+                        {
+                            string busca;
+                            if (item.Value.Length == 10)
+                            {
+                                string ano = item.Value.Substring(0, 4);
+                                string mes = item.Value.Substring(5, 2);
+                                string dia = item.Value.Substring(7, 2);
+                                busca = ano + mes + dia;
+                            }
+                            else if (item.Value.Length == 8)
+                            {
+                                string dia = item.Value.Substring(6, 1);
+                                string anoMes = item.Value.Substring(0, 6);
+                                busca = anoMes + "0" + dia;
+                            }
+                            else
+                            {
+                                busca = item.Value.Replace("<", "");
+                            }
+                            //busca = item.Value.Replace("<", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda <= dta);
+                        }
+                        else if (item.Value.Length == 4)
+                        {
+                            string busca = item.Value + "0101";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda.Year == dtaIni.Year);
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month == dtaIni.Month);
+                        }
+                        else if (item.Value.Length == 7)
+                        {
+                            string dia = item.Value.Substring(6, 1);
+                            string anoMes = item.Value.Substring(0, 6);
+                            string busca = anoMes + "0" + dia;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month == dtaIni.Month && e.dtVenda.Day == dtaIni.Day);
                         }
                         else // IGUAL
                         {
                             string busca = item.Value;
                             DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtVenda >= dtaIni && e.dtVenda <= dtaFim).AsQueryable<tbRecebimentoTEF>();
+                            entity = entity.Where(e => e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month == dtaIni.Month && e.dtVenda.Day == dtaIni.Day);
                         }
                         break;
+                        //entity = entity.Where(e => e.dtVenda.Equals(dtVenda)).AsQueryable<tbRecebimentoTEF>();
+                        //break;
                     case CAMPOS.HRVENDA:
                         TimeSpan hrVenda = TimeSpan.Parse(item.Value);
                         entity = entity.Where(e => e.hrVenda.Equals(hrVenda)).AsQueryable<tbRecebimentoTEF>();
@@ -142,7 +200,7 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.vlVenda.Equals(vlVenda)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.QTPARCELAS:
-                        byte qtParcelas = Convert.ToByte(item.Value);
+                        Int32 qtParcelas = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.qtParcelas.Equals(qtParcelas)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.NRCARTAO:
@@ -150,7 +208,7 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.nrCartao.Equals(nrCartao)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDBANDEIRA:
-                        short cdBandeira = short.Parse(item.Value);
+                        Int32 cdBandeira = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdBandeira.Equals(cdBandeira)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.NMOPERADORA:
@@ -162,7 +220,7 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.dthrVenda.Equals(dthrVenda)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDESTADOTRANSACAOTEF:
-                        byte cdEstadoTransacaoTEF = Convert.ToByte(item.Value);
+                        Int32 cdEstadoTransacaoTEF = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdEstadoTransacaoTEF.Equals(cdEstadoTransacaoTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDTRASACAOTEF:
@@ -170,19 +228,19 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.cdTrasacaoTEF.Equals(cdTrasacaoTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDMODOENTRADATEF:
-                        short cdModoEntradaTEF = short.Parse(item.Value);
+                        Int32 cdModoEntradaTEF = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdModoEntradaTEF.Equals(cdModoEntradaTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDREDETEF:
-                        short cdRedeTEF = short.Parse(item.Value);
+                        Int32 cdRedeTEF = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdRedeTEF.Equals(cdRedeTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDPRODUTOTEF:
-                        short cdProdutoTEF = short.Parse(item.Value);
+                        Int32 cdProdutoTEF = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdProdutoTEF.Equals(cdProdutoTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDBANDEIRATEF:
-                        short cdBandeiraTEF = short.Parse(item.Value);
+                        Int32 cdBandeiraTEF = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.cdBandeiraTEF.Equals(cdBandeiraTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.CDESTABELECIMENTOHOST:
@@ -396,6 +454,37 @@ namespace api.Negocios.Card
                         cdEstabelecimentoHost = e.cdEstabelecimentoHost,
                     }).ToList<dynamic>();
                 }
+                else if (colecao == 3) // Resumo Movimento
+                {
+                    CollectionTbRecebimentoTEF = query
+                        .GroupBy(x => new { x.cdBandeira, x.cdTrasacaoTEF})
+                        .Select(e => new
+                    {
+                        
+                        quantidade = e.Count(),
+                        vlVenda = (e.Sum(p => p.vlVenda)),
+                        cdBandeira = e.Key.cdBandeira,
+                        cdTrasacaoTEF = e.Key.cdTrasacaoTEF,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 4) // Movimento
+                {
+                    CollectionTbRecebimentoTEF = query
+                         //.GroupBy(x => new { x.cdGrupo })
+                        .Select(e => new
+                        {
+
+                            hrVenda = e.hrVenda,
+                            filial = e.grupo_empresa.ds_nome,
+                            nmOperadora = e.nmOperadora,
+                            nrCartao = e.nrCartao,
+                            vlVenda = e.vlVenda,
+                            qtParcelas = e.qtParcelas,
+                            tipoProtuto = e.tbProdutoTef.tbTipoProdutoTef.dsTipoProdutoTef,
+                            nrNSUTEF = e.nrNSUTEF,
+                            Status = e.tbEstadoTransacaoTef.dsEstadoTransacaoTef,
+                        }).ToList<dynamic>();
+                }
                 else if (colecao == 2)
                 {
                     CollectionTbRecebimentoTEF = query
@@ -422,6 +511,7 @@ namespace api.Negocios.Card
                     retorno.ItensPorPagina = pageSize;
 
                 }
+
 
                 retorno.Registros = CollectionTbRecebimentoTEF;
 

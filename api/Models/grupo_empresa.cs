@@ -22,6 +22,7 @@ namespace api.Models
             this.LoginOperadoras = new List<LoginOperadora>();
             this.tbContaCorrentes = new List<tbContaCorrente>();
             this.tbLoginAdquirenteEmpresas = new List<tbLoginAdquirenteEmpresa>();
+            this.tbRecebimentoTEFs = new List<tbRecebimentoTEF>();
         }
 
         public int id_grupo { get; set; }
@@ -33,6 +34,7 @@ namespace api.Models
         public bool fl_proinfo { get; set; }
         public Nullable<int> id_vendedor { get; set; }
         public bool fl_ativo { get; set; }
+        public byte cdPrioridade { get; set; }
         public virtual ICollection<ConnectionString> ConnectionStrings { get; set; }
         public virtual ICollection<LogExceptionWinApp> LogExceptionWinApps { get; set; }
         public virtual ICollection<Bandeira> Bandeiras { get; set; }
@@ -49,5 +51,7 @@ namespace api.Models
         public virtual webpages_Users Vendedor { get; set; }
         public virtual ICollection<tbContaCorrente> tbContaCorrentes { get; set; }
         public virtual ICollection<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
+        public virtual ICollection<tbRecebimentoTEF> tbRecebimentoTEFs { get; set; }
+        
     }
 }

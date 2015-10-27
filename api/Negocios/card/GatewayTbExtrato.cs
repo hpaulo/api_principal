@@ -689,6 +689,9 @@ namespace api.Negocios.Card
 
                         #region OBTÉM O TOTAL DE MOVIMENTAÇÕES REPETIDAS PARA A MOVIMENTAÇÃO CORRENTE
                         IEnumerable<Transaction> trans = ofxDocument.Transactions.Where(t => t.Amount == extrato.vlMovimento)
+                                                                                 .Where(t => t.Date.Year == extrato.dtExtrato.Year)
+                                                                                 .Where(t => t.Date.Month == extrato.dtExtrato.Month)
+                                                                                 .Where(t => t.Date.Day == extrato.dtExtrato.Day)
                                                                                  //.Where(t => t.TransType.ToString().Equals(extrato.dsTipo))
                                                                                  .Where(t => t.CheckNum.Equals(extrato.nrDocumento));
                         if (!memo) trans = trans.Where(t => t.Name.Equals(extrato.dsDocumento));
@@ -698,10 +701,12 @@ namespace api.Negocios.Card
 
                         #region OBTÉM AS MOVIMENTAÇÕES JÁ ARMAZENADAS NA BASE QUE POSSUEM MESMAS INFORMAÇÕES DA MOVIMENTAÇÃO CORRENTE
                         IQueryable<tbExtrato> olds = _db.tbExtratos.Where(e => e.cdContaCorrente == extrato.cdContaCorrente)
-                                                             .Where(e => e.dtExtrato.Equals(extrato.dtExtrato))
+                                                             //.Where(e => e.dtExtrato.Equals(extrato.dtExtrato))
+                                                             .Where(e => e.dtExtrato.Year == extrato.dtExtrato.Year)
+                                                             .Where(e => e.dtExtrato.Month == extrato.dtExtrato.Month)
+                                                             .Where(e => e.dtExtrato.Day == extrato.dtExtrato.Day)
                                                              .Where(e => e.nrDocumento.Equals(extrato.nrDocumento))
                                                              .Where(e => e.vlMovimento == extrato.vlMovimento)
-                                                             //.Where(e => e.dsTipo.Equals(extrato.dsTipo))
                                                              .Where(e => e.dsDocumento.Equals(extrato.dsDocumento))
                                                              .OrderBy(e => e.dtExtrato);
                         Int32 contExtratosBD = olds.Count();
@@ -818,6 +823,7 @@ namespace api.Negocios.Card
             string codBanese = "047"; // conta + hífen + dígito
             string codCaixa = "104";  // conta precedidas de zeros
             string codItau = "341";   // agencia + conta
+            string codBradesco = "237";
             //string codSantander = "033"; // conta + hífen + dígito
 
             string contaDocumento = contaOFX;
@@ -871,8 +877,8 @@ namespace api.Negocios.Card
                 return contaDocumento.EndsWith(contaBDComHifen);
             }
 
-            // CAIXA => SEM HÍFEN E DÍGITO VERIFICADOR
-            if (codBanco.Equals(codCaixa))
+            // CAIXA E BRADESCO => SEM HÍFEN E DÍGITO VERIFICADOR
+            if (codBanco.Equals(codCaixa) || codBradesco.Equals(codBradesco))
             {
                 // Se a conta já não tem hifen, então de fato está errada
                 if (!contaBDSemZeros.Contains("-")) return false; 

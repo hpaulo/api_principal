@@ -54,45 +54,45 @@ namespace api.Negocios.Card
                 Dictionary<string, string> queryStringAjustes = new Dictionary<string, string>();
                 Dictionary<string, string> queryStringRecebimentoParcela = new Dictionary<string, string>();
                 // DATA
-                DateTime dataNow = Convert.ToDateTime(DateTime.Now.ToShortDateString());
+                DateTime dataMin = Convert.ToDateTime(DateTime.Now.AddDays(1).ToShortDateString());
                 queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, ""); // dtaRecebimentoEfetivo is null
                 if (queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
                 {
-                    // Não permite que o período seja inferior a data corrente
+                    // Não permite que o período seja inferior a data corrente + 1
                     string data = queryString["" + (int)CAMPOS.DATA];
                     if (data.Contains(">")){
                         DateTime dataInicial = DateTime.ParseExact(data.Replace(">", "") + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                        if(dataInicial < dataNow)
-                            throw new Exception("Período deve ser igual ou superior a data corrente (" + dataNow.ToShortDateString() + ")");
+                        if(dataInicial < dataMin)
+                            throw new Exception("Período deve ser igual ou superior ao dia seguinte da data corrente (" + dataMin.ToShortDateString() + ")");
                         //data = ">" + Convert.ToDateTime(dataNow.ToShortDateString());
                     }
                     else if (data.Contains("|"))
                     {
                         DateTime dataInicial = DateTime.ParseExact(data.Substring(0, data.IndexOf("|")) + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                        if (dataInicial < dataNow)
+                        if (dataInicial < dataMin)
                             //data = Convert.ToDateTime(dataNow.ToShortDateString()) + data.Substring(data.IndexOf("|"));
-                            throw new Exception("Data inicial do período deve ser igual ou superior a data corrente (" + dataNow.ToShortDateString() + ")");
+                            throw new Exception("Data inicial do período deve ser igual ou superior ao dia seguinte da data corrente (" + dataMin.ToShortDateString() + ")");
                         DateTime dataFinal = DateTime.ParseExact(data.Substring(data.IndexOf("|") + 1) + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                        if (dataFinal < dataNow)
+                        if (dataFinal < dataMin)
                             //data = data.Substring(0, data.IndexOf("|") + 1) + Convert.ToDateTime(dataNow.ToShortDateString());
-                            throw new Exception("Data final do período deve ser igual ou superior a data corrente (" + dataNow.ToShortDateString() + ")");
+                            throw new Exception("Data final do período deve ser igual ou superior ao dia seguinte da data corrente (" + dataMin.ToShortDateString() + ")");
                         if (dataInicial > dataFinal)
                             throw new Exception("Período informado é inválido!");
                     }
                     else
                     {
                         DateTime dataInicial = DateTime.ParseExact(data + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                        if (dataInicial < dataNow)
+                        if (dataInicial < dataMin)
                             //data = ">" + Convert.ToDateTime(dataNow.ToShortDateString());
-                            throw new Exception("Data informada deve ser igual ou superior a data corrente (" + dataNow.ToShortDateString() + ")");
+                            throw new Exception("Data informada deve ser igual ou superior ao dia seguinte da data corrente (" + dataMin.ToShortDateString() + ")");
                     }
                     queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, data);
                     queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, data);
                 }
                 else
                 {
-                    // Período todo => começa a partir da data corrente
-                    string data = ">" + dataNow.ToShortDateString();
+                    // Período todo => começa a partir da data corrente + 1
+                    string data = ">" + dataMin.ToShortDateString();
                     queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, data);
                     queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, data);
                 }
@@ -148,19 +148,18 @@ namespace api.Negocios.Card
 
                 if (ajustes.Count > 0) recebiveisFuturos = recebiveisFuturos.Concat(ajustes).OrderBy(r => r.data).ToList<RecebiveisFuturos>();
 
-                CollectionRecebiveisFuturos = recebiveisFuturos.GroupBy(r => r.adquirente)
-                                                               .OrderBy(r => r.Key)
+                CollectionRecebiveisFuturos = recebiveisFuturos.GroupBy(r => new { r.data.Value.Month, r.data.Value.Year })
                                                                .Select(r => new
                                                                {
-                                                                   adquirente = r.Key,
+                                                                   competencia = CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(r.Key.Month) + "/" + r.Key.Year,
                                                                    valorBruto = r.Sum(f => f.valorBruto),
                                                                    valorDescontado = r.Sum(f => f.valorDescontado),
                                                                    valorLiquido = r.Sum(f => f.valorLiquido),
-                                                                   meses = r.GroupBy(f => new { f.data.Value.Month, f.data.Value.Year })
+                                                                   adquirentes = r.GroupBy(f => f.adquirente)
+                                                                   .OrderBy(f => f.Key)
                                                                    .Select(f => new
                                                                    {
-                                                                       competencia = CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(f.Key.Month) + "/" + f.Key.Year,
-                                                                       //data = Convert.ToDateTime("01/" + (f.Key.Month < 10 ? "0" : "") + f.Key.Month + "/" + f.Key.Year),
+                                                                       adquirente = f.Key,
                                                                        valorBruto = f.Sum(x => x.valorBruto),
                                                                        valorDescontado = f.Sum(x => x.valorDescontado),
                                                                        valorLiquido = f.Sum(x => x.valorLiquido),

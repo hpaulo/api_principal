@@ -59,10 +59,10 @@ namespace api.Controllers.Card
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token))
                 {
-                    short dados = GatewayTbProdutoTef.Add(token, param);
+                    Int32 dados = GatewayTbProdutoTef.Add(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;
                     Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse<short>(HttpStatusCode.OK, dados);
+                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
                 }
                 else
                 {

@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations;
 using System.Data.Entity.ModelConfiguration;
 
 namespace api.Models.Mapping
@@ -72,6 +72,18 @@ namespace api.Models.Mapping
             this.Property(t => t.cdProdutoTEF).HasColumnName("cdProdutoTEF");
             this.Property(t => t.cdBandeiraTEF).HasColumnName("cdBandeiraTEF");
             this.Property(t => t.cdEstabelecimentoHost).HasColumnName("cdEstabelecimentoHost");
+
+            // Relationships
+            this.HasOptional(t => t.tbEstadoTransacaoTef)
+                .WithMany(t => t.tbRecebimentoTEFs)
+                .HasForeignKey(d => d.cdEstadoTransacaoTEF);
+            this.HasOptional(t => t.tbProdutoTef)
+                .WithMany(t => t.tbRecebimentoTEFs)
+                .HasForeignKey(d => d.cdProdutoTEF);
+            this.HasOptional(t => t.grupo_empresa)
+                .WithMany(t => t.tbRecebimentoTEFs)
+                .HasForeignKey(d => d.cdGrupo);
+
         }
     }
 }
