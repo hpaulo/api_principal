@@ -58,7 +58,7 @@ namespace api.Negocios.Card
                 {
                     case CAMPOS.CDTIPOPRODUTOTEF:
                         short cdTipoProdutoTef = short.Parse(item.Value);
-                        entity = entity.Where(e => e.cdTipoProdutoTef.Equals(cdTipoProdutoTef)).AsQueryable<tbTipoProdutoTef>();
+                        entity = entity.Where(e => e.cdTipoProdutoTef == cdTipoProdutoTef).AsQueryable<tbTipoProdutoTef>();
                         break;
                     case CAMPOS.DSTIPOPRODUTOTEF:
                         string dsTipoProdutoTef = Convert.ToString(item.Value);
@@ -159,7 +159,7 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static short Add(string token, tbTipoProdutoTef param)
+        public static Int32 Add(string token, tbTipoProdutoTef param)
         {
             try
             {

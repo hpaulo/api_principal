@@ -5,9 +5,15 @@ namespace api.Models
 {
     public partial class tbProdutoTef
     {
-        public short cdProdutoTef { get; set; }
-        public Nullable<short> cdTipoProdutoTef { get; set; }
+        public tbProdutoTef()
+        {
+            this.tbRecebimentoTEFs = new List<tbRecebimentoTEF>();
+        }
+
+        public Int32 cdProdutoTef { get; set; }
+        public Nullable<int> cdTipoProdutoTef { get; set; }
         public string dsProdutoTef { get; set; }
         public virtual tbTipoProdutoTef tbTipoProdutoTef { get; set; }
+        public virtual ICollection<tbRecebimentoTEF> tbRecebimentoTEFs { get; set; }
     }
 }

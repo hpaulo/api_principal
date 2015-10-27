@@ -10,7 +10,7 @@ namespace api.Models
             this.tbProdutoTefs = new List<tbProdutoTef>();
         }
 
-        public short cdTipoProdutoTef { get; set; }
+        public int cdTipoProdutoTef { get; set; }
         public string dsTipoProdutoTef { get; set; }
         public virtual ICollection<tbProdutoTef> tbProdutoTefs { get; set; }
     }
