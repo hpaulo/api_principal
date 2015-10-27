@@ -31,7 +31,7 @@ namespace api.Negocios.Card
         /// </summary>
         public enum CAMPOS
         {
-            DATA = 100, 
+            DATA = 100,
             TIPO = 101,  // 1 : CONCILIADO, 2 : PRÉ-CONCILIADO, 3 : NÃO-CONCILIADO
             ID_GRUPO = 102,
             NU_CNPJ = 103,
@@ -60,7 +60,7 @@ namespace api.Negocios.Card
         /// <param name="listaConciliacao">Lista com os elementos da conciliação</param>
         /// <param name="listaNaoConciliado">Lista que contém elementos não conciliados</param>
         /// <returns></returns>
-        private static void adicionaElementosNaoConciliadosNaLista(List<dynamic> listaConciliacao, 
+        private static void adicionaElementosNaoConciliadosNaLista(List<dynamic> listaConciliacao,
                                                                    List<ConciliacaoBancaria> listaNaoConciliado)
         {
             foreach (var item in listaNaoConciliado)
@@ -100,8 +100,8 @@ namespace api.Negocios.Card
         /// <param name="movimentacao">ConciliacaoBancaria referente ao lado do extrato</param>
         /// <param name="tipo">CONCILIADO ou PRE-CONCILIADO</param>
         /// <returns></returns>
-        private static void adicionaElementosConciliadosNaLista(List<dynamic> listaConciliacao, 
-                                                     ConciliacaoBancaria recebimento, 
+        private static void adicionaElementosConciliadosNaLista(List<dynamic> listaConciliacao,
+                                                     ConciliacaoBancaria recebimento,
                                                      ConciliacaoBancaria movimentacao,
                                                      TIPO_CONCILIADO tipo)
         {
@@ -144,8 +144,8 @@ namespace api.Negocios.Card
         /// <param name="listaNaoConciliado">Lista que receberá os elementos candidatos não conciliados</param>
         /// <param name="adicionaNaListaPreConciliado">Set true se os elementos determinados como conciliados devem ser adicionados na listaConciliacao</param>
         /// <returns></returns>
-        private static void Concilia(List<dynamic> listaConciliacao, 
-                                     List<ConciliacaoBancaria> listaCandidatos, 
+        private static void Concilia(List<dynamic> listaConciliacao,
+                                     List<ConciliacaoBancaria> listaCandidatos,
                                      List<ConciliacaoBancaria> listaNaoConciliado,
                                      bool adicionaNaListaPreConciliado)
         {
@@ -157,8 +157,8 @@ namespace api.Negocios.Card
 
                 // Verifica se está conciliado
                 if (item2 == null || item1.Tipo.Equals(item2.Tipo) || // CREDIT/DEBIT
-                   // Adquirente
-                   !item1.Adquirente.Equals(item1.Adquirente) || 
+                                                                      // Adquirente
+                   !item1.Adquirente.Equals(item1.Adquirente) ||
                    // Bandeira
                    (item1.Bandeira != null && item2.Bandeira != null && !item1.Bandeira.Equals("") && !item2.Bandeira.Equals("") && !item1.Bandeira.Equals(item2.Bandeira)) ||
                    // Tipo cartão
@@ -174,7 +174,7 @@ namespace api.Negocios.Card
                 // CONCILIADO!
                 k++;
                 if (adicionaNaListaPreConciliado)
-                { 
+                {
                     ConciliacaoBancaria recebimento = null;
                     ConciliacaoBancaria movimentacao = null;
                     if (item1.Tipo.Equals(TIPO_EXTRATO))
@@ -205,7 +205,7 @@ namespace api.Negocios.Card
         /// <param name="maxCombinacoes">Máximo de combinações desejadas => otimização</param>
         /// <param name="values">Lista que armazenará os elementos de grupo que atinjem o valor sum</param>
         /// <returns></returns>
-        private static IEnumerable<List<List<ConciliacaoBancaria.ConciliacaoGrupo>>> GetCombinations(List<ConciliacaoBancaria.ConciliacaoGrupo> grupo, 
+        private static IEnumerable<List<List<ConciliacaoBancaria.ConciliacaoGrupo>>> GetCombinations(List<ConciliacaoBancaria.ConciliacaoGrupo> grupo,
                                                                                   decimal sum,
                                                                                   List<ConciliacaoBancaria.ConciliacaoGrupo> values = null)
         {
@@ -243,7 +243,7 @@ namespace api.Negocios.Card
         /// <param name="adicionaNaListaPreConciliado">Set true se os elementos determinados como conciliados devem ser adicionados na listaConciliacao</param>
         /// <returns></returns>
         private static void conciliaSubGrupos(List<dynamic> listaConciliacao,
-                                              List<ConciliacaoBancaria> recebimentosParcelaAgrupados, 
+                                              List<ConciliacaoBancaria> recebimentosParcelaAgrupados,
                                               List<ConciliacaoBancaria> extratoBancario,
                                               bool adicionaNaListaPreConciliado)
         {
@@ -454,7 +454,7 @@ namespace api.Negocios.Card
                 Int32 IdGrupo = Permissoes.GetIdGrupo(token);
                 if (IdGrupo == 0 && queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
                     IdGrupo = Convert.ToInt32(queryString["" + (int)CAMPOS.ID_GRUPO]);
-                if (IdGrupo != 0) 
+                if (IdGrupo != 0)
                 {
                     queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.ID_GRUPO, IdGrupo.ToString());
                     queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.ID_GRUPO, IdGrupo.ToString());
@@ -494,17 +494,19 @@ namespace api.Negocios.Card
                     queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.CDADQUIRENTE, cdAdquirente);
                     queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.CDADQUIRENTE, cdAdquirente);
                     queryStringExtrato["" + (int)GatewayTbExtrato.CAMPOS.CDADQUIRENTE] = cdAdquirente;
-                    
+
                 }
 
                 // Vigência
                 vigencia = CnpjEmpresa;
-                if (!data.Equals("")) {
+                if (!data.Equals(""))
+                {
                     vigencia += "!" + data;
                     if (!cdAdquirente.Equals("")) vigencia += "!" + cdAdquirente;
-                }else if (!cdAdquirente.Equals("")) vigencia += "!null!" + cdAdquirente;
+                }
+                else if (!cdAdquirente.Equals("")) vigencia += "!null!" + cdAdquirente;
                 queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.VIGENCIA, vigencia);
-                
+
                 // PARA O EXTRATO, SÓ CONSIDERA OS TIPO CREDIT
                 queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.DSTIPO, OFXSharp.OFXTransactionType.CREDIT.ToString());
 
@@ -534,7 +536,8 @@ namespace api.Negocios.Card
 
 
                 // Só busca por conciliações já concretizadas se não tiver sido requisitado um filtro do tipo PRE-CONCILIADO ou NÃO CONCILIADO
-                if (!filtroTipoPreConciliado && !filtroTipoNaoConciliado) {
+                if (!filtroTipoPreConciliado && !filtroTipoNaoConciliado)
+                {
                     #region OBTÉM AS INFORMAÇÕES DE DADOS JÁ CONCILIADOS PREVIAMENTE
                     // EXTRATOS JÁ CONCILIADOS, COM SEUS RESPECTIVOS RECEBIMENTOS CONCILIADOS
                     List<dynamic> extratosBancariosConciliados = queryExtrato
@@ -670,7 +673,7 @@ namespace api.Negocios.Card
                             // Recebimento + Ajuste
                             if (recebimento == null)
                                 recebimento = ajustes;
-                            else if(ajustes != null)
+                            else if (ajustes != null)
                             {
                                 foreach (ConciliacaoBancaria.ConciliacaoGrupo grupo in ajustes.Grupo)
                                     recebimento.Grupo.Add(grupo);
@@ -744,9 +747,6 @@ namespace api.Negocios.Card
                                                             Filial = r.Recebimento.empresa.ds_fantasia + (r.Recebimento.empresa.filial != null ? " " + r.Recebimento.empresa.filial : "")
                                                         }).ToList<ConciliacaoBancaria>();
 
-                    Util.GatewayProxy proxy = new GatewayProxy();
-
-
                     List<ConciliacaoBancaria> ajustes = queryAjustes
                                                         .Where(r => r.idExtrato == null)
                                                         .Select(r => new ConciliacaoBancaria
@@ -762,8 +762,7 @@ namespace api.Negocios.Card
                                                                     TipoCartao = r.tbBandeira.dsTipo.ToUpper().TrimEnd(),
                                                                     DataVenda = r.dtAjuste,
                                                                     DataPrevista = r.dtAjuste,
-                                                                    Filial = r.empresa.ds_fantasia + (r.empresa.filial != null ? " " + r.empresa.filial : ""),
-                                                                    NumTituloErp = ""
+                                                                    Filial = r.empresa.ds_fantasia + (r.empresa.filial != null ? " " + r.empresa.filial : "")
                                                                 }
                                                             },
                                                             ValorTotal = r.vlAjuste,
@@ -780,7 +779,7 @@ namespace api.Negocios.Card
                     #endregion
 
                     #region OBTÉM OS EXTRATOS NÃO CONCILIADOS QUE TEM ADQUIRENTE ASSOCIADA
-                    List <ConciliacaoBancaria> extratoBancario = queryExtrato
+                    List<ConciliacaoBancaria> extratoBancario = queryExtrato
                                                             // Só considera os extratos que não estão conciliados
                                                             .Where(e => e.RecebimentoParcelas.Count == 0)
                                                             .Select(e => new ConciliacaoBancaria
@@ -899,7 +898,7 @@ namespace api.Negocios.Card
                                     if (recebimentosParcela.Count > 0)
                                     {
                                         //totalRecebimento += recebimentosParcelaAgrupados.Sum(r => r.ValorTotal);
-                                        adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, 
+                                        adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria,
                                                             // Envia recebimentos agrupados
                                                             recebimentosParcela
                                                                     .GroupBy(r => new { r.Data, r.Filial, r.Adquirente, r.Bandeira })
@@ -1382,7 +1381,7 @@ namespace api.Negocios.Card
 
                         foreach (ConciliaRecebimentoParcela.RecebParcela recebimentoParcela in grupoExtrato.recebimentosParcela)
                         {
-                            if(recebimentoParcela.numParcela == -1)
+                            if (recebimentoParcela.numParcela == -1)
                             {
                                 // AJUSTE
                                 tbRecebimentoAjuste value = _db.tbRecebimentoAjustes

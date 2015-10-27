@@ -45,7 +45,7 @@ namespace api.Models.Object
             set { filial = value; }
         }
 
-        private string adquirente; 
+        private string adquirente;
         public string Adquirente
         {
             get { return adquirente; }
@@ -153,13 +153,6 @@ namespace api.Models.Object
                 get { return numParcela; }
                 set { numParcela = value; }
             }
-
-            private string numTituloErp;
-            public string NumTituloErp
-            {
-                get { return numTituloErp; }
-                set { numTituloErp = value; }
-            }
         }
 
 
@@ -187,7 +180,7 @@ namespace api.Models.Object
                 set { nrAgencia = value; }
             }
 
-            private string nrConta; 
+            private string nrConta;
             public string NrConta
             {
                 get { return nrConta; }
@@ -204,7 +197,7 @@ namespace api.Models.Object
                 if (c1 == c2) return true; // é a mesma instância ou ambos são nulos
                 if (c1 == null || c2 == null) return false;
                 return c1.Data.Year == c2.Data.Year && c1.Data.Month == c2.Data.Month && c1.Data.Day == c2.Data.Day &&
-                       c1.ValorTotal == c2.ValorTotal && 
+                       c1.ValorTotal == c2.ValorTotal &&
                        c1.Adquirente.Equals(c2.Adquirente);
             }
 
@@ -214,31 +207,6 @@ namespace api.Models.Object
                 DateTime d = new DateTime(c.Data.Year, c.Data.Month, c.Data.Day);
                 return ((int)d.Ticks) + c.Adquirente.GetHashCode() + ((int)c.ValorTotal);
             }
-        }
-
-        public class TituloErp
-        {
-            public int seq_titulo;
-            public int cod_empresa;
-            public int cod_pessoa_sacado;
-            public string ind_marcado;
-            public string num_titulo;
-            public DateTime dta_emissao;
-            public DateTime dta_vencimento;
-            public double val_original;
-            public double val_juros_original;
-            public double val_juros;
-            public double val_multa;
-            public double val_desconto;
-            public double val_taxa_cobranca;
-            public double val_outros_acrescimos;
-            public double val_despesa_acessoria;
-            public string ind_tipo_titulo;
-            public string des_observacao;
-            public string num_placa;
-            public int qtd_parcelas;
-            public string num_autorizacao_tef;
-            public string num_nsu_tef;
         }
 
     }
