@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
+using System.Globalization;
 
 namespace api.Negocios.Card
 {
@@ -115,8 +116,22 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.cdSituacaoRedeTEF.Equals(cdSituacaoRedeTEF)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.DTVENDA:
-                        DateTime dtVenda = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtVenda.Equals(dtVenda)).AsQueryable<tbRecebimentoTEF>();
+                        //DateTime dtVenda = Convert.ToDateTime(item.Value);
+                        //entity = entity.Where(e => e.dtVenda.Equals(dtVenda)).AsQueryable<tbRecebimentoTEF>();
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda >= dtaIni && e.dtVenda <= dtaFim).AsQueryable<tbRecebimentoTEF>();
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda >= dtaIni && e.dtVenda <= dtaFim).AsQueryable<tbRecebimentoTEF>();
+                        }
                         break;
                     case CAMPOS.HRVENDA:
                         TimeSpan hrVenda = TimeSpan.Parse(item.Value);
