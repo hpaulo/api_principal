@@ -911,6 +911,7 @@
     <Compile Include="Negocios\Tax\GatewayTbManifesto.cs" />
     <Compile Include="Negocios\Util\GatewayBancos.cs" />
     <Compile Include="Negocios\Util\GatewayExportar.cs" />
+    <Compile Include="Negocios\Util\GatewayProxy.cs" />
     <Compile Include="Negocios\Util\GatewayUtilNfe.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

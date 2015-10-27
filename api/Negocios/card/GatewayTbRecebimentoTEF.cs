@@ -511,7 +511,7 @@ namespace api.Negocios.Card
                     retorno.ItensPorPagina = pageSize;
 
                 }
-                
+
 
                 retorno.Registros = CollectionTbRecebimentoTEF;
 

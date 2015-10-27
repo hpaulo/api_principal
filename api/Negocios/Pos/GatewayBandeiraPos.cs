@@ -116,6 +116,11 @@ namespace api.Negocios.Pos
                 List<dynamic> CollectionBandeiraPos = new List<dynamic>();
                 Retorno retorno = new Retorno();
 
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+                Int32 IdGrupo = 0;
+                IdGrupo = Permissoes.GetIdGrupo(token);
+                
+
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
                 var queryTotal = query;
@@ -154,6 +159,12 @@ namespace api.Negocios.Pos
                         desBandeira = e.desBandeira,
                         idOperadora = e.idOperadora,
                     }).ToList<dynamic>();
+                }
+                else if (colecao == 2)
+                {
+                    CollectionBandeiraPos = query.Where(e => e.Operadora.idGrupoEmpresa == IdGrupo).Select(
+                                                                                                            e => new { e.Operadora.nmOperadora }
+                                                                                                            ).ToList<dynamic>();
                 }
 
                 retorno.Registros = CollectionBandeiraPos;

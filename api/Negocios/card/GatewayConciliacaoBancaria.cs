@@ -744,6 +744,9 @@ namespace api.Negocios.Card
                                                             Filial = r.Recebimento.empresa.ds_fantasia + (r.Recebimento.empresa.filial != null ? " " + r.Recebimento.empresa.filial : "")
                                                         }).ToList<ConciliacaoBancaria>();
 
+                    Util.GatewayProxy proxy = new GatewayProxy();
+
+
                     List<ConciliacaoBancaria> ajustes = queryAjustes
                                                         .Where(r => r.idExtrato == null)
                                                         .Select(r => new ConciliacaoBancaria
@@ -759,7 +762,8 @@ namespace api.Negocios.Card
                                                                     TipoCartao = r.tbBandeira.dsTipo.ToUpper().TrimEnd(),
                                                                     DataVenda = r.dtAjuste,
                                                                     DataPrevista = r.dtAjuste,
-                                                                    Filial = r.empresa.ds_fantasia + (r.empresa.filial != null ? " " + r.empresa.filial : "")
+                                                                    Filial = r.empresa.ds_fantasia + (r.empresa.filial != null ? " " + r.empresa.filial : ""),
+                                                                    NumTituloErp = ""
                                                                 }
                                                             },
                                                             ValorTotal = r.vlAjuste,
