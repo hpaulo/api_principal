@@ -564,6 +564,9 @@ namespace api.Negocios.Card
                     // Obtém o nome do arquivo upado
                     string nomeArquivo = (postedFile.FileName.LastIndexOf(".") > -1 ? postedFile.FileName.Substring(0, postedFile.FileName.LastIndexOf(".")) : postedFile.FileName) + "_0" + extensao;
 
+                    // Remove caracteres inválidos para nome de arquivo
+                    nomeArquivo = Path.GetInvalidFileNameChars().Aggregate(nomeArquivo, (current, c) => current.Replace(c.ToString(), string.Empty));
+
                     // Valida o nome do arquivo dentro do diretório => deve ser único
                     int cont = 0;
                     while (File.Exists(diretorio + nomeArquivo))
@@ -573,10 +576,7 @@ namespace api.Negocios.Card
                         nomeArquivo += ++cont + extensao;
                     }
                     #endregion
-
-                    // Remove caracteres inválidos para nome de arquivo
-                    nomeArquivo = Path.GetInvalidFileNameChars().Aggregate(nomeArquivo, (current, c) => current.Replace(c.ToString(), string.Empty));
-
+                    
                     #region SALVA ARQUIVO NO DISCO
                     string filePath = diretorio + nomeArquivo;
                     // Salva o arquivo
