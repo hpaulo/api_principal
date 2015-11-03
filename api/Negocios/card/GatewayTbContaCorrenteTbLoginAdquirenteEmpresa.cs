@@ -38,6 +38,8 @@ namespace api.Negocios.Card
 
             DSADQUIRENTE = 301,
 
+            DTVIGENCIA = 400
+
         };
 
         /// <summary>
@@ -102,6 +104,29 @@ namespace api.Negocios.Card
                         else
                             entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente.Equals(nome)).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
                         break;
+                    case CAMPOS.DTVIGENCIA:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
+                                                        && (v.dtFim == null || (v.dtFim.Value.Year > dtIni.Year || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month > dtIni.Month) || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month == dtIni.Month && v.dtFim.Value.Day >= dtIni.Day)))
+                                                        && (v.dtInicio.Year < dtaFim.Year || (v.dtInicio.Year == dtaFim.Year && v.dtInicio.Month < dtaFim.Month) || (v.dtInicio.Year == dtaFim.Year && v.dtInicio.Month == dtaFim.Month && v.dtInicio.Day <= dtaFim.Day))
+                                                        && (v.dtFim == null || (v.dtFim.Value.Year > dtaFim.Year || (v.dtFim.Value.Year == dtaFim.Year && v.dtFim.Value.Month > dtaFim.Month) || (v.dtFim.Value.Year == dtaFim.Year && v.dtFim.Value.Month == dtaFim.Month && v.dtFim.Value.Day >= dtaFim.Day)))
+                                                        ).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                        }
+                        else // ANO + MES + DIA
+                        {
+                            string busca = item.Value;
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(v => (v.dtInicio.Year < data.Year || (v.dtInicio.Year == data.Year && v.dtInicio.Month < data.Month) || (v.dtInicio.Year == data.Year && v.dtInicio.Month == data.Month && v.dtInicio.Day <= data.Day))
+                                                        && (v.dtFim == null || (v.dtFim.Value.Year > data.Year || (v.dtFim.Value.Year == data.Year && v.dtFim.Value.Month > data.Month) || (v.dtFim.Value.Year == data.Year && v.dtFim.Value.Month == data.Month && v.dtFim.Value.Day >= data.Day)))
+                                                        && (v.dtInicio.Year < data.Year || (v.dtInicio.Year == data.Year && v.dtInicio.Month < data.Month) || (v.dtInicio.Year == data.Year && v.dtInicio.Month == data.Month && v.dtInicio.Day <= data.Day))
+                                                        && (v.dtFim == null || (v.dtFim.Value.Year > data.Year || (v.dtFim.Value.Year == data.Year && v.dtFim.Value.Month > data.Month) || (v.dtFim.Value.Year == data.Year && v.dtFim.Value.Month == data.Month && v.dtFim.Value.Day >= data.Day)))
+                                                        ).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                        }
+                        break;
                 }
             }
             #endregion
@@ -161,10 +186,9 @@ namespace api.Negocios.Card
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                var queryTotal = query;
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
 
                 // PAGINAÇÃO
