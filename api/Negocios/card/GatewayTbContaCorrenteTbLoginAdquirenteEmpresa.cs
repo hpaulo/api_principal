@@ -249,6 +249,36 @@ namespace api.Negocios.Card
                         //stLoginAdquirenteEmpresa = l.tbLoginAdquirenteEmpresa.stLoginAdquirenteEmpresa // controle de bruno
                     }).ToList<dynamic>();
                 }
+                else if (colecao == 3) // [WEB] Filiais
+                {
+                    CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = query
+                        .Where(e => e.tbLoginAdquirenteEmpresa.empresa.fl_ativo == 1)
+                        .GroupBy(e => e.tbLoginAdquirenteEmpresa.empresa.nu_cnpj)
+                        .Select(e => new
+                    {
+                        nu_cnpj = e.Key,
+                        ds_fantasia = e.Select(f => f.tbLoginAdquirenteEmpresa.empresa.ds_fantasia).FirstOrDefault(),
+                        filial = e.Select(f => f.tbLoginAdquirenteEmpresa.empresa.filial).FirstOrDefault(),
+                        adquirentes = e.Select(f => new
+                        {
+                            cdAdquirente = f.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente,
+                            nmAdquirente = f.tbLoginAdquirenteEmpresa.tbAdquirente.nmAdquirente,
+                            stAdquirente = f.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente,
+                        }).OrderBy(f => f.nmAdquirente).ToList<dynamic>(),
+                    }).OrderBy(e => e.ds_fantasia).ThenBy(e => e.filial).ToList<dynamic>();
+                }
+                else if (colecao == 4) // [WEB] Adquirentes
+                {
+                    CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = query
+                        .Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente == 1)
+                        .GroupBy(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente)
+                        .Select(e => new
+                        {
+                            cdAdquirente = e.Key,
+                            nmAdquirente = e.Select(f => f.tbLoginAdquirenteEmpresa.tbAdquirente.nmAdquirente).FirstOrDefault(),
+                            stAdquirente = e.Select(f => f.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente).FirstOrDefault(),
+                        }).OrderBy(e => e.nmAdquirente).ToList<dynamic>();
+                }
 
                 retorno.Registros = CollectionTbContaCorrente_tbLoginAdquirenteEmpresa;
 

@@ -40,6 +40,8 @@ namespace api.Negocios.Card
             IDOPERADORA = 200,
 
             CDADQUIRENTE = 300,
+
+            CDCONTACORRENTE = 400,
         };
 
         public enum TIPO_CONCILIADO
@@ -482,7 +484,7 @@ namespace api.Negocios.Card
                 }
                 //else throw new Exception("Uma filial deve ser selecionada como filtro de conciliação bancária!");
                 // ADQUIRENTE
-                queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.CDADQUIRENTE, "0!"); // cdAdquirente != null ou dsTipoCartao != null
+                queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.CDADQUIRENTE, "0!"); // cdAdquirente != null ou (cdAdquirente == null && dsTipoCartao != null)
                 string cdAdquirente = String.Empty;
                 if (queryString.TryGetValue("" + (int)CAMPOS.CDADQUIRENTE, out outValue))
                 {
@@ -520,6 +522,15 @@ namespace api.Negocios.Card
                 queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.DSTIPO, OFXSharp.OFXTransactionType.CREDIT.ToString());
 
 
+                // Conta corrente específica
+                string contaCorrente = String.Empty;
+                if (queryString.TryGetValue("" + (int)CAMPOS.CDCONTACORRENTE, out outValue))
+                {
+                    contaCorrente = queryString["" + (int)CAMPOS.CDCONTACORRENTE];
+                    queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.CDCONTACORRENTE, contaCorrente);
+                }
+ 
+
 
                 // FILTRO DE TIPO ?
                 bool filtroTipoConciliado = false;
@@ -538,6 +549,33 @@ namespace api.Negocios.Card
                 IQueryable<tbRecebimentoAjuste> queryAjustes = GatewayTbRecebimentoAjuste.getQuery(0, (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, 0, 0, queryStringAjustes);
                 IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(0, (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, 0, 0, 0, queryStringRecebimentoParcela);
                 IQueryable<tbExtrato> queryExtrato = GatewayTbExtrato.getQuery(0, (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, 0, 0, 0, queryStringExtrato);
+
+                // SE TIVER CONTA CORRENTE ASSOCIADA E NENHUMA FILIAL FOR ESPECIFICADA, SÓ OBTÉM OS DADOS DAS FILIAIS ASSOCIADAS À CONTA (O MESMO VALE PARA ADQUIRENTE)
+                if (!contaCorrente.Equals("")) 
+                {
+                    int cdContaCorrente = Convert.ToInt32(contaCorrente);
+                    if (CnpjEmpresa.Equals(""))
+                    {
+                        List<string> filiaisDaConta = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
+                            .Where(e => e.cdContaCorrente == cdContaCorrente)
+                            .Where(e => e.tbLoginAdquirenteEmpresa.empresa.fl_ativo == 1)
+                            .GroupBy(e => e.tbLoginAdquirenteEmpresa.empresa.nu_cnpj)
+                            .Select(e => e.Key).ToList<string>();
+                        
+                        queryAjustes = queryAjustes.Where(e => filiaisDaConta.Contains(e.nrCNPJ)).AsQueryable<tbRecebimentoAjuste>();
+                        queryRecebimentoParcela = queryRecebimentoParcela.Where(e => filiaisDaConta.Contains(e.Recebimento.cnpj)).AsQueryable<RecebimentoParcela>();
+                    }
+                    if (cdAdquirente.Equals(""))
+                    {
+                        List<int> adquirentesDaConta = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
+                            .Where(e => e.cdContaCorrente == cdContaCorrente)
+                            .Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente == 1)
+                            .GroupBy(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente)
+                            .Select(e => e.Key).ToList<int>();
+                        queryAjustes = queryAjustes.Where(e => adquirentesDaConta.Contains(e.tbBandeira.cdAdquirente)).AsQueryable<tbRecebimentoAjuste>();
+                        queryRecebimentoParcela = queryRecebimentoParcela.Where(e => adquirentesDaConta.Contains(e.Recebimento.tbBandeira.cdAdquirente)).AsQueryable<RecebimentoParcela>();
+                    }
+                }
 
                 // VALOR TOTAL ASSOCIADO A CADA LADO DA CONCILIAÇÃO
                 decimal totalRecebimento = new decimal(0.0);
@@ -875,11 +913,10 @@ namespace api.Negocios.Card
                                               .ThenBy(c => c.Data.Month)
                                               .ThenBy(c => c.Data.Day)
                                               .ThenBy(c => c.ValorTotal)
-                                              .ThenByDescending(c => c.TipoCartao)
                                               .ThenByDescending(c => c.Filial)
-                                              //.ThenBy(c => c.Adquirente.Equals("") ? c.TipoCartao : c.Adquirente)
+                                              .ThenByDescending(c => c.Adquirente)
                                               .ThenByDescending(c => c.Bandeira)
-                                              //.ThenByDescending(c => c.TipoCartao)
+                                              .ThenByDescending(c => c.TipoCartao)
                                               .ToList<ConciliacaoBancaria>();
 
                         // Faz a conciliação
@@ -972,11 +1009,10 @@ namespace api.Negocios.Card
                                                   .ThenBy(c => c.Data.Month)
                                                   .ThenBy(c => c.Data.Day)
                                                   .ThenBy(c => c.ValorTotal)
-                                                  .ThenByDescending(c => c.TipoCartao)
                                                   .ThenByDescending(c => c.Filial)
-                                                  //.ThenBy(c => c.Adquirente.Equals("") ? c.TipoCartao : c.Adquirente)
+                                                  .ThenByDescending(c => c.Adquirente)
                                                   .ThenByDescending(c => c.Bandeira)
-                                                  //.ThenByDescending(c => c.TipoCartao)
+                                                  .ThenByDescending(c => c.TipoCartao)
                                                   .ToList<ConciliacaoBancaria>();
 
                                 // Faz a conciliação
@@ -1075,11 +1111,10 @@ namespace api.Negocios.Card
                                                           .ThenBy(c => c.Data.Month)
                                                           .ThenBy(c => c.Data.Day)
                                                           .ThenBy(c => c.ValorTotal)
-                                                          .ThenByDescending(c => c.TipoCartao)
                                                           .ThenByDescending(c => c.Filial)
-                                                          //.ThenBy(c => c.Adquirente.Equals("") ? c.TipoCartao : c.Adquirente)
+                                                          .ThenByDescending(c => c.Adquirente)
                                                           .ThenByDescending(c => c.Bandeira)
-                                                          //.ThenByDescending(c => c.TipoCartao)
+                                                          .ThenByDescending(c => c.TipoCartao)
                                                           .ToList<ConciliacaoBancaria>();
 
                                         // Faz a conciliação
@@ -1189,11 +1224,10 @@ namespace api.Negocios.Card
                                                                       .ThenBy(c => c.Data.Month)
                                                                       .ThenBy(c => c.Data.Day)
                                                                       .ThenBy(c => c.ValorTotal)
-                                                                      .ThenByDescending(c => c.TipoCartao)
                                                                       .ThenByDescending(c => c.Filial)
-                                                                      //.ThenBy(c => c.Adquirente.Equals("") ? c.TipoCartao : c.Adquirente)
+                                                                      .ThenByDescending(c => c.Adquirente)
                                                                       .ThenByDescending(c => c.Bandeira)
-                                                                      //.ThenByDescending(c => c.TipoCartao)
+                                                                      .ThenByDescending(c => c.TipoCartao)
                                                                       .ToList<ConciliacaoBancaria>();
 
                                                     // Faz a conciliação
@@ -1276,11 +1310,10 @@ namespace api.Negocios.Card
                                                                               .ThenBy(c => c.Data.Month)
                                                                               .ThenBy(c => c.Data.Day)
                                                                               .ThenBy(c => c.ValorTotal)
-                                                                              .ThenByDescending(c => c.TipoCartao)
                                                                               .ThenByDescending(c => c.Filial)
-                                                                              //.ThenBy(c => c.Adquirente.Equals("") ? c.TipoCartao : c.Adquirente)
+                                                                              .ThenByDescending(c => c.Adquirente)
                                                                               .ThenByDescending(c => c.Bandeira)
-                                                                              //.ThenByDescending(c => c.TipoCartao)
+                                                                              .ThenByDescending(c => c.TipoCartao)
                                                                               .ToList<ConciliacaoBancaria>();
 
                                                             // Faz a conciliação
@@ -1341,8 +1374,8 @@ namespace api.Negocios.Card
                                                                 .ThenBy(c => c.Data.Month)
                                                                 .ThenBy(c => c.Data.Day)
                                                                 .ThenBy(c => c.RecebimentosParcela != null ? c.ValorTotalRecebimento : c.ValorTotalExtrato)
-                                                                .ThenBy(c => c.Adquirente)
-                                                                .ThenBy(c => c.Bandeira)
+                                                                .ThenByDescending(c => c.Adquirente)
+                                                                .ThenByDescending(c => c.Bandeira)
                                                                 .ToList<dynamic>();
 
                 // TOTAL DE REGISTROS
