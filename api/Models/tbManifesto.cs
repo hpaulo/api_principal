@@ -37,6 +37,7 @@ namespace api.Models
         public Nullable<int> idUsers { get; set; }
         public Nullable<bool> flEntrega { get; set; }
         public Nullable<System.DateTime> dtImportacao { get; set; }
+        public Nullable<int> idUsersImportacao { get; set; }
 
         public tbManifesto()
         {
