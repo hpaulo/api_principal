@@ -203,14 +203,15 @@ namespace api.Controllers.Util
                                     Transaction transaction = new Transaction();
 
                                     //row.dtExtrato = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                                    //try
-                                    //{
+                                    try
+                                    {
                                         transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                                    //}
-                                    //catch
-                                    //{
-                                    //    transaction.Date = new DateTime();
-                                    //}
+                                    }
+                                    catch
+                                    {
+                                        //transaction.Date = new DateTime();
+                                        throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (1)");
+                                    }
                                     // Procura valor e nrDocumento
                                     string auxiliar = cipherText.Substring(10).TrimEnd();
                                     int index = auxiliar.LastIndexOf(" ");
@@ -221,7 +222,7 @@ namespace api.Controllers.Util
                                     }
                                     catch
                                     {
-                                        amount = new decimal(0.0);
+                                        throw new Exception("'" + auxiliar.Substring(index + 1) + "' não corresponde a um valor monetário (1)");
                                     }
                                     auxiliar = auxiliar.Substring(0, index).TrimEnd();
                                     index = auxiliar.LastIndexOf(" ");
@@ -310,14 +311,14 @@ namespace api.Controllers.Util
                                             Transaction transaction = new Transaction();
 
                                             //row.dtExtrato = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                                            //try
-                                            //{
+                                            try
+                                            {
                                                 transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                                            //}
-                                            //catch
-                                            //{
-                                            //    transaction.Date = new DateTime();
-                                            //}
+                                            }
+                                            catch
+                                            {
+                                                throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (2)");
+                                            }
                                             ////row.nrDocumento = Regex.Match(filter.Substring(10, filter.Length - 10), @"\d+").Value;
                                             //transaction.CheckNum = Regex.Match(filter.Substring(10, filter.Length - 10), @"\d+").Value;
                                             ////row.vlMovimento = Convert.ToDecimal(filter.Substring(filter.IndexOf(row.nrDocumento) + row.nrDocumento.Length, (filter.Length - (filter.IndexOf(row.nrDocumento) + row.nrDocumento.Length))).Trim().TrimStart().TrimEnd());
@@ -338,7 +339,7 @@ namespace api.Controllers.Util
                                             }
                                             catch
                                             {
-                                                amount = new decimal(0.0);
+                                                throw new Exception("'" + auxiliar.Substring(index + 1) + "' não corresponde a um valor monetário (2)");
                                             }
                                             auxiliar = auxiliar.Substring(0, index).TrimEnd();
                                             index = auxiliar.LastIndexOf(" ");
@@ -414,7 +415,14 @@ namespace api.Controllers.Util
                                     Transaction transaction = new Transaction();
 
                                     //row.dtExtrato = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                                    transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                    try
+                                    {
+                                        transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                    }
+                                    catch
+                                    {
+                                        throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (3)");
+                                    }
                                     //row.nrDocumento = Regex.Match(filter.Substring(10, filter.Length - 10), @"\d+").Value;
                                     //transaction.CheckNum = Regex.Match(filter.Substring(10, filter.Length - 10), @"\d+").Value;
                                     ////row.vlMovimento = Convert.ToDecimal(filter.Substring(filter.IndexOf(row.nrDocumento) + row.nrDocumento.Length, (filter.Length - (filter.IndexOf(row.nrDocumento) + row.nrDocumento.Length))).Trim().TrimStart().TrimEnd());
@@ -432,7 +440,8 @@ namespace api.Controllers.Util
                                     }
                                     catch
                                     {
-                                        amount = new decimal(0.0);
+                                        //amount = new decimal(0.0);
+                                        throw new Exception("'" + auxiliar.Substring(index + 1) + "' não corresponde a um valor monetário (3)");
                                     }
                                     auxiliar = auxiliar.Substring(0, index).TrimEnd();
                                     index = auxiliar.LastIndexOf(" ");
