@@ -32,9 +32,9 @@ namespace api.Negocios.Card
         /// </summary>
         public enum CAMPOS
         {
-            DATA = 100, // pos.RecebimentoParcela
-            NU_CNPJ = 101, // pos.Recebimento
-            ID_GRUPO = 102
+            DATA = 100, 
+            ID_GRUPO = 101,
+            NU_CNPJ = 102, 
         };
 
         /// <summary>
@@ -76,7 +76,7 @@ namespace api.Negocios.Card
                     queryStringTbRecebimentoAjuste.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.ID_GRUPO, IdGrupo.ToString());
                     queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.ID_GRUPO, IdGrupo.ToString());
                 }
-                else throw new Exception("Um grupo deve ser selecionado como filtro de conciliação bancária!");
+                else throw new Exception("Um grupo deve ser selecionado como filtro de relatório de conciliação!");
                 // FILIAL
                 string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
                 if (CnpjEmpresa.Equals("") && queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
@@ -87,7 +87,7 @@ namespace api.Negocios.Card
                     queryStringTbRecebimentoAjuste.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.NRCNPJ, CnpjEmpresa);
                     queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.NU_CNPJ, CnpjEmpresa);
                 }
-                else throw new Exception("Uma filial deve ser selecionada como filtro de conciliação bancária!");
+                //else throw new Exception("Uma filial deve ser selecionada como filtro de conciliação bancária!");
 
                 // Vigência
                 string vigencia = CnpjEmpresa;
@@ -115,7 +115,7 @@ namespace api.Negocios.Card
                     vigencia += "!" + data;
                 }            
                 queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.VIGENCIA, vigencia);
-                queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.CDADQUIRENTE, "0"); // Somente movimentações que tem adquirente associado
+                queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.CDADQUIRENTE, "0!"); // Somente movimentações que tem adquirente/tipo cartão associado
                 // PARA O EXTRATO, SÓ CONSIDERA OS TIPO CREDIT
                 queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.DSTIPO, OFXSharp.OFXTransactionType.CREDIT.ToString());
 
@@ -131,10 +131,14 @@ namespace api.Negocios.Card
                     tipo = "R",
                     adquirente = t.Recebimento.tbBandeira.tbAdquirente.nmAdquirente,
                     bandeira = t.Recebimento.tbBandeira.dsBandeira,
+                    tipocartao = t.Recebimento.tbBandeira.dsTipo,
                     competencia = t.dtaRecebimentoEfetivo != null ? t.dtaRecebimentoEfetivo.Value : t.dtaRecebimento,
                     valorDescontado = t.valorDescontado,
-                    valorParcelaBruta = t.valorParcelaBruta,
-                    idExtrato = t.idExtrato
+                    valorDescontadoAntecipacao = t.vlDescontadoAntecipacao,
+                    valorBruto = t.valorParcelaBruta,
+                    valorLiquido = t.valorParcelaBruta - t.valorDescontado,//t.valorParcelaLiquida.Value,
+                    idExtrato = t.idExtrato,
+                    taxaCashFlow = (t.valorDescontado * new decimal(100.0)) / t.valorParcelaBruta
                 }).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
 
                 List<ConciliacaoRelatorios> rRecebimentoAjuste = queryTbRecebimentoAjuste.Select(t => new ConciliacaoRelatorios
@@ -142,8 +146,14 @@ namespace api.Negocios.Card
                     tipo = "A",
                     adquirente = t.tbBandeira.tbAdquirente.nmAdquirente,
                     bandeira = t.tbBandeira.dsBandeira,
+                    tipocartao = t.tbBandeira.dsTipo,
                     competencia = t.dtAjuste,
-                    vlAjuste = t.vlAjuste
+                    valorLiquido = t.vlAjuste,
+                    valorDescontadoAntecipacao = new decimal(0.0),
+                    valorBruto = t.vlAjuste > new decimal(0.0) ? t.vlAjuste : new decimal(0.0),
+                    valorDescontado = t.vlAjuste < new decimal(0.0) ? new decimal(-1.0) * t.vlAjuste : new decimal(0.0),
+                    idExtrato = t.idExtrato,
+                    taxaCashFlow = new decimal(0.0) 
                 }).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
 
                 List<ConciliacaoRelatorios> rRecebimentoExtrato = queryExtrato.Select(t => new ConciliacaoRelatorios
@@ -152,13 +162,22 @@ namespace api.Negocios.Card
                     adquirente = GatewayTbExtrato._db.tbBancoParametro.Where(p => p.dsMemo.Equals(t.dsDocumento))
                                                                                                  .Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco))
                                                                                                  .Select(p => p.tbAdquirente.nmAdquirente.ToUpper())
-                                                                                                 .FirstOrDefault() ?? "",
+                                                                                                 .FirstOrDefault() ?? "Indefinida",
                     bandeira = GatewayTbExtrato._db.tbBancoParametro.
                                                     Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco)
                                                     && p.dsMemo.Equals(t.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? "Indefinida"
                                                     ).FirstOrDefault() ?? "Indefinida",
-                    extratoBancario = t.vlMovimento ?? new decimal(0.0),
-                    competencia = t.dtExtrato
+                    tipocartao = GatewayTbExtrato._db.tbBancoParametro.
+                                                    Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco)
+                                                    && p.dsMemo.Equals(t.dsDocumento)).Select(p => p.dsTipoCartao ?? ""
+                                                    ).FirstOrDefault() ?? "",
+                    valorBruto = t.vlMovimento ?? new decimal(0.0),
+                    valorDescontado = new decimal(0.0),
+                    valorDescontadoAntecipacao = new decimal(0.0),
+                    valorLiquido = t.vlMovimento ?? new decimal(0.0),
+                    competencia = t.dtExtrato,
+                    idExtrato = t.RecebimentoParcelas.Count + t.tbRecebimentoAjustes.Count,
+                    taxaCashFlow = new decimal(0.0)
                 }).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
 
                 List<ConciliacaoRelatorios> listaCompleta = rRecebimentoParcela.Concat(rRecebimentoAjuste).Concat(rRecebimentoExtrato).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
@@ -169,40 +188,53 @@ namespace api.Negocios.Card
                                                                competencia = t.Key.ToShortDateString(),
                                                                //bandeira = t.Key.bandeira,
                                                                //competencia = t.Key.competencia,
-                                                               taxaMedia = t.Select(x => (x.valorDescontado * new decimal(100.0))/(x.valorParcelaBruta > new decimal(0.0) ? x.valorParcelaBruta : new decimal(1.0) )).Sum() / (t.Count() > 0 ? t.Count() : 1),
-                                                               vendas = t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorParcelaBruta),
-                                                               taxaADM = new decimal(0.0),
-                                                               ajustesCredito = t.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste > new decimal(0.0)).Sum(x => x.vlAjuste),
-                                                               ajustesDebito = t.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste < new decimal(0.0)).Sum(x => x.vlAjuste),
-                                                               valorLiquido = t.Sum(x => x.valorLiquido),
-                                                               extratoBancario = t.Where(x => x.tipo.Equals("E")).Sum(x => x.extratoBancario),
-                                                               diferenca = new decimal(0.0),                                                               
+                                                               taxaMedia = t.Where(x => x.tipo.Equals("R")).Count() == 0 ? new decimal(0.0) : (t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado) * new decimal(100.0)) / t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),//t.Where(x => x.tipo.Equals("R")).Sum(x => x.taxaCashFlow) / t.Where(x => x.tipo.Equals("R")).Count(),
+                                                               vendas = t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),
+                                                               valorDescontadoTaxaADM = t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado),
+                                                               ajustesCredito = t.Where(x => x.tipo.Equals("A")).Sum(x => x.valorBruto),
+                                                               ajustesDebito = t.Where(x => x.tipo.Equals("A")).Sum(x => x.valorDescontado),
+                                                               valorLiquido = t.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido),
+                                                               valorDescontadoAntecipacao = t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                               valorLiquidoTotal = t.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                               extratoBancario = t.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido),
+                                                               diferenca = Math.Abs(t.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - t.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido)),
+                                                               status = t.Where(x => !x.tipo.Equals("E")).Where(x => x.idExtrato == null).Count() > 0 || t.Where(x => x.tipo.Equals("E")).Where(x => x.idExtrato == 0).Count() > 0 ? "Não conciliado" : "Conciliado",
 
                                                                adquirentes = t.GroupBy(c => c.adquirente)
                                                                                .OrderBy(c => c.Key)
-                                                                               .Select(c => new {
+                                                                               .Select(c => new
+                                                                               {
                                                                                    adquirente = c.Key,
-                                                                                   taxaMedia = c.Select(x => (x.valorDescontado * new decimal(100.0)) / (x.valorParcelaBruta > new decimal(0.0) ? x.valorParcelaBruta : new decimal(1.0))).Sum() / (c.Count() > 0 ? c.Count() : 1),
-                                                                                   vendas = c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorParcelaBruta),
-                                                                                   taxaADM = new decimal(0.0),
-                                                                                   ajustesCredito = c.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste > new decimal(0.0)).Sum(x => x.vlAjuste),
-                                                                                   ajustesDebito = c.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste < new decimal(0.0)).Sum(x => x.vlAjuste),
-                                                                                   valorLiquido = c.Sum(x => x.valorLiquido),
-                                                                                   extratoBancario = c.Where(x => x.tipo.Equals("E")).Sum(x => x.extratoBancario),
-                                                                                   diferenca = new decimal(0.0),
-                                                                                   
-                                                                                   bandeiras = c.GroupBy(b => b.bandeira)
-                                                                                                .OrderBy(b => b.Key)
-                                                                                                .Select(b => new {
-                                                                                                    bandeira = b.Key,
-                                                                                                    taxaMedia = b.Select(x => (x.valorDescontado * new decimal(100.0)) / (x.valorParcelaBruta > new decimal(0.0) ? x.valorParcelaBruta : new decimal(1.0))).Sum() / (b.Count() > 0 ? b.Count() : 1),
-                                                                                                    vendas = b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorParcelaBruta),
-                                                                                                    taxaADM = new decimal(0.0),
-                                                                                                    ajustesCredito = b.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste > new decimal(0.0)).Sum(x => x.vlAjuste),
-                                                                                                    ajustesDebito = b.Where(x => x.tipo.Equals("A")).Where(x => x.vlAjuste < new decimal(0.0)).Sum(x => x.vlAjuste),
-                                                                                                    valorLiquido = b.Sum(x => x.valorLiquido),
-                                                                                                    extratoBancario = b.Where(x => x.tipo.Equals("E")).Sum(x => x.extratoBancario),
-                                                                                                    diferenca = new decimal(0.0),                                                                                                    
+                                                                                   taxaMedia = c.Where(x => x.tipo.Equals("R")).Count() == 0 ? new decimal(0.0) : (c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado) * new decimal(100.0)) / c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),//c.Where(x => x.tipo.Equals("R")).Sum(x => x.taxaCashFlow) / c.Where(x => x.tipo.Equals("R")).Count(),
+                                                                                   vendas = c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),
+                                                                                   valorDescontadoTaxaADM = c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado),
+                                                                                   ajustesCredito = c.Where(x => x.tipo.Equals("A")).Sum(x => x.valorBruto),
+                                                                                   ajustesDebito = c.Where(x => x.tipo.Equals("A")).Sum(x => x.valorDescontado),
+                                                                                   valorLiquido = c.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido),
+                                                                                   valorDescontadoAntecipacao = c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                                                   valorLiquidoTotal = c.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                                                   extratoBancario = c.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido),
+                                                                                   diferenca = Math.Abs(c.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - c.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido)),
+                                                                                   status = c.Where(x => !x.tipo.Equals("E")).Where(x => x.idExtrato == null).Count() > 0 || c.Where(x => x.tipo.Equals("E")).Where(x => x.idExtrato == 0).Count() > 0 ? "Não conciliado" : "Conciliado",
+
+                                                                                   bandeiras = c.GroupBy(b => new { b.bandeira, b.tipocartao })
+                                                                                                .OrderBy(b => b.Key.bandeira)
+                                                                                                .ThenBy(b => b.Key.tipocartao)
+                                                                                                .Select(b => new
+                                                                                                {
+                                                                                                    bandeira = b.Key.bandeira + (!b.Key.bandeira.Equals("Indefinida") || b.Key.tipocartao.Equals("") ? "" : " (" + b.Key.tipocartao + ")"),
+                                                                                                    taxaMedia = b.Where(x => x.tipo.Equals("R")).Count() == 0 ? new decimal(0.0) : (b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado) * new decimal(100.0)) / b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),//b.Where(x => x.tipo.Equals("R")).Sum(x => x.taxaCashFlow) / b.Where(x => x.tipo.Equals("R")).Count(),
+                                                                                                    vendas = b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),
+                                                                                                    valorDescontadoTaxaADM = b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado),
+                                                                                                    ajustesCredito = b.Where(x => x.tipo.Equals("A")).Sum(x => x.valorBruto),
+                                                                                                    ajustesDebito = b.Where(x => x.tipo.Equals("A")).Sum(x => x.valorDescontado),
+                                                                                                    valorLiquido = b.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido),
+                                                                                                    valorDescontadoAntecipacao = b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                                                                    valorLiquidoTotal = b.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                                                                    extratoBancario = b.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido),
+                                                                                                    diferenca = Math.Abs(b.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - b.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido)),
+                                                                                                    status = b.Where(x => !x.tipo.Equals("E")).Where(x => x.idExtrato == null).Count() > 0 || b.Where(x => x.tipo.Equals("E")).Where(x => x.idExtrato == 0).Count() > 0 ? "Não conciliado" : "Conciliado",
+
                                                                                                 }).ToList<dynamic>()
                                                                                }).ToList<dynamic>(),
 
