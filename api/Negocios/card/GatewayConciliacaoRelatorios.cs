@@ -198,7 +198,7 @@ namespace api.Negocios.Card
                                                                valorLiquidoTotal = t.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
                                                                extratoBancario = t.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido),
                                                                diferenca = Math.Abs(t.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - t.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido)),
-                                                               status = t.Where(x => !x.tipo.Equals("E")).Where(x => x.idExtrato == null).Count() > 0 || t.Where(x => x.tipo.Equals("E")).Where(x => x.idExtrato == 0).Count() > 0 ? "Não conciliado" : "Conciliado",
+                                                               status = t.Where(x => !x.tipo.Equals("E")).Where(x => x.idExtrato == null).Count() > 0 || t.Where(x => x.tipo.Equals("E")).Where(x => x.idExtrato == 0).Count() > 0 ? Math.Abs(t.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - t.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido)) <= new decimal(0.3) ? "Pré-Conciliado" : "Não conciliado" : "Conciliado",
 
                                                                adquirentes = t.GroupBy(c => c.adquirente)
                                                                                .OrderBy(c => c.Key)
@@ -215,7 +215,7 @@ namespace api.Negocios.Card
                                                                                    valorLiquidoTotal = c.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
                                                                                    extratoBancario = c.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido),
                                                                                    diferenca = Math.Abs(c.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - c.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido)),
-                                                                                   status = c.Where(x => !x.tipo.Equals("E")).Where(x => x.idExtrato == null).Count() > 0 || c.Where(x => x.tipo.Equals("E")).Where(x => x.idExtrato == 0).Count() > 0 ? "Não conciliado" : "Conciliado",
+                                                                                   status = c.Where(x => !x.tipo.Equals("E")).Where(x => x.idExtrato == null).Count() > 0 || c.Where(x => x.tipo.Equals("E")).Where(x => x.idExtrato == 0).Count() > 0 ? Math.Abs(c.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - c.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido)) <= new decimal(0.3) ? "Pré-Conciliado" : "Não conciliado" : "Conciliado",
 
                                                                                    bandeiras = c.GroupBy(b => new { b.bandeira, b.tipocartao })
                                                                                                 .OrderBy(b => b.Key.bandeira)
@@ -233,7 +233,7 @@ namespace api.Negocios.Card
                                                                                                     valorLiquidoTotal = b.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
                                                                                                     extratoBancario = b.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido),
                                                                                                     diferenca = Math.Abs(b.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - b.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido)),
-                                                                                                    status = b.Where(x => !x.tipo.Equals("E")).Where(x => x.idExtrato == null).Count() > 0 || b.Where(x => x.tipo.Equals("E")).Where(x => x.idExtrato == 0).Count() > 0 ? "Não conciliado" : "Conciliado",
+                                                                                                    status = b.Where(x => !x.tipo.Equals("E")).Where(x => x.idExtrato == null).Count() > 0 || b.Where(x => x.tipo.Equals("E")).Where(x => x.idExtrato == 0).Count() > 0 ? Math.Abs(b.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - b.Where(x => x.tipo.Equals("E")).Sum(x => x.valorLiquido)) <= new decimal(0.3) ? "Pré-Conciliado" : "Não conciliado" : "Conciliado",
 
                                                                                                 }).ToList<dynamic>()
                                                                                }).ToList<dynamic>(),
