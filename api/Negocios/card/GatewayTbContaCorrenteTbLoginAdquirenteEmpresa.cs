@@ -8,6 +8,7 @@ using api.Bibliotecas;
 using api.Models.Object;
 using System.Globalization;
 using System.Data.Entity.Validation;
+using api.Negocios.Util;
 
 namespace api.Negocios.Card
 {
@@ -38,7 +39,10 @@ namespace api.Negocios.Card
 
             DSADQUIRENTE = 301,
 
-            DTVIGENCIA = 400
+            DTVIGENCIA = 400,
+
+            NU_CNPJ = 500,
+            ID_GRUPO = 516,
 
         };
 
@@ -127,6 +131,15 @@ namespace api.Negocios.Card
                                                         ).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
                         }
                         break;
+                    case CAMPOS.ID_GRUPO:
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.empresa.id_grupo == id_grupo).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                        break;
+                    case CAMPOS.NU_CNPJ:
+                        string nu_cnpj = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.nrCnpj.Equals(nu_cnpj)).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                        break;
+
                 }
             }
             #endregion
@@ -183,6 +196,26 @@ namespace api.Negocios.Card
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = new List<dynamic>();
                 Retorno retorno = new Retorno();
+
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+                string outValue = null;
+                Int32 IdGrupo = 0;
+                IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (!CnpjEmpresa.Equals(""))
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
+                }
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
@@ -278,6 +311,59 @@ namespace api.Negocios.Card
                             nmAdquirente = e.Select(f => f.tbLoginAdquirenteEmpresa.tbAdquirente.nmAdquirente).FirstOrDefault(),
                             stAdquirente = e.Select(f => f.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente).FirstOrDefault(),
                         }).OrderBy(e => e.nmAdquirente).ToList<dynamic>();
+                }
+                else if (colecao == 5) // [WEB] Relação adquirente-filial por conta
+                {
+                    List<dynamic> tbLoginAdquirenteEmpresas = query
+                        .Select(e => new
+                        {
+                            tbContaCorrente = new
+                            {
+                                e.tbContaCorrente.cdContaCorrente,
+                                //e.tbContaCorrente.cdBanco,
+                                banco = new { Codigo = e.tbContaCorrente.cdBanco, NomeExtenso = "" },
+                                e.tbContaCorrente.nrAgencia,
+                                e.tbContaCorrente.nrConta
+                            },
+                            empresa = new
+                            {
+                                e.tbLoginAdquirenteEmpresa.empresa.nu_cnpj,
+                                e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia,
+                                e.tbLoginAdquirenteEmpresa.empresa.filial
+                            },
+                            tbAdquirente = new
+                            {
+                                e.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente,
+                                e.tbLoginAdquirenteEmpresa.tbAdquirente.nmAdquirente
+                            },
+                            cdEstabelecimento = e.tbLoginAdquirenteEmpresa.cdEstabelecimento,
+                            cdEstabelecimentoConsulta = e.tbLoginAdquirenteEmpresa.cdEstabelecimentoConsulta
+                        })
+                        .OrderBy(e => e.empresa.nu_cnpj)
+                        .ThenBy(e => e.tbAdquirente.nmAdquirente)
+                        .ThenBy(e => e.tbContaCorrente.banco.Codigo)
+                        .ThenBy(e => e.tbContaCorrente.nrAgencia)
+                        .ThenBy(e => e.tbContaCorrente.nrConta)
+                        .ToList<dynamic>();
+
+                    // Após transformar em lista (isto é, trazer para a memória), atualiza o valor do NomeExtenso associado ao banco
+                    foreach (var tbLoginAdquirenteEmpresa in tbLoginAdquirenteEmpresas)
+                    {
+                        CollectionTbContaCorrente_tbLoginAdquirenteEmpresa.Add(new
+                        {
+                            tbContaCorrente = new {
+                                cdContaCorrente = tbLoginAdquirenteEmpresa.tbContaCorrente.cdContaCorrente,
+                                //e.tbContaCorrente.cdBanco,
+                                banco = new { Codigo = tbLoginAdquirenteEmpresa.tbContaCorrente.banco.Codigo, NomeExtenso = GatewayBancos.Get(tbLoginAdquirenteEmpresa.tbContaCorrente.banco.Codigo) },
+                                nrAgencia = tbLoginAdquirenteEmpresa.tbContaCorrente.nrAgencia,
+                                nrConta = tbLoginAdquirenteEmpresa.tbContaCorrente.nrConta,
+                            },
+                            empresa = tbLoginAdquirenteEmpresa.empresa,
+                            tbAdquirente = tbLoginAdquirenteEmpresa.tbAdquirente,
+                            cdEstabelecimento = tbLoginAdquirenteEmpresa.cdEstabelecimento,
+                            cdEstabelecimentoConsulta = tbLoginAdquirenteEmpresa.cdEstabelecimentoConsulta,
+                        });
+                    }
                 }
 
                 retorno.Registros = CollectionTbContaCorrente_tbLoginAdquirenteEmpresa;
