@@ -159,6 +159,8 @@ namespace api.Negocios.Card
 
                 // Verifica se está conciliado
                 if (item2 == null || item1.Tipo.Equals(item2.Tipo) || // 'E' ou 'R'
+                   // Data
+                   (item1.Data.Year != item2.Data.Year || item1.Data.Month != item2.Data.Month || item1.Data.Day != item2.Data.Day) ||
                    // Adquirente                                                  
                    (item1.Adquirente != null && item2.Adquirente != null && !item1.Adquirente.Equals("") && !item2.Adquirente.Equals("") && !item1.Adquirente.Equals(item2.Adquirente)) ||
                    // Filial                                                  

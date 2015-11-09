@@ -34,6 +34,7 @@ namespace api.Models.Mapping
             this.Property(t => t.idExtrato).HasColumnName("idExtrato");
             this.Property(t => t.dtaRecebimentoEfetivo).HasColumnName("dtaRecebimentoEfetivo");
             this.Property(t => t.vlDescontadoAntecipacao).HasColumnName("vlDescontadoAntecipacao");
+            this.Property(t => t.idRecebimentoTitulo).HasColumnName("idRecebimentoTitulo");
 
             // Relationships
             this.HasRequired(t => t.Recebimento)
@@ -42,7 +43,9 @@ namespace api.Models.Mapping
             this.HasOptional(t => t.tbExtrato)
                 .WithMany(t => t.RecebimentoParcelas)
                 .HasForeignKey(d => d.idExtrato);
-
+            this.HasOptional(t => t.tbRecebimentoTitulo)
+                .WithMany(t => t.RecebimentoParcelas)
+                .HasForeignKey(d => d.idRecebimentoTitulo);
         }
     }
 }

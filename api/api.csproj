@@ -292,6 +292,7 @@
     <Compile Include="Controllers\Administracao\WebpagesUsersController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersInRolesController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoRelatoriosController.cs" />
+    <Compile Include="Controllers\Card\ConciliacaoTitulosController.cs" />
     <Compile Include="Controllers\Card\RecebiveisFuturosController.cs" />
     <Compile Include="Controllers\Card\RelatorioVendasController.cs" />
     <Compile Include="Controllers\Card\TbBandeiraController.cs" />
@@ -307,6 +308,7 @@
     <Compile Include="Controllers\Card\TbContaCorrenteController.cs" />
     <Compile Include="Controllers\Card\TbRecebimentoAjusteController.cs" />
     <Compile Include="Controllers\Card\TbRecebimentoResumoManualController.cs" />
+    <Compile Include="Controllers\Card\TbRecebimentoTituloController.cs" />
     <Compile Include="Controllers\Card\TbTerminalLogicoController.cs" />
     <Compile Include="Controllers\Card\TbTransacaoTefController.cs" />
     <Compile Include="Controllers\Card\TbTipoProdutoTefController.cs" />
@@ -371,9 +373,12 @@
     <Compile Include="Models\Mapping\tbLogCargaMap.cs" />
     <Compile Include="Models\Mapping\tbRecebimentoAjusteMap.cs" />
     <Compile Include="Models\Mapping\tbRecebimentoResumoManualMap.cs" />
+    <Compile Include="Models\Mapping\tbRecebimentoTituloMap.cs" />
     <Compile Include="Models\Mapping\tbTerminalLogicoMap.cs" />
     <Compile Include="Models\Object\Assinante.cs" />
     <Compile Include="Models\Object\ConciliacaoRelatorios.cs" />
+    <Compile Include="Models\Object\ConciliacaoTitulos.cs" />
+    <Compile Include="Models\Object\ConciliaRecebimentoParcelaTitulo.cs" />
     <Compile Include="Models\Object\RecebiveisFuturos.cs" />
     <Compile Include="Models\Object\RelatorioVendas.cs" />
     <Compile Include="Models\tbAssinante.cs" />
@@ -802,6 +807,7 @@
     <Compile Include="Models\tbRecebimentoAjuste.cs" />
     <Compile Include="Models\tbRecebimentoResumoManual.cs" />
     <Compile Include="Models\tbRecebimentoTEF.cs" />
+    <Compile Include="Models\tbRecebimentoTitulo.cs" />
     <Compile Include="Models\tbRedeTef.cs" />
     <Compile Include="Models\tbSituacaoRedeTef.cs" />
     <Compile Include="Models\tbTerminalLogico.cs" />
@@ -851,6 +857,7 @@
     <Compile Include="Controllers\Card\TbModoEntradaTefController.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbCanal.cs" />
     <Compile Include="Negocios\Card\GatewayConciliacaoRelatorios.cs" />
+    <Compile Include="Negocios\Card\GatewayConciliacaoTitulos.cs" />
     <Compile Include="Negocios\Card\GatewayRecebiveisFuturos.cs" />
     <Compile Include="Negocios\Card\GatewayRelatorioVendas.cs" />
     <Compile Include="Negocios\Card\GatewayTbBandeira.cs" />
@@ -865,6 +872,7 @@
     <Compile Include="Negocios\Card\GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.cs" />
     <Compile Include="Negocios\Card\GatewayTbRecebimentoAjuste.cs" />
     <Compile Include="Negocios\Card\GatewayTbRecebimentoResumoManual.cs" />
+    <Compile Include="Negocios\Card\GatewayTbRecebimentoTitulo.cs" />
     <Compile Include="Negocios\Card\GatewayTbTerminalLogico.cs" />
     <Compile Include="Negocios\Card\GatewayTbTransacaoTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbTipoProdutoTef.cs" />
@@ -1062,7 +1070,7 @@
     <VisualStudio>
       <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
         <WebProjectProperties>
-          <UseIIS>True</UseIIS>
+          <UseIIS>False</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
           <DevelopmentServerPort>55437</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
