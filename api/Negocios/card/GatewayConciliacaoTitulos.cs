@@ -33,6 +33,7 @@ namespace api.Negocios.Card
             TIPO = 101,  // 1 : CONCILIADO, 2 : PRÉ-CONCILIADO, 3 : NÃO-CONCILIADO
             ID_GRUPO = 102,
             NU_CNPJ = 103,
+            CONSIDERA_NSU = 104, // 0 ou 1
 
             // RELACIONAMENTOS
             CDADQUIRENTE = 200,
@@ -70,6 +71,7 @@ namespace api.Negocios.Card
                         Nsu = item.Nsu,
                         DataVenda = item.DataVenda,
                         Valor = item.Valor,
+                        Bandeira = item.Bandeira,
                     },
                     RecebimentoParcela = item.Tipo != TIPO_RECEBIMENTO ? null : new
                     {
@@ -79,12 +81,13 @@ namespace api.Negocios.Card
                         CodResumoVendas = item.CodResumoVendas,
                         DataVenda = item.DataVenda,
                         Valor = item.Valor,
+                        Bandeira = item.Bandeira,
                     },
                     Adquirente = item.Adquirente,
-                    Bandeira = item.Bandeira,
                     Data = item.Data,
                     Filial = item.Filial,
                     Valor = item.Valor,
+                    Bandeira = item.Bandeira,
                 });
             }
         }
@@ -115,6 +118,7 @@ namespace api.Negocios.Card
                         Nsu = titulo.Nsu,
                         DataVenda = titulo.DataVenda,
                         Valor = titulo.Valor,
+                        Bandeira = titulo.Bandeira,
                     },
                     RecebimentoParcela = new
                     {
@@ -124,12 +128,13 @@ namespace api.Negocios.Card
                         CodResumoVendas = recebimento.CodResumoVendas,
                         DataVenda = recebimento.DataVenda,
                         Valor = recebimento.Valor,
+                        Bandeira = recebimento.Bandeira,
                     },
                     Adquirente = recebimento.Adquirente,
-                    Bandeira = recebimento.Bandeira,
                     Filial = recebimento.Filial,
                     Data = titulo.Data,
                     Valor = titulo.Valor,
+                    Bandeira = recebimento.Bandeira,
                 });
             }
         }
@@ -147,7 +152,7 @@ namespace api.Negocios.Card
         private static void Concilia(List<dynamic> listaConciliacao,
                                      List<ConciliacaoTitulos> listaCandidatos,
                                      List<ConciliacaoTitulos> listaNaoConciliado,
-                                     bool adicionaNaListaPreConciliado)
+                                     bool adicionaNaListaPreConciliado, bool consideraNSU)
         {
             for (var k = 0; k < listaCandidatos.Count; k++)
             {
@@ -170,17 +175,20 @@ namespace api.Negocios.Card
                     continue;
                 }
 
-                // NSUs com mesmo comprimento
-                string nsu1 = item1.Nsu;
-                string nsu2 = item2.Nsu;
-                while (nsu1.Length < nsu2.Length) nsu1 = "0" + nsu1;
-                while (nsu2.Length < nsu1.Length) nsu2 = "0" + nsu2;
-
-                if(!nsu1.Equals(nsu2))
+                if (consideraNSU)
                 {
-                    // NSU diferente!
-                    listaNaoConciliado.Add(item1);
-                    continue;
+                    // NSUs com mesmo comprimento
+                    string nsu1 = item1.Nsu;
+                    string nsu2 = item2.Nsu;
+                    while (nsu1.Length < nsu2.Length) nsu1 = "0" + nsu1;
+                    while (nsu2.Length < nsu1.Length) nsu2 = "0" + nsu2;
+
+                    if (!nsu1.Equals(nsu2))
+                    {
+                        // NSU diferente!
+                        listaNaoConciliado.Add(item1);
+                        continue;
+                    }
                 }
 
                 // CONCILIADO!
@@ -263,6 +271,10 @@ namespace api.Negocios.Card
                     queryStringTbRecebimentoTitulo.Add("" + (int)GatewayTbRecebimentoTitulo.CAMPOS.CDADQUIRENTE, cdAdquirente);
 
                 }
+                // CONSIDERA NSU?
+                bool consideraNSU = true;
+                if (queryString.TryGetValue("" + (int)CAMPOS.CONSIDERA_NSU, out outValue))
+                    consideraNSU = Convert.ToBoolean(queryString["" + (int)CAMPOS.CONSIDERA_NSU]);
 
 
                 // FILTRO DE TIPO ?
@@ -424,7 +436,7 @@ namespace api.Negocios.Card
                                               .ToList<ConciliacaoTitulos>();
 
                         // Faz a conciliação
-                        Concilia(CollectionConciliacaoTitulos, listaCandidatos, listaNaoConciliado, !filtroTipoNaoConciliado);
+                        Concilia(CollectionConciliacaoTitulos, listaCandidatos, listaNaoConciliado, !filtroTipoNaoConciliado, consideraNSU);
 
                         #endregion
 
@@ -525,7 +537,7 @@ namespace api.Negocios.Card
                     {
                         // Avalia o título
                         tbRecebimentoTitulo tbRecebimentoTitulo = null;
-                        if (tbRecebimentoTitulo.idRecebimentoTitulo > 0)
+                        if (conciliaTitulo.idRecebimentoTitulo > 0)
                         {
                             tbRecebimentoTitulo = _db.tbRecebimentoTitulos.Where(e => e.idRecebimentoTitulo == conciliaTitulo.idRecebimentoTitulo).FirstOrDefault();
                             if (tbRecebimentoTitulo == null) continue; // título inválido!

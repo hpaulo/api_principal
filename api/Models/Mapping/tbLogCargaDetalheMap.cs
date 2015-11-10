@@ -25,7 +25,7 @@ namespace api.Models.Mapping
 
             this.Property(t => t.dsModalidade)
                 .IsRequired()
-                .HasMaxLength(20);
+                .HasMaxLength(30);
 
             // Table & Column Mappings
             this.ToTable("tbLogCargaDetalhe", "card");

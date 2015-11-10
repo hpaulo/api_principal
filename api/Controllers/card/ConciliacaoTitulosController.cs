@@ -46,5 +46,38 @@ namespace api.Controllers.Card
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
+
+
+        // PUT /ConciliacaoTitulos/token/
+        public HttpResponseMessage Put(string token, [FromBody]List<ConciliaRecebimentoParcelaTitulo> param)
+        {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+            try
+            {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
+
+                HttpResponseMessage retorno = new HttpResponseMessage();
+                if (Permissoes.Autenticado(token))
+                {
+                    GatewayConciliacaoTitulos.Update(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
+                else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
+            }
+            catch (Exception e)
+            {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
+                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+        }
     }
 }
