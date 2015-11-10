@@ -85,7 +85,7 @@ namespace api.Negocios.Card
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtVenda != null && e.dtVenda.Value > dtaIni && e.dtVenda.Value < dtaFim).AsQueryable<tbRecebimentoTitulo>();
+                            entity = entity.Where(e => e.dtVenda != null && e.dtVenda.Value >= dtaIni && e.dtVenda.Value <= dtaFim).AsQueryable<tbRecebimentoTitulo>();
                         }
                         else // IGUAL
                         {
@@ -116,7 +116,7 @@ namespace api.Negocios.Card
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtTitulo > dtaIni && e.dtTitulo < dtaFim).AsQueryable<tbRecebimentoTitulo>();
+                            entity = entity.Where(e => e.dtTitulo >= dtaIni && e.dtTitulo <= dtaFim).AsQueryable<tbRecebimentoTitulo>();
                         }
                         else // IGUAL
                         {

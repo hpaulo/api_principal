@@ -1576,6 +1576,85 @@ namespace api.Negocios.Card
             }
         }
 
+
+
+
+        /// <summary>
+        /// Gera arquivos de baixa
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static void Patch(string token, List<List<ConciliaRecebimentoParcela.RecebParcela>> param)
+        {
+            try
+            {
+                //foreach (ConciliaRecebimentoParcela grupoExtrato in param)
+                //{
+                //    if (grupoExtrato.recebimentosParcela != null)
+                //    {
+                //        // Avalia o extrato
+                //        tbExtrato extrato = null;
+                //        if (grupoExtrato.idExtrato > 0)
+                //        {
+                //            extrato = _db.tbExtratos.Where(e => e.idExtrato == grupoExtrato.idExtrato).FirstOrDefault();
+                //            if (extrato == null) continue; // extrato inválido!
+                //        }
+
+
+                //        foreach (ConciliaRecebimentoParcela.RecebParcela recebimentoParcela in grupoExtrato.recebimentosParcela)
+                //        {
+                //            if (recebimentoParcela.numParcela == -1)
+                //            {
+                //                // AJUSTE
+                //                tbRecebimentoAjuste value = _db.tbRecebimentoAjustes
+                //                                                        .Where(e => e.idRecebimentoAjuste == recebimentoParcela.idRecebimento)
+                //                                                        .FirstOrDefault();
+                //                if (value != null)
+                //                {
+                //                    if (grupoExtrato.idExtrato == -1) value.idExtrato = null;
+                //                    else
+                //                    {
+                //                        value.idExtrato = extrato.idExtrato;
+                //                        //value.dtAjuste = extrato.dtExtrato; // atualiza data efetiva do ajuste
+                //                    }
+                //                    _db.SaveChanges();
+                //                }
+                //            }
+                //            else
+                //            {
+                //                // RECEBIMENTO PARCELA
+                //                RecebimentoParcela value = _db.RecebimentoParcelas
+                //                                                        .Where(e => e.idRecebimento == recebimentoParcela.idRecebimento)
+                //                                                        .Where(e => e.numParcela == recebimentoParcela.numParcela)
+                //                                                        .FirstOrDefault();
+                //                if (value != null)
+                //                {
+                //                    if (grupoExtrato.idExtrato == -1) value.idExtrato = null;
+                //                    else
+                //                    {
+                //                        value.idExtrato = extrato.idExtrato;
+                //                        value.dtaRecebimentoEfetivo = extrato.dtExtrato; // atualiza data efetiva de recebimento
+                //                    }
+                //                    _db.SaveChanges();
+                //                }
+                //            }
+                //        }
+                //    }
+
+                //}
+
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento parcela" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+        }
+
     }
 
 }
