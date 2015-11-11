@@ -10,6 +10,7 @@ using System.Data.Entity.Validation;
 using api.Negocios.Pos;
 using Microsoft.Ajax.Utilities;
 using api.Negocios.Util;
+using System.Data.SqlClient;
 
 namespace api.Negocios.Card
 {
@@ -1584,64 +1585,29 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Patch(string token, List<List<ConciliaRecebimentoParcela.RecebParcela>> param)
+        public static List<List<string>> Patch(string token, List<BaixaTitulos> param)
         {
             try
             {
-                //foreach (ConciliaRecebimentoParcela grupoExtrato in param)
-                //{
-                //    if (grupoExtrato.recebimentosParcela != null)
-                //    {
-                //        // Avalia o extrato
-                //        tbExtrato extrato = null;
-                //        if (grupoExtrato.idExtrato > 0)
-                //        {
-                //            extrato = _db.tbExtratos.Where(e => e.idExtrato == grupoExtrato.idExtrato).FirstOrDefault();
-                //            if (extrato == null) continue; // extrato inválido!
-                //        }
+                List<List<string>> arquivos = new List<List<String>>();
+                foreach (BaixaTitulos baixa in param)
+                {
+                    if (baixa.dataRecebimento == null || baixa.idsRecebimento == null || baixa.idsRecebimento.Count == 0)
+                        continue;
 
+                    string data = baixa.dataRecebimento.Substring(0, 4) + "-" + 
+                                  baixa.dataRecebimento.Substring(4, 2) + "-" +
+                                  baixa.dataRecebimento.Substring(6, 2);
+                    string ids = String.Empty;
+                    foreach (int idRecebimento in baixa.idsRecebimento)
+                        ids += idRecebimento + "|";
 
-                //        foreach (ConciliaRecebimentoParcela.RecebParcela recebimentoParcela in grupoExtrato.recebimentosParcela)
-                //        {
-                //            if (recebimentoParcela.numParcela == -1)
-                //            {
-                //                // AJUSTE
-                //                tbRecebimentoAjuste value = _db.tbRecebimentoAjustes
-                //                                                        .Where(e => e.idRecebimentoAjuste == recebimentoParcela.idRecebimento)
-                //                                                        .FirstOrDefault();
-                //                if (value != null)
-                //                {
-                //                    if (grupoExtrato.idExtrato == -1) value.idExtrato = null;
-                //                    else
-                //                    {
-                //                        value.idExtrato = extrato.idExtrato;
-                //                        //value.dtAjuste = extrato.dtExtrato; // atualiza data efetiva do ajuste
-                //                    }
-                //                    _db.SaveChanges();
-                //                }
-                //            }
-                //            else
-                //            {
-                //                // RECEBIMENTO PARCELA
-                //                RecebimentoParcela value = _db.RecebimentoParcelas
-                //                                                        .Where(e => e.idRecebimento == recebimentoParcela.idRecebimento)
-                //                                                        .Where(e => e.numParcela == recebimentoParcela.numParcela)
-                //                                                        .FirstOrDefault();
-                //                if (value != null)
-                //                {
-                //                    if (grupoExtrato.idExtrato == -1) value.idExtrato = null;
-                //                    else
-                //                    {
-                //                        value.idExtrato = extrato.idExtrato;
-                //                        value.dtaRecebimentoEfetivo = extrato.dtExtrato; // atualiza data efetiva de recebimento
-                //                    }
-                //                    _db.SaveChanges();
-                //                }
-                //            }
-                //        }
-                //    }
+                    int total = baixa.idsRecebimento.Count;
 
-                //}
+                    arquivos.Add(_db.Database.SqlQuery<string>("EXECUTE [card].[sp_GeraCsvArquivoBaixa_DealerNet] '" + data + "', '" + ids + "', " + total).ToList<string>());
+                }
+
+                return arquivos;
 
             }
             catch (Exception e)

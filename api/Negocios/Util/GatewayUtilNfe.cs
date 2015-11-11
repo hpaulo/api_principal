@@ -52,6 +52,38 @@ namespace api.Negocios.Util
             }
         }
 
+
+        public static byte[] DownloadZipCSVs(List<List<string>> lista, List<string> nomesArquivo = null)
+        {
+            using (var compressedFileStream = new MemoryStream())
+            {
+                using (var zipArchive = new ZipArchive(compressedFileStream, ZipArchiveMode.Update, false))
+                {
+                    int i = 0;
+                    byte[] bytes;
+                    foreach (List<string> lines in lista)
+                    {
+                        //Create a zip entry for each attachment
+                        var zipEntry = zipArchive.CreateEntry((nomesArquivo != null && i < nomesArquivo.Count ? nomesArquivo[i] + "_" : "") + i + ".csv");
+                        i++;
+
+                        bytes = Bibliotecas.Converter.ListToCSV(lines);
+
+                        //Get the stream of the attachment
+                        using (var originalFileStream = new MemoryStream(bytes))
+                        {
+                            using (var zipEntryStream = zipEntry.Open())
+                            {
+                                //Copy the attachment stream to the zip entry stream
+                                originalFileStream.CopyTo(zipEntryStream);
+                            }
+                        }
+                    }
+                }
+                return compressedFileStream.ToArray();
+            }
+        }
+
         public static byte[] PDFDanfe(string xmlNFe, string nrChave)
         {
             

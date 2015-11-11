@@ -376,6 +376,7 @@
     <Compile Include="Models\Mapping\tbRecebimentoTituloMap.cs" />
     <Compile Include="Models\Mapping\tbTerminalLogicoMap.cs" />
     <Compile Include="Models\Object\Assinante.cs" />
+    <Compile Include="Models\Object\BaixaTitulos.cs" />
     <Compile Include="Models\Object\ConciliacaoRelatorios.cs" />
     <Compile Include="Models\Object\ConciliacaoTitulos.cs" />
     <Compile Include="Models\Object\ConciliaRecebimentoParcelaTitulo.cs" />
