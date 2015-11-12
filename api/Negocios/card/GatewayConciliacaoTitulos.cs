@@ -438,10 +438,15 @@ namespace api.Negocios.Card
                                                                             .FirstOrDefault();
                     if (recebimento == null) throw new Exception("Parcela inválida!");
 
+                    DateTime data = Convert.ToDateTime(recebimento.Recebimento.dtaVenda.ToShortDateString());
+                    DateTime dataIni = data.Subtract(new TimeSpan(RANGE_DIAS_ANTERIOR, 0, 0, 0));
+                    DateTime dataFim = data.AddDays(RANGE_DIAS_POSTERIOR);
+
                     // Consulta títulos com a mesma data da venda
-                    List<tbRecebimentoTitulo> titulos = _db.tbRecebimentoTitulos.Where(e => e.dtVenda != null && e.dtVenda.Value.Year == recebimento.Recebimento.dtaVenda.Year &&
-                                                                                      e.dtVenda.Value.Month == recebimento.Recebimento.dtaVenda.Month &&
-                                                                                      e.dtVenda.Value.Day == recebimento.Recebimento.dtaVenda.Day)
+                    List<tbRecebimentoTitulo> titulos = _db.tbRecebimentoTitulos.Where(e => e.dtVenda != null && /*(e.dtVenda.Value.Year == recebimento.Recebimento.dtaVenda.Year &&
+                                                                                                                  e.dtVenda.Value.Month == recebimento.Recebimento.dtaVenda.Month &&
+                                                                                                                  e.dtVenda.Value.Day == recebimento.Recebimento.dtaVenda.Day))*/
+                                                                                            e.dtVenda.Value >= dataIni && e.dtVenda.Value <= dataFim)
                                                                                 .Where(e => e.nrCNPJ.Equals(recebimento.Recebimento.cnpj))
                                                                                 .Where(e => e.cdAdquirente == recebimento.Recebimento.tbBandeira.cdAdquirente)
                                                                                 .Where(e => (e.vlVenda >= recebimento.Recebimento.valorVendaBruta && e.vlVenda - recebimento.Recebimento.valorVendaBruta <= TOLERANCIA) ||
