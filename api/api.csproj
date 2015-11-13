@@ -293,6 +293,7 @@
     <Compile Include="Controllers\Administracao\WebpagesUsersInRolesController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoRelatoriosController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoTitulosController.cs" />
+    <Compile Include="Controllers\Card\RelatorioConciliacaoTitulosController.cs" />
     <Compile Include="Controllers\Card\RecebiveisFuturosController.cs" />
     <Compile Include="Controllers\Card\RelatorioVendasController.cs" />
     <Compile Include="Controllers\Card\TbBandeiraController.cs" />
@@ -860,6 +861,7 @@
     <Compile Include="Negocios\Card\GatewayConciliacaoRelatorios.cs" />
     <Compile Include="Negocios\Card\GatewayConciliacaoTitulos.cs" />
     <Compile Include="Negocios\Card\GatewayRecebiveisFuturos.cs" />
+    <Compile Include="Negocios\Card\GatewayRelatorioConciliacaoTitulos.cs" />
     <Compile Include="Negocios\Card\GatewayRelatorioVendas.cs" />
     <Compile Include="Negocios\Card\GatewayTbBandeira.cs" />
     <Compile Include="Negocios\Card\GatewayTbLogCarga.cs" />

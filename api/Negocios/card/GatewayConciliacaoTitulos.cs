@@ -48,11 +48,11 @@ namespace api.Negocios.Card
             NAO_CONCILIADO = 3
         };
 
-        private static string TIPO_TITULO = "T";
-        private static string TIPO_RECEBIMENTO = "R";
+        public static string TIPO_TITULO = "T";
+        public static string TIPO_RECEBIMENTO = "R";
         // Pré-Conciliação
-        private const int RANGE_DIAS_ANTERIOR = 3;
-        private const int RANGE_DIAS_POSTERIOR = 3;
+        private const int RANGE_DIAS_ANTERIOR = 5;
+        private const int RANGE_DIAS_POSTERIOR = 5;
         private static decimal TOLERANCIA = new decimal(0.1); // R$0,10 
 
 
@@ -79,6 +79,7 @@ namespace api.Negocios.Card
                         Valor = item.Valor,
                         Bandeira = item.Bandeira,
                         Data = item.Data,
+                        Filial = item.Filial,
                     },
                     RecebimentoParcela = item.Tipo != TIPO_RECEBIMENTO ? null : new
                     {
@@ -90,9 +91,9 @@ namespace api.Negocios.Card
                         Valor = item.Valor,
                         Bandeira = item.Bandeira,
                         Data = item.Data,
+                        Filial = item.Filial,
                     },
-                    Adquirente = item.Adquirente,
-                    Data = item.Data,
+                    Adquirente = item.Adquirente,         
                 });
             }
         }
@@ -125,6 +126,7 @@ namespace api.Negocios.Card
                         Valor = titulo.Valor,
                         Bandeira = titulo.Bandeira,
                         Data = titulo.Data,
+                        Filial = titulo.Filial,
                     },
                     RecebimentoParcela = new
                     {
@@ -136,9 +138,9 @@ namespace api.Negocios.Card
                         Valor = recebimento.Valor,
                         Bandeira = recebimento.Bandeira,
                         Data = recebimento.Data,
+                        Filial = recebimento.Filial,
                     },
                     Adquirente = recebimento.Adquirente,
-                    Filial = recebimento.Filial,
                 });
             }
         }
@@ -299,7 +301,7 @@ namespace api.Negocios.Card
 
 
                     // Só busca por possíveis conciliações se não tiver sido requisitado um filtro do tipo CONCILIADO
-                    if (!filtroTipoConciliado)
+                    if (!filtroTipoConciliado && (pageSize == 0 || CollectionConciliacaoTitulos.Count < pageSize))
                     {
                         #region OBTÉM AS INFORMAÇÕES DE DADOS NÃO-CONCILIADOS E BUSCA PRÉ-CONCILIAÇÕES
 
@@ -325,12 +327,15 @@ namespace api.Negocios.Card
 
                         #endregion
 
-                        // Remove filtro de data dos títulos
-                        //if (queryStringTbRecebimentoTitulo.TryGetValue("" + (int)GatewayTbRecebimentoTitulo.CAMPOS.DTTITULO, out outValue))
-                        //{
-                        //    queryStringTbRecebimentoTitulo.Remove("" + (int)GatewayTbRecebimentoTitulo.CAMPOS.DTTITULO);
-                        //    queryTbRecebimentoTitulo = GatewayTbRecebimentoTitulo.getQuery(0, (int)GatewayTbRecebimentoTitulo.CAMPOS.DTTITULO, 0, 0, 0, queryStringTbRecebimentoTitulo);
-                        //}
+                        // TOTAL DE REGISTROS
+                        retorno.TotalDeRegistros = recebimentosParcela.Count + CollectionConciliacaoTitulos.Count;
+
+                        // PAGINAÇÃO
+                        int skipRows = (pageNumber - 1) * (pageSize - CollectionConciliacaoTitulos.Count);
+                        if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                            recebimentosParcela = recebimentosParcela.Skip(skipRows).Take(pageSize - CollectionConciliacaoTitulos.Count).ToList<ConciliacaoTitulos>();
+                        else
+                            pageNumber = 1;
 
                         List<int> idsPreConciliados = new List<int>();
                         foreach (ConciliacaoTitulos recebParcela in recebimentosParcela)
@@ -340,13 +345,13 @@ namespace api.Negocios.Card
                             string nsu = "" + Convert.ToInt32(recebParcela.Nsu);
                             // Para cada recebimento Parcela, procurar
                             List<ConciliacaoTitulos> titulos = queryTbRecebimentoTitulo
-                                // Só considera os títulos que não estão conciliados
+                                                                // Só considera os títulos que não estão conciliados
                                                                 .Where(e => e.RecebimentoParcelas.Count == 0)
-                                // Com data no intervalo esperado
+                                                                // Com data no intervalo esperado
                                                                 .Where(e => e.dtTitulo >= dataIni && e.dtTitulo <= dataFim)
-                                // NSU
+                                                                // NSU
                                                                 .Where(e => e.nrNSU.EndsWith(nsu))
-                                // Não pode ter sido pré-conciliado
+                                                                // Não pode ter sido pré-conciliado
                                                                 .Where(e => !idsPreConciliados.Contains(e.idRecebimentoTitulo))
                                                                 .Select(e => new ConciliacaoTitulos
                                                                 {
@@ -405,7 +410,6 @@ namespace api.Negocios.Card
                                     adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoTitulos, rps);
                             }
                         }
-                        #endregion
                     }
 
                     // Ordena
@@ -422,11 +426,12 @@ namespace api.Negocios.Card
                     // TOTAL
                     retorno.Totais = new Dictionary<string, object>();
                     retorno.Totais.Add("valor", CollectionConciliacaoTitulos.Select(r => r.RecebimentoParcela.Valor).Cast<decimal>().Sum());
+                    #endregion
 
                 }
                 else if (colecao == 1)
                 {
-                    // Busca títulos
+                    #region BUSCA TÍTULOS
                     if (!queryString.TryGetValue("" + (int)CAMPOS.IDRECEBIMENTO, out outValue) ||
                         !queryString.TryGetValue("" + (int)CAMPOS.NUMPARCELA, out outValue))
                         throw new Exception("Para consultar títulos, deve ser enviado dados da parcela!");
@@ -438,6 +443,11 @@ namespace api.Negocios.Card
                                                                             .FirstOrDefault();
                     if (recebimento == null) throw new Exception("Parcela inválida!");
 
+                    // Pode ter enviado de uma filial diferente
+                    string nrCNPJ = recebimento.Recebimento.cnpj;
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                        nrCNPJ = queryString["" + (int)CAMPOS.NU_CNPJ];
+
                     DateTime data = Convert.ToDateTime(recebimento.Recebimento.dtaVenda.ToShortDateString());
                     DateTime dataIni = data.Subtract(new TimeSpan(RANGE_DIAS_ANTERIOR, 0, 0, 0));
                     DateTime dataFim = data.AddDays(RANGE_DIAS_POSTERIOR);
@@ -447,7 +457,7 @@ namespace api.Negocios.Card
                                                                                                                   e.dtVenda.Value.Month == recebimento.Recebimento.dtaVenda.Month &&
                                                                                                                   e.dtVenda.Value.Day == recebimento.Recebimento.dtaVenda.Day))*/
                                                                                             e.dtVenda.Value >= dataIni && e.dtVenda.Value <= dataFim)
-                                                                                .Where(e => e.nrCNPJ.Equals(recebimento.Recebimento.cnpj))
+                                                                                .Where(e => e.nrCNPJ.Equals(nrCNPJ))
                                                                                 .Where(e => e.cdAdquirente == recebimento.Recebimento.tbBandeira.cdAdquirente)
                                                                                 .Where(e => (e.vlVenda >= recebimento.Recebimento.valorVendaBruta && e.vlVenda - recebimento.Recebimento.valorVendaBruta <= TOLERANCIA) ||
                                                                                             (e.vlVenda < recebimento.Recebimento.valorVendaBruta && recebimento.Recebimento.valorVendaBruta - e.vlVenda <= TOLERANCIA))
@@ -499,17 +509,11 @@ namespace api.Negocios.Card
                             });
                         }
                     }
+
+                    retorno.TotalDeRegistros = CollectionConciliacaoTitulos.Count;
+
+                    #endregion
                 }
-
-                // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = CollectionConciliacaoTitulos.Count;
-
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    CollectionConciliacaoTitulos = CollectionConciliacaoTitulos.Skip(skipRows).Take(pageSize).ToList<dynamic>();
-                else
-                    pageNumber = 1;
 
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;

@@ -103,7 +103,8 @@ namespace api.Controllers.Card
 
                     List<string> nomesArquivo = new List<string>();
                     foreach (BaixaTitulos p in param)
-                        nomesArquivo.Add(p.dataRecebimento + "_" + p.idsRecebimento.Count);
+                        //nomesArquivo.Add(p.dataRecebimento + "_" + p.idsRecebimento.Count);
+                        nomesArquivo.Add(p.idExtrato.ToString());
 
                     if (arquivos.Count == 1)
                     {

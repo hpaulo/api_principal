@@ -7,7 +7,8 @@ namespace api.Models.Object
 {
     public class BaixaTitulos
     {
-        public string dataRecebimento;
-        public List<int> idsRecebimento;
+        //public string dataRecebimento;
+        //public List<int> idsRecebimento;
+        public int idExtrato;
     }
 }

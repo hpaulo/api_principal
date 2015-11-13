@@ -1592,19 +1592,21 @@ namespace api.Negocios.Card
                 List<List<string>> arquivos = new List<List<String>>();
                 foreach (BaixaTitulos baixa in param)
                 {
-                    if (baixa.dataRecebimento == null || baixa.idsRecebimento == null || baixa.idsRecebimento.Count == 0)
-                        continue;
+                    //if (baixa.dataRecebimento == null || baixa.idsRecebimento == null || baixa.idsRecebimento.Count == 0)
+                    //    continue;
 
-                    string data = baixa.dataRecebimento.Substring(0, 4) + "-" + 
-                                  baixa.dataRecebimento.Substring(4, 2) + "-" +
-                                  baixa.dataRecebimento.Substring(6, 2);
-                    string ids = String.Empty;
-                    foreach (int idRecebimento in baixa.idsRecebimento)
-                        ids += idRecebimento + "|";
+                    //string data = baixa.dataRecebimento.Substring(0, 4) + "-" + 
+                    //              baixa.dataRecebimento.Substring(4, 2) + "-" +
+                    //              baixa.dataRecebimento.Substring(6, 2);
+                    //string ids = String.Empty;
+                    //foreach (int idRecebimento in baixa.idsRecebimento)
+                    //    ids += idRecebimento + "|";
 
-                    int total = baixa.idsRecebimento.Count;
+                    //int total = baixa.idsRecebimento.Count;
 
-                    arquivos.Add(_db.Database.SqlQuery<string>("EXECUTE [card].[sp_GeraCsvArquivoBaixa_DealerNet] '" + data + "', '" + ids + "', " + total).ToList<string>());
+                    //arquivos.Add(_db.Database.SqlQuery<string>("EXECUTE [card].[sp_GeraCsvArquivoBaixa_DealerNet] '" + data + "', '" + ids + "', " + total).ToList<string>());
+
+                    arquivos.Add(_db.Database.SqlQuery<string>("EXECUTE [card].[sp_GeraCsvArquivoBaixa_DealerNet] " + baixa.idExtrato).ToList<string>());
                 }
 
                 return arquivos;

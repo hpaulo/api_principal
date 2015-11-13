@@ -83,5 +83,19 @@ namespace api.Models.Object
             get { return valor; }
             set { valor = value; }
         }
+
+        private Nullable<decimal> valorVenda;
+        public Nullable<decimal> ValorVenda
+        {
+            get { return valorVenda; }
+            set { valorVenda = value; }
+        }
+
+        private Nullable<decimal> valorLiquido;
+        public Nullable<decimal> ValorLiquido
+        {
+            get { return valorLiquido; }
+            set { valorLiquido = value; }
+        }
     }
 }

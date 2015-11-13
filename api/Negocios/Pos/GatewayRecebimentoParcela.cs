@@ -39,6 +39,7 @@ namespace api.Negocios.Pos
             IDEXTRATO = 106, // -1 para = null, 0 para != null
             DTARECEBIMENTOEFETIVO = 107,
             VLDESCONTADOANTECIPACAO = 108,
+            IDRECEBIMENTOTITULO = 109, // -1 para = null, 0 para != null
 
             // EMPRESA
             NU_CNPJ = 300,
@@ -123,6 +124,12 @@ namespace api.Negocios.Pos
                         if (idExtrato == -1) entity = entity.Where(e => e.idExtrato == null);
                         else if (idExtrato == 0) entity = entity.Where(e => e.idExtrato != null);
                         else entity = entity.Where(e => e.idExtrato == idExtrato);
+                        break;
+                    case CAMPOS.IDRECEBIMENTOTITULO:
+                        Int32 idRecebimentoTitulo = Convert.ToInt32(item.Value);
+                        if (idRecebimentoTitulo == -1) entity = entity.Where(e => e.idRecebimentoTitulo == null);
+                        else if (idRecebimentoTitulo == 0) entity = entity.Where(e => e.idRecebimentoTitulo != null);
+                        else entity = entity.Where(e => e.idRecebimentoTitulo == idRecebimentoTitulo);
                         break;
 
                     /// PERSONALIZADO
