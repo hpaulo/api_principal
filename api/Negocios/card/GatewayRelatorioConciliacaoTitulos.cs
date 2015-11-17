@@ -129,12 +129,12 @@ namespace api.Negocios.Card
                                                 // Somente as parcelas que foram conciliados com um título de filial igual ao cnpj enviado
                                                 .Where(t => t.idRecebimentoTitulo != null && t.tbRecebimentoTitulo.nrCNPJ.Equals(cnpjTitulo));
                 }
-                else
+                /*else
                 {
                     queryRecebimentoParcela = queryRecebimentoParcela
                                                 // Somente as parcelas que não foram conciliadas ou aquelas que foram conciliados com um título de filial diferente
                                                 .Where(t => t.idRecebimentoTitulo == null || (t.idRecebimentoTitulo != null && !t.Recebimento.cnpj.Equals(t.tbRecebimentoTitulo.nrCNPJ)));
-                }
+                }*/
 
                 List<dynamic> rRecebimentoParcela = queryRecebimentoParcela
                                                             .Select(t => new

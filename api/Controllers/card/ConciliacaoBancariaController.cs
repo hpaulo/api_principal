@@ -50,9 +50,41 @@ namespace api.Controllers.Card
             }
         }
 
+
+        // POST /ConciliacaoBancaria/token/
+        public HttpResponseMessage Post(string token, [FromBody]List<ConciliaRecebimentoParcela> param)
+        {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+            try
+            {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
+
+                HttpResponseMessage retorno = new HttpResponseMessage();
+                if (Permissoes.Autenticado(token))
+                {
+                    GatewayConciliacaoBancaria.Post(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
+                else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
+            }
+            catch (Exception e)
+            {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
+                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+        }
        
         // PUT /ConciliacaoBancaria/token/
-        public HttpResponseMessage Put(string token, [FromBody]List<ConciliaRecebimentoParcela> param)
+        public HttpResponseMessage Put(string token, [FromBody]RecebimentosParcela param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try

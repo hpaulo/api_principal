@@ -23,6 +23,8 @@ namespace api.Models
         public DateTime dtTitulo { get; set; } //
         public decimal vlParcela { get; set; } // 
         public byte nrParcela { get; set; } //
+        public string cdERP { get; set; }
+        public Nullable<DateTime> dtBaixaERP { get; set; }
         public virtual tbAdquirente tbAdquirente { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual ICollection<RecebimentoParcela> RecebimentoParcelas { get; set; }

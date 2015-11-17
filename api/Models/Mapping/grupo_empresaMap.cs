@@ -22,6 +22,9 @@ namespace api.Models.Mapping
             this.Property(t => t.cdPrioridade)
                 .IsRequired();
 
+            this.Property(t => t.dsAPI)
+                .HasMaxLength(30);
+
             // Table & Column Mappings
             this.ToTable("grupo_empresa", "cliente");
             this.Property(t => t.id_grupo).HasColumnName("id_grupo");
@@ -34,6 +37,7 @@ namespace api.Models.Mapping
             this.Property(t => t.id_vendedor).HasColumnName("id_vendedor");
             this.Property(t => t.fl_ativo).HasColumnName("fl_ativo");
             this.Property(t => t.cdPrioridade).HasColumnName("cdPrioridade");
+            this.Property(t => t.dsAPI).HasColumnName("dsAPI");
 
 
             // Relationships

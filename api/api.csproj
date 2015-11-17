@@ -291,6 +291,7 @@
     <Compile Include="Controllers\Administracao\WebpagesRolesController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersController.cs" />
     <Compile Include="Controllers\Administracao\WebpagesUsersInRolesController.cs" />
+    <Compile Include="Controllers\Card\BaixaAutomaticaERPController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoRelatoriosController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoTitulosController.cs" />
     <Compile Include="Controllers\Card\RelatorioConciliacaoTitulosController.cs" />
@@ -299,7 +300,7 @@
     <Compile Include="Controllers\Card\TbBandeiraController.cs" />
     <Compile Include="Controllers\Card\TbLogCargaController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoBancariaController.cs" />
-    <Compile Include="Controllers\Card\tbBancoParametroController.cs" />
+    <Compile Include="Controllers\Card\TbBancoParametroController.cs" />
     <Compile Include="Controllers\Card\TbLogCargaDetalheController.cs" />
     <Compile Include="Controllers\Card\TbLoginAdquirenteEmpresaController.cs" />
     <Compile Include="Controllers\Card\TbAdquirenteController.cs" />
@@ -858,6 +859,7 @@
     <Compile Include="Negocios\Administracao\GatewayWebpagesUsersInRoles.cs" />
     <Compile Include="Controllers\Card\TbModoEntradaTefController.cs" />
     <Compile Include="Negocios\Administracao\GatewayTbCanal.cs" />
+    <Compile Include="Negocios\Card\GatewayBaixaAutomaticaERP.cs" />
     <Compile Include="Negocios\Card\GatewayConciliacaoRelatorios.cs" />
     <Compile Include="Negocios\Card\GatewayConciliacaoTitulos.cs" />
     <Compile Include="Negocios\Card\GatewayRecebiveisFuturos.cs" />

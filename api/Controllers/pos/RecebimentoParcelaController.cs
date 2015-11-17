@@ -64,66 +64,7 @@ namespace api.Controllers.Pos
         }
 
         // POST /RecebimentoParcela/token/
-        /*public HttpResponseMessage Post(string token, [FromBody]RecebimentoParcela param)
-        {
-            try
-            {
-                HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, GatewayRecebimentoParcela.Add(token, param));
-                else
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
-            }
-            catch
-            {
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
-            }
-
-
-        }
-
-        // PUT /RecebimentoParcela/token/
-        public HttpResponseMessage Put(string token, [FromBody]RecebimentoParcela param)
-        {
-            try
-            {
-                HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
-                {
-                    GatewayRecebimentoParcela.Update(token, param);
-                    return Request.CreateResponse(HttpStatusCode.OK);
-                }
-                else
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
-            }
-            catch
-            {
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
-            }
-        }
-
-        // DELETE /RecebimentoParcela/token/idRecebimento
-        public HttpResponseMessage Delete(string token, Int32 idRecebimento)
-        {
-            try
-            {
-                HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
-                {
-                    GatewayRecebimentoParcela.Delete(token, idRecebimento);
-                    return Request.CreateResponse(HttpStatusCode.OK);
-                }
-                else
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
-            }
-            catch
-            {
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
-            }
-        }*/
-
-        // PUT /RecebimentoParcela/token/
-        public HttpResponseMessage Put(string token, RecebimentosParcela param)
+        public HttpResponseMessage Post(string token, [FromBody]RecebimentoParcela param)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
@@ -131,7 +72,72 @@ namespace api.Controllers.Pos
                 log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+                if (Permissoes.Autenticado(token) && Permissoes.GetRoleLevel(token) <= 1)
+                {
+                    Int32 idRecebimento = GatewayRecebimentoParcela.Add(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.OK, idRecebimento);
+                }
+                else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
+            }
+            catch (Exception e)
+            {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
+                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+
+        }
+
+        // DELETE /RecebimentoParcela/token/idRecebimento
+        public HttpResponseMessage Delete(string token, Int32 idRecebimento, Int32 numParcela)
+        {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+            try
+            {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("idRecebimento = " + idRecebimento + "; numParcela : " + numParcela), "Delete");
+
+                HttpResponseMessage retorno = new HttpResponseMessage();
+                if (Permissoes.Autenticado(token) && Permissoes.GetRoleLevel(token) <= 1)
+                {
+                    GatewayRecebimentoParcela.Delete(token, idRecebimento, numParcela);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
+                else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
+            }
+            catch (Exception e)
+            {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
+                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+        }
+
+        // PUT /RecebimentoParcela/token/
+        public HttpResponseMessage Put(string token, [FromBody]RecebimentoParcela param)
+        {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+            try
+            {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put");
+
+                HttpResponseMessage retorno = new HttpResponseMessage();
+                if (Permissoes.Autenticado(token) && Permissoes.GetRoleLevel(token) <= 1)
                 {
                     GatewayRecebimentoParcela.Update(token, param);
                     log.codResposta = (int)HttpStatusCode.OK;

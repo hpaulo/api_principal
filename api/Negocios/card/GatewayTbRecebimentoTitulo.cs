@@ -38,9 +38,13 @@ namespace api.Negocios.Card
             DTTITULO = 109,
             VLPARCELA = 110,
             NRPARCELA = 111,
+            CDERP = 112,
+            DTBAIXAERP = 113, // "" : null | "0" : != null
 
             // RELACIONAMENTOS
-            ID_GRUPO = 216
+            ID_GRUPO = 216,
+
+            ID_EXTRATO = 306,
         };
 
         /// <summary>
@@ -133,11 +137,38 @@ namespace api.Negocios.Card
                         byte nrParcela = Convert.ToByte(item.Value);
                         entity = entity.Where(e => e.nrParcela.Equals(nrParcela)).AsQueryable<tbRecebimentoTitulo>();
                         break;
+                    case CAMPOS.CDERP:
+                        string cdERP = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.cdERP.Equals(cdERP)).AsQueryable<tbRecebimentoTitulo>();
+                        break;
+                    case CAMPOS.DTBAIXAERP:
+                        if (item.Value.Equals(""))
+                            entity = entity.Where(e => e.dtBaixaERP == null).AsQueryable<tbRecebimentoTitulo>();
+                        else if (item.Value.Equals("0"))
+                            entity = entity.Where(e => e.dtBaixaERP != null).AsQueryable<tbRecebimentoTitulo>();
+                        else if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtBaixaERP != null && e.dtBaixaERP.Value >= dtaIni && e.dtBaixaERP.Value <= dtaFim).AsQueryable<tbRecebimentoTitulo>();
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtBaixaERP != null && e.dtBaixaERP.Value.Year == dtaIni.Year && e.dtBaixaERP.Value.Month == dtaIni.Month && e.dtBaixaERP.Value.Day == dtaIni.Day).AsQueryable<tbRecebimentoTitulo>();
+                        }
+                        break;
 
                     // RELACIONAMENTOS
                     case CAMPOS.ID_GRUPO:
                         Int32 id_grupo = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.empresa.id_grupo == id_grupo).AsQueryable<tbRecebimentoTitulo>();
+                        break;
+                    case CAMPOS.ID_EXTRATO:
+                        Int32 idExtrato = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.RecebimentoParcelas.Where(r => r.idExtrato == idExtrato).Count() > 0).AsQueryable<tbRecebimentoTitulo>();
                         break;
                 }
             }
@@ -266,6 +297,8 @@ namespace api.Negocios.Card
                     dtTitulo = e.dtTitulo,
                     vlParcela = e.vlParcela,
                     nrParcela = e.nrParcela,
+                    cdERP = e.cdERP,
+                    dtBaixaERP = e.dtBaixaERP,
                 }).ToList<dynamic>();
             }
             else if (colecao == 0)
@@ -284,7 +317,30 @@ namespace api.Negocios.Card
                     dtTitulo = e.dtTitulo,
                     vlParcela = e.vlParcela,
                     nrParcela = e.nrParcela,
+                    cdERP = e.cdERP,
+                    dtBaixaERP = e.dtBaixaERP,
                 }).ToList<dynamic>();
+            }
+            else if(colecao == 2) // PORTAL: Consulta Títulos ERP
+            {
+                CollectionTbRecebimentoTitulo = query.Select(e => new
+                {
+
+                    Id = e.idRecebimentoTitulo,
+                    NumParcela = e.nrParcela,
+                    Filial = e.empresa.ds_fantasia.ToUpper() + (e.empresa.filial != null ? " " + e.empresa.filial.ToUpper() : ""),
+                    Documento = e.nrNSU,
+                    DataVenda = e.dtVenda,
+                    Adquirente = e.tbAdquirente.dsAdquirente.ToUpper(),
+                    Bandeira = e.dsBandeira,
+                    DataPrevista = e.dtTitulo,
+                    Valor = e.vlParcela,
+                    Baixado = e.dtBaixaERP != null,
+                }).OrderBy(e => e.Filial).ThenBy(e => e.DataPrevista).ThenBy(e => e.DataVenda).ThenBy(e => e.Valor).ToList<dynamic>();
+
+                retorno.Totais = new Dictionary<string, object>();
+                retorno.Totais.Add("valorTotal", CollectionTbRecebimentoTitulo.Count > 0 ? CollectionTbRecebimentoTitulo.Select(e => e.Valor).Cast<decimal>().Sum() : new decimal(0.0));
+                retorno.Totais.Add("totalBaixados", CollectionTbRecebimentoTitulo.Where(e => e.Baixado == true).Count());
             }
 
             retorno.Registros = CollectionTbRecebimentoTitulo;

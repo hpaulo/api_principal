@@ -903,7 +903,14 @@ namespace api.Negocios.Pos
         {
             try
             {
-                _db.Recebimentoes.Remove(_db.Recebimentoes.Where(e => e.id.Equals(id)).First());
+                Recebimento Recebimento = _db.Recebimentoes.Where(e => e.id == id).FirstOrDefault();
+                if (Recebimento == null) throw new Exception("Recebimento inexistente!");
+
+                // Deleta as parcelas
+                _db.RecebimentoParcelas.RemoveRange(_db.RecebimentoParcelas.Where(r => r.idRecebimento == id));
+
+                // Remove a venda
+                _db.Recebimentoes.Remove(Recebimento);
                 _db.SaveChanges();
             }
             catch (Exception e)

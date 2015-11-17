@@ -1506,7 +1506,7 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, List<ConciliaRecebimentoParcela> param)
+        public static void Post(string token, List<ConciliaRecebimentoParcela> param)
         {
             try
             {
@@ -1565,6 +1565,64 @@ namespace api.Negocios.Card
 
                 }
 
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento parcela" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+        }
+
+
+
+        /// <summary>
+        /// Altera data de Recebimento Efetivo do RecebimentoParcela e/ou tbRecebimentoAjuste
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static void Update(string token, RecebimentosParcela param)
+        {
+            try
+            {
+
+                if (param == null || param.dtaRecebimentoEfetivo == null || param.recebimentosParcela == null)
+                    throw new Exception("Argumento inválido");
+
+                foreach (RecebimentosParcela.RecebParcela recebimentoParcela in param.recebimentosParcela)
+                {
+
+                    if (recebimentoParcela.numParcela == -1)
+                    {
+                        // AJUSTE
+                        tbRecebimentoAjuste ajuste = _db.tbRecebimentoAjustes.Where(e => e.idRecebimentoAjuste == recebimentoParcela.idRecebimento)
+                                                                             .FirstOrDefault();
+                        if (ajuste != null && ajuste.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
+                        {
+                            ajuste.dtAjuste = param.dtaRecebimentoEfetivo;
+                            _db.SaveChanges();
+                        }
+                    }
+                    else
+                    {
+                        // PARCELA
+
+                        RecebimentoParcela recebimento = _db.RecebimentoParcelas
+                                                                .Where(e => e.idRecebimento == recebimentoParcela.idRecebimento)
+                                                                .Where(e => e.numParcela == recebimentoParcela.numParcela)
+                                                                .FirstOrDefault();
+
+                        if (recebimento != null && recebimento.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
+                        {
+                            recebimento.dtaRecebimentoEfetivo = param.dtaRecebimentoEfetivo;
+                            _db.SaveChanges();
+                        }
+                    }
+
+                }
             }
             catch (Exception e)
             {

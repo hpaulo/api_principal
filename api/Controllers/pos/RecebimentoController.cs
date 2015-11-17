@@ -11,6 +11,7 @@ using api.Models.Object;
 using System.IO;
 using System.Net.Http.Headers;
 using System.Data;
+using Newtonsoft.Json;
 
 namespace api.Controllers.Pos
 {
@@ -62,20 +63,35 @@ namespace api.Controllers.Pos
             }
         }
 
-        /*
+        
         // POST /Recebimento/token/
         public HttpResponseMessage Post(string token, [FromBody]Recebimento param)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
-                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, GatewayRecebimento.Add(token, param));
+                if (Permissoes.Autenticado(token) && Permissoes.GetRoleLevel(token) <= 1)
+                {
+                    Int32 id = GatewayRecebimento.Add(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.OK, id);
+                }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
 
@@ -85,19 +101,31 @@ namespace api.Controllers.Pos
         // PUT /Recebimento/token/
         public HttpResponseMessage Put(string token, [FromBody]Recebimento param)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put");
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+                if (Permissoes.Autenticado(token) && Permissoes.GetRoleLevel(token) <= 1)
                 {
                     GatewayRecebimento.Update(token, param);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
@@ -105,21 +133,33 @@ namespace api.Controllers.Pos
         // DELETE /Recebimento/token/id
         public HttpResponseMessage Delete(string token, Int32 id)
         {
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("id : " + id), "Delete");
+
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+                if (Permissoes.Autenticado(token) && Permissoes.GetRoleLevel(token) <= 1)
                 {
                     GatewayRecebimento.Delete(token, id);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
             }
-            catch
+            catch (Exception e)
             {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
-        }*/
+        }
     }
 }
