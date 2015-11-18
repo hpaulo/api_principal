@@ -316,6 +316,7 @@
     <Compile Include="Controllers\Card\TbTipoProdutoTefController.cs" />
     <Compile Include="Controllers\Card\TbSituacaoRedeTefController.cs" />
     <Compile Include="Controllers\Card\TbRedeTefController.cs" />
+    <Compile Include="Controllers\Card\TitulosErpController.cs" />
     <Compile Include="Controllers\Cliente\EmpresaController.cs" />
     <Compile Include="Controllers\Cliente\GrupoEmpresaController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -382,6 +383,7 @@
     <Compile Include="Models\Object\ConciliacaoRelatorios.cs" />
     <Compile Include="Models\Object\ConciliacaoTitulos.cs" />
     <Compile Include="Models\Object\ConciliaRecebimentoParcelaTitulo.cs" />
+    <Compile Include="Models\Object\ImportaTitulos.cs" />
     <Compile Include="Models\Object\RecebiveisFuturos.cs" />
     <Compile Include="Models\Object\RelatorioVendas.cs" />
     <Compile Include="Models\tbAssinante.cs" />
@@ -885,6 +887,7 @@
     <Compile Include="Negocios\Card\GatewayTbModoEntradaTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbRedeTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbContaCorrente.cs" />
+    <Compile Include="Negocios\Card\GatewayTitulosErp.cs" />
     <Compile Include="Negocios\Cliente\GatewayEmpresa.cs" />
     <Compile Include="Negocios\Cliente\GatewayGrupoEmpresa.cs" />
     <Compile Include="Controllers\Card\TbEstadoTransacaoTefController.cs" />

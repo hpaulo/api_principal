@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Globalization;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -238,114 +239,126 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbRecebimentoTitulo = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-            string outValue = null;
-            Int32 IdGrupo = 0;
-            IdGrupo = Permissoes.GetIdGrupo(token);
-            if (IdGrupo != 0)
+            try
             {
-                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbRecebimentoTitulo = new List<dynamic>();
+                Retorno retorno = new Retorno();
+
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+                string outValue = null;
+                Int32 IdGrupo = 0;
+                IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (!CnpjEmpresa.Equals(""))
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NRCNPJ, CnpjEmpresa);
+                }
+
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = query.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
                 else
-                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
-            }
-            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-            if (!CnpjEmpresa.Equals(""))
-            {
-                if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
-                    queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
-                else
-                    queryString.Add("" + (int)CAMPOS.NRCNPJ, CnpjEmpresa);
-            }
+                    pageNumber = 1;
 
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
 
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = query.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
-            {
-                CollectionTbRecebimentoTitulo = query.Select(e => new
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
                 {
+                    CollectionTbRecebimentoTitulo = query.Select(e => new
+                    {
 
-                    idRecebimentoTitulo = e.idRecebimentoTitulo,
-                    nrCNPJ = e.nrCNPJ,
-                    nrNSU = e.nrNSU,
-                    dtVenda = e.dtVenda,
-                    cdAdquirente = e.cdAdquirente,
-                    dsBandeira = e.dsBandeira,
-                    vlVenda = e.vlVenda,
-                    qtParcelas = e.qtParcelas,
-                    dtTitulo = e.dtTitulo,
-                    vlParcela = e.vlParcela,
-                    nrParcela = e.nrParcela,
-                    cdERP = e.cdERP,
-                    dtBaixaERP = e.dtBaixaERP,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionTbRecebimentoTitulo = query.Select(e => new
+                        idRecebimentoTitulo = e.idRecebimentoTitulo,
+                        nrCNPJ = e.nrCNPJ,
+                        nrNSU = e.nrNSU,
+                        dtVenda = e.dtVenda,
+                        cdAdquirente = e.cdAdquirente,
+                        dsBandeira = e.dsBandeira,
+                        vlVenda = e.vlVenda,
+                        qtParcelas = e.qtParcelas,
+                        dtTitulo = e.dtTitulo,
+                        vlParcela = e.vlParcela,
+                        nrParcela = e.nrParcela,
+                        cdERP = e.cdERP,
+                        dtBaixaERP = e.dtBaixaERP,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
                 {
+                    CollectionTbRecebimentoTitulo = query.Select(e => new
+                    {
 
-                    idRecebimentoTitulo = e.idRecebimentoTitulo,
-                    nrCNPJ = e.nrCNPJ,
-                    nrNSU = e.nrNSU,
-                    dtVenda = e.dtVenda,
-                    cdAdquirente = e.cdAdquirente,
-                    dsBandeira = e.dsBandeira,
-                    vlVenda = e.vlVenda,
-                    qtParcelas = e.qtParcelas,
-                    dtTitulo = e.dtTitulo,
-                    vlParcela = e.vlParcela,
-                    nrParcela = e.nrParcela,
-                    cdERP = e.cdERP,
-                    dtBaixaERP = e.dtBaixaERP,
-                }).ToList<dynamic>();
-            }
-            else if(colecao == 2) // PORTAL: Consulta Títulos ERP
-            {
-                CollectionTbRecebimentoTitulo = query.Select(e => new
+                        idRecebimentoTitulo = e.idRecebimentoTitulo,
+                        nrCNPJ = e.nrCNPJ,
+                        nrNSU = e.nrNSU,
+                        dtVenda = e.dtVenda,
+                        cdAdquirente = e.cdAdquirente,
+                        dsBandeira = e.dsBandeira,
+                        vlVenda = e.vlVenda,
+                        qtParcelas = e.qtParcelas,
+                        dtTitulo = e.dtTitulo,
+                        vlParcela = e.vlParcela,
+                        nrParcela = e.nrParcela,
+                        cdERP = e.cdERP,
+                        dtBaixaERP = e.dtBaixaERP,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2) // PORTAL: Consulta Títulos ERP
                 {
+                    CollectionTbRecebimentoTitulo = query.Select(e => new
+                    {
 
-                    Id = e.idRecebimentoTitulo,
-                    NumParcela = e.nrParcela,
-                    Filial = e.empresa.ds_fantasia.ToUpper() + (e.empresa.filial != null ? " " + e.empresa.filial.ToUpper() : ""),
-                    Documento = e.nrNSU,
-                    DataVenda = e.dtVenda,
-                    Adquirente = e.tbAdquirente.dsAdquirente.ToUpper(),
-                    Bandeira = e.dsBandeira,
-                    DataPrevista = e.dtTitulo,
-                    Valor = e.vlParcela,
-                    Baixado = e.dtBaixaERP != null,
-                }).OrderBy(e => e.Filial).ThenBy(e => e.DataPrevista).ThenBy(e => e.DataVenda).ThenBy(e => e.Valor).ToList<dynamic>();
+                        Id = e.idRecebimentoTitulo,
+                        NumParcela = e.nrParcela,
+                        Filial = e.empresa.ds_fantasia.ToUpper() + (e.empresa.filial != null ? " " + e.empresa.filial.ToUpper() : ""),
+                        Documento = e.nrNSU,
+                        DataVenda = e.dtVenda,
+                        Adquirente = e.tbAdquirente.dsAdquirente.ToUpper(),
+                        Bandeira = e.dsBandeira,
+                        DataPrevista = e.dtTitulo,
+                        Valor = e.vlParcela,
+                        Baixado = e.dtBaixaERP != null,
+                    }).OrderBy(e => e.Filial).ThenBy(e => e.DataPrevista).ThenBy(e => e.DataVenda).ThenBy(e => e.Valor).ToList<dynamic>();
 
-                retorno.Totais = new Dictionary<string, object>();
-                retorno.Totais.Add("valorTotal", CollectionTbRecebimentoTitulo.Count > 0 ? CollectionTbRecebimentoTitulo.Select(e => e.Valor).Cast<decimal>().Sum() : new decimal(0.0));
-                retorno.Totais.Add("totalBaixados", CollectionTbRecebimentoTitulo.Where(e => e.Baixado == true).Count());
+                    retorno.Totais = new Dictionary<string, object>();
+                    retorno.Totais.Add("valorTotal", CollectionTbRecebimentoTitulo.Count > 0 ? CollectionTbRecebimentoTitulo.Select(e => e.Valor).Cast<decimal>().Sum() : new decimal(0.0));
+                    retorno.Totais.Add("totalBaixados", CollectionTbRecebimentoTitulo.Where(e => e.Baixado == true).Count());
+                }
+
+                retorno.Registros = CollectionTbRecebimentoTitulo;
+
+                return retorno;
             }
-
-            retorno.Registros = CollectionTbRecebimentoTitulo;
-
-            return retorno;
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao importar consultar títulos" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
         }
         /// <summary>
         /// Adiciona nova TbRecebimentoTitulo
@@ -354,9 +367,21 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Int32 Add(string token, tbRecebimentoTitulo param)
         {
-            _db.tbRecebimentoTitulos.Add(param);
-            _db.SaveChanges();
-            return param.idRecebimentoTitulo;
+            try
+            {
+                _db.tbRecebimentoTitulos.Add(param);
+                _db.SaveChanges();
+                return param.idRecebimentoTitulo;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao importar salvar título" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
         }
 
 
@@ -367,8 +392,20 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 idRecebimentoTitulo)
         {
-            _db.tbRecebimentoTitulos.Remove(_db.tbRecebimentoTitulos.Where(e => e.idRecebimentoTitulo.Equals(idRecebimentoTitulo)).First());
-            _db.SaveChanges();
+            try
+            {
+                _db.tbRecebimentoTitulos.Remove(_db.tbRecebimentoTitulos.Where(e => e.idRecebimentoTitulo.Equals(idRecebimentoTitulo)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao importar remover título" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
         }
         /// <summary>
         /// Altera tbRecebimentoTitulo
@@ -377,34 +414,39 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbRecebimentoTitulo param)
         {
-            tbRecebimentoTitulo value = _db.tbRecebimentoTitulos
-                    .Where(e => e.idRecebimentoTitulo.Equals(param.idRecebimentoTitulo))
-                    .First<tbRecebimentoTitulo>();
+            try
+            {
+                tbRecebimentoTitulo value = _db.tbRecebimentoTitulos
+                        .Where(e => e.idRecebimentoTitulo == param.idRecebimentoTitulo)
+                        .First<tbRecebimentoTitulo>();
 
-
-            if (param.idRecebimentoTitulo != null && param.idRecebimentoTitulo != value.idRecebimentoTitulo)
-                value.idRecebimentoTitulo = param.idRecebimentoTitulo;
-            if (param.nrCNPJ != null && param.nrCNPJ != value.nrCNPJ)
-                value.nrCNPJ = param.nrCNPJ;
-            if (param.nrNSU != null && param.nrNSU != value.nrNSU)
-                value.nrNSU = param.nrNSU;
-            if (param.dtVenda != null && param.dtVenda != value.dtVenda)
-                value.dtVenda = param.dtVenda;
-            if (param.cdAdquirente != null && param.cdAdquirente != value.cdAdquirente)
-                value.cdAdquirente = param.cdAdquirente;
-            if (param.dsBandeira != null && param.dsBandeira != value.dsBandeira)
-                value.dsBandeira = param.dsBandeira;
-            if (param.vlVenda != null && param.vlVenda != value.vlVenda)
-                value.vlVenda = param.vlVenda;
-            if (param.qtParcelas != null && param.qtParcelas != value.qtParcelas)
-                value.qtParcelas = param.qtParcelas;
-            if (param.dtTitulo != null && param.dtTitulo != value.dtTitulo)
-                value.dtTitulo = param.dtTitulo;
-            if (param.vlParcela != null && param.vlParcela != value.vlParcela)
-                value.vlParcela = param.vlParcela;
-            if (param.nrParcela != null && param.nrParcela != value.nrParcela)
-                value.nrParcela = param.nrParcela;
-            _db.SaveChanges();
+                if (param.dtVenda != null && param.dtVenda != value.dtVenda)
+                    value.dtVenda = param.dtVenda;
+                if (param.cdAdquirente != 0 && param.cdAdquirente != value.cdAdquirente)
+                    value.cdAdquirente = param.cdAdquirente;
+                if (param.dsBandeira != null && param.dsBandeira != value.dsBandeira)
+                    value.dsBandeira = param.dsBandeira;
+                if (param.vlVenda != null && param.vlVenda != value.vlVenda)
+                    value.vlVenda = param.vlVenda;
+                if (param.qtParcelas != null && param.qtParcelas != value.qtParcelas)
+                    value.qtParcelas = param.qtParcelas;
+                if (param.vlParcela != new decimal(0.0) && param.vlParcela != value.vlParcela)
+                    value.vlParcela = param.vlParcela;
+                if (param.cdERP != null && param.cdERP != value.cdERP)
+                    value.cdERP = param.cdERP;
+                if (param.dtBaixaERP != null && param.dtBaixaERP != value.dtBaixaERP)
+                    value.dtBaixaERP = param.dtBaixaERP;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao importar atualizar título" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
 
         }
 

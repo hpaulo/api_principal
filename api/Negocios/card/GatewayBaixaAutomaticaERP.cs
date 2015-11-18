@@ -36,7 +36,7 @@ namespace api.Negocios.Card
             ID_GRUPO = 101,
         };
 
-        private const string DOMINIO = ".atoscapital.com.br/";
+        private readonly static string DOMINIO = System.Configuration.ConfigurationManager.AppSettings["DOMINIO"];
 
         /// <summary>
         /// Requisita à API correspondente a baixa automática
