@@ -89,7 +89,12 @@ namespace api.Negocios.Card
                     //Pegando os dados do Rest e armazenando na variável retorno
                     retorno = response.Content.ReadAsAsync<Retorno>().Result;
                 else
-                    throw new Exception(((int) response.StatusCode) + " - " + response.Content.ReadAsAsync<string>().Result);
+                {
+                    string resp = response.Content.ReadAsAsync<string>().Result;
+                    if (resp != null && !resp.Trim().Equals(""))
+                        throw new Exception(((int)response.StatusCode) + " - " + resp);
+                    throw new Exception(((int)response.StatusCode) + "");
+                }
  
 
                 return retorno;

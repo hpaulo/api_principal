@@ -240,8 +240,8 @@ namespace api.Negocios.Card
             }
 
             // POR DEFAULT, LISTA SOMENTE OS QUE ESTÃO VISÍVEIS
-            if (!queryString.TryGetValue("" + (int)CAMPOS.FLVISIVEL, out outValue))
-                queryString.Add("" + (int)CAMPOS.FLVISIVEL, Convert.ToString(true));
+            //if (!queryString.TryGetValue("" + (int)CAMPOS.FLVISIVEL, out outValue))
+            //    queryString.Add("" + (int)CAMPOS.FLVISIVEL, Convert.ToString(true));
 
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
