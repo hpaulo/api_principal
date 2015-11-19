@@ -475,6 +475,10 @@ namespace api.Negocios.Administracao
             try
             {
                 GatewayWebpagesMethods.DeleteControllerMethods(token, id_controller);
+                // Deleta os logs de acesso
+                _db.LogAcesso1.RemoveRange(_db.LogAcesso1.Where(l => l.idController == id_controller));
+                _db.tbLogAcessoUsuarios.RemoveRange(_db.tbLogAcessoUsuarios.Where(l => l.idController == id_controller));
+                _db.SaveChanges();
                 _db.webpages_Controllers.RemoveRange(_db.webpages_Controllers.Where(e => e.id_controller == id_controller));
                 _db.SaveChanges();
             }

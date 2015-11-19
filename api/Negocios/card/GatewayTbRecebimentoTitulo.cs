@@ -434,8 +434,11 @@ namespace api.Negocios.Card
                     value.vlParcela = param.vlParcela;
                 if (param.cdERP != null && param.cdERP != value.cdERP)
                     value.cdERP = param.cdERP;
-                if (param.dtBaixaERP != null && param.dtBaixaERP != value.dtBaixaERP)
-                    value.dtBaixaERP = param.dtBaixaERP;
+                if (/*param.dtBaixaERP != null && param.dtBaixaERP != value.dtBaixaERP*/ 
+                    (param.dtBaixaERP == null && value.dtBaixaERP != null) || 
+                    (param.dtBaixaERP != null && value.dtBaixaERP == null) || 
+                    (param.dtBaixaERP != null && value.dtBaixaERP != null && !param.dtBaixaERP.Value.Equals(value.dtBaixaERP.Value)))
+                        value.dtBaixaERP = param.dtBaixaERP;
                 _db.SaveChanges();
             }
             catch (Exception e)

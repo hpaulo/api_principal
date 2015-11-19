@@ -12,6 +12,8 @@ using Microsoft.Ajax.Utilities;
 using api.Negocios.Util;
 using System.Globalization;
 using System.Net.Http;
+using System.Data.Entity.Infrastructure;
+using System.Data.Entity.Core.Objects;
 
 namespace api.Negocios.Card
 {
@@ -148,6 +150,13 @@ namespace api.Negocios.Card
         {
             try
             {
+                try
+                {
+                    ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
+                }
+                catch { }
+
                 //DECLARAÇÕES
                 string outValue = null;
 
@@ -192,6 +201,13 @@ namespace api.Negocios.Card
         {
             try
             {
+                try
+                {
+                    ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
+                }
+                catch { }
+
                 if (param != null) 
                 { 
                     // GRUPO EMPRESA => OBRIGATÓRIO!
@@ -217,7 +233,7 @@ namespace api.Negocios.Card
                             dtTitulo = tit.dtTitulo,
                             dtVenda = tit.dtVenda,
                             nrCNPJ = tit.empresa.nu_cnpj,
-                            nrNSU = tit.nrNSU,
+                            nrNSU = tit.nrNSU,// != null ? tit.nrNSU : "",
                             nrParcela = Convert.ToByte(tit.nrParcela),
                             qtParcelas = Convert.ToByte(tit.qtParcelas),
                             vlParcela = Convert.ToDecimal(tit.vlParcela),
