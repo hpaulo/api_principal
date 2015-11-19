@@ -142,22 +142,45 @@ namespace api.Negocios.Card
                                                                        .Count() > 0).AsQueryable<tbExtrato>();
                         break;
                     case CAMPOS.CDADQUIRENTE:
-                        int cdAdquirente = Convert.ToInt32(item.Value);
-                        if (cdAdquirente == -1)
-                            entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
-                                                                           .Where(b => b.dsMemo.Equals(e.dsDocumento))
-                                                                           .Where(b => b.cdAdquirente == null)
-                                                                           .Count() > 0).AsQueryable<tbExtrato>();
-                        else if (cdAdquirente == 0)
-                            entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
-                                                                           .Where(b => b.dsMemo.Equals(e.dsDocumento))
-                                                                           .Where(b => b.cdAdquirente != null)
-                                                                           .Count() > 0).AsQueryable<tbExtrato>();
+                        if (item.Value.Contains("!"))
+                        {
+                            // Considera também os que tem dsTipo != null
+                            int cdAdquirente = Convert.ToInt32(item.Value.Replace("!",""));
+                            if (cdAdquirente == -1)
+                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                                                               .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdAdquirente == null && b.dsTipoCartao != null)
+                                                                               .Count() > 0).AsQueryable<tbExtrato>();
+                            else if (cdAdquirente == 0)
+                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                                                               .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdAdquirente != null || (b.cdAdquirente == null && b.dsTipoCartao != null))
+                                                                               .Count() > 0).AsQueryable<tbExtrato>();
+                            else
+                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                                                               .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdAdquirente == cdAdquirente || (b.cdAdquirente == null && b.dsTipoCartao != null))
+                                                                               .Count() > 0).AsQueryable<tbExtrato>();
+                        }
                         else
-                            entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
-                                                                           .Where(b => b.dsMemo.Equals(e.dsDocumento))
-                                                                           .Where(b => b.cdAdquirente == cdAdquirente)
-                                                                           .Count() > 0).AsQueryable<tbExtrato>();
+                        {
+                            int cdAdquirente = Convert.ToInt32(item.Value);
+                            if (cdAdquirente == -1)
+                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                                                               .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdAdquirente == null)
+                                                                               .Count() > 0).AsQueryable<tbExtrato>();
+                            else if (cdAdquirente == 0)
+                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                                                               .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdAdquirente != null)
+                                                                               .Count() > 0).AsQueryable<tbExtrato>();
+                            else
+                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                                                               .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdAdquirente == cdAdquirente)
+                                                                               .Count() > 0).AsQueryable<tbExtrato>();
+                        }
                         break;
                     case CAMPOS.VIGENCIA:
                         string[] vigencia = item.Value.Split('!');
@@ -400,7 +423,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao listar extrato" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
         /// <summary>
@@ -433,7 +456,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar extrato" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -451,7 +474,12 @@ namespace api.Negocios.Card
                 if (extrato == null) throw new Exception("Extrato inexistente");
                 // Remove o arquivo associado do disco, caso não tenha mais nenhum registro referenciando esse arquivo
                 if (!extrato.dsArquivo.Equals("") && _db.tbExtratos.Where(e => e.dsArquivo.Equals(extrato.dsArquivo)).FirstOrDefault() == null)
-                    File.Delete(extrato.dsArquivo);
+                {
+                    try
+                    {
+                        File.Delete(extrato.dsArquivo);
+                    }catch { }
+                }
                 // Remove o extrato da base
                 _db.tbExtratos.Remove(extrato);
                 _db.SaveChanges();
@@ -463,7 +491,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar estrato" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
         /*/// <summary>
@@ -532,9 +560,12 @@ namespace api.Negocios.Card
                     // Arquivo upado
                     HttpPostedFile postedFile = httpRequest.Files[0];
                     // Obtém a extensão
-                    string extensao = postedFile.FileName.Substring(postedFile.FileName.LastIndexOf("."));
+                    string extensao = postedFile.FileName.LastIndexOf(".") > -1 ? postedFile.FileName.Substring(postedFile.FileName.LastIndexOf(".")) : ".ofx";
                     // Obtém o nome do arquivo upado
-                    string nomeArquivo = postedFile.FileName.Substring(0, postedFile.FileName.LastIndexOf(".")) + "_0" + extensao;
+                    string nomeArquivo = (postedFile.FileName.LastIndexOf(".") > -1 ? postedFile.FileName.Substring(0, postedFile.FileName.LastIndexOf(".")) : postedFile.FileName) + "_0" + extensao;
+
+                    // Remove caracteres inválidos para nome de arquivo
+                    nomeArquivo = Path.GetInvalidFileNameChars().Aggregate(nomeArquivo, (current, c) => current.Replace(c.ToString(), string.Empty));
 
                     // Valida o nome do arquivo dentro do diretório => deve ser único
                     int cont = 0;
@@ -545,10 +576,18 @@ namespace api.Negocios.Card
                         nomeArquivo += ++cont + extensao;
                     }
                     #endregion
-
+                    
                     #region SALVA ARQUIVO NO DISCO
                     string filePath = diretorio + nomeArquivo;
-                    postedFile.SaveAs(filePath);
+                    // Salva o arquivo
+                    try
+                    {
+                        postedFile.SaveAs(filePath);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception("Não foi possível salvar o arquivo '" + filePath + "'! " + e.Message);
+                    }
                     #endregion
 
                     // Loga o nome do arquivo
@@ -569,7 +608,7 @@ namespace api.Negocios.Card
                         {
                             // Deleta o arquivo
                             File.Delete(filePath);
-                            throw new Exception("Arquivo não é um .ofx válido");
+                            throw new Exception("Arquivo não é um .ofx válido. " + e.Message);
                         }
                     }
                     else if (extensao.ToLower().Equals(".pdf"))
@@ -589,7 +628,7 @@ namespace api.Negocios.Card
                         {
                             // Deleta o arquivo
                             File.Delete(filePath);
-                            throw new Exception("Arquivo não é um .pdf válido");
+                            throw new Exception("Arquivo não é um .pdf válido! " + e.Message);
                         }
                     }
                     else
@@ -660,6 +699,10 @@ namespace api.Negocios.Card
                     bool armazenou = false;
                     DateTime? dataArmazenada = null;
 
+                    // Tamanho máximo de dsArquivo é de 255 bytes
+                    string dsArquivo = filePath.Length > 255 ? filePath.Substring(filePath.Length - 255) : filePath;
+                        
+
                     #region ARMAZENA MOVIMENTAÇÕES BANCÁRIAS
                     foreach (var transacao in ofxDocument.Transactions)
                     {
@@ -669,7 +712,7 @@ namespace api.Negocios.Card
                         extrato.dtExtrato = new DateTime(transacao.Date.Year, transacao.Date.Month, transacao.Date.Day);
                         extrato.vlMovimento = transacao.Amount;
                         extrato.nrDocumento = transacao.CheckNum;
-                        extrato.dsArquivo = filePath;
+                        extrato.dsArquivo = dsArquivo;//filePath;
                         // OTHER => TRANSFORMA PARA CREDIT OU DEBIT
                         //if (transacao.TransType.Equals(OFXTransactionType.OTHER))
                         //    transacao.TransType = extrato.vlMovimento < 0 ? OFXTransactionType.DEBIT : OFXTransactionType.CREDIT;
@@ -727,7 +770,11 @@ namespace api.Negocios.Card
                                     tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
                                     ext.dsArquivo = extrato.dsArquivo;
                                     ext.dsTipo = extrato.dsTipo;
-                                    _db.SaveChanges();
+                                    try
+                                    {
+                                        _db.SaveChanges();
+                                    }
+                                    catch { }
                                 }
                                 // Ainda tem movimentações referenciando o arquivo antigo?
                                 if (totalTransacoesOld <= 1)
@@ -746,7 +793,10 @@ namespace api.Negocios.Card
                                 {
                                     tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
                                     ext.dsTipo = extrato.dsTipo;
-                                    _db.SaveChanges();
+                                    try {
+                                        _db.SaveChanges();
+                                    }
+                                    catch { }
                                 }
                             }
                             #endregion
@@ -785,7 +835,14 @@ namespace api.Negocios.Card
                     #endregion
 
                     // Se não armazenou pelo menos um elemento, deleta o arquivo do disco
-                    if (!armazenou) File.Delete(filePath);
+                    if (!armazenou)
+                    {
+                        try
+                        {
+                            File.Delete(filePath); // Deleta o arquivo
+                        }
+                        catch { }
+                    }
 
                     if (dataArmazenada == null) dataArmazenada = ofxDocument.StatementStart;
 
@@ -800,12 +857,12 @@ namespace api.Negocios.Card
             }
             catch (Exception e)
             {
-                if (e is DbEntityValidationException)
+                /*if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao enviar extrato" : erro);
-                }
-                throw new Exception(e.Message);
+                }*/
+                throw new Exception(e.ToString());//e.Message);
             }
         }
 

@@ -361,7 +361,7 @@ namespace api.Negocios.Administracao
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao listar controller" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -391,13 +391,13 @@ namespace api.Negocios.Administracao
                     //webpages_Methods filtroempresa = new webpages_Methods { ds_method = "Filtro Empresa", id_controller = param.Webpagescontrollers.id_controller };
 
                     try { GatewayWebpagesMethods.Add(token, put); }
-                    catch (Exception e){ throw new Exception(e.Message); }
+                    catch (Exception e){ throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message); }
                     try { GatewayWebpagesMethods.Add(token, post); }
-                    catch (Exception e){ throw new Exception(e.Message); }
+                    catch (Exception e){ throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message); }
                     try { GatewayWebpagesMethods.Add(token, get); }
-                    catch (Exception e) { throw new Exception(e.Message); }
+                    catch (Exception e) { throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message); }
                     try { GatewayWebpagesMethods.Add(token, delete); }
-                    catch (Exception e) { throw new Exception(e.Message); }
+                    catch (Exception e) { throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message); }
                     //GatewayWebpagesMethods.Add(token, filtroempresa);
                 }
 
@@ -410,7 +410,7 @@ namespace api.Negocios.Administracao
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar controller" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -460,7 +460,7 @@ namespace api.Negocios.Administracao
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar controller" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -475,6 +475,10 @@ namespace api.Negocios.Administracao
             try
             {
                 GatewayWebpagesMethods.DeleteControllerMethods(token, id_controller);
+                // Deleta os logs de acesso
+                _db.LogAcesso1.RemoveRange(_db.LogAcesso1.Where(l => l.idController == id_controller));
+                _db.tbLogAcessoUsuarios.RemoveRange(_db.tbLogAcessoUsuarios.Where(l => l.idController == id_controller));
+                _db.SaveChanges();
                 _db.webpages_Controllers.RemoveRange(_db.webpages_Controllers.Where(e => e.id_controller == id_controller));
                 _db.SaveChanges();
             }
@@ -485,7 +489,7 @@ namespace api.Negocios.Administracao
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar controller" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -532,7 +536,7 @@ namespace api.Negocios.Administracao
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar controller" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 

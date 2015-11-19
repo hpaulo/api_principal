@@ -8,6 +8,7 @@ using api.Bibliotecas;
 using api.Models.Object;
 using System.Globalization;
 using System.Data.Entity.Validation;
+using api.Negocios.Util;
 
 namespace api.Negocios.Card
 {
@@ -37,6 +38,11 @@ namespace api.Negocios.Card
             DS_FANTASIA = 204,
 
             DSADQUIRENTE = 301,
+
+            DTVIGENCIA = 400,
+
+            NU_CNPJ = 500,
+            ID_GRUPO = 516,
 
         };
 
@@ -102,6 +108,38 @@ namespace api.Negocios.Card
                         else
                             entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente.Equals(nome)).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
                         break;
+                    case CAMPOS.DTVIGENCIA:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(v => (v.dtInicio.Year < dtIni.Year || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month < dtIni.Month) || (v.dtInicio.Year == dtIni.Year && v.dtInicio.Month == dtIni.Month && v.dtInicio.Day <= dtIni.Day))
+                                                        && (v.dtFim == null || (v.dtFim.Value.Year > dtIni.Year || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month > dtIni.Month) || (v.dtFim.Value.Year == dtIni.Year && v.dtFim.Value.Month == dtIni.Month && v.dtFim.Value.Day >= dtIni.Day)))
+                                                        && (v.dtInicio.Year < dtaFim.Year || (v.dtInicio.Year == dtaFim.Year && v.dtInicio.Month < dtaFim.Month) || (v.dtInicio.Year == dtaFim.Year && v.dtInicio.Month == dtaFim.Month && v.dtInicio.Day <= dtaFim.Day))
+                                                        && (v.dtFim == null || (v.dtFim.Value.Year > dtaFim.Year || (v.dtFim.Value.Year == dtaFim.Year && v.dtFim.Value.Month > dtaFim.Month) || (v.dtFim.Value.Year == dtaFim.Year && v.dtFim.Value.Month == dtaFim.Month && v.dtFim.Value.Day >= dtaFim.Day)))
+                                                        ).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                        }
+                        else // ANO + MES + DIA
+                        {
+                            string busca = item.Value;
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(v => (v.dtInicio.Year < data.Year || (v.dtInicio.Year == data.Year && v.dtInicio.Month < data.Month) || (v.dtInicio.Year == data.Year && v.dtInicio.Month == data.Month && v.dtInicio.Day <= data.Day))
+                                                        && (v.dtFim == null || (v.dtFim.Value.Year > data.Year || (v.dtFim.Value.Year == data.Year && v.dtFim.Value.Month > data.Month) || (v.dtFim.Value.Year == data.Year && v.dtFim.Value.Month == data.Month && v.dtFim.Value.Day >= data.Day)))
+                                                        && (v.dtInicio.Year < data.Year || (v.dtInicio.Year == data.Year && v.dtInicio.Month < data.Month) || (v.dtInicio.Year == data.Year && v.dtInicio.Month == data.Month && v.dtInicio.Day <= data.Day))
+                                                        && (v.dtFim == null || (v.dtFim.Value.Year > data.Year || (v.dtFim.Value.Year == data.Year && v.dtFim.Value.Month > data.Month) || (v.dtFim.Value.Year == data.Year && v.dtFim.Value.Month == data.Month && v.dtFim.Value.Day >= data.Day)))
+                                                        ).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                        }
+                        break;
+                    case CAMPOS.ID_GRUPO:
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.empresa.id_grupo == id_grupo).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                        break;
+                    case CAMPOS.NU_CNPJ:
+                        string nu_cnpj = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.nrCnpj.Equals(nu_cnpj)).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                        break;
+
                 }
             }
             #endregion
@@ -159,12 +197,31 @@ namespace api.Negocios.Card
                 List<dynamic> CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = new List<dynamic>();
                 Retorno retorno = new Retorno();
 
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+                string outValue = null;
+                Int32 IdGrupo = 0;
+                IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (!CnpjEmpresa.Equals(""))
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
+                }
+
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                var queryTotal = query;
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
 
                 // PAGINAÇÃO
@@ -225,6 +282,89 @@ namespace api.Negocios.Card
                         //stLoginAdquirenteEmpresa = l.tbLoginAdquirenteEmpresa.stLoginAdquirenteEmpresa // controle de bruno
                     }).ToList<dynamic>();
                 }
+                else if (colecao == 3) // [WEB] Filiais
+                {
+                    CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = query
+                        .Where(e => e.tbLoginAdquirenteEmpresa.empresa.fl_ativo == 1)
+                        .GroupBy(e => e.tbLoginAdquirenteEmpresa.empresa.nu_cnpj)
+                        .Select(e => new
+                    {
+                        nu_cnpj = e.Key,
+                        ds_fantasia = e.Select(f => f.tbLoginAdquirenteEmpresa.empresa.ds_fantasia).FirstOrDefault(),
+                        filial = e.Select(f => f.tbLoginAdquirenteEmpresa.empresa.filial).FirstOrDefault(),
+                        adquirentes = e.Select(f => new
+                        {
+                            cdAdquirente = f.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente,
+                            nmAdquirente = f.tbLoginAdquirenteEmpresa.tbAdquirente.nmAdquirente,
+                            stAdquirente = f.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente,
+                        }).OrderBy(f => f.nmAdquirente).ToList<dynamic>(),
+                    }).OrderBy(e => e.ds_fantasia).ThenBy(e => e.filial).ToList<dynamic>();
+                }
+                else if (colecao == 4) // [WEB] Adquirentes
+                {
+                    CollectionTbContaCorrente_tbLoginAdquirenteEmpresa = query
+                        .Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente == 1)
+                        .GroupBy(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente)
+                        .Select(e => new
+                        {
+                            cdAdquirente = e.Key,
+                            nmAdquirente = e.Select(f => f.tbLoginAdquirenteEmpresa.tbAdquirente.nmAdquirente).FirstOrDefault(),
+                            stAdquirente = e.Select(f => f.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente).FirstOrDefault(),
+                        }).OrderBy(e => e.nmAdquirente).ToList<dynamic>();
+                }
+                else if (colecao == 5) // [WEB] Relação adquirente-filial por conta
+                {
+                    List<dynamic> tbLoginAdquirenteEmpresas = query
+                        .Select(e => new
+                        {
+                            tbContaCorrente = new
+                            {
+                                e.tbContaCorrente.cdContaCorrente,
+                                //e.tbContaCorrente.cdBanco,
+                                banco = new { Codigo = e.tbContaCorrente.cdBanco, NomeExtenso = "" },
+                                e.tbContaCorrente.nrAgencia,
+                                e.tbContaCorrente.nrConta
+                            },
+                            empresa = new
+                            {
+                                e.tbLoginAdquirenteEmpresa.empresa.nu_cnpj,
+                                e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia,
+                                e.tbLoginAdquirenteEmpresa.empresa.filial
+                            },
+                            tbAdquirente = new
+                            {
+                                e.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente,
+                                e.tbLoginAdquirenteEmpresa.tbAdquirente.nmAdquirente
+                            },
+                            cdEstabelecimento = e.tbLoginAdquirenteEmpresa.cdEstabelecimento,
+                            cdEstabelecimentoConsulta = e.tbLoginAdquirenteEmpresa.cdEstabelecimentoConsulta
+                        })
+                        .OrderBy(e => e.empresa.nu_cnpj)
+                        .ThenBy(e => e.tbAdquirente.nmAdquirente)
+                        .ThenBy(e => e.tbContaCorrente.banco.Codigo)
+                        .ThenBy(e => e.tbContaCorrente.nrAgencia)
+                        .ThenBy(e => e.tbContaCorrente.nrConta)
+                        .ToList<dynamic>();
+
+                    // Após transformar em lista (isto é, trazer para a memória), atualiza o valor do NomeExtenso associado ao banco
+                    foreach (var tbLoginAdquirenteEmpresa in tbLoginAdquirenteEmpresas)
+                    {
+                        CollectionTbContaCorrente_tbLoginAdquirenteEmpresa.Add(new
+                        {
+                            tbContaCorrente = new {
+                                cdContaCorrente = tbLoginAdquirenteEmpresa.tbContaCorrente.cdContaCorrente,
+                                //e.tbContaCorrente.cdBanco,
+                                banco = new { Codigo = tbLoginAdquirenteEmpresa.tbContaCorrente.banco.Codigo, NomeExtenso = GatewayBancos.Get(tbLoginAdquirenteEmpresa.tbContaCorrente.banco.Codigo) },
+                                nrAgencia = tbLoginAdquirenteEmpresa.tbContaCorrente.nrAgencia,
+                                nrConta = tbLoginAdquirenteEmpresa.tbContaCorrente.nrConta,
+                            },
+                            empresa = tbLoginAdquirenteEmpresa.empresa,
+                            tbAdquirente = tbLoginAdquirenteEmpresa.tbAdquirente,
+                            cdEstabelecimento = tbLoginAdquirenteEmpresa.cdEstabelecimento,
+                            cdEstabelecimentoConsulta = tbLoginAdquirenteEmpresa.cdEstabelecimentoConsulta,
+                        });
+                    }
+                }
 
                 retorno.Registros = CollectionTbContaCorrente_tbLoginAdquirenteEmpresa;
 
@@ -237,7 +377,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao listar adquirente empresa" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -327,7 +467,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao verificar conflito em adquirente empresa" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -360,7 +500,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar adquirente empresa" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -384,7 +524,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar adquirente empresa" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -414,7 +554,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar adquirente empresa" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -450,7 +590,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar adquirente empresa" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 

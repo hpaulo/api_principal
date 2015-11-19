@@ -205,7 +205,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao listar adquirente" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
     }

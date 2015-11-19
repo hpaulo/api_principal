@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Data.Entity.ModelConfiguration;
 
 namespace api.Models.Mapping
@@ -45,6 +46,9 @@ namespace api.Models.Mapping
 
             this.Property(t => t.cdEstabelecimentoHost)
                 .HasMaxLength(30);
+
+            this.Property(t => t.dthrVenda)
+                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
 
             // Table & Column Mappings
             this.ToTable("tbRecebimentoTEF", "card");

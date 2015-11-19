@@ -163,7 +163,8 @@ namespace api.Controllers.Card
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
                 Bibliotecas.LogAcaoUsuario.Save(log);
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                //throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, e.Message);
             }
         }
     }

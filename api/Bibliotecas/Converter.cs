@@ -45,6 +45,21 @@ namespace api.Bibliotecas
                 return stream.GetBuffer();
         }
 
+
+        public static byte[] ListToCSV(List<string> lines)
+        {
+            MemoryStream stream = new MemoryStream();
+            string line = String.Empty;
+            foreach (string l in lines)
+                line = line + l + Environment.NewLine;
+
+            StreamWriter file = new StreamWriter(stream, Encoding.UTF8, 512);
+            file.Write(line.Replace("\r\n;", "\r\n"));
+            file.Flush();
+            file.Close();
+            return stream.GetBuffer();
+        }
+
         public static DataTable ConvertToDataTable<T>(IList<T> data)
         {
             PropertyDescriptorCollection properties =

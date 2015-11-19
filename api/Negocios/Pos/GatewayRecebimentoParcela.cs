@@ -39,6 +39,7 @@ namespace api.Negocios.Pos
             IDEXTRATO = 106, // -1 para = null, 0 para != null
             DTARECEBIMENTOEFETIVO = 107,
             VLDESCONTADOANTECIPACAO = 108,
+            IDRECEBIMENTOTITULO = 109, // -1 para = null, 0 para != null
 
             // EMPRESA
             NU_CNPJ = 300,
@@ -123,6 +124,12 @@ namespace api.Negocios.Pos
                         if (idExtrato == -1) entity = entity.Where(e => e.idExtrato == null);
                         else if (idExtrato == 0) entity = entity.Where(e => e.idExtrato != null);
                         else entity = entity.Where(e => e.idExtrato == idExtrato);
+                        break;
+                    case CAMPOS.IDRECEBIMENTOTITULO:
+                        Int32 idRecebimentoTitulo = Convert.ToInt32(item.Value);
+                        if (idRecebimentoTitulo == -1) entity = entity.Where(e => e.idRecebimentoTitulo == null);
+                        else if (idRecebimentoTitulo == 0) entity = entity.Where(e => e.idRecebimentoTitulo != null);
+                        else entity = entity.Where(e => e.idRecebimentoTitulo == idRecebimentoTitulo);
                         break;
 
                     /// PERSONALIZADO
@@ -810,6 +817,11 @@ namespace api.Negocios.Pos
                     CollectionRecebimentoParcela = query
                         .Select(e => new
                         {
+                            parcela = new
+                            {
+                                idRecebimento = e.idRecebimento,
+                                numParcela = e.numParcela
+                            },
                             cnpj = e.Recebimento.cnpj,
                             dsFantasia = e.Recebimento.empresa.ds_fantasia + (e.Recebimento.empresa.filial != null ? " " + e.Recebimento.empresa.filial : ""),
                             dsBandeira = e.Recebimento.tbBandeira.dsBandeira ?? e.Recebimento.BandeiraPos.desBandeira,
@@ -834,6 +846,7 @@ namespace api.Negocios.Pos
                         List<dynamic> ajustes = GatewayTbRecebimentoAjuste.getQuery(1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
                                             .Select(e => new
                                             {
+                                                ajuste = new { idRecebimentoAjuste = e.idRecebimentoAjuste },
                                                 cnpj = e.nrCNPJ,
                                                 dsFantasia = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
                                                 dsBandeira = e.tbBandeira.dsBandeira,
@@ -1090,7 +1103,7 @@ namespace api.Negocios.Pos
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao listar recebimento parcela" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -1116,7 +1129,7 @@ namespace api.Negocios.Pos
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar recebimento parcela" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -1126,17 +1139,24 @@ namespace api.Negocios.Pos
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 idRecebimento)
+        public static void Delete(string token, Int32 idRecebimento, Int32 numParcela)
         {
             try
             {
                 RecebimentoParcela recebimentoparcela = _db.RecebimentoParcelas.Where(e => e.idRecebimento == idRecebimento)
+                                                                               .Where(e => e.numParcela == numParcela)
                                                                                .FirstOrDefault();
 
                 if (recebimentoparcela == null) throw new Exception("Recebimento Parcela inexistente");
 
+                // Se só tiver uma parcela, significa que a venda ficará sem parcelas => Remove a venda também
+                bool removeVenda = recebimentoparcela.Recebimento.RecebimentoParcelas.Count == 1;
+                    
                 _db.RecebimentoParcelas.Remove(recebimentoparcela);
                 _db.SaveChanges();
+
+                // Remove a venda toda
+                if(removeVenda) GatewayRecebimento.Delete(token, idRecebimento);
             }
             catch (Exception e)
             {
@@ -1145,7 +1165,7 @@ namespace api.Negocios.Pos
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar recebimento parcela" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -1156,28 +1176,30 @@ namespace api.Negocios.Pos
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, RecebimentosParcela param)
+        public static void Update(string token,  RecebimentoParcela param)
         {
             try
             {
 
-                if (param == null || param.dtaRecebimentoEfetivo == null || param.recebimentosParcela == null)
-                    throw new Exception("Argumento inválido");
+                RecebimentoParcela value = _db.RecebimentoParcelas
+                    .Where(e => e.idRecebimento == param.idRecebimento)
+                    .First<RecebimentoParcela>();
 
-                foreach (RecebimentosParcela.RecebParcela recebimentosParcela in param.recebimentosParcela)
-                {
-                    RecebimentoParcela recebimento = _db.RecebimentoParcelas
-                                                            .Where(e => e.idRecebimento == recebimentosParcela.idRecebimento)
-                                                            .Where(e => e.numParcela == recebimentosParcela.numParcela)
-                                                            .FirstOrDefault();
-
-                    if (recebimento != null && recebimento.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
-                    {
-                        recebimento.dtaRecebimentoEfetivo = param.dtaRecebimentoEfetivo;
-                        _db.SaveChanges();
-                    }
-
-                }
+                if (param.valorParcelaBruta != new decimal(0.0) && param.valorParcelaBruta != value.valorParcelaBruta)
+                    value.valorParcelaBruta = param.valorParcelaBruta;
+                if (param.dtaRecebimento != null && param.dtaRecebimento != value.dtaRecebimento)
+                    value.dtaRecebimento = param.dtaRecebimento;
+                if (param.valorDescontado != new decimal(0.0) && param.valorDescontado != value.valorDescontado)
+                    value.valorDescontado = param.valorDescontado;
+                //if (param.idExtrato != null && param.idExtrato != value.idExtrato)
+                //    value.idExtrato = param.idExtrato;
+                if (param.dtaRecebimentoEfetivo != null && param.dtaRecebimentoEfetivo != value.dtaRecebimentoEfetivo)
+                    value.dtaRecebimentoEfetivo = param.dtaRecebimentoEfetivo;
+                if (param.vlDescontadoAntecipacao != new decimal(0.0) && param.vlDescontadoAntecipacao != value.vlDescontadoAntecipacao)
+                    value.vlDescontadoAntecipacao = param.vlDescontadoAntecipacao;
+                //if (param.idRecebimentoTitulo != null && param.idRecebimentoTitulo != value.idRecebimentoTitulo)
+                //    value.idRecebimentoTitulo = param.idRecebimentoTitulo;
+                _db.SaveChanges();
             }
             catch (Exception e)
             {
@@ -1186,15 +1208,10 @@ namespace api.Negocios.Pos
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento parcela" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
     }
 
-    public class RecebimentoToRecebimentoParcelas
-    {
-        public Recebimento recebimento;
-        public RecebimentoParcela parcela;
-    }
 }

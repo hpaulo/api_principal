@@ -14,7 +14,7 @@ namespace api.Controllers.Card
 {
     public class ConciliacaoRelatoriosController : ApiController
     {
-        // GET /ConciliacaoBancaria/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
+        // GET /ConciliacaoRelatorios/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();

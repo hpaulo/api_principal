@@ -60,6 +60,7 @@ namespace api.Negocios.Tax
             IDUSERS = 121,
             FLENTREGA = 122,
             DTIMPORTACAO = 123,
+            IDUSERSIMPORTACAO = 124,
 
         };
 
@@ -625,6 +626,8 @@ namespace api.Negocios.Tax
                         dtEntrega = e.dtEntrega,
                         idUsers = e.idUsers,
                         flEntrega = e.flEntrega,
+                        dtImportacao = e.dtImportacao,
+                        idUsersImportacao = e.idUsersImportacao,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2) // [iTAX] Consulta as notas disponíveis para manifestação
@@ -1552,7 +1555,7 @@ namespace api.Negocios.Tax
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao listar TbManifesto" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -1581,7 +1584,7 @@ namespace api.Negocios.Tax
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar TbManifesto" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
             finally
             {
@@ -1617,7 +1620,7 @@ namespace api.Negocios.Tax
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar TbManifesto" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
             finally
             {
@@ -1691,6 +1694,10 @@ namespace api.Negocios.Tax
                     value.dtEntrega = DateTime.Now;
                     value.idUsers = Bibliotecas.Permissoes.GetIdUser(token);
                 }
+                if (param.dtImportacao != null && param.dtImportacao != value.dtImportacao)
+                    value.dtImportacao = param.dtImportacao;
+                if (param.idUsersImportacao != null && param.idUsersImportacao != value.idUsersImportacao)
+                    value.idUsersImportacao = param.idUsersImportacao;
 
                 _db.SaveChanges();
             }
@@ -1701,7 +1708,7 @@ namespace api.Negocios.Tax
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar TbManifesto" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
             finally
             {

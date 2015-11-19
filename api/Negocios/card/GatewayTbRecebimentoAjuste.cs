@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Globalization;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -39,8 +40,7 @@ namespace api.Negocios.Card
             ID_GRUPO = 216,
 
             CDADQUIRENTE = 302,
-
-            DSTIPO = 403,
+            DSTIPO = 303,
         };
 
         /// <summary>
@@ -243,58 +243,97 @@ namespace api.Negocios.Card
 
             return retorno;
         }
-        ///// <summary>
-        ///// Adiciona nova TbRecebimentoAjuste
-        ///// </summary>
-        ///// <param name="param"></param>
-        ///// <returns></returns>
-        //public static Int32 Add(string token, tbRecebimentoAjuste param)
-        //{
-        //    _db.tbRecebimentoAjustes.Add(param);
-        //    _db.SaveChanges();
-        //    return param.idRecebimentoAjuste;
-        //}
+
+        /// <summary>
+        /// Adiciona nova TbRecebimentoAjuste
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static Int32 Add(string token, tbRecebimentoAjuste param)
+        {
+            try
+            {
+                _db.tbRecebimentoAjustes.Add(param);
+                _db.SaveChanges();
+                return param.idRecebimentoAjuste;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar recebimento" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+        }
 
 
-        ///// <summary>
-        ///// Apaga uma TbRecebimentoAjuste
-        ///// </summary>
-        ///// <param name="param"></param>
-        ///// <returns></returns>
-        //public static void Delete(string token, Int32 idRecebimentoAjuste)
-        //{
-        //    _db.tbRecebimentoAjustes.Remove(_db.tbRecebimentoAjustes.Where(e => e.idRecebimentoAjuste.Equals(idRecebimentoAjuste)).First());
-        //    _db.SaveChanges();
-        //}
-        ///// <summary>
-        ///// Altera tbRecebimentoAjuste
-        ///// </summary>
-        ///// <param name="param"></param>
-        ///// <returns></returns>
-        //public static void Update(string token, tbRecebimentoAjuste param)
-        //{
-        //    tbRecebimentoAjuste value = _db.tbRecebimentoAjustes
-        //            .Where(e => e.idRecebimentoAjuste.Equals(param.idRecebimentoAjuste))
-        //            .First<tbRecebimentoAjuste>();
+        /// <summary>
+        /// Apaga uma TbRecebimentoAjuste
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static void Delete(string token, Int32 idRecebimentoAjuste)
+        {
+            try
+            {
+                tbRecebimentoAjuste tbRecebimentoAjuste = _db.tbRecebimentoAjustes.Where(e => e.idRecebimentoAjuste == idRecebimentoAjuste).FirstOrDefault();
+                if (tbRecebimentoAjuste == null) throw new Exception("Ajuste inexistente!");
+                _db.tbRecebimentoAjustes.Remove(tbRecebimentoAjuste);
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao apagar recebimento" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+        }
 
 
-        //    if (param.idRecebimentoAjuste != 0 && param.idRecebimentoAjuste != value.idRecebimentoAjuste)
-        //        value.idRecebimentoAjuste = param.idRecebimentoAjuste;
-        //    if (param.dtAjuste != null && param.dtAjuste != value.dtAjuste)
-        //        value.dtAjuste = param.dtAjuste;
-        //    if (param.nrCNPJ != null && param.nrCNPJ != value.nrCNPJ)
-        //        value.nrCNPJ = param.nrCNPJ;
-        //    if (param.cdBandeira != 0 && param.cdBandeira != value.cdBandeira)
-        //        value.cdBandeira = param.cdBandeira;
-        //    if (param.dsMotivo != null && param.dsMotivo != value.dsMotivo)
-        //        value.dsMotivo = param.dsMotivo;
-        //    if (param.vlAjuste != 0 && param.vlAjuste != value.vlAjuste)
-        //        value.vlAjuste = param.vlAjuste;
-        //    if (param.idExtrato != null && param.idExtrato != value.idExtrato)
-        //        value.idExtrato = param.idExtrato;
-        //    _db.SaveChanges();
+        /// <summary>
+        /// Altera tbRecebimentoAjuste
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static void Update(string token, tbRecebimentoAjuste param)
+        {
+            try
+            {
+                tbRecebimentoAjuste value = _db.tbRecebimentoAjustes
+                        .Where(e => e.idRecebimentoAjuste == param.idRecebimentoAjuste)
+                        .First<tbRecebimentoAjuste>();
 
-        //}
+
+                if (param.dtAjuste != null && param.dtAjuste != value.dtAjuste)
+                    value.dtAjuste = param.dtAjuste;
+                if (param.nrCNPJ != null && param.nrCNPJ != value.nrCNPJ)
+                    value.nrCNPJ = param.nrCNPJ;
+                if (param.cdBandeira != 0 && param.cdBandeira != value.cdBandeira)
+                    value.cdBandeira = param.cdBandeira;
+                if (param.dsMotivo != null && param.dsMotivo != value.dsMotivo)
+                    value.dsMotivo = param.dsMotivo;
+                if (param.vlAjuste != 0 && param.vlAjuste != value.vlAjuste)
+                    value.vlAjuste = param.vlAjuste;
+                if (param.idExtrato != null && param.idExtrato != value.idExtrato)
+                    value.idExtrato = param.idExtrato;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+
+        }
 
     }
 }

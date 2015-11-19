@@ -15,6 +15,7 @@ namespace api.Models
             this.tbTerminalLogicos = new List<tbTerminalLogico>();
             this.tbRecebimentoResumoManuals = new List<tbRecebimentoResumoManual>();
             this.tbLogCargas = new List<tbLogCarga>();
+            this.tbRecebimentoTitulos = new List<tbRecebimentoTitulo>();
         }
 
         public int cdAdquirente { get; set; }
@@ -30,5 +31,6 @@ namespace api.Models
         public virtual ICollection<tbBandeira> tbBandeiras { get; set; }
         public virtual ICollection<tbTerminalLogico> tbTerminalLogicos { get; set; }
         public virtual ICollection<tbRecebimentoResumoManual> tbRecebimentoResumoManuals { get; set; }
+        public virtual ICollection<tbRecebimentoTitulo> tbRecebimentoTitulos { get; set; }
     }
 }

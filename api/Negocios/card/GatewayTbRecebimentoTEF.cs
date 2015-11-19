@@ -53,6 +53,9 @@ namespace api.Negocios.Card
             CDBANDEIRATEF = 123,
             CDESTABELECIMENTOHOST = 124,
 
+            // RELACIONAMENTOS
+            ID_GRUPO = 216,
+
         };
 
         /// <summary>
@@ -132,56 +135,6 @@ namespace api.Negocios.Card
                                                     && (e.dtVenda.Year < dtaFim.Year || (e.dtVenda.Year == dtaFim.Year && e.dtVenda.Month < dtaFim.Month) ||
                                                                                           (e.dtVenda.Year == dtaFim.Year && e.dtVenda.Month == dtaFim.Month && e.dtVenda.Day <= dtaFim.Day)));
                         }
-                        else if (item.Value.Contains(">")) // MAIOR IGUAL
-                        {
-                            string busca = item.Value.Replace(">", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtVenda >= dta);
-                        }
-                        else if (item.Value.Contains("<")) // MENOR IGUAL
-                        {
-                            string busca;
-                            if (item.Value.Length == 10)
-                            {
-                                string ano = item.Value.Substring(0, 4);
-                                string mes = item.Value.Substring(5, 2);
-                                string dia = item.Value.Substring(7, 2);
-                                busca = ano + mes + dia;
-                            }
-                            else if (item.Value.Length == 8)
-                            {
-                                string dia = item.Value.Substring(6, 1);
-                                string anoMes = item.Value.Substring(0, 6);
-                                busca = anoMes + "0" + dia;
-                            }
-                            else
-                            {
-                                busca = item.Value.Replace("<", "");
-                            }
-                            //busca = item.Value.Replace("<", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtVenda <= dta);
-                        }
-                        else if (item.Value.Length == 4)
-                        {
-                            string busca = item.Value + "0101";
-                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtVenda.Year == dtaIni.Year);
-                        }
-                        else if (item.Value.Length == 6)
-                        {
-                            string busca = item.Value + "01";
-                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month == dtaIni.Month);
-                        }
-                        else if (item.Value.Length == 7)
-                        {
-                            string dia = item.Value.Substring(6, 1);
-                            string anoMes = item.Value.Substring(0, 6);
-                            string busca = anoMes + "0" + dia;
-                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtVenda.Year == dtaIni.Year && e.dtVenda.Month == dtaIni.Month && e.dtVenda.Day == dtaIni.Day);
-                        }
                         else // IGUAL
                         {
                             string busca = item.Value;
@@ -246,6 +199,12 @@ namespace api.Negocios.Card
                     case CAMPOS.CDESTABELECIMENTOHOST:
                         string cdEstabelecimentoHost = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.cdEstabelecimentoHost.Equals(cdEstabelecimentoHost)).AsQueryable<tbRecebimentoTEF>();
+                        break;
+
+                    // RELACIONAMENTOS
+                    case CAMPOS.ID_GRUPO:
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => _db.empresas.Where(f => f.nu_cnpj.Equals(e.nrCNPJ) && f.id_grupo == id_grupo).Count() > 0).AsQueryable<tbRecebimentoTEF>();
                         break;
                 }
             }
@@ -372,13 +331,31 @@ namespace api.Negocios.Card
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbRecebimentoTEF = new List<dynamic>();
                 Retorno retorno = new Retorno();
+                string outValue = null;
+
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO/*CDGRUPO*/, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO/*CDGRUPO*/] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO/*CDGRUPO*/, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (!CnpjEmpresa.Equals(""))
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NRCNPJ, CnpjEmpresa);
+                }
+
 
                 // GET QUERY
                 var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                var queryTotal = query;
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
 
                 // PAGINAÇÃO
@@ -467,23 +444,35 @@ namespace api.Negocios.Card
                         cdTrasacaoTEF = e.Key.cdTrasacaoTEF,
                     }).ToList<dynamic>();
                 }
-                else if (colecao == 4) // Movimento
+                else if (colecao == 4) // Movimento TEF
                 {
                     CollectionTbRecebimentoTEF = query
-                         //.GroupBy(x => new { x.cdGrupo })
+                        //.GroupBy(x => new { x.cdGrupo })
                         .Select(e => new
                         {
-
+                            dtVenda = e.dtVenda,
                             hrVenda = e.hrVenda,
-                            filial = e.grupo_empresa.ds_nome,
-                            nmOperadora = e.nmOperadora,
+                            // empresa = new { e.empresa.nu_cnpj, e.empresa.ds_fantasia, e.empresa.filial },
+                            empresa = e.nrCNPJ != null ? _db.empresas.Where(f => f.nu_cnpj.Equals(e.nrCNPJ)).Select(f => new { f.nu_cnpj, f.ds_fantasia, f.filial }).FirstOrDefault() : null,
+                            dsBandeira = e.nmOperadora, // BANDEIRA
                             nrCartao = e.nrCartao,
                             vlVenda = e.vlVenda,
-                            qtParcelas = e.qtParcelas,
-                            tipoProtuto = e.tbProdutoTef.tbTipoProdutoTef.dsTipoProdutoTef,
+                            qtParcelas = e.qtParcelas ?? 0,
+                            tipoProtuto = e.tbProdutoTef.tbTipoProdutoTef.dsTipoProdutoTef ?? "",
                             nrNSUTEF = e.nrNSUTEF,
-                            Status = e.tbEstadoTransacaoTef.dsEstadoTransacaoTef,
-                        }).ToList<dynamic>();
+                            //e.nrNSUHost,
+                            nrPDVTEF = e.nrPDVTEF,
+                            dsEstadoTransacaoTef = e.tbEstadoTransacaoTef.dsEstadoTransacaoTef ?? "",
+                            tbRedeTEF = e.cdRedeTEF != null ? _db.tbRedeTefs.Where(r => r.cdRedeTef == e.cdRedeTEF).Select(r => new { r.cdRedeTef, r.dsRedeTef }).FirstOrDefault() : null,
+                        })
+                        .OrderBy(e => e.dtVenda)
+                        .ThenBy(e => e.hrVenda)
+                        .ThenBy(e => e.empresa != null ? e.empresa.ds_fantasia : "")
+                        .ToList<dynamic>();
+
+                    retorno.Totais = new Dictionary<string, object>();
+                    retorno.Totais.Add("valorVenda", CollectionTbRecebimentoTEF.Count > 0 ? CollectionTbRecebimentoTEF.Select(e => e.vlVenda).Cast<decimal>().Sum() : new decimal(0.0));
+                    retorno.Totais.Add("totalTransacoes", CollectionTbRecebimentoTEF.Count);
                 }
                 else if (colecao == 2)
                 {
@@ -524,7 +513,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao listar recebimento tef" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
         /// <summary>
@@ -547,7 +536,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar recebimento tef" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
@@ -571,7 +560,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar recebimento tef" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
         /// <summary>
@@ -647,7 +636,7 @@ namespace api.Negocios.Card
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento tef" : erro);
                 }
-                throw new Exception(e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
         }
 
