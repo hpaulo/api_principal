@@ -8,11 +8,12 @@ namespace api.Models.Mapping
         public LogAcesso1Map()
         {
             // Primary Key
-            this.HasKey(t => t.dtAcesso);
+            this.HasKey(t => t.idLogAcesso);
 
             // Properties
             // Table & Column Mappings
             this.ToTable("LogAcesso", "log");
+            this.Property(t => t.idLogAcesso).HasColumnName("idLogAcesso");
             this.Property(t => t.idUsers).HasColumnName("idUsers");
             this.Property(t => t.idController).HasColumnName("idController");
             this.Property(t => t.idMethod).HasColumnName("idMethod");
