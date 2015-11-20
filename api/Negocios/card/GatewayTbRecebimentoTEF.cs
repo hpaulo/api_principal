@@ -334,13 +334,6 @@ namespace api.Negocios.Card
                 string outValue = null;
 
                 Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-                if (IdGrupo != 0)
-                {
-                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO/*CDGRUPO*/, out outValue))
-                        queryString["" + (int)CAMPOS.ID_GRUPO/*CDGRUPO*/] = IdGrupo.ToString();
-                    else
-                        queryString.Add("" + (int)CAMPOS.ID_GRUPO/*CDGRUPO*/, IdGrupo.ToString());
-                }
                 string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
                 if (!CnpjEmpresa.Equals(""))
                 {
@@ -348,6 +341,29 @@ namespace api.Negocios.Card
                         queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
                     else
                         queryString.Add("" + (int)CAMPOS.NRCNPJ, CnpjEmpresa);
+                    // não faz consulta de grupo empresa
+                    queryString.Remove("" + (int)CAMPOS.ID_GRUPO); 
+                }
+                // Só exige filtro de grupo se não tiver filtro de cnpj, pq não tem FK
+                else if (!queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
+                {
+                    if (IdGrupo != 0)
+                    {
+                        if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO/*CDGRUPO*/, out outValue))
+                            queryString["" + (int)CAMPOS.ID_GRUPO/*CDGRUPO*/] = IdGrupo.ToString();
+                        else
+                            queryString.Add("" + (int)CAMPOS.ID_GRUPO/*CDGRUPO*/, IdGrupo.ToString());
+                    }
+                }
+                else if(IdGrupo != 0)
+                {
+                    // Avalia se a filial informada no parâmetro é do grupo que está amarrado
+                    CnpjEmpresa = queryString["" + (int)CAMPOS.NRCNPJ];
+                    empresa empresa = _db.empresas.Where(e => e.nu_cnpj.Equals(CnpjEmpresa)).FirstOrDefault();
+                    if (empresa != null && empresa.id_grupo != IdGrupo)
+                        throw new Exception("401"); // não pode consultar a filial
+                    // não faz consulta de grupo empresa
+                    queryString.Remove("" + (int)CAMPOS.ID_GRUPO); 
                 }
 
 
@@ -357,13 +373,20 @@ namespace api.Negocios.Card
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = query.Count();
 
+                retorno.Totais = new Dictionary<string, object>();
 
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
+                if(colecao == 4 || colecao == 3)
+                    retorno.Totais.Add("valorVenda", retorno.TotalDeRegistros > 0 ? query.Select(e => e.vlVenda).Cast<decimal>().Sum() : new decimal(0.0));
+
+                if (colecao != 2)
+                {
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+                }
 
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
@@ -433,16 +456,48 @@ namespace api.Negocios.Card
                 }
                 else if (colecao == 3) // Resumo Movimento
                 {
-                    CollectionTbRecebimentoTEF = query
-                        .GroupBy(x => new { x.cdBandeira, x.cdTrasacaoTEF})
+                    List<dynamic> listSemProduto = query
+                        .Where(e => e.cdProdutoTEF == null)
+                        .GroupBy(e => e.nmOperadora)
+                        .OrderBy(e => e.Key)
                         .Select(e => new
                     {
-                        
-                        quantidade = e.Count(),
-                        vlVenda = (e.Sum(p => p.vlVenda)),
-                        cdBandeira = e.Key.cdBandeira,
-                        cdTrasacaoTEF = e.Key.cdTrasacaoTEF,
+                        totalTransacoes = e.Count(),
+                        vlVenda = e.Sum(p => p.vlVenda),
+                        dsBandeira = e.Key,
+                        tipoProduto = "",
                     }).ToList<dynamic>();
+
+                    List<dynamic> listComProduto = query
+                        .Where(e => e.cdProdutoTEF != null)
+                        .GroupBy(e => new { e.nmOperadora, e.tbProdutoTef.tbTipoProdutoTef.dsTipoProdutoTef })
+                        .OrderBy(e => e.Key.nmOperadora)
+                        .ThenBy(e => e.Key.dsTipoProdutoTef)
+                        .Select(e => new
+                        {
+                            totalTransacoes = e.Count(),
+                            vlVenda = e.Sum(p => p.vlVenda),
+                            dsBandeira = e.Key.nmOperadora,
+                            tipoProduto = e.Key.dsTipoProdutoTef,
+                        }).ToList<dynamic>();
+
+ 
+                    retorno.Totais.Add("totalTransacoes", retorno.TotalDeRegistros);
+
+                    CollectionTbRecebimentoTEF = listComProduto.Concat(listSemProduto)
+                                                    .OrderBy(e => e.dsBandeira)
+                                                    .ThenBy(e => e.tipoProduto)
+                                                    .ToList<dynamic>();
+
+                    // TOTAL DE REGISTROS
+                    retorno.TotalDeRegistros = CollectionTbRecebimentoTEF.Count;
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        CollectionTbRecebimentoTEF = CollectionTbRecebimentoTEF.Skip(skipRows).Take(pageSize).ToList<dynamic>();
+                    else
+                        pageNumber = 1;
                 }
                 else if (colecao == 4) // Movimento TEF
                 {
@@ -458,7 +513,7 @@ namespace api.Negocios.Card
                             nrCartao = e.nrCartao,
                             vlVenda = e.vlVenda,
                             qtParcelas = e.qtParcelas ?? 0,
-                            tipoProtuto = e.tbProdutoTef.tbTipoProdutoTef.dsTipoProdutoTef ?? "",
+                            tipoProduto = e.tbProdutoTef.tbTipoProdutoTef.dsTipoProdutoTef ?? "",
                             nrNSUTEF = e.nrNSUTEF,
                             //e.nrNSUHost,
                             nrPDVTEF = e.nrPDVTEF,
@@ -469,36 +524,29 @@ namespace api.Negocios.Card
                         .ThenBy(e => e.hrVenda)
                         .ThenBy(e => e.empresa != null ? e.empresa.ds_fantasia : "")
                         .ToList<dynamic>();
-
-                    retorno.Totais = new Dictionary<string, object>();
-                    retorno.Totais.Add("valorVenda", CollectionTbRecebimentoTEF.Count > 0 ? CollectionTbRecebimentoTEF.Select(e => e.vlVenda).Cast<decimal>().Sum() : new decimal(0.0));
-                    retorno.Totais.Add("totalTransacoes", CollectionTbRecebimentoTEF.Count);
                 }
                 else if (colecao == 2)
                 {
-                    CollectionTbRecebimentoTEF = query
+                    IQueryable<dynamic> subQuery = query
                         .GroupBy(x => new { x.cdGrupo })
                         .Select(e => new
                         {
                             cdGrupo = e.Key.cdGrupo,
                             nmGrupo = _db.grupo_empresa.Where(g => g.id_grupo == e.Key.cdGrupo).Select(g => g.ds_nome).FirstOrDefault(),
                             dtVenda = (e.Max(p => p.dthrVenda)),
-                        }).ToList<dynamic>();
+                        });
 
                     // TOTAL DE REGISTROS
-                    retorno.TotalDeRegistros = CollectionTbRecebimentoTEF.Count();
-
+                    retorno.TotalDeRegistros = subQuery.Count();
 
                     // PAGINAÇÃO
-                    skipRows = (pageNumber - 1) * pageSize;
+                    int skipRows = (pageNumber - 1) * pageSize;
                     if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                        query = query.Skip(skipRows).Take(pageSize);
+                        subQuery = subQuery.Skip(skipRows).Take(pageSize);
                     else
                         pageNumber = 1;
 
-                    retorno.PaginaAtual = pageNumber;
-                    retorno.ItensPorPagina = pageSize;
-
+                    CollectionTbRecebimentoTEF = subQuery.ToList<dynamic>();
                 }
 
 

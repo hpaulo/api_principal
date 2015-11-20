@@ -15,6 +15,7 @@ namespace api.Models
         public string CNPJjFilial { get; set; }
         public string DecricaoPdv { get; set; }
         public string CodPdvERP { get; set; }
+        public string cdEmpresaTEF { get; set; }
         public string CodPdvHostPagamento { get; set; }
         public byte cdGrupo { get; set; }
         public virtual ICollection<ConciliacaoPagamento> ConciliacaoPagamentos { get; set; }

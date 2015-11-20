@@ -1357,24 +1357,6 @@ namespace api.Negocios.Card
                                                                                         .ThenBy(e => e.Bandeira)
                                                                                         .ToList<ConciliacaoBancaria>();
 
-                                                                recebimentosParcelaAgrupados = recebimentosParcela
-                                                                                                .GroupBy(r => new { r.Data, r.Filial, r.Adquirente, r.Bandeira })
-                                                                                                .OrderBy(r => r.Key.Data)
-                                                                                                .ThenBy(r => r.Key.Filial)
-                                                                                                .ThenBy(r => r.Key.Adquirente)
-                                                                                                .ThenBy(r => r.Key.Bandeira)
-                                                                                                .Select(r => new ConciliacaoBancaria
-                                                                                                {
-                                                                                                    Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                                                    Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Filial).ThenBy(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
-                                                                                                    Data = r.Key.Data,
-                                                                                                    ValorTotal = r.Sum(x => x.Grupo[0].Valor),
-                                                                                                    Adquirente = r.Key.Adquirente,
-                                                                                                    Bandeira = r.Key.Bandeira,
-                                                                                                    TipoCartao = r.Select(x => x.TipoCartao).FirstOrDefault(),
-                                                                                                    Filial = r.Key.Filial
-                                                                                                }).ToList<ConciliacaoBancaria>();
-
                                                                 extratoBancario = listaNaoConciliado.Where(e => e.Tipo.Equals(TIPO_EXTRATO))
                                                                                                         .OrderBy(e => e.Data)
                                                                                                         .ThenBy(e => e.Adquirente)
@@ -1382,7 +1364,91 @@ namespace api.Negocios.Card
                                                                                                         .ToList<ConciliacaoBancaria>();
 
                                                                 #endregion
-                                                                
+
+                                                                if (recebimentosParcela.Count > 0 && extratoBancario.Count > 0)
+                                                                {
+                                                                    #region TENTA PRÉ-CONCILIAR POR TIPO CARTÃO
+
+                                                                    recebimentosParcelaAgrupados = recebimentosParcela
+                                                                                        .GroupBy(r => new { r.Data, r.Adquirente, r.TipoCartao })
+                                                                                        .OrderBy(r => r.Key.Data)
+                                                                                        .ThenBy(r => r.Key.Adquirente)
+                                                                                        .ThenBy(r => r.Key.TipoCartao)
+                                                                                        .Select(r => new ConciliacaoBancaria
+                                                                                        {
+                                                                                            Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                                            Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Filial).ThenBy(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                            Data = r.Key.Data,
+                                                                                            ValorTotal = r.Sum(x => x.Grupo[0].Valor),
+                                                                                            Adquirente = r.Key.Adquirente,
+                                                                                            Bandeira = "",
+                                                                                            TipoCartao = r.Key.TipoCartao,
+                                                                                            Filial = ""
+                                                                                        }).ToList<ConciliacaoBancaria>();
+
+                                                                    // Concatena as duas listas, ordenando por data
+                                                                    listaCandidatos = recebimentosParcelaAgrupados.Concat<ConciliacaoBancaria>(extratoBancario)
+                                                                                      .OrderBy(c => c.Data.Year)
+                                                                                      .ThenBy(c => c.Data.Month)
+                                                                                      .ThenBy(c => c.Data.Day)
+                                                                                      .ThenBy(c => c.ValorTotal)
+                                                                                      //.ThenByDescending(c => c.Filial)
+                                                                                      .ThenByDescending(c => c.Adquirente)
+                                                                                      //.ThenByDescending(c => c.Bandeira)
+                                                                                      .ThenByDescending(c => c.TipoCartao)
+                                                                                      .ToList<ConciliacaoBancaria>();
+
+                                                                    // Faz a conciliação
+                                                                    listaNaoConciliado.Clear();
+                                                                    Concilia(CollectionConciliacaoBancaria, listaCandidatos, listaNaoConciliado, !filtroTipoNaoConciliado);
+
+                                                                    #endregion
+
+
+                                                                    #region REMOVE DA LISTA OS ELEMENTOS JÁ PRÉ-CONCILIADOS
+                                                                    recebimentosParcelaAgrupados = listaNaoConciliado.Where(r => r.Tipo.Equals(TIPO_RECEBIMENTO))
+                                                                                                                .OrderBy(r => r.Data)
+                                                                        //.ThenBy(r => r.Filial)
+                                                                                                                .ThenBy(r => r.Adquirente)
+                                                                                                                .ToList<ConciliacaoBancaria>();
+
+                                                                    recebimentosParcela = recebimentosParcela.Where(e => recebimentosParcelaAgrupados.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id && g.NumParcela == e.Grupo[0].NumParcela)))
+                                                                                            .OrderBy(e => e.Data)
+                                                                                            .ThenBy(r => r.Filial)
+                                                                                            .ThenBy(e => e.Adquirente)
+                                                                                            .ThenBy(e => e.Bandeira)
+                                                                                            .ToList<ConciliacaoBancaria>();
+
+                                                                    extratoBancario = listaNaoConciliado.Where(e => e.Tipo.Equals(TIPO_EXTRATO))
+                                                                                                            .OrderBy(e => e.Data)
+                                                                                                            .ThenBy(e => e.Adquirente)
+                                                                                                            .ThenBy(e => e.Memo)
+                                                                                                            .ToList<ConciliacaoBancaria>();
+
+                                                                    #endregion
+
+                                                                }
+
+                                                                // Obtém o agrupamento padrão de recebimentos
+                                                                recebimentosParcelaAgrupados = recebimentosParcela
+                                                                                               .GroupBy(r => new { r.Data, r.Filial, r.Adquirente, r.Bandeira })
+                                                                                               .OrderBy(r => r.Key.Data)
+                                                                                               .ThenBy(r => r.Key.Filial)
+                                                                                               .ThenBy(r => r.Key.Adquirente)
+                                                                                               .ThenBy(r => r.Key.Bandeira)
+                                                                                               .Select(r => new ConciliacaoBancaria
+                                                                                               {
+                                                                                                   Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                                                   Grupo = r.Select(x => x.Grupo[0]).OrderBy(x => x.Filial).ThenBy(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                                   Data = r.Key.Data,
+                                                                                                   ValorTotal = r.Sum(x => x.Grupo[0].Valor),
+                                                                                                   Adquirente = r.Key.Adquirente,
+                                                                                                   Bandeira = r.Key.Bandeira,
+                                                                                                   TipoCartao = r.Select(x => x.TipoCartao).FirstOrDefault(),
+                                                                                                   Filial = r.Key.Filial
+                                                                                               }).ToList<ConciliacaoBancaria>();
+
+
                                                                 #endregion
                                                             }
 

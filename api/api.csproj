@@ -317,6 +317,7 @@
     <Compile Include="Controllers\Card\TbSituacaoRedeTefController.cs" />
     <Compile Include="Controllers\Card\TbRedeTefController.cs" />
     <Compile Include="Controllers\Card\TitulosErpController.cs" />
+    <Compile Include="Controllers\Cartao\PDVsController.cs" />
     <Compile Include="Controllers\Cliente\EmpresaController.cs" />
     <Compile Include="Controllers\Cliente\GrupoEmpresaController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -888,6 +889,7 @@
     <Compile Include="Negocios\Card\GatewayTbRedeTef.cs" />
     <Compile Include="Negocios\Card\GatewayTbContaCorrente.cs" />
     <Compile Include="Negocios\Card\GatewayTitulosErp.cs" />
+    <Compile Include="Negocios\Cartao\GatewayPDVs.cs" />
     <Compile Include="Negocios\Cliente\GatewayEmpresa.cs" />
     <Compile Include="Negocios\Cliente\GatewayGrupoEmpresa.cs" />
     <Compile Include="Controllers\Card\TbEstadoTransacaoTefController.cs" />
