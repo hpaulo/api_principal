@@ -593,11 +593,16 @@ namespace api.Bibliotecas
         /// <returns></returns>
         public static bool Autenticado(string token)
         {
-            using (var _db = new painel_taxservices_dbContext()){
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
+            {
 
                 _db.Configuration.ProxyCreationEnabled = false;
 
                 var verify = _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v).FirstOrDefault();
+
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
 
                 if (verify != null)
                     return true;
@@ -612,13 +617,18 @@ namespace api.Bibliotecas
         /// <returns>Null se o token for inválido</returns>
         public static webpages_Users GetUser(string token)
         {
-            using (var _db = new painel_taxservices_dbContext())
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 _db.Configuration.ProxyCreationEnabled = false;
 
-                return _db.LoginAutenticacaos.Where(v => v.token.Equals(token))
+                webpages_Users user = _db.LoginAutenticacaos.Where(v => v.token.Equals(token))
                             .Select(v => v.webpages_Users)
                             .FirstOrDefault<webpages_Users>();
+
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
+                return user;
             }
             //return _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v.webpages_Users).FirstOrDefault();
         }
@@ -642,11 +652,15 @@ namespace api.Bibliotecas
         /// <returns>0 se o ds_login for inválido</returns>
         public static Int32 GetIdUserPeloLogin(string ds_login)
         {
-            using (var _db = new painel_taxservices_dbContext())
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 _db.Configuration.ProxyCreationEnabled = false;
 
                 webpages_Users user = _db.webpages_Users.Where(o => o.ds_login.Equals(ds_login)).Select(o => o).FirstOrDefault();
+
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
 
                 if (user != null) return (Int32)user.id_users;
                 return 0;
@@ -687,14 +701,21 @@ namespace api.Bibliotecas
             webpages_Users user = GetUser(token);
             if (user != null)
             {
-                using (var _db = new painel_taxservices_dbContext())
+                using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
                 {
                     _db.Configuration.ProxyCreationEnabled = false;
-                    return _db.webpages_UsersInRoles
+
+                    webpages_Roles role = _db.webpages_UsersInRoles
                                             .Where(r => r.UserId == user.id_users)
                                             .Where(r => r.RoleId > 50)
                                             .Select(r => r.webpages_Roles)
                                             .FirstOrDefault();
+
+                    // Fecha a conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+
+                    return role;
                 }
             }
             return null;
@@ -803,13 +824,17 @@ namespace api.Bibliotecas
  
             Int32 UserId = GetIdUser(token);
 
-            using (var _db = new painel_taxservices_dbContext())
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 _db.Configuration.ProxyCreationEnabled = false;
                 lista = _db.grupo_empresa
                         .Where(g => g.id_vendedor == UserId)
                         .Select(g => g.id_grupo)
                         .ToList<Int32>();
+
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
 
                 return lista;
             }
@@ -825,13 +850,17 @@ namespace api.Bibliotecas
         {
             Int32 idMethod = 0;
 
-            using (var _db = new painel_taxservices_dbContext())
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 _db.Configuration.ProxyCreationEnabled = false;
 
                 var method = _db.webpages_Methods.Where(m => m.id_controller == idController)
                                                  .Where(m => m.ds_method.ToUpper().Equals(ds_method.ToUpper()))
                                                  .FirstOrDefault();
+
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
 
                 if (method != null)
                     idMethod = method.id_method;
@@ -851,14 +880,20 @@ namespace api.Bibliotecas
 
             if (UserId == 0) return 0;
 
-            using (var _db = new painel_taxservices_dbContext())
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 _db.Configuration.ProxyCreationEnabled = false;
-                return _db.LogAcesso1
+                Int32 idController = _db.LogAcesso1
                             .Where(e => e.idUsers == UserId)
                             .OrderByDescending(e => e.dtAcesso)
                             .Select(e => e.idController ?? 0)
                             .FirstOrDefault();
+
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
+
+                return idController;
             }
         }
 
@@ -878,13 +913,19 @@ namespace api.Bibliotecas
             Int32 idRole = GetRoleId(token);
             if (idRole == 0) return false;
 
-            using (var _db = new painel_taxservices_dbContext())
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 _db.Configuration.ProxyCreationEnabled = false;
 
-                return _db.webpages_Permissions.Where(p => p.id_roles == idRole)
+                bool temPermissao = _db.webpages_Permissions.Where(p => p.id_roles == idRole)
                                                .Where(p => p.webpages_Methods.id_controller == idController)
                                                .Count() > 0;
+
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
+
+                return temPermissao;
             }
         }
 
@@ -900,16 +941,22 @@ namespace api.Bibliotecas
             Int32 idRole = GetRoleId(token);
             if (idRole == 0) return false;
 
-            using (var _db = new painel_taxservices_dbContext())
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 _db.Configuration.ProxyCreationEnabled = false;
 
                 metodo = metodo.ToLower();
 
-                return _db.webpages_Permissions.Where(p => p.id_roles == idRole)
+                bool temPermissao = _db.webpages_Permissions.Where(p => p.id_roles == idRole)
                                                .Where(p => p.webpages_Methods.id_controller == idController)
                                                .Where(p => p.webpages_Methods.ds_method.ToLower().Equals(metodo))
                                                .Count() > 0;
+
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
+
+                return temPermissao;
             }
         }
 

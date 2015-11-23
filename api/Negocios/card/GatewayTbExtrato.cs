@@ -702,6 +702,7 @@ namespace api.Negocios.Card
                     // Tamanho máximo de dsArquivo é de 255 bytes
                     string dsArquivo = filePath.Length > 255 ? filePath.Substring(filePath.Length - 255) : filePath;
                         
+                    DateTime dataGeracaoExtrato = Convert.ToDateTime(ofxDocument.SignOn.DTServer.ToShortDateString());
 
                     #region ARMAZENA MOVIMENTAÇÕES BANCÁRIAS
                     foreach (var transacao in ofxDocument.Transactions)
@@ -729,6 +730,12 @@ namespace api.Negocios.Card
                         }
 
                         #endregion
+                        
+                        // Não importa movimentações em que a data é igual a data da geração do extrato
+                        if (/*dataGeracaoExtrato.Year != 1 && 
+                            dataGeracaoExtrato.Month != 1 &&
+                            dataGeracaoExtrato.Day != 1 &&*/ dataGeracaoExtrato >= extrato.dtExtrato)
+                                continue; // Não importa
 
                         #region OBTÉM O TOTAL DE MOVIMENTAÇÕES REPETIDAS PARA A MOVIMENTAÇÃO CORRENTE
                         IEnumerable<Transaction> trans = ofxDocument.Transactions.Where(t => t.Amount == extrato.vlMovimento)

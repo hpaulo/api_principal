@@ -65,6 +65,7 @@ namespace api.Controllers.Util
             document.Account = new Account();
             document.Account.BankID = "033";
             document.Transactions = new List<Transaction>();
+            document.SignOn = new SignOn();
 
             string strText = string.Empty;
             string[] PdfData = null;
@@ -128,7 +129,17 @@ namespace api.Controllers.Util
                         int index = temp[i].ToString().IndexOf("Período:") + "Periodo:".Length;
                         string periodo = temp[i].ToString().Substring(index);
                         if (periodo.Contains("Data/Hora"))
+                        {
+                            // DTSERVER
+                            string dtServer = periodo.Substring(periodo.IndexOf("Data/Hora") + 10);
+                            if (dtServer.Contains("às"))
+                                dtServer = dtServer.Substring(0, dtServer.IndexOf("às"));
+
+                            document.SignOn.DTServer = Convert.ToDateTime(dtServer.Trim());
+
+                            // Período
                             periodo = periodo.Substring(0, periodo.IndexOf("Data/Hora"));
+                        }
 
                         index = periodo.IndexOf(" a ");
                         string dtInicio = periodo.Substring(0, index).Trim();

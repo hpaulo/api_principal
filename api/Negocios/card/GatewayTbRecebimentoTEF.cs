@@ -8,19 +8,20 @@ using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
 using System.Globalization;
+using System.Data.Entity;
 
 namespace api.Negocios.Card
 {
     public class GatewayTbRecebimentoTEF
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTbRecebimentoTEF()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -68,7 +69,7 @@ namespace api.Negocios.Card
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<tbRecebimentoTEF> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<tbRecebimentoTEF> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.tbRecebimentoTEFs.AsQueryable<tbRecebimentoTEF>();
@@ -326,6 +327,9 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
+            // Abre nova conexão com a base
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+
             try
             {
                 //DECLARAÇÕES
@@ -366,9 +370,8 @@ namespace api.Negocios.Card
                     queryString.Remove("" + (int)CAMPOS.ID_GRUPO); 
                 }
 
-
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = query.Count();
@@ -549,7 +552,6 @@ namespace api.Negocios.Card
                     CollectionTbRecebimentoTEF = subQuery.ToList<dynamic>();
                 }
 
-
                 retorno.Registros = CollectionTbRecebimentoTEF;
 
                 return retorno;
@@ -563,6 +565,12 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
+            }
         }
         /// <summary>
         /// Adiciona nova TbRecebimentoTEF
@@ -571,20 +579,34 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Int32 Add(string token, tbRecebimentoTEF param)
         {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+            // Transação
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 _db.tbRecebimentoTEFs.Add(param);
                 _db.SaveChanges();
+                // Commit
+                transaction.Commit();
                 return param.idRecebimentoTEF;
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar recebimento tef" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
 
@@ -596,19 +618,33 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Delete(string token, Int32 idRecebimentoTEF)
         {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+            // Transação
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 _db.tbRecebimentoTEFs.Remove(_db.tbRecebimentoTEFs.Where(e => e.idRecebimentoTEF.Equals(idRecebimentoTEF)).First());
                 _db.SaveChanges();
+                // Commit
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar recebimento tef" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
         /// <summary>
@@ -618,17 +654,16 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void Update(string token, tbRecebimentoTEF param)
         {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+            // Transação
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbRecebimentoTEF value = _db.tbRecebimentoTEFs
                         .Where(e => e.idRecebimentoTEF.Equals(param.idRecebimentoTEF))
                         .First<tbRecebimentoTEF>();
 
-                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
-
-
-                if (param.idRecebimentoTEF != null && param.idRecebimentoTEF != value.idRecebimentoTEF)
-                    value.idRecebimentoTEF = param.idRecebimentoTEF;
                 if (param.cdGrupo != null && param.cdGrupo != value.cdGrupo)
                     value.cdGrupo = param.cdGrupo;
                 if (param.nrCNPJ != null && param.nrCNPJ != value.nrCNPJ)
@@ -676,15 +711,25 @@ namespace api.Negocios.Card
                 if (param.cdEstabelecimentoHost != null && param.cdEstabelecimentoHost != value.cdEstabelecimentoHost)
                     value.cdEstabelecimentoHost = param.cdEstabelecimentoHost;
                 _db.SaveChanges();
+                // Commit
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento tef" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
 

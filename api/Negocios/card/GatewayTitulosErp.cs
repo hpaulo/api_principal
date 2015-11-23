@@ -19,14 +19,14 @@ namespace api.Negocios.Card
 {
     public class GatewayTitulosErp
     {
-        public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+       // public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTitulosErp()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+           // _db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace api.Negocios.Card
 
 
 
-        private static Retorno carregaTitulos(string token, string dsAPI, string data, int pageSize = 0, int pageNumber = 0)
+        private static Retorno carregaTitulos(painel_taxservices_dbContext _db, string token, string dsAPI, string data, int pageSize = 0, int pageNumber = 0)
         {
             // Coloca a data no padrão de sql
             data = data.Substring(0, 4) + "-" + data.Substring(4, 2) + "-" + data.Substring(6, 2);
@@ -148,14 +148,16 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
         {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
             try
             {
-                try
-                {
-                    ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+                //try
+                //{
+                //    ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
 
-                }
-                catch { }
+                //}
+                //catch { }
 
                 //DECLARAÇÕES
                 string outValue = null;
@@ -178,7 +180,7 @@ namespace api.Negocios.Card
                 if (grupo_empresa.dsAPI == null || grupo_empresa.dsAPI.Equals(""))
                     throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
 
-                return carregaTitulos(token, grupo_empresa.dsAPI, data, pageSize, pageNumber);
+                return carregaTitulos(_db, token, grupo_empresa.dsAPI, data, pageSize, pageNumber);
 
             }
             catch (Exception e)
@@ -190,6 +192,12 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
+            }
         }
 
         /// <summary>
@@ -199,14 +207,16 @@ namespace api.Negocios.Card
         /// <returns></returns>
         public static void ImportaTitulos(string token, ImportaTitulos param)
         {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
             try
             {
-                try
-                {
-                    ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+                //try
+                //{
+                //    ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
 
-                }
-                catch { }
+                //}
+                //catch { }
 
                 if (param != null) 
                 { 
@@ -220,7 +230,7 @@ namespace api.Negocios.Card
                     if (grupo_empresa.dsAPI == null || grupo_empresa.dsAPI.Equals(""))
                         throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
 
-                    Retorno retorno = carregaTitulos(token, grupo_empresa.dsAPI, param.data);
+                    Retorno retorno = carregaTitulos(_db, token, grupo_empresa.dsAPI, param.data);
 
                     foreach (dynamic tit in retorno.Registros)
                     {
@@ -249,11 +259,11 @@ namespace api.Negocios.Card
                                                                 .FirstOrDefault();
 
                         if (titulo == null)
-                            GatewayTbRecebimentoTitulo.Add(token, tbRecebimentoTitulo);
+                            GatewayTbRecebimentoTitulo.Add(token, tbRecebimentoTitulo, _db);
                         else
                         {
                             tbRecebimentoTitulo.idRecebimentoTitulo = titulo.idRecebimentoTitulo;
-                            GatewayTbRecebimentoTitulo.Update(token, tbRecebimentoTitulo);
+                            GatewayTbRecebimentoTitulo.Update(token, tbRecebimentoTitulo, _db);
                         }
                     }
                 }
@@ -266,6 +276,12 @@ namespace api.Negocios.Card
                     throw new Exception(erro.Equals("") ? "Falha ao importar títulos ERP" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                // Fecha a conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
 
