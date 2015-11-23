@@ -5,6 +5,7 @@ namespace api.Models
 {
     public partial class LogAcesso1
     {
+        public int idLogAcesso { get; set; }
         public Nullable<int> idUsers { get; set; }
         public Nullable<int> idController { get; set; }
         public Nullable<int> idMethod { get; set; }
