@@ -17,14 +17,14 @@ namespace api.Negocios.Card
     public class GatewayConciliacaoRelatorios
     {
 
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayConciliacaoRelatorios()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -41,8 +41,12 @@ namespace api.Negocios.Card
         /// Retorna a lista de conciliação bancária
         /// </summary>
         /// <returns></returns>        
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            // Abre conexão
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 //DECLARAÇÕES
@@ -67,7 +71,7 @@ namespace api.Negocios.Card
                 }
                 else throw new Exception("Uma data deve ser selecionada como filtro de conciliação bancária!");
                 // GRUPO EMPRESA => OBRIGATÓRIO!
-                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo == 0 && queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
                     IdGrupo = Convert.ToInt32(queryString["" + (int)CAMPOS.ID_GRUPO]);
                 if (IdGrupo != 0)
@@ -78,7 +82,7 @@ namespace api.Negocios.Card
                 }
                 else throw new Exception("Um grupo deve ser selecionado como filtro de relatório de conciliação!");
                 // FILIAL
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (CnpjEmpresa.Equals("") && queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
                     CnpjEmpresa = queryString["" + (int)CAMPOS.NU_CNPJ];
                 if (!CnpjEmpresa.Equals(""))
@@ -121,9 +125,9 @@ namespace api.Negocios.Card
 
 
                 // OBTÉM AS QUERIES                
-                IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(0, (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, 0, 0, 0, queryStringRecebimentoParcela);
-                IQueryable<tbRecebimentoAjuste> queryTbRecebimentoAjuste = GatewayTbRecebimentoAjuste.getQuery(0, (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, 0, 0, queryStringTbRecebimentoAjuste);
-                IQueryable<tbExtrato> queryExtrato = GatewayTbExtrato.getQuery(0, (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, 0, 0, 0, queryStringExtrato);
+                IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(_db, 0, (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, 0, 0, 0, queryStringRecebimentoParcela);
+                IQueryable<tbRecebimentoAjuste> queryTbRecebimentoAjuste = GatewayTbRecebimentoAjuste.getQuery(_db, 0, (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, 0, 0, queryStringTbRecebimentoAjuste);
+                IQueryable<tbExtrato> queryExtrato = GatewayTbExtrato.getQuery(_db, 0, (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, 0, 0, 0, queryStringExtrato);
 
 
                 List<ConciliacaoRelatorios> rRecebimentoParcela = queryRecebimentoParcela.Select(t => new ConciliacaoRelatorios
@@ -159,15 +163,15 @@ namespace api.Negocios.Card
                 List<ConciliacaoRelatorios> rRecebimentoExtrato = queryExtrato.Select(t => new ConciliacaoRelatorios
                 {
                     tipo = "E",
-                    adquirente = GatewayTbExtrato._db.tbBancoParametro.Where(p => p.dsMemo.Equals(t.dsDocumento))
+                    adquirente = /*GatewayTbExtrato.*/_db.tbBancoParametro.Where(p => p.dsMemo.Equals(t.dsDocumento))
                                                                                                  .Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco))
                                                                                                  .Select(p => p.tbAdquirente.nmAdquirente.ToUpper())
                                                                                                  .FirstOrDefault() ?? "Indefinida",
-                    bandeira = GatewayTbExtrato._db.tbBancoParametro.
+                    bandeira = /*GatewayTbExtrato.*/_db.tbBancoParametro.
                                                     Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco)
                                                     && p.dsMemo.Equals(t.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? "Indefinida"
                                                     ).FirstOrDefault() ?? "Indefinida",
-                    tipocartao = GatewayTbExtrato._db.tbBancoParametro.
+                    tipocartao = /*GatewayTbExtrato.*/_db.tbBancoParametro.
                                                     Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco)
                                                     && p.dsMemo.Equals(t.dsDocumento)).Select(p => p.dsTipoCartao ?? ""
                                                     ).FirstOrDefault() ?? "",
@@ -285,6 +289,15 @@ namespace api.Negocios.Card
                     throw new Exception(erro.Equals("") ? "Falha ao listar adquirente" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

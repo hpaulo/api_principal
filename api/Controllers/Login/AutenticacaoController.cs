@@ -23,12 +23,18 @@ namespace api.Controllers.Login
         public Boolean Mobile = false;
 
 
-        private static Autenticado AcessoUsuarioLogado(string token, Int32 id_users)
+        private static Autenticado AcessoUsuarioLogado(string token, Int32 id_users, painel_taxservices_dbContext _dbContext = null)
         {
-            using (var _db = new painel_taxservices_dbContext())
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+
+            try
             {
 
-                _db.Configuration.ProxyCreationEnabled = false;
+                //_db.Configuration.ProxyCreationEnabled = false;
 
                 var usuario = _db.webpages_Users.Where(u => u.id_users == id_users)
                                                     .Select(u => new
@@ -282,46 +288,63 @@ namespace api.Controllers.Login
                     controllers = controllers,
                 };
             }
+            catch
+            {
+                return null;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
         // GET /autenticacao/
         public Autenticado Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
             try
             {
  
-                if (!Permissoes.Autenticado(token)) throw new HttpResponseException(HttpStatusCode.Unauthorized);
+                if (!Permissoes.Autenticado(token, _db)) throw new HttpResponseException(HttpStatusCode.Unauthorized);
 
-                using (var _db = new painel_taxservices_dbContext())
-                {
-                    _db.Configuration.ProxyCreationEnabled = false;
+                //_db.Configuration.ProxyCreationEnabled = false;
 
-                    var verify = (from v in _db.LoginAutenticacaos
-                                  where v.token.Equals(token)
-                                  select v
-                                    ).Single();
+                var verify = (from v in _db.LoginAutenticacaos
+                                where v.token.Equals(token)
+                                select v
+                                ).Single();
 
-                    if (verify == null) throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                if (verify == null) throw new HttpResponseException(HttpStatusCode.InternalServerError);
 
-                    #region Log de Acesso ao Sistema
-                    api.Models.Object.Log log = new api.Models.Object.Log();
-                    log.IdUser = verify.idUsers;
-                    log.IdController = 45;
-                    log.IdMethod = 51;
-                    log.DtAcesso = DateTime.Now;
+                #region Log de Acesso ao Sistema
+                api.Models.Object.Log log = new api.Models.Object.Log();
+                log.IdUser = verify.idUsers;
+                log.IdController = 45;
+                log.IdMethod = 51;
+                log.DtAcesso = DateTime.Now;
 
-                    LogAcesso.New(log);
-                    #endregion
+                LogAcesso.New(log);
+                #endregion
 
-                    return AcessoUsuarioLogado(token, verify.idUsers);
-                }
+                return AcessoUsuarioLogado(token, verify.idUsers, _db);
 
             }
             catch (Exception e)
             {
                 if (e.Message.Equals("401")) throw new HttpResponseException(HttpStatusCode.Unauthorized);
                 else throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
 
@@ -334,11 +357,14 @@ namespace api.Controllers.Login
             {
                 if (ModelState.IsValid && WebSecurity.Login(data.usuario, data.senha, persistCookie: false))
                 {
+                    // Abre nova conexão
+                    painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
                     int userId = WebSecurity.GetUserId(data.usuario);
-                    using (var _db = new painel_taxservices_dbContext())
+
+                    try
                     {
-                        _db.Configuration.ProxyCreationEnabled = false;
+                        //_db.Configuration.ProxyCreationEnabled = false;
 
 
                         #region Log de Acesso ao Sistema
@@ -375,8 +401,18 @@ namespace api.Controllers.Login
                             token = verify.token;
 
 
-                        return AcessoUsuarioLogado(token, userId);
+                        return AcessoUsuarioLogado(token, userId, _db);
 
+                    }
+                    catch(Exception e)
+                    {
+                        throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                    }
+                    finally
+                    {
+                        // Fecha conexão
+                        _db.Database.Connection.Close();
+                        _db.Dispose();
                     }
 
                 }

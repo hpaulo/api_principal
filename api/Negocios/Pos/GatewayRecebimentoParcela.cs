@@ -10,19 +10,20 @@ using System.Globalization;
 using System.Data.Entity.Validation;
 using System.Web.Http;
 using api.Negocios.Card;
+using System.Data.Entity;
 
 namespace api.Negocios.Pos
 {
     public class GatewayRecebimentoParcela
     {
-        public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayRecebimentoParcela()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -87,7 +88,7 @@ namespace api.Negocios.Pos
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        public static IQueryable<RecebimentoParcela> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        public static IQueryable<RecebimentoParcela> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.RecebimentoParcelas.AsQueryable();
@@ -477,13 +478,16 @@ namespace api.Negocios.Pos
         /// Retorna RecebimentoParcela/RecebimentoParcela
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 // Implementar o filtro por Grupo apartir do TOKEN do Usuário
                 string outValue = null;
-                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo != 0)
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
@@ -491,7 +495,7 @@ namespace api.Negocios.Pos
                     else
                         queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
                 }
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (!CnpjEmpresa.Equals(""))
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
@@ -506,7 +510,7 @@ namespace api.Negocios.Pos
                 retorno.Totais = new Dictionary<string, object>();
 
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
 
                 bool exportar = queryString.TryGetValue("" + (int)CAMPOS.EXPORTAR, out outValue);
@@ -843,7 +847,7 @@ namespace api.Negocios.Pos
                     if (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
                         queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue))
                     {
-                        List<dynamic> ajustes = GatewayTbRecebimentoAjuste.getQuery(1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
+                        List<dynamic> ajustes = GatewayTbRecebimentoAjuste.getQuery(_db, 1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
                                             .Select(e => new
                                             {
                                                 ajuste = new { idRecebimentoAjuste = e.idRecebimentoAjuste },
@@ -932,7 +936,7 @@ namespace api.Negocios.Pos
                         if (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
                             queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue))
                         {
-                            ajustes = GatewayTbRecebimentoAjuste.getQuery(1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
+                            ajustes = GatewayTbRecebimentoAjuste.getQuery(_db, 1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
                                                     .GroupBy(x => new { x.empresa, x.tbBandeira })
                                                     .OrderBy(e => e.Key.empresa.ds_fantasia)
                                                     .ThenBy(e => e.Key.empresa.filial)
@@ -987,7 +991,7 @@ namespace api.Negocios.Pos
                         if (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
                             queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue))
                         {
-                            ajustes = GatewayTbRecebimentoAjuste.getQuery(1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
+                            ajustes = GatewayTbRecebimentoAjuste.getQuery(_db, 1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
                                                     .GroupBy(x => new { x.empresa, x.tbBandeira })
                                                     .OrderBy(e => e.Key.empresa.ds_fantasia)
                                                     .ThenBy(e => e.Key.empresa.filial)
@@ -1105,6 +1109,15 @@ namespace api.Negocios.Pos
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -1114,22 +1127,39 @@ namespace api.Negocios.Pos
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, RecebimentoParcela param)
+        public static Int32 Add(string token, RecebimentoParcela param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 _db.RecebimentoParcelas.Add(param);
                 _db.SaveChanges();
+                // Commit
+                transaction.Commit();
                 return param.idRecebimento;
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar recebimento parcela" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -1139,8 +1169,12 @@ namespace api.Negocios.Pos
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 idRecebimento, Int32 numParcela)
+        public static void Delete(string token, Int32 idRecebimento, Int32 numParcela, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 RecebimentoParcela recebimentoparcela = _db.RecebimentoParcelas.Where(e => e.idRecebimento == idRecebimento)
@@ -1155,17 +1189,31 @@ namespace api.Negocios.Pos
                 _db.RecebimentoParcelas.Remove(recebimentoparcela);
                 _db.SaveChanges();
 
+                // Commit
+                transaction.Commit();
+
                 // Remove a venda toda
                 if(removeVenda) GatewayRecebimento.Delete(token, idRecebimento);
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar recebimento parcela" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -1176,8 +1224,12 @@ namespace api.Negocios.Pos
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token,  RecebimentoParcela param)
+        public static void Update(string token, RecebimentoParcela param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
 
@@ -1200,15 +1252,29 @@ namespace api.Negocios.Pos
                 //if (param.idRecebimentoTitulo != null && param.idRecebimentoTitulo != value.idRecebimentoTitulo)
                 //    value.idRecebimentoTitulo = param.idRecebimentoTitulo;
                 _db.SaveChanges();
+
+                // Commit
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento parcela" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

@@ -14,14 +14,14 @@ namespace api.Negocios.Card
 {
     public class GatewayRelatorioVendas
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayRelatorioVendas()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -39,8 +39,11 @@ namespace api.Negocios.Card
         /// Retorna a lista de conciliação bancária
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 //DECLARAÇÕES
@@ -81,7 +84,7 @@ namespace api.Negocios.Card
                 else throw new Exception("Data ou período de vendas deve ser informado!");
 
                 // GRUPO EMPRESA => OBRIGATÓRIO!
-                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo == 0 && queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
                     IdGrupo = Convert.ToInt32(queryString["" + (int)CAMPOS.ID_GRUPO]);
                 if (IdGrupo != 0)
@@ -91,7 +94,7 @@ namespace api.Negocios.Card
                 }
                 else throw new Exception("Um grupo deve ser selecionado como filtro de recebíveis futuros!");
                 // FILIAL
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (CnpjEmpresa.Equals("") && queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
                     CnpjEmpresa = queryString["" + (int)CAMPOS.NU_CNPJ];
                 if (!CnpjEmpresa.Equals(""))
@@ -102,7 +105,7 @@ namespace api.Negocios.Card
 
 
                 // OBTÉM A QUERY
-                IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(0, (int)GatewayRecebimentoParcela.CAMPOS.DTAVENDA, 0, 0, 0, queryStringRecebimentoParcela);
+                IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(_db, 0, (int)GatewayRecebimentoParcela.CAMPOS.DTAVENDA, 0, 0, 0, queryStringRecebimentoParcela);
 
                 List<RelatorioVendas> vendas = queryRecebimentoParcela.Select(r => new RelatorioVendas
                 {
@@ -219,6 +222,15 @@ namespace api.Negocios.Card
                     throw new Exception(erro.Equals("") ? "Falha ao listar adquirente" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
     }

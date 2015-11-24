@@ -11,20 +11,21 @@ using api.Negocios.Pos;
 using Microsoft.Ajax.Utilities;
 using api.Negocios.Util;
 using System.Data.SqlClient;
+using System.Data.Entity;
 
 namespace api.Negocios.Card
 {
     public class GatewayConciliacaoBancaria
     {
 
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayConciliacaoBancaria()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+           // _db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -440,8 +441,11 @@ namespace api.Negocios.Card
         /// Retorna a lista de conciliação bancária
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 //DECLARAÇÕES
@@ -465,7 +469,7 @@ namespace api.Negocios.Card
                     queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, data);
                 }
                 // GRUPO EMPRESA => OBRIGATÓRIO!
-                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo == 0 && queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
                     IdGrupo = Convert.ToInt32(queryString["" + (int)CAMPOS.ID_GRUPO]);
                 if (IdGrupo != 0)
@@ -476,7 +480,7 @@ namespace api.Negocios.Card
                 }
                 else throw new Exception("Um grupo deve ser selecionado como filtro de conciliação bancária!");
                 // FILIAL
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (CnpjEmpresa.Equals("") && queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
                     CnpjEmpresa = queryString["" + (int)CAMPOS.NU_CNPJ];
                 if (!CnpjEmpresa.Equals(""))
@@ -549,9 +553,9 @@ namespace api.Negocios.Card
 
 
                 // OBTÉM AS QUERIES
-                IQueryable<tbRecebimentoAjuste> queryAjustes = GatewayTbRecebimentoAjuste.getQuery(0, (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, 0, 0, queryStringAjustes);
-                IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(0, (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, 0, 0, 0, queryStringRecebimentoParcela);
-                IQueryable<tbExtrato> queryExtrato = GatewayTbExtrato.getQuery(0, (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, 0, 0, 0, queryStringExtrato);
+                IQueryable<tbRecebimentoAjuste> queryAjustes = GatewayTbRecebimentoAjuste.getQuery(_db, 0, (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, 0, 0, queryStringAjustes);
+                IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(_db, 0, (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, 0, 0, 0, queryStringRecebimentoParcela);
+                IQueryable<tbExtrato> queryExtrato = GatewayTbExtrato.getQuery(_db, 0, (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, 0, 0, 0, queryStringExtrato);
 
                 // SE TIVER CONTA CORRENTE ASSOCIADA E NENHUMA FILIAL FOR ESPECIFICADA, SÓ OBTÉM OS DADOS DAS FILIAIS ASSOCIADAS À CONTA (O MESMO VALE PARA ADQUIRENTE)
                 if (!contaCorrente.Equals("")) 
@@ -598,10 +602,10 @@ namespace api.Negocios.Card
                                                     nrDocumento = e.nrDocumento,
                                                     vlMovimento = e.vlMovimento ?? new decimal(0.0),
                                                     dsDocumento = e.dsDocumento,
-                                                    adquirente = GatewayTbExtrato._db.tbBancoParametro.Where(p => p.dsMemo.Equals(e.dsDocumento)).Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco)).Select(p => p.tbAdquirente.nmAdquirente.ToUpper() ?? "").FirstOrDefault() ?? "",
-                                                    filial = GatewayTbExtrato._db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia + (p.empresa.filial != null ? " " + p.empresa.filial : "")) ?? "").FirstOrDefault() ?? "",
-                                                    bandeira = GatewayTbExtrato._db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? "").FirstOrDefault() ?? "",
-                                                    tipo = GatewayTbExtrato._db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.dsTipoCartao ?? "").FirstOrDefault() ?? "",
+                                                    adquirente = /*GatewayTbExtrato.*/_db.tbBancoParametro.Where(p => p.dsMemo.Equals(e.dsDocumento)).Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco)).Select(p => p.tbAdquirente.nmAdquirente.ToUpper() ?? "").FirstOrDefault() ?? "",
+                                                    filial = /*GatewayTbExtrato.*/_db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia + (p.empresa.filial != null ? " " + p.empresa.filial : "")) ?? "").FirstOrDefault() ?? "",
+                                                    bandeira = /*GatewayTbExtrato.*/_db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? "").FirstOrDefault() ?? "",
+                                                    tipo = /*GatewayTbExtrato.*/_db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.dsTipoCartao ?? "").FirstOrDefault() ?? "",
                                                     Conta = new ConciliacaoBancaria.ConciliacaoConta
                                                     {
                                                         CdContaCorrente = e.tbContaCorrente.cdContaCorrente,
@@ -846,12 +850,12 @@ namespace api.Negocios.Card
                                                                                     Id = e.idExtrato,
                                                                                     Documento = e.nrDocumento,
                                                                                     Valor = e.vlMovimento ?? new decimal(0.0),
-                                                                                    Filial = GatewayTbExtrato._db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia + (p.empresa.filial != null ? " " + p.empresa.filial : "")) ?? "").FirstOrDefault() ?? "",
+                                                                                    Filial = /*GatewayTbExtrato.*/_db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia + (p.empresa.filial != null ? " " + p.empresa.filial : "")) ?? "").FirstOrDefault() ?? "",
                                                                                 }
                                                                             },
                                                                 ValorTotal = e.vlMovimento ?? new decimal(0.0),
                                                                 Data = e.dtExtrato,
-                                                                Adquirente = GatewayTbExtrato._db.tbBancoParametro.Where(p => p.dsMemo.Equals(e.dsDocumento))
+                                                                Adquirente = /*GatewayTbExtrato.*/_db.tbBancoParametro.Where(p => p.dsMemo.Equals(e.dsDocumento))
                                                                                                  .Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco))
                                                                                                  .Select(p => p.tbAdquirente.nmAdquirente.ToUpper() ?? "")
                                                                                                  .FirstOrDefault() ?? "",
@@ -863,9 +867,9 @@ namespace api.Negocios.Card
                                                                     NrConta = e.tbContaCorrente.nrConta,
                                                                     CdBanco = e.tbContaCorrente.cdBanco
                                                                 },
-                                                                Bandeira = GatewayTbExtrato._db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? "").FirstOrDefault() ?? "",
-                                                                TipoCartao = GatewayTbExtrato._db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.dsTipoCartao.ToUpper().TrimEnd() ?? "").FirstOrDefault() ?? "",
-                                                                Filial = GatewayTbExtrato._db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia + (p.empresa.filial != null ? " " + p.empresa.filial : "")) ?? "").FirstOrDefault() ?? "",
+                                                                Bandeira = /*GatewayTbExtrato.*/_db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? "").FirstOrDefault() ?? "",
+                                                                TipoCartao = /*GatewayTbExtrato.*/_db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.dsTipoCartao.ToUpper().TrimEnd() ?? "").FirstOrDefault() ?? "",
+                                                                Filial = /*GatewayTbExtrato.*/_db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia + (p.empresa.filial != null ? " " + p.empresa.filial : "")) ?? "").FirstOrDefault() ?? "",
                                                             }).ToList<ConciliacaoBancaria>();
                     #endregion
 
@@ -1564,6 +1568,15 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -1572,8 +1585,12 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Post(string token, List<ConciliaRecebimentoParcela> param)
+        public static void Post(string token, List<ConciliaRecebimentoParcela> param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 foreach (ConciliaRecebimentoParcela grupoExtrato in param)
@@ -1630,16 +1647,29 @@ namespace api.Negocios.Card
                     }
 
                 }
+                // Commit
+                //transaction.Commit();
 
             }
             catch (Exception e)
             {
+                // Rollback
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento parcela" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {                
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -1650,8 +1680,12 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, RecebimentosParcela param)
+        public static void Update(string token, RecebimentosParcela param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
 
@@ -1689,15 +1723,28 @@ namespace api.Negocios.Card
                     }
 
                 }
+                // Commit
+                //transaction.Commit();
             }
             catch (Exception e)
             {
+                // Rollback
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento parcela" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -1709,28 +1756,18 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static List<List<string>> Patch(string token, List<BaixaTitulos> param)
+        public static List<List<string>> Patch(string token, List<BaixaTitulos> param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 List<List<string>> arquivos = new List<List<String>>();
                 foreach (BaixaTitulos baixa in param)
                 {
-                    //if (baixa.dataRecebimento == null || baixa.idsRecebimento == null || baixa.idsRecebimento.Count == 0)
-                    //    continue;
-
-                    //string data = baixa.dataRecebimento.Substring(0, 4) + "-" + 
-                    //              baixa.dataRecebimento.Substring(4, 2) + "-" +
-                    //              baixa.dataRecebimento.Substring(6, 2);
-                    //string ids = String.Empty;
-                    //foreach (int idRecebimento in baixa.idsRecebimento)
-                    //    ids += idRecebimento + "|";
-
-                    //int total = baixa.idsRecebimento.Count;
-
-                    //arquivos.Add(_db.Database.SqlQuery<string>("EXECUTE [card].[sp_GeraCsvArquivoBaixa_DealerNet] '" + data + "', '" + ids + "', " + total).ToList<string>());
-
-                    arquivos.Add(_db.Database.SqlQuery<string>("EXECUTE [card].[sp_GeraCsvArquivoBaixa_DealerNet] " + baixa.idExtrato).ToList<string>());
+                    arquivos.Add(_db.Database.SqlQuery<string>("EXECUTE [card].[sp_GeraCsvArquivoBaixa_DealerNet] " + baixa.idExtrato)
+                            .ToList<string>());
                 }
 
                 return arquivos;
@@ -1744,6 +1781,15 @@ namespace api.Negocios.Card
                     throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento parcela" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

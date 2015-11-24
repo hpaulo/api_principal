@@ -12,19 +12,20 @@ using OFXSharp;
 using System.IO;
 using System.Data.Entity.Validation;
 using api.Controllers.Util;
+using System.Data.Entity;
 
 namespace api.Negocios.Card
 {
     public class GatewayTbExtrato
     {
-        public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTbExtrato()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -62,7 +63,7 @@ namespace api.Negocios.Card
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        public static IQueryable<tbExtrato> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        public static IQueryable<tbExtrato> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.tbExtratos.AsQueryable<tbExtrato>();
@@ -354,20 +355,40 @@ namespace api.Negocios.Card
         /// Retorna TbExtrato/TbExtrato
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbExtrato = new List<dynamic>();
                 Retorno retorno = new Retorno();
 
+                string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
+                if (!CnpjEmpresa.Equals(""))
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
+                }
+
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                var queryTotal = query;
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
 
                 // PAGINAÇÃO
@@ -425,14 +446,27 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
         /// <summary>
         /// Adiciona nova TbExtrato
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbExtrato param)
+        public static Int32 Add(string token, tbExtrato param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 // Valida param para não adicionar duplicidades
@@ -447,16 +481,29 @@ namespace api.Negocios.Card
                 if (extrato != null) throw new Exception("Extrato já existe");
                 _db.tbExtratos.Add(param);
                 _db.SaveChanges();
+                // Commit
+                transaction.Commit();
                 return param.idExtrato;
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar extrato" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -466,8 +513,12 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 idExtrato)
+        public static void Delete(string token, Int32 idExtrato, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbExtrato extrato = _db.tbExtratos.Where(e => e.idExtrato == idExtrato).FirstOrDefault();
@@ -483,15 +534,28 @@ namespace api.Negocios.Card
                 // Remove o extrato da base
                 _db.tbExtratos.Remove(extrato);
                 _db.SaveChanges();
+                // Commit
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar estrato" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
         /*/// <summary>
@@ -523,14 +587,18 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static object Patch(string token, Dictionary<string, string> queryString, tbLogAcessoUsuario log)
+        public static object Patch(string token, Dictionary<string, string> queryString, tbLogAcessoUsuario log, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 string pastaExtratos = HttpContext.Current.Server.MapPath("~/App_Data/Extratos/");
 
                 // Tem que estar associado a um grupo
-                Int32 idGrupo = Permissoes.GetIdGrupo(token);
+                Int32 idGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (idGrupo == 0) throw new Exception("Grupo inválido");
 
                 // Tem que informar por filtro a conta corrente
@@ -734,7 +802,7 @@ namespace api.Negocios.Card
                         // Não importa movimentações em que a data é igual a data da geração do extrato
                         if (/*dataGeracaoExtrato.Year != 1 && 
                             dataGeracaoExtrato.Month != 1 &&
-                            dataGeracaoExtrato.Day != 1 &&*/ dataGeracaoExtrato >= extrato.dtExtrato)
+                            dataGeracaoExtrato.Day != 1 &&*/ dataGeracaoExtrato < extrato.dtExtrato)
                                 continue; // Não importa
 
                         #region OBTÉM O TOTAL DE MOVIMENTAÇÕES REPETIDAS PARA A MOVIMENTAÇÃO CORRENTE
@@ -841,6 +909,9 @@ namespace api.Negocios.Card
                     }
                     #endregion
 
+                    // Commit
+                    //transaction.Commit();
+
                     // Se não armazenou pelo menos um elemento, deleta o arquivo do disco
                     if (!armazenou)
                     {
@@ -864,12 +935,23 @@ namespace api.Negocios.Card
             }
             catch (Exception e)
             {
+                // Rollback
+                //transaction.Rollback();
                 /*if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao enviar extrato" : erro);
                 }*/
-                throw new Exception(e.ToString());//e.Message);
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

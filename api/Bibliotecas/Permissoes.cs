@@ -47,11 +47,15 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="dscontrollers"></param> Lista dos dscontrollers, do filho para o pai
         /// <returns></returns>
-        private static Int32 GetIdController(List<string> dscontrollers)
+        private static Int32 GetIdController(List<string> dscontrollers, painel_taxservices_dbContext _dbContext = null)
         {
-            using (var _db = new painel_taxservices_dbContext())
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
+            try
             {
-                _db.Configuration.ProxyCreationEnabled = false;
+                //_db.Configuration.ProxyCreationEnabled = false;
 
                 if (dscontrollers.Count == 0) return 0;
 
@@ -80,7 +84,18 @@ namespace api.Bibliotecas
 
                 if (list.Count > 1) return list[0].id_controller;
                 return 0;
-
+            }
+            catch
+            {
+                return 0;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -591,23 +606,34 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static bool Autenticado(string token)
+        public static bool Autenticado(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            try 
             {
 
-                _db.Configuration.ProxyCreationEnabled = false;
+                //_db.Configuration.ProxyCreationEnabled = false;
 
                 var verify = _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v).FirstOrDefault();
 
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
-
                 if (verify != null)
                     return true;
+                return false;
             }
-            return false;
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
         /// <summary>
@@ -615,20 +641,30 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns>Null se o token for inválido</returns>
-        public static webpages_Users GetUser(string token)
+        public static webpages_Users GetUser(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            try
             {
-                _db.Configuration.ProxyCreationEnabled = false;
+                //_db.Configuration.ProxyCreationEnabled = false;
 
-                webpages_Users user = _db.LoginAutenticacaos.Where(v => v.token.Equals(token))
+                return _db.LoginAutenticacaos.Where(v => v.token.Equals(token))
                             .Select(v => v.webpages_Users)
                             .FirstOrDefault<webpages_Users>();
-
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
-                return user;
+            }
+            catch
+            {
+                return null;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
             //return _db.LoginAutenticacaos.Where(v => v.token.Equals(token)).Select(v => v.webpages_Users).FirstOrDefault();
         }
@@ -638,9 +674,9 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns>0 se o token for inválido</returns>
-        public static Int32 GetIdUser(string token)
+        public static Int32 GetIdUser(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            webpages_Users user = GetUser(token);
+            webpages_Users user = GetUser(token, _dbContext);
             if (user != null) return (Int32) user.id_users;
             return 0;
         }
@@ -650,20 +686,31 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="ds_login"></param>
         /// <returns>0 se o ds_login for inválido</returns>
-        public static Int32 GetIdUserPeloLogin(string ds_login)
+        public static Int32 GetIdUserPeloLogin(string ds_login, painel_taxservices_dbContext _dbContext = null)
         {
-            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            try
             {
-                _db.Configuration.ProxyCreationEnabled = false;
+                //_db.Configuration.ProxyCreationEnabled = false;
 
                 webpages_Users user = _db.webpages_Users.Where(o => o.ds_login.Equals(ds_login)).Select(o => o).FirstOrDefault();
 
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
-
                 if (user != null) return (Int32)user.id_users;
                 return 0;
+            }
+            catch
+            {
+                return 0;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -672,9 +719,9 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns>0 se o token for inválido ou se o usuário não estiver associado a algum grupo</returns>
-        public static Int32 GetIdGrupo(string token)
+        public static Int32 GetIdGrupo(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            webpages_Users user = GetUser(token);
+            webpages_Users user = GetUser(token, _dbContext);
             if (user != null && user.id_grupo != null) return (Int32) user.id_grupo;
             return 0;
         }
@@ -684,9 +731,9 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns>"" (string vazia) se o token for inválido ou se o usuário não estiver associado a alguma filial</returns>
-        public static string GetCNPJEmpresa(string token)
+        public static string GetCNPJEmpresa(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            webpages_Users user = GetUser(token);
+            webpages_Users user = GetUser(token, _dbContext);
             if (user != null && user.id_grupo != null && user.nu_cnpjEmpresa != null) return user.nu_cnpjEmpresa;
             return "";
         }
@@ -696,29 +743,39 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns>null se o token for inválido ou se o usuário não estiver associado a nenhuma role do novo portal (id > 50)</returns>
-        public static webpages_Roles GetRole(string token)
+        public static webpages_Roles GetRole(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            webpages_Users user = GetUser(token);
-            if (user != null)
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            try
             {
-                using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
+                webpages_Users user = GetUser(token, _db);
+                if (user != null)
                 {
-                    _db.Configuration.ProxyCreationEnabled = false;
+                    //_db.Configuration.ProxyCreationEnabled = false;
 
-                    webpages_Roles role = _db.webpages_UsersInRoles
+                    return _db.webpages_UsersInRoles
                                             .Where(r => r.UserId == user.id_users)
                                             .Where(r => r.RoleId > 50)
                                             .Select(r => r.webpages_Roles)
                                             .FirstOrDefault();
-
-                    // Fecha a conexão
+                }
+                return null;
+            }
+            catch
+            {
+                return null;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
                     _db.Database.Connection.Close();
                     _db.Dispose();
-
-                    return role;
                 }
             }
-            return null;
+            
         }
 
         /// <summary>
@@ -726,9 +783,9 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns>0 se o token for inválido ou se o usuário não estiver associado a nenhuma role do novo portal (id > 50)</returns>
-        public static Int32 GetRoleId(string token)
+        public static Int32 GetRoleId(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            webpages_Roles role = GetRole(token);
+            webpages_Roles role = GetRole(token, _dbContext);
             if (role != null) return role.RoleId;
             return 0;
         }
@@ -738,9 +795,9 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns>"" (string vazia) se o token for inválido ou se o usuário não estiver associado a nenhuma role do novo portal (id > 50)</returns>
-        public static String GetRoleName(string token)
+        public static String GetRoleName(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            webpages_Roles role = GetRole(token);
+            webpages_Roles role = GetRole(token, _dbContext);
             if (role != null) return role.RoleName;
             return "";
         }
@@ -750,9 +807,9 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static Int32 GetRoleLevel(string token)
+        public static Int32 GetRoleLevel(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            webpages_Roles role = GetRole(token);
+            webpages_Roles role = GetRole(token, _dbContext);
             if (role != null) return role.RoleLevel;
             return 4;
         }
@@ -762,9 +819,9 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static Int32 GetRoleLevelMin(string token)
+        public static Int32 GetRoleLevelMin(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            Int32 RoleLevel = GetRoleLevel(token);
+            Int32 RoleLevel = GetRoleLevel(token, _dbContext);
             if (RoleLevel > 1) return RoleLevel + 1;
             return RoleLevel;
         }
@@ -774,9 +831,9 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static bool isAtosRole(string token)
+        public static bool isAtosRole(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            Int32 RoleLevel = GetRoleLevel(token);
+            Int32 RoleLevel = GetRoleLevel(token, _dbContext);
             return RoleLevel >= 0 && RoleLevel <= 2;
         }
 
@@ -796,10 +853,28 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static bool isAtosRoleVendedor(string token)
+        public static bool isAtosRoleVendedor(string token, painel_taxservices_dbContext _dbContext = null)
         {
-            string RoleName = GetRoleName(token);
-            return isAtosRole(token) && RoleName.ToUpper().Equals("COMERCIAL");
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            try
+            {
+                string RoleName = GetRoleName(token, _db);
+                return isAtosRole(token, _db) && RoleName.ToUpper().Equals("COMERCIAL");
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
         /// <summary>
@@ -818,13 +893,17 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static List<Int32> GetIdsGruposEmpresasVendedor(string token)
+        public static List<Int32> GetIdsGruposEmpresasVendedor(string token, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
             List<Int32> lista = new List<Int32>();
  
-            Int32 UserId = GetIdUser(token);
+            Int32 UserId = GetIdUser(token, _db);
 
-            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
+            try
             {
                 _db.Configuration.ProxyCreationEnabled = false;
                 lista = _db.grupo_empresa
@@ -832,11 +911,19 @@ namespace api.Bibliotecas
                         .Select(g => g.id_grupo)
                         .ToList<Int32>();
 
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
-
                 return lista;
+            }
+            catch
+            {
+                return new List<Int32>();
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -846,26 +933,38 @@ namespace api.Bibliotecas
         /// <param name="idController"></param>
         /// <param name="ds_method"></param>
         /// <returns>0 se o método não existe para o controller</returns>
-        public static Int32 GetIdMethod(Int32 idController, string ds_method)
+        public static Int32 GetIdMethod(Int32 idController, string ds_method, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
             Int32 idMethod = 0;
 
-            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
+            try
             {
-                _db.Configuration.ProxyCreationEnabled = false;
+                //_db.Configuration.ProxyCreationEnabled = false;
 
                 var method = _db.webpages_Methods.Where(m => m.id_controller == idController)
                                                  .Where(m => m.ds_method.ToUpper().Equals(ds_method.ToUpper()))
                                                  .FirstOrDefault();
 
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
-
                 if (method != null)
                     idMethod = method.id_method;
 
                 return idMethod;
+            }
+            catch
+            {
+                return 0;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -874,27 +973,37 @@ namespace api.Bibliotecas
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static Int32 GetIdUltimoControllerAcessado(string token)
+        public static Int32 GetIdUltimoControllerAcessado(string token, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
             Int32 UserId = GetIdUser(token);
 
             if (UserId == 0) return 0;
 
-            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
+           try
             {
-                _db.Configuration.ProxyCreationEnabled = false;
-                Int32 idController = _db.LogAcesso1
+                //_db.Configuration.ProxyCreationEnabled = false;
+                return _db.LogAcesso1
                             .Where(e => e.idUsers == UserId)
                             .OrderByDescending(e => e.dtAcesso)
                             .Select(e => e.idController ?? 0)
                             .FirstOrDefault();
-
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
-
-                return idController;
             }
+           catch
+           {
+               return 0;
+           }
+           finally
+           {
+               if (_dbContext == null)
+               {
+                   _db.Database.Connection.Close();
+                   _db.Dispose();
+               }
+           }
         }
 
 
@@ -904,28 +1013,38 @@ namespace api.Bibliotecas
         /// <param name="token"></param>
         /// <param name="idController"></param>
         /// <returns></returns>
-        public static bool usuarioTemPermissaoController(string token, Int32 idController)
+        public static bool usuarioTemPermissaoController(string token, Int32 idController, painel_taxservices_dbContext _dbContext = null)
         {
             Int32 idControllerPortalMinhaConta = 91;
 
             if (idController == idControllerPortalMinhaConta) return true; // Minha conta => todos tem acesso
 
-            Int32 idRole = GetRoleId(token);
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
+            Int32 idRole = GetRoleId(token, _db);
             if (idRole == 0) return false;
 
-            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
+            try
             {
-                _db.Configuration.ProxyCreationEnabled = false;
+                //_db.Configuration.ProxyCreationEnabled = false;
 
-                bool temPermissao = _db.webpages_Permissions.Where(p => p.id_roles == idRole)
+                return _db.webpages_Permissions.Where(p => p.id_roles == idRole)
                                                .Where(p => p.webpages_Methods.id_controller == idController)
                                                .Count() > 0;
-
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
-
-                return temPermissao;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -936,12 +1055,16 @@ namespace api.Bibliotecas
         /// <param name="token"></param>
         /// <param name="idController"></param>
         /// <returns></returns>
-        public static bool usuarioTemPermissaoMetodoController(string token, Int32 idController, string metodo)
+        public static bool usuarioTemPermissaoMetodoController(string token, Int32 idController, string metodo, painel_taxservices_dbContext _dbContext = null)
         {
-            Int32 idRole = GetRoleId(token);
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
+            Int32 idRole = GetRoleId(token, _db);
             if (idRole == 0) return false;
 
-            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
+            try
             {
                 _db.Configuration.ProxyCreationEnabled = false;
 
@@ -952,11 +1075,19 @@ namespace api.Bibliotecas
                                                .Where(p => p.webpages_Methods.ds_method.ToLower().Equals(metodo))
                                                .Count() > 0;
 
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
-
                 return temPermissao;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -966,22 +1097,41 @@ namespace api.Bibliotecas
         /// <param name="token"></param>
         /// <param name="id_grupo"></param>
         /// <returns></returns>
-        public static Boolean usuarioPodeSeAssociarAoGrupo(string token, Int32 id_grupo)
+        public static Boolean usuarioPodeSeAssociarAoGrupo(string token, Int32 id_grupo, painel_taxservices_dbContext _dbContext = null)
         {
-            bool isAtosVendedor = isAtosRoleVendedor(token);
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
 
-            // Perfil ATOS não vendedor pode se associar a qualquer grupo
-            if (isAtosRole(token) && !isAtosVendedor) return true;
-
-            // Perfil ATOS vendedor pode se associar aos grupos de sua "carteira"
-            if (isAtosVendedor)
+            try
             {
-                List<Int32> list = GetIdsGruposEmpresasVendedor(token);
-                return list.Contains(id_grupo);
-            }
+                bool isAtosVendedor = isAtosRoleVendedor(token, _db);
 
-            // Qualquer outro privilégio não pode mudar de grupo
-            return false;
+                // Perfil ATOS não vendedor pode se associar a qualquer grupo
+                if (isAtosRole(token, _db) && !isAtosVendedor) return true;
+
+                // Perfil ATOS vendedor pode se associar aos grupos de sua "carteira"
+                if (isAtosVendedor)
+                {
+                    List<Int32> list = GetIdsGruposEmpresasVendedor(token, _db);
+                    return list.Contains(id_grupo);
+                }
+
+                // Qualquer outro privilégio não pode mudar de grupo
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
     }
 }

@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
+using System.Globalization;
 
 namespace api.Negocios.Admin
 {
@@ -106,8 +107,22 @@ namespace api.Negocios.Admin
                         entity = entity.Where(e => e.dsFiltros.Equals(dsFiltros)).AsQueryable<tbLogAcessoUsuario>();
                         break;
                     case CAMPOS.DTACESSO:
-                        DateTime dtAcesso = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtAcesso.Equals(dtAcesso)).AsQueryable<tbLogAcessoUsuario>();
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtAcesso.Year > dtaIni.Year || (e.dtAcesso.Year == dtaIni.Year && e.dtAcesso.Month > dtaIni.Month) ||
+                                                                                          (e.dtAcesso.Year == dtaIni.Year && e.dtAcesso.Month == dtaIni.Month && e.dtAcesso.Day >= dtaIni.Day))
+                                                    && (e.dtAcesso.Year < dtaFim.Year || (e.dtAcesso.Year == dtaFim.Year && e.dtAcesso.Month < dtaFim.Month) ||
+                                                                                          (e.dtAcesso.Year == dtaFim.Year && e.dtAcesso.Month == dtaFim.Month && e.dtAcesso.Day <= dtaFim.Day)));
+                        }
+                        else // ANO + MES + DIA
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtAcesso.Year == dtaIni.Year && e.dtAcesso.Month == dtaIni.Month && e.dtAcesso.Day == dtaIni.Day);
+                        }
                         break;
                     case CAMPOS.DSAPLICACAO:
                         string dsAplicacao = Convert.ToString(item.Value);

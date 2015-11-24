@@ -42,7 +42,7 @@ namespace api.Negocios.Card
 
 
 
-        private static Retorno carregaTitulos(painel_taxservices_dbContext _db, string token, string dsAPI, string data, int pageSize = 0, int pageNumber = 0)
+        private static Retorno carregaTitulos(painel_taxservices_dbContext _db, string token, string dsAPI, string data)
         {
             // Coloca a data no padrão de sql
             data = data.Substring(0, 4) + "-" + data.Substring(4, 2) + "-" + data.Substring(6, 2);
@@ -62,8 +62,60 @@ namespace api.Negocios.Card
             {
                 //Pegando os dados do Rest e armazenando na variável retorno
                 Retorno retorno = response.Content.ReadAsAsync<Retorno>().Result;
-
                 retorno.TotalDeRegistros = retorno.Registros.Count;
+                return retorno;
+            }
+            // Falhou!
+            string resp = response.Content.ReadAsAsync<string>().Result;
+            if (resp != null && !resp.Trim().Equals(""))
+                throw new Exception(((int)response.StatusCode) + " - " + resp);
+            throw new Exception(((int)response.StatusCode) + "");
+
+        }
+
+
+
+        /// <summary>
+        /// Retorna Títulos ERP
+        /// </summary>
+        /// <returns></returns>
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
+        {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            try
+            {
+                //try
+                //{
+                //    ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+
+                //}
+                //catch { }
+
+                //DECLARAÇÕES
+                string outValue = null;
+
+                // DATA
+                string data = String.Empty;
+                if (!queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
+                    throw new Exception("O identificador da movimentação bancária deve ser informada para a baixa automática!");
+
+                data = queryString["" + (int)CAMPOS.DATA];
+
+                // GRUPO EMPRESA => OBRIGATÓRIO!
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo == 0 && queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                    IdGrupo = Convert.ToInt32(queryString["" + (int)CAMPOS.ID_GRUPO]);
+                if (IdGrupo == 0) throw new Exception("Um grupo deve ser selecionado como para a baixa automática!");
+
+                grupo_empresa grupo_empresa = _db.grupo_empresa.Where(e => e.id_grupo == IdGrupo).FirstOrDefault();
+
+                if (grupo_empresa.dsAPI == null || grupo_empresa.dsAPI.Equals(""))
+                    throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
+
+                // Obtém os títulos
+                Retorno retorno = carregaTitulos(_db, token, grupo_empresa.dsAPI, data);
 
                 // Obtém os registros
                 List<dynamic> titulos = new List<dynamic>();
@@ -130,59 +182,6 @@ namespace api.Negocios.Card
                 return retorno;
 
             }
-            else
-            {
-                string resp = response.Content.ReadAsAsync<string>().Result;
-                if (resp != null && !resp.Trim().Equals(""))
-                    throw new Exception(((int)response.StatusCode) + " - " + resp);
-                throw new Exception(((int)response.StatusCode) + "");
-            }
-
-        }
-
-
-
-        /// <summary>
-        /// Retorna Títulos ERP
-        /// </summary>
-        /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
-        {
-            // Abre nova conexão
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
-            try
-            {
-                //try
-                //{
-                //    ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
-
-                //}
-                //catch { }
-
-                //DECLARAÇÕES
-                string outValue = null;
-
-                // DATA
-                string data = String.Empty;
-                if (!queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
-                    throw new Exception("O identificador da movimentação bancária deve ser informada para a baixa automática!");
-
-                data = queryString["" + (int)CAMPOS.DATA];
-
-                // GRUPO EMPRESA => OBRIGATÓRIO!
-                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-                if (IdGrupo == 0 && queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                    IdGrupo = Convert.ToInt32(queryString["" + (int)CAMPOS.ID_GRUPO]);
-                if (IdGrupo == 0) throw new Exception("Um grupo deve ser selecionado como para a baixa automática!");
-
-                grupo_empresa grupo_empresa = _db.grupo_empresa.Where(e => e.id_grupo == IdGrupo).FirstOrDefault();
-
-                if (grupo_empresa.dsAPI == null || grupo_empresa.dsAPI.Equals(""))
-                    throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
-
-                return carregaTitulos(_db, token, grupo_empresa.dsAPI, data, pageSize, pageNumber);
-
-            }
             catch (Exception e)
             {
                 if (e is DbEntityValidationException)
@@ -194,9 +193,12 @@ namespace api.Negocios.Card
             }
             finally
             {
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                if (_dbContext == null)
+                {
+                    // Fecha a conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -205,23 +207,18 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void ImportaTitulos(string token, ImportaTitulos param)
+        public static void ImportaTitulos(string token, ImportaTitulos param, painel_taxservices_dbContext _dbContext = null)
         {
-            // Abre nova conexão
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
-                //try
-                //{
-                //    ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
-
-                //}
-                //catch { }
 
                 if (param != null) 
                 { 
                     // GRUPO EMPRESA => OBRIGATÓRIO!
-                    Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                    Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                     //if (IdGrupo == 0 && param.id_grupo != 0) IdGrupo = param.id_grupo;
                     if (IdGrupo == 0) throw new Exception("Um grupo deve ser selecionado como para a baixa automática!");
 
@@ -234,15 +231,20 @@ namespace api.Negocios.Card
 
                     foreach (dynamic tit in retorno.Registros)
                     {
+                        //try
+                        //{
+                        string dsBandeira = tit.dsBandeira;
+                        if (dsBandeira.Length > 50) dsBandeira = dsBandeira.Substring(0, 50);
+
                         tbRecebimentoTitulo tbRecebimentoTitulo = new tbRecebimentoTitulo
                         {
-                            dsBandeira = tit.dsBandeira,
-                            cdAdquirente = tit.tbAdquirente.cdAdquirente,
+                            dsBandeira = dsBandeira,
+                            cdAdquirente = tit.cdAdquirente,//tit.tbAdquirente.cdAdquirente,
                             cdERP = tit.cdERP,
                             dtBaixaERP = tit.dtBaixaERP,
                             dtTitulo = tit.dtTitulo,
                             dtVenda = tit.dtVenda,
-                            nrCNPJ = tit.empresa.nu_cnpj,
+                            nrCNPJ = tit.nrCNPJ,//tit.empresa.nu_cnpj,
                             nrNSU = tit.nrNSU,// != null ? tit.nrNSU : "",
                             nrParcela = Convert.ToByte(tit.nrParcela),
                             qtParcelas = Convert.ToByte(tit.qtParcelas),
@@ -251,7 +253,7 @@ namespace api.Negocios.Card
                         };
 
                         tbRecebimentoTitulo titulo = _db.tbRecebimentoTitulos
-                                                                // Unique
+                            // Unique
                                                                 .Where(e => e.nrCNPJ.Equals(tbRecebimentoTitulo.nrCNPJ))
                                                                 .Where(e => e.nrNSU.Equals(tbRecebimentoTitulo.nrNSU))
                                                                 .Where(e => e.dtTitulo.Equals(tbRecebimentoTitulo.dtTitulo))
@@ -265,6 +267,11 @@ namespace api.Negocios.Card
                             tbRecebimentoTitulo.idRecebimentoTitulo = titulo.idRecebimentoTitulo;
                             GatewayTbRecebimentoTitulo.Update(token, tbRecebimentoTitulo, _db);
                         }
+                        //}
+                        //catch (Exception e)
+                        //{
+                        //    string bandeira = tit.dsBandeira;
+                        //}
                     }
                 }
             }
@@ -279,9 +286,12 @@ namespace api.Negocios.Card
             }
             finally
             {
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                if (_dbContext == null)
+                {
+                    // Fecha a conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

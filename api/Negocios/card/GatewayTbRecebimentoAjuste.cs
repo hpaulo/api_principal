@@ -8,19 +8,20 @@ using api.Bibliotecas;
 using api.Models.Object;
 using System.Globalization;
 using System.Data.Entity.Validation;
+using System.Data.Entity;
 
 namespace api.Negocios.Card
 {
     public class GatewayTbRecebimentoAjuste
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTbRecebimentoAjuste()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -53,7 +54,7 @@ namespace api.Negocios.Card
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        public static IQueryable<tbRecebimentoAjuste> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        public static IQueryable<tbRecebimentoAjuste> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL
             var entity = _db.tbRecebimentoAjustes.AsQueryable<tbRecebimentoAjuste>();
@@ -185,63 +186,106 @@ namespace api.Negocios.Card
         /// Retorna TbRecebimentoAjuste/TbRecebimentoAjuste
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbRecebimentoAjuste = new List<dynamic>();
-            Retorno retorno = new Retorno();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            try 
+            { 
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbRecebimentoAjuste = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = query.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
-            {
-                CollectionTbRecebimentoAjuste = query.Select(e => new
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+                string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
+                if (IdGrupo != 0)
                 {
-
-                    idRecebimentoAjuste = e.idRecebimentoAjuste,
-                    dtAjuste = e.dtAjuste,
-                    nrCNPJ = e.nrCNPJ,
-                    cdBandeira = e.cdBandeira,
-                    dsMotivo = e.dsMotivo,
-                    vlAjuste = e.vlAjuste,
-                    idExtrato = e.idExtrato,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionTbRecebimentoAjuste = query.Select(e => new
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
+                if (!CnpjEmpresa.Equals(""))
                 {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NRCNPJ, CnpjEmpresa);
+                }
 
-                    idRecebimentoAjuste = e.idRecebimentoAjuste,
-                    dtAjuste = e.dtAjuste,
-                    nrCNPJ = e.nrCNPJ,
-                    cdBandeira = e.cdBandeira,
-                    dsMotivo = e.dsMotivo,
-                    vlAjuste = e.vlAjuste,
-                    idExtrato = e.idExtrato,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = query.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbRecebimentoAjuste = query.Select(e => new
+                    {
+
+                        idRecebimentoAjuste = e.idRecebimentoAjuste,
+                        dtAjuste = e.dtAjuste,
+                        nrCNPJ = e.nrCNPJ,
+                        cdBandeira = e.cdBandeira,
+                        dsMotivo = e.dsMotivo,
+                        vlAjuste = e.vlAjuste,
+                        idExtrato = e.idExtrato,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbRecebimentoAjuste = query.Select(e => new
+                    {
+
+                        idRecebimentoAjuste = e.idRecebimentoAjuste,
+                        dtAjuste = e.dtAjuste,
+                        nrCNPJ = e.nrCNPJ,
+                        cdBandeira = e.cdBandeira,
+                        dsMotivo = e.dsMotivo,
+                        vlAjuste = e.vlAjuste,
+                        idExtrato = e.idExtrato,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbRecebimentoAjuste;
+
+                return retorno;
             }
-
-            retorno.Registros = CollectionTbRecebimentoAjuste;
-
-            return retorno;
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar recebimento" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
         /// <summary>
@@ -249,16 +293,24 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbRecebimentoAjuste param)
+        public static Int32 Add(string token, tbRecebimentoAjuste param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 _db.tbRecebimentoAjustes.Add(param);
                 _db.SaveChanges();
+                // Commit
+                transaction.Commit();
                 return param.idRecebimentoAjuste;
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -274,17 +326,25 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 idRecebimentoAjuste)
+        public static void Delete(string token, Int32 idRecebimentoAjuste, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbRecebimentoAjuste tbRecebimentoAjuste = _db.tbRecebimentoAjustes.Where(e => e.idRecebimentoAjuste == idRecebimentoAjuste).FirstOrDefault();
                 if (tbRecebimentoAjuste == null) throw new Exception("Ajuste inexistente!");
                 _db.tbRecebimentoAjustes.Remove(tbRecebimentoAjuste);
                 _db.SaveChanges();
+                // Commit
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -300,8 +360,12 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbRecebimentoAjuste param)
+        public static void Update(string token, tbRecebimentoAjuste param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbRecebimentoAjuste value = _db.tbRecebimentoAjustes
@@ -322,9 +386,13 @@ namespace api.Negocios.Card
                 if (param.idExtrato != null && param.idExtrato != value.idExtrato)
                     value.idExtrato = param.idExtrato;
                 _db.SaveChanges();
+                // Commit
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);

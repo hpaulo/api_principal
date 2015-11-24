@@ -325,10 +325,11 @@ namespace api.Negocios.Card
         /// Retorna TbRecebimentoTEF/TbRecebimentoTEF
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
-            // Abre nova conexão com a base
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
 
             try
             {
@@ -567,9 +568,12 @@ namespace api.Negocios.Card
             }
             finally
             {
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
         /// <summary>
@@ -577,24 +581,20 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbRecebimentoTEF param)
+        public static Int32 Add(string token, tbRecebimentoTEF param, painel_taxservices_dbContext _dbContext = null)
         {
-            // Abre nova conexão
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
-            // Transação
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
             try
             {
                 _db.tbRecebimentoTEFs.Add(param);
                 _db.SaveChanges();
-                // Commit
-                transaction.Commit();
                 return param.idRecebimentoTEF;
             }
             catch (Exception e)
             {
-                // Rollback
-                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -604,9 +604,12 @@ namespace api.Negocios.Card
             }
             finally
             {
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                if (_dbContext == null)
+                {
+                    // Fecha a conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -616,23 +619,18 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 idRecebimentoTEF)
+        public static void Delete(string token, Int32 idRecebimentoTEF, painel_taxservices_dbContext _dbContext = null)
         {
-            // Abre nova conexão
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
-            // Transação
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 _db.tbRecebimentoTEFs.Remove(_db.tbRecebimentoTEFs.Where(e => e.idRecebimentoTEF.Equals(idRecebimentoTEF)).First());
                 _db.SaveChanges();
-                // Commit
-                transaction.Commit();
             }
             catch (Exception e)
             {
-                // Rollback
-                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -642,9 +640,12 @@ namespace api.Negocios.Card
             }
             finally
             {
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
         /// <summary>
@@ -652,12 +653,11 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbRecebimentoTEF param)
+        public static void Update(string token, tbRecebimentoTEF param, painel_taxservices_dbContext _dbContext = null)
         {
-            // Abre nova conexão
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
-            // Transação
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 tbRecebimentoTEF value = _db.tbRecebimentoTEFs
@@ -711,13 +711,9 @@ namespace api.Negocios.Card
                 if (param.cdEstabelecimentoHost != null && param.cdEstabelecimentoHost != value.cdEstabelecimentoHost)
                     value.cdEstabelecimentoHost = param.cdEstabelecimentoHost;
                 _db.SaveChanges();
-                // Commit
-                transaction.Commit();
             }
             catch (Exception e)
             {
-                // Rollback
-                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -727,9 +723,12 @@ namespace api.Negocios.Card
             }
             finally
             {
-                // Fecha a conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                if (_dbContext == null)
+                {
+                    // Fecha a conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

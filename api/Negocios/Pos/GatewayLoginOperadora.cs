@@ -7,19 +7,20 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
+using System.Data.Entity;
 
 namespace api.Negocios.Pos
 {
     public class GatewayLoginOperadora
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayLoginOperadora()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -54,7 +55,7 @@ namespace api.Negocios.Pos
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<LoginOperadora> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<LoginOperadora> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.LoginOperadoras.AsQueryable<LoginOperadora>();
@@ -196,9 +197,13 @@ namespace api.Negocios.Pos
         /// Retorna LoginOperadora/LoginOperadora
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
-
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
             try
             {
                 // Filtro de grupo empresa e filial
@@ -231,7 +236,7 @@ namespace api.Negocios.Pos
                 Retorno retorno = new Retorno();
 
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
                 // Perfil vendedor ?
                 if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))
@@ -378,14 +383,27 @@ namespace api.Negocios.Pos
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
         /// <summary>
         /// Adiciona nova LoginOperadora
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, LoginOperadora param)
+        public static Int32 Add(string token, LoginOperadora param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 // Avalia adquirente
@@ -461,7 +479,7 @@ namespace api.Negocios.Pos
                 // Adiciona log execution
                 try
                 {
-                    adicionaLogExecution(param.id, param.idOperadora);
+                    adicionaLogExecution(_db, param.id, param.idOperadora);
                 }
                 catch (Exception e)
                 {
@@ -480,12 +498,23 @@ namespace api.Negocios.Pos
             }
             catch (Exception e)
             {
+                // Rollback
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar login operadora" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -495,8 +524,12 @@ namespace api.Negocios.Pos
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 id)
+        public static void Delete(string token, Int32 id, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 LoginOperadora loginOperadora = _db.LoginOperadoras.Where(e => e.id == id).FirstOrDefault();
@@ -504,16 +537,23 @@ namespace api.Negocios.Pos
 
                 // Remove logexecutions
                 _db.LogExecutions.RemoveRange(_db.LogExecutions.Where(l => l.idLoginOperadora == loginOperadora.id));
+                _db.SaveChanges();
 
                 // Remove operadora
                 _db.Operadoras.RemoveRange(_db.Operadoras.Where(o => o.id == loginOperadora.idOperadora));
+                _db.SaveChanges();
 
                 // Por fim, remove login operadora
                 _db.LoginOperadoras.Remove(loginOperadora);
                 _db.SaveChanges();
+
+                // Commit
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                // Rollback
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -521,14 +561,26 @@ namespace api.Negocios.Pos
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
         /// <summary>
         /// Altera LoginOperadora
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, LoginOperadora param)
+        public static void Update(string token, LoginOperadora param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 LoginOperadora value = _db.LoginOperadoras
@@ -567,11 +619,11 @@ namespace api.Negocios.Pos
 
                 try
                 {
-                    adicionaLogExecution(value.id, value.idOperadora);
+                    adicionaLogExecution(_db, value.id, value.idOperadora);
                 }
                 catch
                 {
-                    // Falha! Como logar isso sem lançar excessão aqui?
+                    // Falha! Como logar isso sem lançar exceção aqui?
                 }
             }
             catch (Exception e)
@@ -583,13 +635,22 @@ namespace api.Negocios.Pos
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
         /**
           * Armazena o logexecution, caso não exista
           */
-        private static void adicionaLogExecution(Int32 idLoginOperadora, Int32 idOperadora)
+        private static void adicionaLogExecution(painel_taxservices_dbContext _db, Int32 idLoginOperadora, Int32 idOperadora)
         {
             // Armazena o logexecution, caso não exista
             // Verifica se já existe logExecution para o registro corrente

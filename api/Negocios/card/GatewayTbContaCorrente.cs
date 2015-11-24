@@ -13,14 +13,14 @@ namespace api.Negocios.Card
 {
     public class GatewayTbContaCorrente
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTbContaCorrente()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -34,7 +34,7 @@ namespace api.Negocios.Card
             CDBANCO = 103,
             NRAGENCIA = 104,
             NRCONTA = 105,
-
+            FLATIVO = 106,
         };
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace api.Negocios.Card
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<tbContaCorrente> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<tbContaCorrente> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.tbContaCorrentes.AsQueryable<tbContaCorrente>();
@@ -84,6 +84,10 @@ namespace api.Negocios.Card
                     case CAMPOS.NRCONTA:
                         string nrConta = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.nrConta.Equals(nrConta)).AsQueryable<tbContaCorrente>();
+                        break;
+                    case CAMPOS.FLATIVO:
+                        Boolean fl_cardservices = Convert.ToBoolean(item.Value);
+                        entity = entity.Where(e => e.flAtivo.Equals(fl_cardservices)).AsQueryable<tbContaCorrente>();
                         break;
                 }
             }
@@ -131,14 +135,17 @@ namespace api.Negocios.Card
         /// Retorna TbContaCorrente/TbContaCorrente
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 // Implementar o filtro por Grupo apartir do TOKEN do Usuário
                 string outValue = null;
                 Int32 IdGrupo = 0;
-                IdGrupo = Permissoes.GetIdGrupo(token);
+                IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo != 0)
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.CDGRUPO, out outValue))
@@ -146,7 +153,7 @@ namespace api.Negocios.Card
                     else
                         queryString.Add("" + (int)CAMPOS.CDGRUPO, IdGrupo.ToString());
                 }
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (!CnpjEmpresa.Equals(""))
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
@@ -160,11 +167,10 @@ namespace api.Negocios.Card
                 Retorno retorno = new Retorno();
 
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                var queryTotal = query;
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
 
                 // PAGINAÇÃO
@@ -255,14 +261,26 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
         /// <summary>
         /// Adiciona nova TbContaCorrente
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbContaCorrente param)
+        public static Int32 Add(string token, tbContaCorrente param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 var verify = _db.tbContaCorrentes
@@ -292,6 +310,15 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -300,8 +327,11 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 cdContaCorrente)
+        public static void Delete(string token, Int32 cdContaCorrente, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 tbContaCorrente conta = _db.tbContaCorrentes.Where(e => e.cdContaCorrente == cdContaCorrente).FirstOrDefault();
@@ -324,14 +354,26 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
         /// <summary>
         /// Altera tbContaCorrente
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbContaCorrente param)
+        public static void Update(string token, tbContaCorrente param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 tbContaCorrente value = _db.tbContaCorrentes
@@ -360,6 +402,15 @@ namespace api.Negocios.Card
                     throw new Exception(erro.Equals("") ? "Falha ao alterar conta corrente" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
