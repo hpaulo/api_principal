@@ -8,6 +8,7 @@ using api.Bibliotecas;
 using api.Models.Object;
 using api.Negocios.Util;
 using System.Data.Entity.Validation;
+using System.Data.Entity;
 
 namespace api.Negocios.Card
 {
@@ -281,6 +282,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 var verify = _db.tbContaCorrentes
@@ -296,6 +298,7 @@ namespace api.Negocios.Card
                     param.flAtivo = true;
                     _db.tbContaCorrentes.Add(param);
                     _db.SaveChanges();
+                    transaction.Commit();
                     return param.cdContaCorrente;
                 }
 
@@ -303,6 +306,7 @@ namespace api.Negocios.Card
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -332,6 +336,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbContaCorrente conta = _db.tbContaCorrentes.Where(e => e.cdContaCorrente == cdContaCorrente).FirstOrDefault();
@@ -344,9 +349,11 @@ namespace api.Negocios.Card
                 // Remove a conta
                 _db.tbContaCorrentes.Remove(conta);
                 _db.SaveChanges();
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -374,6 +381,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbContaCorrente value = _db.tbContaCorrentes
@@ -393,9 +401,11 @@ namespace api.Negocios.Card
                 if (param.flAtivo != value.flAtivo)
                     value.flAtivo = param.flAtivo;
                 _db.SaveChanges();
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);

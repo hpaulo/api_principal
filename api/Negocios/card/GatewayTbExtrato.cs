@@ -805,107 +805,117 @@ namespace api.Negocios.Card
                             dataGeracaoExtrato.Day != 1 &&*/ dataGeracaoExtrato < extrato.dtExtrato)
                                 continue; // Não importa
 
-                        #region OBTÉM O TOTAL DE MOVIMENTAÇÕES REPETIDAS PARA A MOVIMENTAÇÃO CORRENTE
-                        IEnumerable<Transaction> trans = ofxDocument.Transactions.Where(t => t.Amount == extrato.vlMovimento)
-                                                                                 .Where(t => t.Date.Year == extrato.dtExtrato.Year)
-                                                                                 .Where(t => t.Date.Month == extrato.dtExtrato.Month)
-                                                                                 .Where(t => t.Date.Day == extrato.dtExtrato.Day)
-                                                                                 //.Where(t => t.TransType.ToString().Equals(extrato.dsTipo))
-                                                                                 .Where(t => t.CheckNum.Equals(extrato.nrDocumento));
-                        if (!memo) trans = trans.Where(t => t.Name.Equals(extrato.dsDocumento));
-                        else trans = trans.Where(t => t.Memo.Equals(extrato.dsDocumento));
-                        Int32 contMovimentacoesRepetidas = trans.Count();
-                        #endregion
+                        DbContextTransaction transaction = _db.Database.BeginTransaction();
 
-                        #region OBTÉM AS MOVIMENTAÇÕES JÁ ARMAZENADAS NA BASE QUE POSSUEM MESMAS INFORMAÇÕES DA MOVIMENTAÇÃO CORRENTE
-                        IQueryable<tbExtrato> olds = _db.tbExtratos.Where(e => e.cdContaCorrente == extrato.cdContaCorrente)
-                                                             //.Where(e => e.dtExtrato.Equals(extrato.dtExtrato))
-                                                             .Where(e => e.dtExtrato.Year == extrato.dtExtrato.Year)
-                                                             .Where(e => e.dtExtrato.Month == extrato.dtExtrato.Month)
-                                                             .Where(e => e.dtExtrato.Day == extrato.dtExtrato.Day)
-                                                             .Where(e => e.nrDocumento.Equals(extrato.nrDocumento))
-                                                             .Where(e => e.vlMovimento == extrato.vlMovimento)
-                                                             .Where(e => e.dsDocumento.Equals(extrato.dsDocumento))
-                                                             .OrderBy(e => e.dtExtrato);
-                        Int32 contExtratosBD = olds.Count();
-                        #endregion
-
-                        if (contExtratosBD >= contMovimentacoesRepetidas)
+                        try
                         {
-                            // Já existe o(s) registro(s) com essas informações!
-                            #region SE O ARQUIVO ATUAL TEM MAIS MOVIMENTAÇÕES, ATUALIZA A REFERÊNCIA DE ARQUIVO DOS EXTRATOS QUE JÁ ESTÃO NA BASE
-                            string arquivoAntigo = olds.Select(o => o.dsArquivo).FirstOrDefault();
-                            int totalTransacoesOld = _db.tbExtratos.Where(e => e.dsArquivo.Equals(arquivoAntigo)).Count();
-                            // Verifica se o extrato atual possui mais movimentações que o anterior
-                            if (ofxDocument.Transactions.Count >= totalTransacoesOld)
+
+                            #region OBTÉM O TOTAL DE MOVIMENTAÇÕES REPETIDAS PARA A MOVIMENTAÇÃO CORRENTE
+                            IEnumerable<Transaction> trans = ofxDocument.Transactions.Where(t => t.Amount == extrato.vlMovimento)
+                                                                                     .Where(t => t.Date.Year == extrato.dtExtrato.Year)
+                                                                                     .Where(t => t.Date.Month == extrato.dtExtrato.Month)
+                                                                                     .Where(t => t.Date.Day == extrato.dtExtrato.Day)
+                                //.Where(t => t.TransType.ToString().Equals(extrato.dsTipo))
+                                                                                     .Where(t => t.CheckNum.Equals(extrato.nrDocumento));
+                            if (!memo) trans = trans.Where(t => t.Name.Equals(extrato.dsDocumento));
+                            else trans = trans.Where(t => t.Memo.Equals(extrato.dsDocumento));
+                            Int32 contMovimentacoesRepetidas = trans.Count();
+                            #endregion
+
+                            #region OBTÉM AS MOVIMENTAÇÕES JÁ ARMAZENADAS NA BASE QUE POSSUEM MESMAS INFORMAÇÕES DA MOVIMENTAÇÃO CORRENTE
+                            IQueryable<tbExtrato> olds = _db.tbExtratos.Where(e => e.cdContaCorrente == extrato.cdContaCorrente)
+                                //.Where(e => e.dtExtrato.Equals(extrato.dtExtrato))
+                                                                 .Where(e => e.dtExtrato.Year == extrato.dtExtrato.Year)
+                                                                 .Where(e => e.dtExtrato.Month == extrato.dtExtrato.Month)
+                                                                 .Where(e => e.dtExtrato.Day == extrato.dtExtrato.Day)
+                                                                 .Where(e => e.nrDocumento.Equals(extrato.nrDocumento))
+                                                                 .Where(e => e.vlMovimento == extrato.vlMovimento)
+                                                                 .Where(e => e.dsDocumento.Equals(extrato.dsDocumento))
+                                                                 .OrderBy(e => e.dtExtrato);
+                            Int32 contExtratosBD = olds.Count();
+                            #endregion
+
+                            if (contExtratosBD >= contMovimentacoesRepetidas)
                             {
-                                // Atualiza o arquivo
-                                for (int k = 0; k < contExtratosBD; k++)
+                                // Já existe o(s) registro(s) com essas informações!
+                                #region SE O ARQUIVO ATUAL TEM MAIS MOVIMENTAÇÕES, ATUALIZA A REFERÊNCIA DE ARQUIVO DOS EXTRATOS QUE JÁ ESTÃO NA BASE
+                                string arquivoAntigo = olds.Select(o => o.dsArquivo).FirstOrDefault();
+                                int totalTransacoesOld = _db.tbExtratos.Where(e => e.dsArquivo.Equals(arquivoAntigo)).Count();
+                                // Verifica se o extrato atual possui mais movimentações que o anterior
+                                if (ofxDocument.Transactions.Count >= totalTransacoesOld)
                                 {
-                                    tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
-                                    ext.dsArquivo = extrato.dsArquivo;
-                                    ext.dsTipo = extrato.dsTipo;
-                                    try
+                                    // Atualiza o arquivo
+                                    for (int k = 0; k < contExtratosBD; k++)
                                     {
-                                        _db.SaveChanges();
+                                        tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
+                                        ext.dsArquivo = extrato.dsArquivo;
+                                        ext.dsTipo = extrato.dsTipo;
+                                        try
+                                        {
+                                            _db.SaveChanges();
+                                        }
+                                        catch { }
                                     }
-                                    catch { }
+                                    // Ainda tem movimentações referenciando o arquivo antigo?
+                                    if (totalTransacoesOld <= 1)
+                                    {
+                                        try
+                                        {
+                                            File.Delete(arquivoAntigo); // Deleta o arquivo antigo
+                                        }
+                                        catch { }
+                                    }
                                 }
-                                // Ainda tem movimentações referenciando o arquivo antigo?
-                                if (totalTransacoesOld <= 1)
+                                else
                                 {
-                                    try
+                                    // Ajusta o tipo, que poderia estar como OTHER ou DEP
+                                    for (int k = 0; k < contExtratosBD; k++)
                                     {
-                                        File.Delete(arquivoAntigo); // Deleta o arquivo antigo
+                                        tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
+                                        ext.dsTipo = extrato.dsTipo;
+                                        try
+                                        {
+                                            _db.SaveChanges();
+                                        }
+                                        catch { }
                                     }
-                                    catch { }
                                 }
+                                #endregion
                             }
                             else
                             {
-                                // Ajusta o tipo, que poderia estar como OTHER ou DEP
-                                for (int k = 0; k < contExtratosBD; k++)
-                                {
-                                    tbExtrato ext = olds.Skip(k).Take(1).FirstOrDefault();
-                                    ext.dsTipo = extrato.dsTipo;
-                                    try {
-                                        _db.SaveChanges();
-                                    }
-                                    catch { }
-                                }
+                                // Salva uma nova movimentação
+                                _db.tbExtratos.Add(extrato);
+                                _db.SaveChanges();
+                                armazenou = true;
+                                if (dataArmazenada == null) dataArmazenada = extrato.dtExtrato;
                             }
+
+                            transaction.Commit();
+
+                            #region SALVA PARÂMETRO BANCÁRIO
+                            tbBancoParametro parametro = new tbBancoParametro();
+                            parametro.cdAdquirente = null;
+                            parametro.cdBandeira = null;
+                            parametro.dsTipoCartao = null;
+                            parametro.nrCnpj = null;
+                            parametro.cdBanco = conta.cdBanco;
+                            parametro.dsMemo = extrato.dsDocumento;
+                            parametro.dsTipo = extrato.dsTipo;
+                            parametro.flVisivel = true;
+                            try
+                            {
+                                GatewayTbBancoParametro.Add(token, parametro, _db);
+                            }
+                            catch (Exception e)
+                            { }
                             #endregion
                         }
-                        else
+                        catch(Exception e)
                         {
-                            // Salva uma nova movimentação
-                            _db.tbExtratos.Add(extrato);
-                            _db.SaveChanges();
-                            armazenou = true;
-                            if (dataArmazenada == null) dataArmazenada = extrato.dtExtrato;
+                            transaction.Rollback();
+                            throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
                         }
-
-                        //if (transacao.TransType.Equals(OFXTransactionType.CREDIT) ||
-                        //   transacao.TransType.Equals(OFXTransactionType.DEBIT))
-                        //{
-                        #region SALVA PARÂMETRO BANCÁRIO
-                        tbBancoParametro parametro = new tbBancoParametro();
-                        parametro.cdAdquirente = null;
-                        parametro.cdBandeira = null;
-                        parametro.dsTipoCartao = null;
-                        parametro.nrCnpj = null;
-                        parametro.cdBanco = conta.cdBanco;
-                        parametro.dsMemo = extrato.dsDocumento;
-                        parametro.dsTipo = extrato.dsTipo;
-                        parametro.flVisivel = true;
-                        try
-                        {
-                            GatewayTbBancoParametro.Add(token, parametro);
-                        }
-                        catch (Exception e)
-                        { }
-                        #endregion
-                        //}
                     }
                     #endregion
 

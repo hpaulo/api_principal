@@ -15,6 +15,7 @@ using System.Web;
 using System.Collections;
 using System.Web.Configuration;
 using System.Collections.Specialized;
+using System.Data.Entity;
 
 namespace api.Controllers.Login
 {

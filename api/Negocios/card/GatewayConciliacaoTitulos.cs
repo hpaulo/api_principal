@@ -155,9 +155,11 @@ namespace api.Negocios.Card
         /// Retorna a lista de conciliação de títulos
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 //DECLARAÇÕES
@@ -196,7 +198,7 @@ namespace api.Negocios.Card
                     if (!CnpjEmpresa.Equals(""))
                     {
                         queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.NU_CNPJ, CnpjEmpresa);
-                        queryStringTbRecebimentoTitulo.Add("" + (int)GatewayTbRecebimentoTitulo.CAMPOS.NRCNPJ, CnpjEmpresa);
+                        //queryStringTbRecebimentoTitulo.Add("" + (int)GatewayTbRecebimentoTitulo.CAMPOS.NRCNPJ, CnpjEmpresa);
                     }
                     // ADQUIRENTE
                     string cdAdquirente = String.Empty;
@@ -250,6 +252,8 @@ namespace api.Negocios.Card
                                                                             Valor = r.valorParcelaBruta,//r.valorParcelaLiquida ?? new decimal(0.0),
                                                                             Adquirente = r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente.ToUpper(),
                                                                         }).ToList<dynamic>();
+
+                        retorno.TotalDeRegistros = recebimentosConciliados.Count;
 
                         // Total dos elementos já conciliados
                         if (recebimentosConciliados.Count > 0)
@@ -341,8 +345,16 @@ namespace api.Negocios.Card
                             pageNumber = 1;
 
                         List<int> idsPreConciliados = new List<int>();
+                        /*string filialConsulta = String.Empty;
+                        if(!CnpjEmpresa.Equals("")){ 
+                            filialConsulta = _db.empresas.Where(e => e.nu_cnpj.Equals(CnpjEmpresa)).Select(e =>  e.ds_fantasia + (e.filial != null ? " " + e.filial : "")).FirstOrDefault();
+                            if(filialConsulta == null) filialConsulta = String.Empty;
+                        }*/
+
                         foreach (ConciliacaoTitulos recebParcela in recebimentosParcela)
                         {
+                            string filialConsulta = recebParcela.Filial;
+
                             DateTime dataIni = recebParcela.Data.Subtract(new TimeSpan(RANGE_DIAS_ANTERIOR, 0, 0, 0));
                             DateTime dataFim = recebParcela.Data.AddDays(RANGE_DIAS_POSTERIOR);
                             string nsu = "" + Convert.ToInt32(recebParcela.Nsu);
@@ -374,20 +386,51 @@ namespace api.Negocios.Card
                             if (titulos.Count > 0)
                             {
                                 ConciliacaoTitulos titPreConciliado = null;
-                                foreach (ConciliacaoTitulos tit in titulos)
-                                {
-                                    // NSUs com mesmo comprimento
-                                    string nsu1 = tit.Nsu;
-                                    string nsu2 = recebParcela.Nsu;
-                                    while (nsu1.Length < nsu2.Length) nsu1 = "0" + nsu1;
-                                    while (nsu2.Length < nsu1.Length) nsu2 = "0" + nsu2;
 
-                                    if (nsu1.Equals(nsu2) && Math.Abs(tit.Valor - recebParcela.Valor) <= TOLERANCIA)
+                                // Mesmo CNPJ
+                                if(!filialConsulta.Equals("")){
+                                    List<ConciliacaoTitulos> titFilial = titulos.Where(e => e.Filial.Equals(filialConsulta)).ToList<ConciliacaoTitulos>();
+                                    if (titFilial.Count > 0)
                                     {
-                                        titPreConciliado = tit;
-                                        break;
+                                        // Tem pra mesma filial
+                                        foreach (ConciliacaoTitulos tit in titFilial)
+                                        {
+                                            // NSUs com mesmo comprimento
+                                            string nsu1 = tit.Nsu;
+                                            string nsu2 = recebParcela.Nsu;
+                                            while (nsu1.Length < nsu2.Length) nsu1 = "0" + nsu1;
+                                            while (nsu2.Length < nsu1.Length) nsu2 = "0" + nsu2;
+
+                                            if (nsu1.Equals(nsu2) && Math.Abs(tit.Valor - recebParcela.Valor) <= TOLERANCIA)
+                                            {
+                                                titPreConciliado = tit;
+                                                break;
+                                            }
+                                        }
+                                        // Se não achou, pega somente os que não são da mesma filial
+                                        if (titPreConciliado == null)
+                                            titulos = titulos.Where(e => !e.Filial.Equals(filialConsulta)).ToList<ConciliacaoTitulos>();
                                     }
                                 }
+
+                                if (titPreConciliado == null)
+                                {
+                                    foreach (ConciliacaoTitulos tit in titulos)
+                                    {
+                                        // NSUs com mesmo comprimento
+                                        string nsu1 = tit.Nsu;
+                                        string nsu2 = recebParcela.Nsu;
+                                        while (nsu1.Length < nsu2.Length) nsu1 = "0" + nsu1;
+                                        while (nsu2.Length < nsu1.Length) nsu2 = "0" + nsu2;
+
+                                        if (nsu1.Equals(nsu2) && Math.Abs(tit.Valor - recebParcela.Valor) <= TOLERANCIA)
+                                        {
+                                            titPreConciliado = tit;
+                                            break;
+                                        }
+                                    }
+                                }
+
                                 if (titPreConciliado != null)
                                 {
                                     idsPreConciliados.Add(titPreConciliado.Id);
@@ -462,8 +505,11 @@ namespace api.Negocios.Card
                                                                                             e.dtVenda.Value >= dataIni && e.dtVenda.Value <= dataFim)
                                                                                 .Where(e => e.nrCNPJ.Equals(nrCNPJ))
                                                                                 .Where(e => e.cdAdquirente == recebimento.Recebimento.tbBandeira.cdAdquirente)
-                                                                                .Where(e => (e.vlVenda >= recebimento.Recebimento.valorVendaBruta && e.vlVenda - recebimento.Recebimento.valorVendaBruta <= TOLERANCIA) ||
-                                                                                            (e.vlVenda < recebimento.Recebimento.valorVendaBruta && recebimento.Recebimento.valorVendaBruta - e.vlVenda <= TOLERANCIA))
+                                                                                .Where(e => (e.vlVenda >= recebimento.Recebimento.valorVendaBruta && (e.vlVenda - recebimento.Recebimento.valorVendaBruta <= TOLERANCIA)) ||
+                                                                                            (e.vlVenda < recebimento.Recebimento.valorVendaBruta && (recebimento.Recebimento.valorVendaBruta - e.vlVenda <= TOLERANCIA)))
+                                                                                .Where(e => e.RecebimentoParcelas.Count == 0)
+                                                                                //.Where(e => (e.vlParcela >= recebimento.valorParcelaLiquida && (e.vlParcela - recebimento.valorParcelaLiquida <= TOLERANCIA)) ||
+                                                                                //            (e.vlParcela < recebimento.valorParcelaLiquida && (recebimento.valorParcelaLiquida - e.vlParcela <= TOLERANCIA)))
                                                                                 .ToList<tbRecebimentoTitulo>();
 
                     // Mesma parcela
@@ -534,6 +580,15 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -547,7 +602,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 foreach (ConciliaRecebimentoParcelaTitulo conciliaTitulo in param)

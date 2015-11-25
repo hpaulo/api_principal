@@ -45,7 +45,7 @@ namespace api.Controllers.Card
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
             finally
@@ -85,7 +85,7 @@ namespace api.Controllers.Card
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
             finally
@@ -125,7 +125,7 @@ namespace api.Controllers.Card
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
             finally
@@ -165,7 +165,7 @@ namespace api.Controllers.Card
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
             finally

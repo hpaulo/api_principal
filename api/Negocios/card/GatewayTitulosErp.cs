@@ -14,6 +14,10 @@ using System.Globalization;
 using System.Net.Http;
 using System.Data.Entity.Infrastructure;
 using System.Data.Entity.Core.Objects;
+using Newtonsoft.Json;
+using System.ComponentModel;
+using System.Threading;
+using System.Data.Entity;
 
 namespace api.Negocios.Card
 {
@@ -229,50 +233,24 @@ namespace api.Negocios.Card
 
                     Retorno retorno = carregaTitulos(_db, token, grupo_empresa.dsAPI, param.data);
 
-                    foreach (dynamic tit in retorno.Registros)
-                    {
-                        //try
-                        //{
-                        string dsBandeira = tit.dsBandeira;
-                        if (dsBandeira.Length > 50) dsBandeira = dsBandeira.Substring(0, 50);
+                    Semaphore semaforo = new Semaphore(0, 1);
 
-                        tbRecebimentoTitulo tbRecebimentoTitulo = new tbRecebimentoTitulo
-                        {
-                            dsBandeira = dsBandeira,
-                            cdAdquirente = tit.cdAdquirente,//tit.tbAdquirente.cdAdquirente,
-                            cdERP = tit.cdERP,
-                            dtBaixaERP = tit.dtBaixaERP,
-                            dtTitulo = tit.dtTitulo,
-                            dtVenda = tit.dtVenda,
-                            nrCNPJ = tit.nrCNPJ,//tit.empresa.nu_cnpj,
-                            nrNSU = tit.nrNSU,// != null ? tit.nrNSU : "",
-                            nrParcela = Convert.ToByte(tit.nrParcela),
-                            qtParcelas = Convert.ToByte(tit.qtParcelas),
-                            vlParcela = Convert.ToDecimal(tit.vlParcela),
-                            vlVenda = Convert.ToDecimal(tit.vlVenda),
-                        };
+                    BackgroundWorker bw = new BackgroundWorker();
+                    bw.WorkerReportsProgress = false;
+                    bw.WorkerSupportsCancellation = false;
+                    bw.DoWork += bw_DoWork;
+                    List<object> args = new List<object>();
+                    args.Add(_db);
+                    args.Add(semaforo);
+                    args.Add(retorno);
+                    bw.RunWorkerAsync(args);
 
-                        tbRecebimentoTitulo titulo = _db.tbRecebimentoTitulos
-                            // Unique
-                                                                .Where(e => e.nrCNPJ.Equals(tbRecebimentoTitulo.nrCNPJ))
-                                                                .Where(e => e.nrNSU.Equals(tbRecebimentoTitulo.nrNSU))
-                                                                .Where(e => e.dtTitulo.Equals(tbRecebimentoTitulo.dtTitulo))
-                                                                .Where(e => e.nrParcela == tbRecebimentoTitulo.nrParcela)
-                                                                .FirstOrDefault();
+                    semaforo.WaitOne();
 
-                        if (titulo == null)
-                            GatewayTbRecebimentoTitulo.Add(token, tbRecebimentoTitulo, _db);
-                        else
-                        {
-                            tbRecebimentoTitulo.idRecebimentoTitulo = titulo.idRecebimentoTitulo;
-                            GatewayTbRecebimentoTitulo.Update(token, tbRecebimentoTitulo, _db);
-                        }
-                        //}
-                        //catch (Exception e)
-                        //{
-                        //    string bandeira = tit.dsBandeira;
-                        //}
-                    }
+                    // Teve erro?
+                    object outValue = null;
+                    if (retorno.Totais != null && retorno.Totais.TryGetValue("erro", out outValue))
+                        throw new Exception(retorno.Totais["erro"].ToString());
                 }
             }
             catch (Exception e)
@@ -293,6 +271,130 @@ namespace api.Negocios.Card
                     _db.Dispose();
                 }
             }
+        }
+
+
+        private static void bw_DoWork(object sender, DoWorkEventArgs a)
+        {
+            BackgroundWorker worker = sender as BackgroundWorker;
+
+            List<object> args = a.Argument as List<object>;
+            painel_taxservices_dbContext _db = args[0] as painel_taxservices_dbContext;
+            Semaphore semaforo = args[1] as Semaphore;
+            Retorno retorno = args[2] as Retorno;
+
+            List<dynamic> Registros = retorno.Registros as List<dynamic>;
+
+            List<dynamic> grupo = Registros
+                                         .GroupBy(e => new { e.nrCNPJ, e.nrNSU, e.dtTitulo, e.nrParcela })
+                                         .Where(e => e.Count() > 1)
+                                         .Select(e => new
+                                         {
+                                             e.Key.nrCNPJ,
+                                             e.Key.nrNSU,
+                                             e.Key.nrParcela,
+                                             e.Key.dtTitulo,
+                                             count = e.Count()
+                                         })
+                                         .OrderByDescending(e => e.count)
+                                         .ToList<dynamic>();
+
+            for (var k = 0; k < Registros.Count; k++)
+            {
+                dynamic tit = Registros[k];
+                DbContextTransaction transaction = _db.Database.BeginTransaction();
+                try
+                {
+                    string dsBandeira = tit.dsBandeira;
+                    if (dsBandeira.Length > 50) dsBandeira = dsBandeira.Substring(0, 50);
+
+                    tbRecebimentoTitulo tbRecebimentoTitulo = new tbRecebimentoTitulo
+                    {
+                        dsBandeira = dsBandeira,
+                        cdAdquirente = tit.cdAdquirente,//tit.tbAdquirente.cdAdquirente,
+                        cdERP = tit.cdERP,
+                        dtBaixaERP = tit.dtBaixaERP,
+                        dtTitulo = tit.dtTitulo,
+                        dtVenda = tit.dtVenda,
+                        nrCNPJ = tit.nrCNPJ,//tit.empresa.nu_cnpj,
+                        nrNSU = tit.nrNSU,// != null ? tit.nrNSU : "",
+                        nrParcela = Convert.ToByte(tit.nrParcela),
+                        qtParcelas = Convert.ToByte(tit.qtParcelas),
+                        vlParcela = Convert.ToDecimal(tit.vlParcela),
+                        vlVenda = Convert.ToDecimal(tit.vlVenda),
+                    };
+
+                    tbRecebimentoTitulo titulo = _db.tbRecebimentoTitulos
+                                                            // Unique
+                                                            .Where(e => e.nrCNPJ.Equals(tbRecebimentoTitulo.nrCNPJ))
+                                                            .Where(e => e.nrNSU.Equals(tbRecebimentoTitulo.nrNSU))
+                                                            .Where(e => e.dtTitulo.Equals(tbRecebimentoTitulo.dtTitulo))
+                                                            .Where(e => e.nrParcela == tbRecebimentoTitulo.nrParcela)
+                                                            .FirstOrDefault();
+
+                    if (titulo == null)
+                    {
+                        //GatewayTbRecebimentoTitulo.Add(token, tbRecebimentoTitulo, _db);
+                        _db.tbRecebimentoTitulos.Add(tbRecebimentoTitulo);
+                        //try
+                        //{
+                        //    _db.SaveChanges();
+                        //}
+                        //catch(Exception e)
+                        //{
+                        //    ((IObjectContextAdapter)_db).ObjectContext.Detach(tbRecebimentoTitulo);
+                        //    if (e is DbEntityValidationException)
+                        //        throw new Exception(MensagemErro.getMensagemErro((DbEntityValidationException)e));
+                        //    else
+                        //        throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+                        //}
+                    }
+                    else
+                    {
+                        //tbRecebimentoTitulo.idRecebimentoTitulo = titulo.idRecebimentoTitulo;
+                        //GatewayTbRecebimentoTitulo.Update(token, tbRecebimentoTitulo, _db);
+                        titulo.dtVenda = tbRecebimentoTitulo.dtVenda;
+                        titulo.cdAdquirente = tbRecebimentoTitulo.cdAdquirente;
+                        titulo.dsBandeira = tbRecebimentoTitulo.dsBandeira;
+                        titulo.vlVenda = tbRecebimentoTitulo.vlVenda;
+                        titulo.qtParcelas = tbRecebimentoTitulo.qtParcelas;
+                        titulo.vlParcela = tbRecebimentoTitulo.vlParcela;
+                        titulo.cdERP = tbRecebimentoTitulo.cdERP;
+                        titulo.dtBaixaERP = tbRecebimentoTitulo.dtBaixaERP;
+                        //try
+                        //{
+                        //    _db.SaveChanges();
+                        //}
+                        //catch(Exception e)
+                        //{
+                        //    _db.Entry(titulo).Reload();
+                        //    if (e is DbEntityValidationException)
+                        //        throw new Exception(MensagemErro.getMensagemErro((DbEntityValidationException)e));
+                        //    else
+                        //        throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+                        //}
+                    }
+                    _db.SaveChanges();
+                    transaction.Commit();
+                }
+                catch (Exception e)
+                {
+                    transaction.Rollback();
+                    string json = JsonConvert.SerializeObject(tit);
+                    string erro = String.Empty;
+                    if (e is DbEntityValidationException)
+                        erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    else
+                        erro = e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message;
+                    //throw new Exception("Título: " + json + ". Erro: " + erro);
+                    // Reporta o erro
+                    retorno.Totais = new Dictionary<string, object>();
+                    retorno.Totais.Add("erro", "Título: " + json + ". Erro: " + erro);
+                    break;
+                }
+            }
+
+            semaforo.Release();
         }
 
     }

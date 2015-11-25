@@ -9,6 +9,7 @@ using api.Models.Object;
 using api.Negocios.Util;
 using System.Data.Entity.Validation;
 using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 
 namespace api.Negocios.Card
 {
@@ -385,7 +386,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            //DbContextTransaction transaction = _db.Database.BeginTransaction();
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try 
             { 
                 tbBancoParametro parametro = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(param.cdBanco))
@@ -403,10 +404,12 @@ namespace api.Negocios.Card
 
                 _db.tbBancoParametro.Add(param);
                 _db.SaveChanges();
+                transaction.Commit();
                 return param.cdBanco;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -436,7 +439,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbBancoParametro parametro = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(cdBanco))
@@ -447,9 +450,11 @@ namespace api.Negocios.Card
 
                 _db.tbBancoParametro.Remove(parametro);
                 _db.SaveChanges();
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -477,7 +482,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 foreach (ParametroBancario parametro in param.Parametros)
@@ -527,12 +532,14 @@ namespace api.Negocios.Card
                             if (param.FlVisivel != value.flVisivel) value.flVisivel = param.FlVisivel;
                             // Salva
                             _db.SaveChanges();
+                            transaction.Commit();
                         }
                     }
                 }
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);

@@ -45,8 +45,14 @@ namespace api.Controllers.Card
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
 
@@ -82,6 +88,12 @@ namespace api.Controllers.Card
                 Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
+            }
         }
 
         // PUT /tbRecebimentoTEF/token/
@@ -113,8 +125,14 @@ namespace api.Controllers.Card
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
 
@@ -147,8 +165,14 @@ namespace api.Controllers.Card
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
     }

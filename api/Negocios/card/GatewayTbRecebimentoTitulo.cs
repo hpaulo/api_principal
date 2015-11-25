@@ -277,6 +277,16 @@ namespace api.Negocios.Card
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = query.Count();
 
+                if (colecao == 2 || colecao == 3)
+                {
+                    // Obtém totais
+                    retorno.Totais = new Dictionary<string, object>();
+                    retorno.Totais.Add("valorTotal", retorno.TotalDeRegistros > 0 ? query.Select(e => e.vlParcela).Cast<decimal>().Sum() : new decimal(0.0));
+                    retorno.Totais.Add("totalBaixados", retorno.TotalDeRegistros > 0 ? query.Where(e => e.dtBaixaERP != null).Count() : 0);
+                    if (colecao == 3)
+                        retorno.Totais.Add("totalConciliados", retorno.TotalDeRegistros > 0 ? query.Where(e => e.RecebimentoParcelas.Count > 0).Count() : 0);
+                }
+
 
                 // PAGINAÇÃO
                 int skipRows = (pageNumber - 1) * pageSize;
@@ -346,9 +356,9 @@ namespace api.Negocios.Card
                         Baixado = e.dtBaixaERP != null,
                     }).OrderBy(e => e.Filial).ThenBy(e => e.DataPrevista).ThenBy(e => e.DataVenda).ThenBy(e => e.Valor).ToList<dynamic>();
 
-                    retorno.Totais = new Dictionary<string, object>();
-                    retorno.Totais.Add("valorTotal", CollectionTbRecebimentoTitulo.Count > 0 ? CollectionTbRecebimentoTitulo.Select(e => e.Valor).Cast<decimal>().Sum() : new decimal(0.0));
-                    retorno.Totais.Add("totalBaixados", CollectionTbRecebimentoTitulo.Where(e => e.Baixado == true).Count());
+                    //retorno.Totais = new Dictionary<string, object>();
+                    //retorno.Totais.Add("valorTotal", retorno.TotalDeRegistros > 0 ? CollectionTbRecebimentoTitulo.Select(e => e.Valor).Cast<decimal>().Sum() : new decimal(0.0));
+                    //retorno.Totais.Add("totalBaixados", retorno.TotalDeRegistros > 0 ? CollectionTbRecebimentoTitulo.Where(e => e.Baixado == true).Count() : 0);
                 }
                 else if (colecao == 3) // PORTAL: Consulta Títulos ERP
                 {
@@ -381,7 +391,8 @@ namespace api.Negocios.Card
                         dtBaixaERP = e.dtBaixaERP,
                         conciliado = e.RecebimentoParcelas.Count > 0
                     }).OrderBy(e => e.dtTitulo).ThenBy(e => e.dtVenda).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.vlParcela).ToList<dynamic>();
-                }
+
+                 }
 
                 retorno.Registros = CollectionTbRecebimentoTitulo;
 
@@ -416,14 +427,17 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 _db.tbRecebimentoTitulos.Add(param);
                 _db.SaveChanges();
+                transaction.Commit();
                 return param.idRecebimentoTitulo;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -453,13 +467,16 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 _db.tbRecebimentoTitulos.Remove(_db.tbRecebimentoTitulos.Where(e => e.idRecebimentoTitulo.Equals(idRecebimentoTitulo)).First());
                 _db.SaveChanges();
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -487,6 +504,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbRecebimentoTitulo value = _db.tbRecebimentoTitulos
@@ -513,9 +531,11 @@ namespace api.Negocios.Card
                     (param.dtBaixaERP != null && value.dtBaixaERP != null && !param.dtBaixaERP.Value.Equals(value.dtBaixaERP.Value)))
                         value.dtBaixaERP = param.dtBaixaERP;
                 _db.SaveChanges();
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);

@@ -1193,7 +1193,7 @@ namespace api.Negocios.Pos
                 transaction.Commit();
 
                 // Remove a venda toda
-                if(removeVenda) GatewayRecebimento.Delete(token, idRecebimento);
+                if(removeVenda) GatewayRecebimento.Delete(token, idRecebimento, _db);
             }
             catch (Exception e)
             {

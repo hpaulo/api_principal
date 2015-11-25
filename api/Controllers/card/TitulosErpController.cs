@@ -48,7 +48,7 @@ namespace api.Controllers.Card
                 HttpStatusCode httpStatus = e.Message.StartsWith("Permissão negada") || e.Message.StartsWith("401") ? HttpStatusCode.Unauthorized : HttpStatusCode.InternalServerError;
                 log.codResposta = (int)httpStatus;
                 log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 return Request.CreateResponse(httpStatus, e.Message);
                 //throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
@@ -88,10 +88,12 @@ namespace api.Controllers.Card
             }
             catch (Exception e)
             {
-                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                HttpStatusCode httpStatus = e.Message.StartsWith("Permissão negada") || e.Message.StartsWith("401") ? HttpStatusCode.Unauthorized : HttpStatusCode.InternalServerError;
+                log.codResposta = (int)httpStatus;
                 log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log, _db);
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                Bibliotecas.LogAcaoUsuario.Save(log);
+                //throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                return Request.CreateResponse(httpStatus, e.Message);
             }
             finally
             {
