@@ -762,10 +762,10 @@ namespace api.Negocios.Card
 
                 foreach (string data in datas)
                 {
-                    _db.Database.SqlQuery<string>("EXECUTE [card].[sp_upd_ConciliaTitulos] '" + 
-                                                   param.nrCNPJ  + "', '" + data + "', " + param.cdAdquirente);
-                }
+                    string script = "EXECUTE [card].[sp_upd_ConciliaTitulos] '" + param.nrCNPJ + "', '" + data + "', " + param.cdAdquirente;
+                    _db.Database.ExecuteSqlCommand(script);
 
+                }
             }
             catch (Exception e)
             {
