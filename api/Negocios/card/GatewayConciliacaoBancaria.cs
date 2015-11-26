@@ -1801,7 +1801,7 @@ namespace api.Negocios.Card
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento parcela" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao gerar a baixa automática" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }

@@ -384,6 +384,7 @@
     <Compile Include="Models\Object\ConciliacaoRelatorios.cs" />
     <Compile Include="Models\Object\ConciliacaoTitulos.cs" />
     <Compile Include="Models\Object\ConciliaRecebimentoParcelaTitulo.cs" />
+    <Compile Include="Models\Object\ConciliaTefNsu.cs" />
     <Compile Include="Models\Object\ImportaTitulos.cs" />
     <Compile Include="Models\Object\RecebiveisFuturos.cs" />
     <Compile Include="Models\Object\RelatorioVendas.cs" />

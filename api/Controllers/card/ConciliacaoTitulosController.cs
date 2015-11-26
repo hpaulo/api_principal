@@ -64,7 +64,7 @@ namespace api.Controllers.Card
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post", _db);
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put", _db);
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
                 if (Permissoes.Autenticado(token, _db))
@@ -85,7 +85,49 @@ namespace api.Controllers.Card
             {
                 log.codResposta = (int)HttpStatusCode.InternalServerError;
                 log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
+                throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
+            }
+        }
+
+
+
+        // POST /ConciliacaoTitulos/token/
+        public HttpResponseMessage Post(string token, [FromBody]ConciliaTefNsu param)
+        {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+            try
+            {
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post", _db);
+
+                HttpResponseMessage retorno = new HttpResponseMessage();
+                if (Permissoes.Autenticado(token, _db))
+                {
+                    GatewayConciliacaoTitulos.ConciliaTefNsu(token, param, _db);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
+                else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
+            }
+            catch (Exception e)
+            {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
             finally

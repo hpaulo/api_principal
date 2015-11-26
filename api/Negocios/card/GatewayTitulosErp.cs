@@ -285,19 +285,19 @@ namespace api.Negocios.Card
 
             List<dynamic> Registros = retorno.Registros as List<dynamic>;
 
-            List<dynamic> grupo = Registros
-                                         .GroupBy(e => new { e.nrCNPJ, e.nrNSU, e.dtTitulo, e.nrParcela })
-                                         .Where(e => e.Count() > 1)
-                                         .Select(e => new
-                                         {
-                                             e.Key.nrCNPJ,
-                                             e.Key.nrNSU,
-                                             e.Key.nrParcela,
-                                             e.Key.dtTitulo,
-                                             count = e.Count()
-                                         })
-                                         .OrderByDescending(e => e.count)
-                                         .ToList<dynamic>();
+            //List<dynamic> grupo = Registros
+            //                             .GroupBy(e => new { e.nrCNPJ, e.nrNSU, e.dtTitulo, e.nrParcela })
+            //                             .Where(e => e.Count() > 1)
+            //                             .Select(e => new
+            //                             {
+            //                                 e.Key.nrCNPJ,
+            //                                 e.Key.nrNSU,
+            //                                 e.Key.nrParcela,
+            //                                 e.Key.dtTitulo,
+            //                                 count = e.Count()
+            //                             })
+            //                             .OrderByDescending(e => e.count)
+            //                             .ToList<dynamic>();
 
             for (var k = 0; k < Registros.Count; k++)
             {
