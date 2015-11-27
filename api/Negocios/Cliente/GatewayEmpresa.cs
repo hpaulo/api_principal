@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
+using System.Data.Entity;
 
 namespace api.Negocios.Cliente
 {
@@ -59,7 +60,7 @@ namespace api.Negocios.Cliente
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<empresa> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<empresa> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.empresas.AsQueryable<empresa>();
@@ -258,8 +259,11 @@ namespace api.Negocios.Cliente
         /// Retorna Empresa/Empresa
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 // Se for uma consulta por um cnpj específico na coleção 0, não força filtro por empresa, filial e rolelevel
@@ -298,7 +302,7 @@ namespace api.Negocios.Cliente
 
 
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
                 // Se não for uma consulta de CNPJ na coleção 0, restringe consulta pelo perfil Comercial que não estiver "amarrado" a um grupo
                 if (!FiltroCNPJ)
@@ -313,11 +317,8 @@ namespace api.Negocios.Cliente
                     }
                 }
 
-
-                var queryTotal = query;
-
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
 
                 // PAGINAÇÃO
@@ -425,6 +426,15 @@ namespace api.Negocios.Cliente
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -434,8 +444,12 @@ namespace api.Negocios.Cliente
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static string Add(string token, empresa param)
+        public static string Add(string token, empresa param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 param.dt_cadastro = DateTime.Now;
@@ -450,16 +464,27 @@ namespace api.Negocios.Cliente
 
                 _db.empresas.Add(param);
                 _db.SaveChanges();
+                transaction.Commit();
                 return param.nu_cnpj;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar empresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -469,26 +494,41 @@ namespace api.Negocios.Cliente
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, string nu_cnpj)
+        public static void Delete(string token, string nu_cnpj, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 if (_db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa == nu_cnpj).ToList().Count == 0)
                 {
                     _db.empresas.Remove(_db.empresas.Where(e => e.nu_cnpj.Equals(nu_cnpj)).First());
                     _db.SaveChanges();
+                    transaction.Commit();
                 }
                 else
                     throw new Exception("Empresa não pode ser deletada!");
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar empresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -499,8 +539,12 @@ namespace api.Negocios.Cliente
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, empresa param)
+        public static void Update(string token, empresa param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 empresa filial = _db.empresas
@@ -542,15 +586,26 @@ namespace api.Negocios.Cliente
                 if (param.nu_inscEstadual != null && param.nu_inscEstadual != filial.nu_inscEstadual)
                     filial.nu_inscEstadual = param.nu_inscEstadual;
                 _db.SaveChanges();
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar empresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

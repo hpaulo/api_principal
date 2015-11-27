@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
+using System.Data.Entity;
 
 
 namespace api.Negocios.Cliente
@@ -49,7 +50,7 @@ namespace api.Negocios.Cliente
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<grupo_empresa> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<grupo_empresa> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.grupo_empresa.AsQueryable<grupo_empresa>();
@@ -159,8 +160,11 @@ namespace api.Negocios.Cliente
         /// Retorna Grupo_empresa/Grupo_empresa
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 // Se for uma consulta por um nome de grupo específico na coleção 0, não força filtro por empresa
@@ -190,7 +194,7 @@ namespace api.Negocios.Cliente
                 Retorno retorno = new Retorno();
 
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
 
                 if (!FiltroNome)
@@ -235,7 +239,8 @@ namespace api.Negocios.Cliente
                         fl_taxservices = e.fl_taxservices,
                         fl_proinfo = e.fl_proinfo,
                         vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
-                        cdPrioridade = e.cdPrioridade
+                        cdPrioridade = e.cdPrioridade,
+                        dsAPI = e.dsAPI,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -251,7 +256,8 @@ namespace api.Negocios.Cliente
                         fl_taxservices = e.fl_taxservices,
                         fl_proinfo = e.fl_proinfo,
                         id_vendedor = e.id_vendedor,
-                        cdPrioridade = e.cdPrioridade
+                        cdPrioridade = e.cdPrioridade,
+                        dsAPI = e.dsAPI,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2 || colecao == 3)
@@ -270,7 +276,8 @@ namespace api.Negocios.Cliente
                         login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
                         dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
                         podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).Count() == 0,
-                        cdPrioridade = e.cdPrioridade
+                        cdPrioridade = e.cdPrioridade,
+                        dsAPI = e.dsAPI,
                     }
 
                     ).ToList<dynamic>();
@@ -294,6 +301,15 @@ namespace api.Negocios.Cliente
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -303,8 +319,12 @@ namespace api.Negocios.Cliente
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, grupo_empresa param)
+        public static Int32 Add(string token, grupo_empresa param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 param.id_grupo = -1;
@@ -314,20 +334,31 @@ namespace api.Negocios.Cliente
                 // Verificar se usuário logado é de perfil comercial
                 if (Permissoes.isAtosRoleVendedor(token))//Permissoes.isAtosRole(token) && Permissoes.GetRoleName(token).ToUpper().Equals("COMERCIAL"))
                     // Perfil Comercial tem uma carteira de clientes específica
-                    param.id_vendedor = Permissoes.GetIdUser(token);
+                    param.id_vendedor = Permissoes.GetIdUser(token, _db);
 
                 _db.grupo_empresa.Add(param);
                 _db.SaveChanges();
+                transaction.Commit();
                 return param.id_grupo;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar grupo empresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -337,26 +368,41 @@ namespace api.Negocios.Cliente
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 id_grupo)
+        public static void Delete(string token, Int32 id_grupo, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 if (_db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == id_grupo).ToList().Count == 0)
                 {
                     _db.grupo_empresa.Remove(_db.grupo_empresa.Where(e => e.id_grupo.Equals(id_grupo)).First());
                     _db.SaveChanges();
+                    transaction.Commit();
                 }
                 else
                     throw new Exception("Grupo empresa não pode ser deletado!");
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar grupo empresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -367,8 +413,12 @@ namespace api.Negocios.Cliente
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, grupo_empresa param)
+        public static void Update(string token, grupo_empresa param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 grupo_empresa value = _db.grupo_empresa
@@ -394,18 +444,31 @@ namespace api.Negocios.Cliente
                     value.fl_taxservices = param.fl_taxservices;
                 if (param.fl_proinfo != value.fl_proinfo)
                     value.fl_proinfo = param.fl_proinfo;
+                if (param.dsAPI != null && param.dsAPI != value.dsAPI)
+                    value.dsAPI = param.dsAPI;
                 //if (param.cdPrioridade != value.cdPrioridade) // não faz alterações pela API!
                 //    value.cdPrioridade = param.cdPrioridade;
                 _db.SaveChanges();
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao alterar grupo empresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

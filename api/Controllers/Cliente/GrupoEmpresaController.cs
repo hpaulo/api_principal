@@ -19,24 +19,26 @@ namespace api.Controllers.cliente
         // GET /grupo_empresa/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get", _db);
 
                 Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+                if (Permissoes.Autenticado(token, _db))
                 {
-                    Retorno dados = GatewayGrupoEmpresa.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                    Retorno dados = GatewayGrupoEmpresa.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString, _db);
                     log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
                     return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
                 }
                 else
                 {
                     log.codResposta = (int)HttpStatusCode.Unauthorized;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
@@ -46,29 +48,37 @@ namespace api.Controllers.cliente
                 log.msgErro = e.Message;
                 Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
 
         // POST /grupo_empresa/token/
         public HttpResponseMessage Post(string token, [FromBody]grupo_empresa param)
         {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post", _db);
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+                if (Permissoes.Autenticado(token, _db))
                 {
-                    Int32 dados = GatewayGrupoEmpresa.Add(token, param);
+                    Int32 dados = GatewayGrupoEmpresa.Add(token, param, _db);
                     log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
                     return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
                 }
                 else
                 {
                     log.codResposta = (int)HttpStatusCode.Unauthorized;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
@@ -78,29 +88,37 @@ namespace api.Controllers.cliente
                 log.msgErro = e.Message;
                 Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
 
         // PUT /grupo_empresa/token/
         public HttpResponseMessage Put(string token, [FromBody]grupo_empresa param)
         {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put");
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put", _db);
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+                if (Permissoes.Autenticado(token, _db))
                 {
-                    GatewayGrupoEmpresa.Update(token, param);
+                    GatewayGrupoEmpresa.Update(token, param, _db);
                     log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
                 {
                     log.codResposta = (int)HttpStatusCode.Unauthorized;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
@@ -110,29 +128,37 @@ namespace api.Controllers.cliente
                 log.msgErro = e.Message;
                 Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
 
         // DELETE /grupo_empresa/token/id_grupo
         public HttpResponseMessage Delete(string token, Int32 id_grupo)
         {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
             try
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("id_grupo : " + id_grupo), "Delete");
+                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("id_grupo : " + id_grupo), "Delete", _db);
 
                 HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token))
+                if (Permissoes.Autenticado(token, _db))
                 {
-                    GatewayGrupoEmpresa.Delete(token, id_grupo);
+                    GatewayGrupoEmpresa.Delete(token, id_grupo, _db);
                     log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
                     return Request.CreateResponse(HttpStatusCode.OK);
                 }
                 else
                 {
                     log.codResposta = (int)HttpStatusCode.Unauthorized;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
                     return Request.CreateResponse(HttpStatusCode.Unauthorized);
                 }
             }
@@ -142,6 +168,12 @@ namespace api.Controllers.cliente
                 log.msgErro = e.Message;
                 Bibliotecas.LogAcaoUsuario.Save(log);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
     }

@@ -36,6 +36,7 @@ namespace api.Negocios.Card
             TIPO = 101,  // 1 : CONCILIADO, 2 : PRÉ-CONCILIADO, 3 : NÃO-CONCILIADO
             ID_GRUPO = 102,
             NU_CNPJ = 103,
+            PRECONCILIA_GRUPO = 104,
 
             // RELACIONAMENTOS
             CDADQUIRENTE = 200,
@@ -174,6 +175,13 @@ namespace api.Negocios.Card
                     // QUERIES DE FILTRO
                     Dictionary<string, string> queryStringRecebimentoParcela = new Dictionary<string, string>();
                     Dictionary<string, string> queryStringTbRecebimentoTitulo = new Dictionary<string, string>();
+
+                    // PRÉ-CONCILIAÇÃO CONSIDERANDO TODO O GRUPO?
+                    bool preConciliaComGrupo = false;
+                    if (queryString.TryGetValue("" + (int)CAMPOS.PRECONCILIA_GRUPO, out outValue))
+                        preConciliaComGrupo = Convert.ToBoolean(queryString["" + (int)CAMPOS.PRECONCILIA_GRUPO]);
+
+
                     // DATA
                     string data = String.Empty;
                     if (queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
@@ -208,7 +216,6 @@ namespace api.Negocios.Card
                         cdAdquirente = queryString["" + (int)CAMPOS.CDADQUIRENTE];
                         queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.CDADQUIRENTE, cdAdquirente);
                         queryStringTbRecebimentoTitulo.Add("" + (int)GatewayTbRecebimentoTitulo.CAMPOS.CDADQUIRENTE, cdAdquirente);
-
                     }
 
                     // FILTRO DE TIPO ?
@@ -231,6 +238,8 @@ namespace api.Negocios.Card
                     // Para a paginação
                     int totalConciliados = 0;
                     int skipRows = (pageNumber - 1) * pageSize;
+
+                    retorno.TotalDeRegistros = 0;
 
                     // Só busca por conciliações já concretizadas se não tiver sido requisitado um filtro do tipo PRE-CONCILIADO ou NÃO CONCILIADO
                     if (!filtroTipoPreConciliado && !filtroTipoNaoConciliado)
@@ -329,185 +338,206 @@ namespace api.Negocios.Card
                         #endregion
                     }
 
-
                     // Só busca por possíveis conciliações se não tiver sido requisitado um filtro do tipo CONCILIADO
-                    if (!filtroTipoConciliado && (pageSize == 0 || CollectionConciliacaoTitulos.Count < pageSize))
-                    {
-                        #region OBTÉM AS INFORMAÇÕES DE DADOS NÃO-CONCILIADOS E BUSCA PRÉ-CONCILIAÇÕES
-
-
-                        #region OBTÉM SOMENTE OS RECEBIMENTOS PARCELAS NÃO-CONCILIADOS
-
+                    if (!filtroTipoConciliado)
+                    { 
+                      
+                        // NÃO CONCILIADOS
                         IQueryable<RecebimentoParcela> queryRecebimentoParcelaNaoConciliados = queryRecebimentoParcela
                                                             .Where(r => r.idRecebimentoTitulo == null)
                                                             .OrderBy(r => r.dtaRecebimentoEfetivo ?? r.dtaRecebimento)
                                                             .ThenBy(r => r.Recebimento.dtaVenda);
 
                         int totalNaoConciliados = queryRecebimentoParcelaNaoConciliados.Count();
-                        int skipRowsNaoConciliados = 0;
 
                         retorno.TotalDeRegistros += totalNaoConciliados;
 
-                        // PAGINA DIRETO PELA BASE SE NÃO FOR PELOS PRÉ-CONCILIADOS
-                        if (!filtroTipoPreConciliado)
+                        if(pageSize == 0 || CollectionConciliacaoTitulos.Count < pageSize)
                         {
-                            int take = 0;
+                            #region OBTÉM AS INFORMAÇÕES DE DADOS NÃO-CONCILIADOS E BUSCA PRÉ-CONCILIAÇÕES
 
-                            if (skipRows > totalConciliados)
+
+                            #region OBTÉM SOMENTE OS RECEBIMENTOS PARCELAS NÃO-CONCILIADOS
+
+                            int skipRowsNaoConciliados = 0;
+
+                            #region PAGINA DIRETO PELA BASE SE NÃO FOR PELOS PRÉ-CONCILIADOS
+                            if (!filtroTipoPreConciliado)
                             {
-                                skipRowsNaoConciliados = skipRows - totalConciliados;
-                                if (skipRowsNaoConciliados >= totalNaoConciliados)
-                                    // pega nenhum
-                                    skipRowsNaoConciliados = totalNaoConciliados;
+                                int take = 0;
+
+                                if (skipRows > totalConciliados)
+                                {
+                                    skipRowsNaoConciliados = skipRows - totalConciliados;
+                                    if (skipRowsNaoConciliados >= totalNaoConciliados)
+                                        // pega nenhum
+                                        skipRowsNaoConciliados = totalNaoConciliados;
+                                    else
+                                    {
+                                        if (totalNaoConciliados - skipRowsNaoConciliados >= pageSize) take = pageSize;
+                                        else take = totalNaoConciliados - skipRowsNaoConciliados;
+                                    }
+                                }
                                 else
                                 {
-                                    if (totalNaoConciliados - skipRowsNaoConciliados >= pageSize) take = pageSize;
-                                    else take = totalNaoConciliados - skipRowsNaoConciliados;
+                                    take = pageSize - (totalConciliados - skipRows);
+                                    if (take > totalNaoConciliados) take = totalNaoConciliados;
                                 }
+
+                                // PAGINAÇÃO
+                                if (pageNumber > 0 && pageSize > 0)
+                                    queryRecebimentoParcelaNaoConciliados = queryRecebimentoParcelaNaoConciliados.Skip(skipRowsNaoConciliados).Take(take);
+                                else if (!filtroTipoNaoConciliado)
+                                    pageNumber = 1;
                             }
-                            else
+                            #endregion
+
+                            List<ConciliacaoTitulos> recebimentosParcela = queryRecebimentoParcelaNaoConciliados
+                                                                .Select(r => new ConciliacaoTitulos
+                                                                {
+                                                                    Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                    Id = r.idRecebimento,
+                                                                    NumParcela = r.numParcela,
+                                                                    Nsu = r.Recebimento.nsu,
+                                                                    CodResumoVendas = r.Recebimento.codResumoVenda,
+                                                                    Bandeira = r.Recebimento.tbBandeira.dsBandeira.ToUpper(),
+                                                                    DataVenda = r.Recebimento.dtaVenda,
+                                                                    Data = r.dtaRecebimentoEfetivo ?? r.dtaRecebimento,
+                                                                    Filial = r.Recebimento.empresa.ds_fantasia + (r.Recebimento.empresa.filial != null ? " " + r.Recebimento.empresa.filial : ""),
+                                                                    Valor = r.valorParcelaBruta,//r.valorParcelaLiquida ?? new decimal(0.0),
+                                                                    Adquirente = r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente.ToUpper(),
+                                                                }).ToList<ConciliacaoTitulos>();
+
+
+                            #endregion
+
+                            // Títulos
+                            if (!preConciliaComGrupo && !CnpjEmpresa.Equals(""))
+                                queryTbRecebimentoTitulo = queryTbRecebimentoTitulo.Where(e => e.nrCNPJ.Equals(CnpjEmpresa));
+
+
+                            List<int> idsPreConciliados = new List<int>();
+                            /*string filialConsulta = String.Empty;
+                            if(!CnpjEmpresa.Equals("")){ 
+                                filialConsulta = _db.empresas.Where(e => e.nu_cnpj.Equals(CnpjEmpresa)).Select(e =>  e.ds_fantasia + (e.filial != null ? " " + e.filial : "")).FirstOrDefault();
+                                if(filialConsulta == null) filialConsulta = String.Empty;
+                            }*/
+
+                            int contSkips = 0;
+                            for (int k = 0; k < recebimentosParcela.Count && (pageSize == 0 || CollectionConciliacaoTitulos.Count < pageSize); k++)
                             {
-                                take = pageSize - (totalConciliados - skipRows);
-                                if (take > totalNaoConciliados) take = totalNaoConciliados;
-                            }
+                                ConciliacaoTitulos recebParcela = recebimentosParcela[k];
 
-                            // PAGINAÇÃO
-                            if (pageNumber > 0 && pageSize > 0)
-                                queryRecebimentoParcelaNaoConciliados = queryRecebimentoParcelaNaoConciliados.Skip(skipRowsNaoConciliados).Take(take);
-                            else if (!filtroTipoNaoConciliado)
-                                pageNumber = 1;
-                        }
+                                List<ConciliacaoTitulos> titulos = new List<ConciliacaoTitulos>();
 
-                        List<ConciliacaoTitulos> recebimentosParcela = queryRecebimentoParcelaNaoConciliados
-                                                            .Select(r => new ConciliacaoTitulos
-                                                            {
-                                                                Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                Id = r.idRecebimento,
-                                                                NumParcela = r.numParcela,
-                                                                Nsu = r.Recebimento.nsu,
-                                                                CodResumoVendas = r.Recebimento.codResumoVenda,
-                                                                Bandeira = r.Recebimento.tbBandeira.dsBandeira.ToUpper(),
-                                                                DataVenda = r.Recebimento.dtaVenda,
-                                                                Data = r.dtaRecebimentoEfetivo ?? r.dtaRecebimento,
-                                                                Filial = r.Recebimento.empresa.ds_fantasia + (r.Recebimento.empresa.filial != null ? " " + r.Recebimento.empresa.filial : ""),
-                                                                Valor = r.valorParcelaBruta,//r.valorParcelaLiquida ?? new decimal(0.0),
-                                                                Adquirente = r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente.ToUpper(),
-                                                            }).ToList<ConciliacaoTitulos>();
-
-
-                        #endregion
-
-
-                        List<int> idsPreConciliados = new List<int>();
-                        /*string filialConsulta = String.Empty;
-                        if(!CnpjEmpresa.Equals("")){ 
-                            filialConsulta = _db.empresas.Where(e => e.nu_cnpj.Equals(CnpjEmpresa)).Select(e =>  e.ds_fantasia + (e.filial != null ? " " + e.filial : "")).FirstOrDefault();
-                            if(filialConsulta == null) filialConsulta = String.Empty;
-                        }*/
-
-                        int contSkips = 0;
-                        for (int k = 0; k < recebimentosParcela.Count && (pageSize == 0 || CollectionConciliacaoTitulos.Count < pageSize); k++)
-                        {
-                            ConciliacaoTitulos recebParcela = recebimentosParcela[k];
-
-                            List<ConciliacaoTitulos> titulos = new List<ConciliacaoTitulos>();
-
-                            // SE FOR ENVIADO O FILTRO DE "NÃO CONCILIADO", EXIBE TODOS OS QUE NÃO TIVEREM TÍTULOS ASSOCIADOS, INDEPENDENTEMENTE SE PUDER SER PRÉ-CONCILIADO
-                            if (!filtroTipoNaoConciliado)
-                            {
-                                //string filialConsulta = recebParcela.Filial;
-
-                                DateTime dataIni = recebParcela.Data.Subtract(new TimeSpan(RANGE_DIAS_ANTERIOR, 0, 0, 0));
-                                DateTime dataFim = recebParcela.Data.AddDays(RANGE_DIAS_POSTERIOR);
-                                string nsu = "" + Convert.ToInt32(recebParcela.Nsu);
-                                // Para cada recebimento Parcela, procurar
-                                titulos = queryTbRecebimentoTitulo
-                                                                    // Só considera os títulos que não estão conciliados
-                                                                    .Where(e => e.RecebimentoParcelas.Count == 0)
-                                                                    // Com data no intervalo esperado
-                                                                    .Where(e => e.dtTitulo >= dataIni && e.dtTitulo <= dataFim)
-                                                                    // NSU
-                                                                    .Where(e => e.nrNSU.EndsWith(nsu))
-                                                                    // Não pode ter sido pré-conciliado
-                                                                    .Where(e => !idsPreConciliados.Contains(e.idRecebimentoTitulo))
-                                                                    .Select(e => new ConciliacaoTitulos
-                                                                    {
-                                                                        Tipo = TIPO_TITULO, // título
-                                                                        Id = e.idRecebimentoTitulo,
-                                                                        NumParcela = e.nrParcela,
-                                                                        Nsu = e.nrNSU,
-                                                                        //CodResumoVendas = null,
-                                                                        Bandeira = e.dsBandeira.ToUpper(),
-                                                                        DataVenda = e.dtVenda,
-                                                                        Data = e.dtTitulo,
-                                                                        Filial = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
-                                                                        Valor = e.vlParcela,
-                                                                        Adquirente = e.tbAdquirente.nmAdquirente.ToUpper(),
-                                                                    }).ToList<ConciliacaoTitulos>();
-                            }
-
-                            if (titulos.Count > 0)
-                            {
-                                ConciliacaoTitulos titPreConciliado = null;
-
-                                // Mesma filial da parcela
-                                List<ConciliacaoTitulos> titFilial = titulos.Where(e => e.Filial.Equals(recebParcela.Filial)).ToList<ConciliacaoTitulos>();
-                                if (titFilial.Count > 0)
+                                // SE FOR ENVIADO O FILTRO DE "NÃO CONCILIADO", EXIBE TODOS OS QUE NÃO TIVEREM TÍTULOS ASSOCIADOS, INDEPENDENTEMENTE SE PUDER SER PRÉ-CONCILIADO
+                                if (!filtroTipoNaoConciliado)
                                 {
-                                    // Tem pra mesma filial
-                                    foreach (ConciliacaoTitulos tit in titFilial)
-                                    {
-                                        // NSUs com mesmo comprimento
-                                        string nsu1 = tit.Nsu;
-                                        string nsu2 = recebParcela.Nsu;
-                                        while (nsu1.Length < nsu2.Length) nsu1 = "0" + nsu1;
-                                        while (nsu2.Length < nsu1.Length) nsu2 = "0" + nsu2;
+                                    //string filialConsulta = recebParcela.Filial;
 
-                                        if (nsu1.Equals(nsu2) && Math.Abs(tit.Valor - recebParcela.Valor) <= TOLERANCIA)
+                                    DateTime dataIni = recebParcela.Data.Subtract(new TimeSpan(RANGE_DIAS_ANTERIOR, 0, 0, 0));
+                                    DateTime dataFim = recebParcela.Data.AddDays(RANGE_DIAS_POSTERIOR);
+                                    string nsu = "" + Convert.ToInt32(recebParcela.Nsu);
+                                    // Para cada recebimento Parcela, procurar
+                                    titulos = queryTbRecebimentoTitulo
+                                                                        // Só considera os títulos que não estão conciliados
+                                                                        .Where(e => e.RecebimentoParcelas.Count == 0)
+                                                                        // Com data no intervalo esperado
+                                                                        .Where(e => e.dtTitulo >= dataIni && e.dtTitulo <= dataFim)
+                                                                        // NSU
+                                                                        .Where(e => e.nrNSU.EndsWith(nsu))
+                                                                        // Não pode ter sido pré-conciliado
+                                                                        .Where(e => !idsPreConciliados.Contains(e.idRecebimentoTitulo))
+                                                                        .Select(e => new ConciliacaoTitulos
+                                                                        {
+                                                                            Tipo = TIPO_TITULO, // título
+                                                                            Id = e.idRecebimentoTitulo,
+                                                                            NumParcela = e.nrParcela,
+                                                                            Nsu = e.nrNSU,
+                                                                            //CodResumoVendas = null,
+                                                                            Bandeira = e.dsBandeira.ToUpper(),
+                                                                            DataVenda = e.dtVenda,
+                                                                            Data = e.dtTitulo,
+                                                                            Filial = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
+                                                                            Valor = e.vlParcela,
+                                                                            Adquirente = e.tbAdquirente.nmAdquirente.ToUpper(),
+                                                                        }).ToList<ConciliacaoTitulos>();
+                                }
+
+                                if (titulos.Count > 0)
+                                {
+                                    ConciliacaoTitulos titPreConciliado = null;
+
+                                    // Mesma filial da parcela
+                                    List<ConciliacaoTitulos> titFilial = titulos.Where(e => e.Filial.Equals(recebParcela.Filial)).ToList<ConciliacaoTitulos>();
+                                    if (titFilial.Count > 0)
+                                    {
+                                        // Tem pra mesma filial
+                                        foreach (ConciliacaoTitulos tit in titFilial)
                                         {
-                                            titPreConciliado = tit;
-                                            break;
+                                            // NSUs com mesmo comprimento
+                                            string nsu1 = tit.Nsu;
+                                            string nsu2 = recebParcela.Nsu;
+                                            while (nsu1.Length < nsu2.Length) nsu1 = "0" + nsu1;
+                                            while (nsu2.Length < nsu1.Length) nsu2 = "0" + nsu2;
+
+                                            if (nsu1.Equals(nsu2) && Math.Abs(tit.Valor - recebParcela.Valor) <= TOLERANCIA)
+                                            {
+                                                titPreConciliado = tit;
+                                                break;
+                                            }
                                         }
+                                        // Se não achou, pega somente os que não são da mesma filial
+                                        if (titPreConciliado == null)
+                                            titulos = titulos.Where(e => !e.Filial.Equals(recebParcela.Filial)).ToList<ConciliacaoTitulos>();
                                     }
-                                    // Se não achou, pega somente os que não são da mesma filial
+
                                     if (titPreConciliado == null)
-                                        titulos = titulos.Where(e => !e.Filial.Equals(recebParcela.Filial)).ToList<ConciliacaoTitulos>();
-                                }
-
-                                if (titPreConciliado == null)
-                                {
-                                    // Não achou na mesma filial => Busca em outra filial do mesmo grupo
-                                    foreach (ConciliacaoTitulos tit in titulos)
                                     {
-                                        // NSUs com mesmo comprimento
-                                        string nsu1 = tit.Nsu;
-                                        string nsu2 = recebParcela.Nsu;
-                                        while (nsu1.Length < nsu2.Length) nsu1 = "0" + nsu1;
-                                        while (nsu2.Length < nsu1.Length) nsu2 = "0" + nsu2;
-
-                                        if (nsu1.Equals(nsu2) && Math.Abs(tit.Valor - recebParcela.Valor) <= TOLERANCIA)
+                                        // Não achou na mesma filial => Busca em outra filial do mesmo grupo
+                                        foreach (ConciliacaoTitulos tit in titulos)
                                         {
-                                            titPreConciliado = tit;
-                                            break;
+                                            // NSUs com mesmo comprimento
+                                            string nsu1 = tit.Nsu;
+                                            string nsu2 = recebParcela.Nsu;
+                                            while (nsu1.Length < nsu2.Length) nsu1 = "0" + nsu1;
+                                            while (nsu2.Length < nsu1.Length) nsu2 = "0" + nsu2;
+
+                                            if (nsu1.Equals(nsu2) && Math.Abs(tit.Valor - recebParcela.Valor) <= TOLERANCIA)
+                                            {
+                                                titPreConciliado = tit;
+                                                break;
+                                            }
                                         }
                                     }
-                                }
 
-                                if (titPreConciliado != null)
-                                {
-                                    // Pré-conciliado
-                                    idsPreConciliados.Add(titPreConciliado.Id);
-                                    if (!filtroTipoNaoConciliado)
+                                    if (titPreConciliado != null)
                                     {
-                                        if(!filtroTipoPreConciliado || contSkips >= skipRows)
-                                            adicionaElementosConciliadosNaLista(CollectionConciliacaoTitulos, recebParcela, titPreConciliado, TIPO_CONCILIADO.PRE_CONCILIADO);
-                                        //if (filtroTipoPreConciliado) retorno.TotalDeRegistros++;
-                                        contSkips++;
+                                        // Pré-conciliado
+                                        idsPreConciliados.Add(titPreConciliado.Id);
+                                        if (!filtroTipoNaoConciliado)
+                                        {
+                                            if(!filtroTipoPreConciliado || contSkips >= skipRows)
+                                                adicionaElementosConciliadosNaLista(CollectionConciliacaoTitulos, recebParcela, titPreConciliado, TIPO_CONCILIADO.PRE_CONCILIADO);
+                                            //if (filtroTipoPreConciliado) retorno.TotalDeRegistros++;
+                                            contSkips++;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Não conciliado
+                                        List<ConciliacaoTitulos> rps = new List<ConciliacaoTitulos>();
+                                        rps.Add(recebParcela);
+                                        if (!filtroTipoPreConciliado)
+                                        {
+                                            adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoTitulos, rps);
+                                            //if (filtroTipoNaoConciliado) retorno.TotalDeRegistros++;
+                                        }
                                     }
                                 }
                                 else
                                 {
-                                    // Não conciliado
+                                    // Não encontrado!
                                     List<ConciliacaoTitulos> rps = new List<ConciliacaoTitulos>();
                                     rps.Add(recebParcela);
                                     if (!filtroTipoPreConciliado)
@@ -517,19 +547,8 @@ namespace api.Negocios.Card
                                     }
                                 }
                             }
-                            else
-                            {
-                                // Não encontrado!
-                                List<ConciliacaoTitulos> rps = new List<ConciliacaoTitulos>();
-                                rps.Add(recebParcela);
-                                if (!filtroTipoPreConciliado)
-                                {
-                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoTitulos, rps);
-                                    //if (filtroTipoNaoConciliado) retorno.TotalDeRegistros++;
-                                }
-                            }
+                            #endregion
                         }
-                        #endregion
                     }
 
                     // Ordena
@@ -762,8 +781,10 @@ namespace api.Negocios.Card
 
                 foreach (string data in datas)
                 {
-                    _db.Database.SqlQuery<string>("EXECUTE [card].[sp_upd_ConciliaTitulos] '" + 
-                                                   param.nrCNPJ  + "', '" + data + "', " + param.cdAdquirente);
+                    //_db.Database.SqlQuery<string>("EXECUTE [card].[sp_upd_ConciliaTitulos] '" + 
+                    //                               param.nrCNPJ  + "', '" + data + "', " + param.cdAdquirente);
+                    _db.Database.ExecuteSqlCommand("EXECUTE [card].[sp_upd_ConciliaTitulos] '" + 
+                                                    param.nrCNPJ  + "', '" + data + "', " + param.cdAdquirente);
                 }
 
             }

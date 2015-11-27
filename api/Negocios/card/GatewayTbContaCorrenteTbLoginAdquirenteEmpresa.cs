@@ -337,7 +337,8 @@ namespace api.Negocios.Card
                                 e.tbLoginAdquirenteEmpresa.tbAdquirente.nmAdquirente
                             },
                             cdEstabelecimento = e.tbLoginAdquirenteEmpresa.cdEstabelecimento,
-                            cdEstabelecimentoConsulta = e.tbLoginAdquirenteEmpresa.cdEstabelecimentoConsulta
+                            cdEstabelecimentoConsulta = e.tbLoginAdquirenteEmpresa.cdEstabelecimentoConsulta,
+                            status = e.tbLoginAdquirenteEmpresa.stLoginAdquirente
                         })
                         .OrderBy(e => e.empresa.nu_cnpj)
                         .ThenBy(e => e.tbAdquirente.nmAdquirente)

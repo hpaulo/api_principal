@@ -1789,8 +1789,7 @@ namespace api.Negocios.Card
                 List<List<string>> arquivos = new List<List<String>>();
                 foreach (BaixaTitulos baixa in param)
                 {
-                    arquivos.Add(_db.Database.SqlQuery<string>("EXECUTE [card].[sp_GeraCsvArquivoBaixa_DealerNet] " + baixa.idExtrato)
-                            .ToList<string>());
+                    arquivos.Add(_db.Database.SqlQuery<string>("EXECUTE [card].[sp_GeraCsvArquivoBaixa_DealerNet] " + baixa.idExtrato).ToList<string>());
                 }
 
                 return arquivos;

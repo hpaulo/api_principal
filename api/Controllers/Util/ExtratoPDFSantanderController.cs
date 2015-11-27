@@ -103,7 +103,7 @@ namespace api.Controllers.Util
             {
                 try
                 {
-                    //if (i == 66)
+                    //if (i == 21)
                     //    Console.WriteLine("Line: " + i + " Total: " + temp.Count + " | " + temp[i].ToString());
                     string value = String.Empty;
 
@@ -273,11 +273,11 @@ namespace api.Controllers.Util
                                         transaction.Memo = auxiliar.Substring(0, index).TrimEnd();//cipherText.Substring(11, cipherText.IndexOf(nrDocumento) - 11);
                                         // Legenda?
                                         if (transaction.Memo.EndsWith(" a")) // Bloqueio Dia / ADM
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a "));
+                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a"));
                                         else if (transaction.Memo.EndsWith(" b")) // Bloqueado
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b "));
+                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b"));
                                         else if (transaction.Memo.EndsWith(" p")) // Lançamento Provisionado
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p "));
+                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p"));
                                         //row.dsTipo = row.vlMovimento > 0 ? "CREDIT" : "DEBIT";
                                         transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
 
@@ -373,11 +373,11 @@ namespace api.Controllers.Util
 
                                                 // Legenda?
                                                 if (transaction.Memo.EndsWith(" a")) // Bloqueio Dia / ADM
-                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a "));
+                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a"));
                                                 else if (transaction.Memo.EndsWith(" b")) // Bloqueado
-                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b "));
+                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b"));
                                                 else if (transaction.Memo.EndsWith(" p")) // Lançamento Provisionado
-                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p "));
+                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p"));
                                                 //row.dsTipo = row.vlMovimento > 0 ? "CREDIT" : "DEBIT";
                                                 transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
 
@@ -474,11 +474,11 @@ namespace api.Controllers.Util
                                         transaction.Memo = auxiliar.Substring(0, index).TrimEnd();
                                         // Legenda?
                                         if (transaction.Memo.EndsWith(" a")) // Bloqueio Dia / ADM
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a "));
+                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a"));
                                         else if (transaction.Memo.EndsWith(" b")) // Bloqueado
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b "));
+                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b"));
                                         else if (transaction.Memo.EndsWith(" p")) // Lançamento Provisionado
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p "));
+                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p"));
 
                                         //row.dsTipo = row.vlMovimento > 0 ? "CREDIT" : "DEBIT";
                                         transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
