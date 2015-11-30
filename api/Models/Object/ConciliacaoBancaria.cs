@@ -80,6 +80,13 @@ namespace api.Models.Object
             set { valortotal = value; }
         }
 
+        private Nullable<decimal> valortotalbruto;
+        public Nullable<decimal> ValorTotalBruto
+        {
+            get { return valortotalbruto; }
+            set { valortotalbruto = value; }
+        }
+
         private ConciliacaoConta conta; // conta bancária associada
         public ConciliacaoConta Conta
         {
@@ -103,6 +110,13 @@ namespace api.Models.Object
             {
                 get { return valor; }
                 set { valor = value; }
+            }
+
+            private Nullable<decimal> valorBruto;
+            public Nullable<decimal> ValorBruto
+            {
+                get { return valorBruto; }
+                set { valorBruto = value; }
             }
 
             private string documento;
