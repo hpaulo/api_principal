@@ -363,6 +363,7 @@ namespace api.Negocios.Card
                             tbAdquirente = tbLoginAdquirenteEmpresa.tbAdquirente,
                             cdEstabelecimento = tbLoginAdquirenteEmpresa.cdEstabelecimento,
                             cdEstabelecimentoConsulta = tbLoginAdquirenteEmpresa.cdEstabelecimentoConsulta,
+                            status = tbLoginAdquirenteEmpresa.status
                         });
                     }
                 }
