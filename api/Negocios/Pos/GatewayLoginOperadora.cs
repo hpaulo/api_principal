@@ -279,7 +279,8 @@ namespace api.Negocios.Pos
                         idGrupo = e.idGrupo,
                         estabelecimento = e.estabelecimento,
                         nrCNPJCentralizadora = e.nrCNPJCentralizadora,
-                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta
+                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta,
+                        dtBloqueio = e.dtBloqueio,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -297,7 +298,8 @@ namespace api.Negocios.Pos
                         idGrupo = e.idGrupo,
                         estabelecimento = e.estabelecimento,
                         nrCNPJCentralizadora = e.nrCNPJCentralizadora,
-                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta
+                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta,
+                        dtBloqueio = e.dtBloqueio,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2) // [mobile]
@@ -313,7 +315,8 @@ namespace api.Negocios.Pos
                         operadora = e.Operadora.nmOperadora,
                         idOperadora = e.idOperadora,
                         nrCNPJCentralizadora = e.nrCNPJCentralizadora,
-                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta
+                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta,
+                        dtBloqueio = e.dtBloqueio,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 3) // [web]/Dados de Acesso/Grid
@@ -331,7 +334,8 @@ namespace api.Negocios.Pos
                         operadora = new { id = e.Operadora.id, desOperadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault() },
                         estabelecimento = e.estabelecimento,
                         empresaCentralizadora = e.nrCNPJCentralizadora == null ? null : new { nu_cnpj = e.empresaCentralizadora.nu_cnpj, ds_fantasia = e.empresaCentralizadora.ds_fantasia, filial = e.empresaCentralizadora.filial },
-                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta
+                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta,
+                        dtBloqueio = e.dtBloqueio,
                     }).ToList<dynamic>();
 
                     CollectionLoginOperadora = CollectionLoginOperadora.OrderBy(l => l.operadora.desOperadora).ToList();
@@ -354,7 +358,8 @@ namespace api.Negocios.Pos
                                         operadora = _db.Adquirentes.Where(a => a.nome.Equals(e.Operadora.nmOperadora)).Select(a => a.descricao).FirstOrDefault(),
                                         estabelecimento = e.estabelecimento,
                                         empresaCentralizadora = e.nrCNPJCentralizadora == null ? null : new { nu_cnpj = e.empresaCentralizadora.nu_cnpj, ds_fantasia = e.empresaCentralizadora.ds_fantasia, filial = e.empresaCentralizadora.filial },
-                                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta
+                                        cdEstabelecimentoConsulta = e.cdEstabelecimentoConsulta,
+                                        dtBloqueio = e.dtBloqueio,
                                     });
 
                     retorno.TotalDeRegistros = subQuery.Count();
@@ -448,8 +453,11 @@ namespace api.Negocios.Pos
                         param.idOperadora = operadora.id;
 
                     // Salva na base
+
                     param.Operadora.idGrupoEmpresa = param.idGrupo;
                     param.status = true;
+                    param.dtBloqueio = null;
+                    param.qtTentativas = 0;
                     try
                     {
                         _db.LoginOperadoras.Add(param);
@@ -594,6 +602,8 @@ namespace api.Negocios.Pos
                 {
                     value.senha = param.senha;
                     value.status = true;
+                    value.dtBloqueio = null;
+                    value.qtTentativas = 0;
                     value.data_alteracao = DateTime.Now;
                 }
                 if (param.estabelecimento != null && param.estabelecimento != value.estabelecimento)

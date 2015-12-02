@@ -9,19 +9,20 @@ using api.Models.Object;
 using System.Globalization;
 using System.Data.Entity.Validation;
 using api.Negocios.Util;
+using System.Data.Entity;
 
 namespace api.Negocios.Card
 {
     public class GatewayTbContaCorrenteTbLoginAdquirenteEmpresa
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTbContaCorrenteTbLoginAdquirenteEmpresa()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -44,6 +45,8 @@ namespace api.Negocios.Card
             NU_CNPJ = 500,
             ID_GRUPO = 516,
 
+            STLOGINADQUIRENTE = 608,
+
         };
 
         /// <summary>
@@ -56,7 +59,7 @@ namespace api.Negocios.Card
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.tbContaCorrente_tbLoginAdquirenteEmpresas.AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
@@ -139,6 +142,10 @@ namespace api.Negocios.Card
                         string nu_cnpj = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.nrCnpj.Equals(nu_cnpj)).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
                         break;
+                    case CAMPOS.STLOGINADQUIRENTE:
+                        byte stLoginAdquirente = Convert.ToByte(item.Value);
+                        entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.stLoginAdquirente == stLoginAdquirente).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                        break;
 
                 }
             }
@@ -189,8 +196,13 @@ namespace api.Negocios.Card
         /// Retorna TbContaCorrente_tbLoginAdquirenteEmpresa/TbContaCorrente_tbLoginAdquirenteEmpresa
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
             try
             {
                 //DECLARAÇÕES
@@ -218,7 +230,7 @@ namespace api.Negocios.Card
                 }
 
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = query.Count();
@@ -381,6 +393,15 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -388,8 +409,13 @@ namespace api.Negocios.Card
           * Procura por conflitos de período de vigência a partir do parâmetro
           * Retorna null se não houve conflito. Caso contrário, retorna o registro ao qual o período conflita
           */
-        private static tbContaCorrente_tbLoginAdquirenteEmpresa conflitoPeriodoVigencia(tbContaCorrente_tbLoginAdquirenteEmpresa param)
+        private static tbContaCorrente_tbLoginAdquirenteEmpresa conflitoPeriodoVigencia(tbContaCorrente_tbLoginAdquirenteEmpresa param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
             try
             {
                 // Avalia se, para o mesmo cdContaCorrente e cdLoginAdquirenteEmpresa
@@ -471,6 +497,15 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -480,8 +515,14 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbContaCorrente_tbLoginAdquirenteEmpresa param)
+        public static Int32 Add(string token, tbContaCorrente_tbLoginAdquirenteEmpresa param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbContaCorrente_tbLoginAdquirenteEmpresa value = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
@@ -493,16 +534,27 @@ namespace api.Negocios.Card
                 if (conflitoPeriodoVigencia(param) != null) throw new Exception("Conflito de período de vigência");
                 _db.tbContaCorrente_tbLoginAdquirenteEmpresas.Add(param);
                 _db.SaveChanges();
+                transaction.Commit();
                 return param.cdContaCorrente;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar adquirente empresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -512,21 +564,39 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 cdContaCorrente)
+        public static void Delete(string token, Int32 cdContaCorrente, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 _db.tbContaCorrente_tbLoginAdquirenteEmpresas.RemoveRange(_db.tbContaCorrente_tbLoginAdquirenteEmpresas.Where(e => e.cdContaCorrente == cdContaCorrente));
                 _db.SaveChanges();
+
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar adquirente empresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -536,8 +606,14 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 cdContaCorrente, Int32 cdLoginAdquirenteEmpresa, DateTime dtInicio)
+        public static void Delete(string token, Int32 cdContaCorrente, Int32 cdLoginAdquirenteEmpresa, DateTime dtInicio, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbContaCorrente_tbLoginAdquirenteEmpresa value = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
@@ -548,15 +624,26 @@ namespace api.Negocios.Card
                 if (value == null) throw new Exception("Vigência inválida!");
                 _db.tbContaCorrente_tbLoginAdquirenteEmpresas.Remove(value);
                 _db.SaveChanges();
+                transaction.Commit();
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar adquirente empresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -565,8 +652,14 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbContaCorrente_tbLoginAdquirenteEmpresa param)
+        public static void Update(string token, tbContaCorrente_tbLoginAdquirenteEmpresa param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbContaCorrente_tbLoginAdquirenteEmpresa value = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
@@ -593,6 +686,15 @@ namespace api.Negocios.Card
                     throw new Exception(erro.Equals("") ? "Falha ao alterar adquirente empresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

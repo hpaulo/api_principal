@@ -24,6 +24,8 @@ namespace api.Models
         public byte stLoginAdquirenteEmpresa { get; set; }
         public string nrCNPJCentralizadora { get; set; }
         public string cdEstabelecimentoConsulta { get; set; }
+        public Nullable<DateTime> dtBloqueio { get; set; }
+        public byte qtTentativas { get; set; }
         public virtual ICollection<tbContaCorrente_tbLoginAdquirenteEmpresa> tbContaCorrente_tbLoginAdquirenteEmpresas { get; set; }
         //public virtual ICollection<tbExecucaoLog> tbExecucaoLog { get; set; }
         public virtual grupo_empresa grupo_empresa { get; set; }

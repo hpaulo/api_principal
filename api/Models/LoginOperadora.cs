@@ -21,6 +21,8 @@ namespace api.Models
         public string estabelecimento { get; set; }
         public string nrCNPJCentralizadora { get; set; }
         public string cdEstabelecimentoConsulta { get; set; }
+        public Nullable<DateTime> dtBloqueio { get; set; }
+        public byte qtTentativas { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual grupo_empresa grupo_empresa { get; set; }
         public virtual ICollection<LogExecution> LogExecutions { get; set; }

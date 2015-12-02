@@ -46,6 +46,9 @@ namespace api.Models.Mapping
             this.Property(t => t.cdEstabelecimentoConsulta)
                 .HasMaxLength(128);
 
+            this.Property(t => t.qtTentativas)
+                .IsRequired();
+
             // Table & Column Mappings
             this.ToTable("tbLoginAdquirenteEmpresa", "card");
             this.Property(t => t.cdLoginAdquirenteEmpresa).HasColumnName("cdLoginAdquirenteEmpresa");
@@ -60,6 +63,8 @@ namespace api.Models.Mapping
             this.Property(t => t.stLoginAdquirenteEmpresa).HasColumnName("stLoginAdquirenteEmpresa");
             this.Property(t => t.nrCNPJCentralizadora).HasColumnName("nrCNPJCentralizadora");
             this.Property(t => t.cdEstabelecimentoConsulta).HasColumnName("cdEstabelecimentoConsulta");
+            this.Property(t => t.dtBloqueio).HasColumnName("dtBloqueio");
+            this.Property(t => t.qtTentativas).HasColumnName("qtTentativas");
 
             // Relationships
             this.HasRequired(t => t.grupo_empresa)
