@@ -13,14 +13,14 @@ namespace api.Negocios.Cliente
 {
     public class GatewayEmpresa
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayEmpresa()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+           //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -282,7 +282,7 @@ namespace api.Negocios.Cliente
                 Int32 IdGrupo = 0;
                 if (!FiltroCNPJ)
                 {
-                    IdGrupo = Permissoes.GetIdGrupo(token);
+                    IdGrupo = Permissoes.GetIdGrupo(token, _db);
                     if (IdGrupo != 0)
                     {
                         if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
@@ -290,7 +290,7 @@ namespace api.Negocios.Cliente
                         else
                             queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
                     }
-                    string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                    string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                     if (!CnpjEmpresa.Equals(""))
                     {
                         if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
@@ -309,10 +309,10 @@ namespace api.Negocios.Cliente
                 {
                     // Restringe consulta pelo perfil do usuário logado
                     //String RoleName = Permissoes.GetRoleName(token).ToUpper();
-                    if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))//RoleName.Equals("COMERCIAL"))
+                    if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token, _db))//RoleName.Equals("COMERCIAL"))
                     {
                         // Perfil Comercial tem uma carteira de clientes específica
-                        List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                        List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token, _db);
                         query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<empresa>();
                     }
                 }
@@ -410,6 +410,68 @@ namespace api.Negocios.Cliente
                                                         nmOperadora = l.Operadora.nmOperadora
                                                     }
                                                 }).ToList<dynamic>()
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 4)
+                {
+                    //IQueryable iq = query.Select(e => new
+                    //{
+
+                    //    nu_cnpj = e.nu_cnpj,
+                    //    ds_fantasia = e.ds_fantasia,
+                    //    ds_razaoSocial = e.ds_razaoSocial,
+                    //    ds_endereco = e.ds_endereco,
+                    //    ds_cidade = e.ds_cidade,
+                    //    sg_uf = e.sg_uf,
+                    //    nu_cep = e.nu_cep,
+                    //    nu_telefone = e.nu_telefone,
+                    //    ds_bairro = e.ds_bairro,
+                    //    ds_email = e.ds_email,
+                    //    dt_cadastro = e.dt_cadastro,
+                    //    fl_ativo = e.fl_ativo,
+                    //    id_grupo = e.id_grupo,
+                    //    filial = e.filial,
+                    //    nu_inscEstadual = e.nu_inscEstadual,
+                    //    //ultimoAcesso = (string) null,
+                    //    ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Take(1)
+                    //                                 .Select(l => new
+                    //                                 {
+                    //                                     login_ultimoAcesso = l.webpages_Users.ds_login,
+                    //                                     dt_ultimoAcesso = l.dtAcesso,
+                    //                                 }).FirstOrDefault(),
+                    //    //login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
+                    //    //dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
+                    //    //podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).Count() == 0
+                    //});
+
+                    CollectionEmpresa = query.Select(e => new
+                    {
+
+                        nu_cnpj = e.nu_cnpj,
+                        ds_fantasia = e.ds_fantasia,
+                        ds_razaoSocial = e.ds_razaoSocial,
+                        ds_endereco = e.ds_endereco,
+                        ds_cidade = e.ds_cidade,
+                        sg_uf = e.sg_uf,
+                        nu_cep = e.nu_cep,
+                        nu_telefone = e.nu_telefone,
+                        ds_bairro = e.ds_bairro,
+                        ds_email = e.ds_email,
+                        dt_cadastro = e.dt_cadastro,
+                        fl_ativo = e.fl_ativo,
+                        id_grupo = e.id_grupo,
+                        filial = e.filial,
+                        nu_inscEstadual = e.nu_inscEstadual,
+                        //ultimoAcesso = (string) null,
+                        ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Take(1)
+                                                     .Select(l => new
+                                                     {
+                                                         login_ultimoAcesso = l.webpages_Users.ds_login,
+                                                         dt_ultimoAcesso = l.dtAcesso,
+                                                     }).FirstOrDefault(),
+                        //login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
+                        //dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
+                        //podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa.Equals(e.nu_cnpj)).Count() == 0
                     }).ToList<dynamic>();
                 }
 

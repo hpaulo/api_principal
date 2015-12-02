@@ -14,14 +14,14 @@ namespace api.Negocios.Cliente
 {
     public class GatewayGrupoEmpresa
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayGrupoEmpresa()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+           //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -179,7 +179,7 @@ namespace api.Negocios.Cliente
                 Int32 IdGrupo = 0;
                 if (!FiltroNome)
                 {
-                    IdGrupo = Permissoes.GetIdGrupo(token);
+                    IdGrupo = Permissoes.GetIdGrupo(token, _db);
                     if (IdGrupo != 0)
                     {
                         if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
@@ -201,18 +201,16 @@ namespace api.Negocios.Cliente
                 {
                     // Restringe consulta pelo perfil do usuário logado
                     //String RoleName = Permissoes.GetRoleName(token).ToUpper();
-                    if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))//RoleName.Equals("COMERCIAL"))
+                    if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token, _db))//RoleName.Equals("COMERCIAL"))
                     {
                         // Perfil Comercial tem uma carteira de clientes específica
-                        List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                        List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token, _db);
                         query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<grupo_empresa>();
                     }
                 }
 
-                var queryTotal = query;
-
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
 
                 // PAGINAÇÃO
@@ -260,7 +258,7 @@ namespace api.Negocios.Cliente
                         dsAPI = e.dsAPI,
                     }).ToList<dynamic>();
                 }
-                else if (colecao == 2 || colecao == 3)
+                else if (colecao == 2)
                 {
                     CollectionGrupo_empresa = query.Select(e => new
                     {
@@ -273,8 +271,8 @@ namespace api.Negocios.Cliente
                         fl_taxservices = e.fl_taxservices,
                         fl_proinfo = e.fl_proinfo,
                         vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
-                        login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
-                        dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
+                        login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Take(1).Select(l => l.webpages_Users.ds_login).FirstOrDefault(),
+                        dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Take(1).Select(l => l.dtAcesso).FirstOrDefault(),
                         podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).Count() == 0,
                         cdPrioridade = e.cdPrioridade,
                         dsAPI = e.dsAPI,
@@ -284,7 +282,62 @@ namespace api.Negocios.Cliente
 
                     // a diferença entre a colecao 2 e a 3 é que a 2 sempre ordena decrescente por dt ultimo acesso
                     // A coleção 2 é usada no mobile, já a 3 é usada no portal web
-                    if (colecao == 2) CollectionGrupo_empresa = CollectionGrupo_empresa.OrderByDescending(d => d.dt_ultimoAcesso).ToList();
+                    CollectionGrupo_empresa = CollectionGrupo_empresa.OrderByDescending(d => d.dt_ultimoAcesso).ToList();
+
+                }
+                else if (colecao == 3)
+                {
+                    //IQueryable iq = query.Select(e => new
+                    //{
+                    //    id_grupo = e.id_grupo,
+                    //    ds_nome = e.ds_nome,
+                    //    dt_cadastro = e.dt_cadastro,
+                    //    token = e.token,
+                    //    fl_ativo = e.fl_ativo,
+                    //    fl_cardservices = e.fl_cardservices,
+                    //    fl_taxservices = e.fl_taxservices,
+                    //    fl_proinfo = e.fl_proinfo,
+                    //    vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
+                    //    //ultimoAcesso = (string)null,
+                    //    ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Take(1)
+                    //                                 .Select(l => new
+                    //                                 {
+                    //                                     login_ultimoAcesso = l.webpages_Users.ds_login,
+                    //                                     dt_ultimoAcesso = l.dtAcesso,
+                    //                                 }).FirstOrDefault(),
+                    //    //login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
+                    //    //dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
+                    //    //podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).Count() == 0,
+                    //    cdPrioridade = e.cdPrioridade,
+                    //    dsAPI = e.dsAPI,
+                    //});
+
+                    CollectionGrupo_empresa = query.Select(e => new
+                    {
+                        id_grupo = e.id_grupo,
+                        ds_nome = e.ds_nome,
+                        dt_cadastro = e.dt_cadastro,
+                        token = e.token,
+                        fl_ativo = e.fl_ativo,
+                        fl_cardservices = e.fl_cardservices,
+                        fl_taxservices = e.fl_taxservices,
+                        fl_proinfo = e.fl_proinfo,
+                        vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
+                        //ultimoAcesso = (string)null,
+                        ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Take(1)
+                                                     .Select(l => new
+                                                     {
+                                                         login_ultimoAcesso = l.webpages_Users.ds_login,
+                                                         dt_ultimoAcesso = l.dtAcesso,
+                                                     }).FirstOrDefault(),
+                        //login_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.webpages_Users.ds_login).Take(1).FirstOrDefault(),
+                        //dt_ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Select(l => l.dtAcesso).Take(1).FirstOrDefault(),
+                        //podeExcluir = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).Count() == 0,
+                        cdPrioridade = e.cdPrioridade,
+                        dsAPI = e.dsAPI,
+                    }
+
+                    ).ToList<dynamic>();
 
                 }
 
