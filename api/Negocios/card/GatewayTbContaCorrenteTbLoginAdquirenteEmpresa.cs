@@ -38,7 +38,8 @@ namespace api.Negocios.Card
             // RELACIONAMENTOS
             DS_FANTASIA = 204,
 
-            DSADQUIRENTE = 301,
+            CDADQUIRENTE = 300,
+            //NMADQUIRENTE = 301,
 
             DTVIGENCIA = 400,
 
@@ -101,16 +102,16 @@ namespace api.Negocios.Card
                         else
                             entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia.Equals(ds_fantasia)).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
                         break;
-                    case CAMPOS.DSADQUIRENTE:
-                        string nome = Convert.ToString(item.Value);
-                        if (nome.Contains("%")) // usa LIKE
-                        {
-                            string busca = nome.Replace("%", "").ToString();
-                            entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente.Contains(busca)).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
-                        }
-                        else
-                            entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente.Equals(nome)).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
-                        break;
+                    //case CAMPOS.NMADQUIRENTE:
+                    //    string nome = Convert.ToString(item.Value);
+                    //    if (nome.Contains("%")) // usa LIKE
+                    //    {
+                    //        string busca = nome.Replace("%", "").ToString();
+                    //        entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente.Contains(busca)).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                    //    }
+                    //    else
+                    //        entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente.Equals(nome)).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                    //    break;
                     case CAMPOS.DTVIGENCIA:
                         if (item.Value.Contains("|")) // BETWEEN
                         {
@@ -146,7 +147,10 @@ namespace api.Negocios.Card
                         byte stLoginAdquirente = Convert.ToByte(item.Value);
                         entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.stLoginAdquirente == stLoginAdquirente).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
                         break;
-
+                    case CAMPOS.CDADQUIRENTE:
+                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.tbLoginAdquirenteEmpresa.cdAdquirente == cdAdquirente).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                        break;
                 }
             }
             #endregion
@@ -178,10 +182,10 @@ namespace api.Negocios.Card
                     if (orderby == 0) entity = entity.OrderBy(e => e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia).ThenBy(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente).ThenByDescending(e => e.dtInicio).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
                     else entity = entity.OrderByDescending(e => e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia).ThenByDescending(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente).ThenByDescending(e => e.dtInicio).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
                     break;
-                case CAMPOS.DSADQUIRENTE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente).ThenBy(e => e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia).ThenByDescending(e => e.dtInicio).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
-                    else entity = entity.OrderByDescending(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente).ThenByDescending(e => e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia).ThenByDescending(e => e.dtInicio).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
-                    break;
+                //case CAMPOS.DSADQUIRENTE:
+                //    if (orderby == 0) entity = entity.OrderBy(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente).ThenBy(e => e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia).ThenByDescending(e => e.dtInicio).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                //    else entity = entity.OrderByDescending(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.dsAdquirente).ThenByDescending(e => e.tbLoginAdquirenteEmpresa.empresa.ds_fantasia).ThenByDescending(e => e.dtInicio).AsQueryable<tbContaCorrente_tbLoginAdquirenteEmpresa>();
+                //    break;
 
             }
             #endregion
@@ -236,15 +240,20 @@ namespace api.Negocios.Card
                 retorno.TotalDeRegistros = query.Count();
 
 
-                // PAGINAÇÃO
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
+                if (colecao != 5)
+                {
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
 
-                retorno.PaginaAtual = pageNumber;
-                retorno.ItensPorPagina = pageSize;
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
+                }
+
+               
 
                 // COLEÇÃO DE RETORNO
                 if (colecao == 1)
@@ -327,6 +336,7 @@ namespace api.Negocios.Card
                 else if (colecao == 5) // [WEB] Relação adquirente-filial por conta
                 {
                     List<dynamic> tbLoginAdquirenteEmpresas = query
+                        .Where(e => e.tbLoginAdquirenteEmpresa.empresa.fl_ativo == 1)
                         .Select(e => new
                         {
                             tbContaCorrente = new
@@ -350,7 +360,9 @@ namespace api.Negocios.Card
                             },
                             cdEstabelecimento = e.tbLoginAdquirenteEmpresa.cdEstabelecimento,
                             cdEstabelecimentoConsulta = e.tbLoginAdquirenteEmpresa.cdEstabelecimentoConsulta,
-                            status = e.tbLoginAdquirenteEmpresa.stLoginAdquirente
+                            status = e.tbLoginAdquirenteEmpresa.stLoginAdquirente,
+                            dtInicio = e.dtInicio,
+                            dtFim = e.dtFim
                         })
                         .OrderBy(e => e.empresa.nu_cnpj)
                         .ThenBy(e => e.tbAdquirente.nmAdquirente)
@@ -358,6 +370,16 @@ namespace api.Negocios.Card
                         .ThenBy(e => e.tbContaCorrente.nrAgencia)
                         .ThenBy(e => e.tbContaCorrente.nrConta)
                         .ToList<dynamic>();
+
+                    // PAGINAÇÃO
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (tbLoginAdquirenteEmpresas.Count > pageSize && pageNumber > 0 && pageSize > 0)
+                        tbLoginAdquirenteEmpresas = tbLoginAdquirenteEmpresas.Skip(skipRows).Take(pageSize).ToList<dynamic>();
+                    else
+                        pageNumber = 1;
+
+                    retorno.PaginaAtual = pageNumber;
+                    retorno.ItensPorPagina = pageSize;
 
                     // Após transformar em lista (isto é, trazer para a memória), atualiza o valor do NomeExtenso associado ao banco
                     foreach (var tbLoginAdquirenteEmpresa in tbLoginAdquirenteEmpresas)
@@ -375,7 +397,9 @@ namespace api.Negocios.Card
                             tbAdquirente = tbLoginAdquirenteEmpresa.tbAdquirente,
                             cdEstabelecimento = tbLoginAdquirenteEmpresa.cdEstabelecimento,
                             cdEstabelecimentoConsulta = tbLoginAdquirenteEmpresa.cdEstabelecimentoConsulta,
-                            status = tbLoginAdquirenteEmpresa.status
+                            status = tbLoginAdquirenteEmpresa.status,
+                            dtInicio = tbLoginAdquirenteEmpresa.dtInicio,
+                            dtFim = tbLoginAdquirenteEmpresa.dtFim
                         });
                     }
                 }
