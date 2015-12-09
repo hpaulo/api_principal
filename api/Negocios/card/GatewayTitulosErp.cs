@@ -18,6 +18,7 @@ using Newtonsoft.Json;
 using System.ComponentModel;
 using System.Threading;
 using System.Data.Entity;
+using System.IO;
 
 namespace api.Negocios.Card
 {
@@ -395,6 +396,212 @@ namespace api.Negocios.Card
             }
 
             semaforo.Release();
+        }
+
+
+
+        public static void Patch(string token, tbLogAcessoUsuario log, painel_taxservices_dbContext _dbContext = null)
+        {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
+            try
+            {
+                string pastaCSVs = HttpContext.Current.Server.MapPath("~/App_Data/Titulos_ERP/");
+
+                // Tem que estar associado a um grupo
+                Int32 idGrupo = Permissoes.GetIdGrupo(token, _db);
+                if (idGrupo == 0) throw new Exception("Grupo inválido");
+
+                // Tem que informar por filtro a conta corrente
+                //string outValue = null;
+                //if (!queryString.TryGetValue("" + (int)CAMPOS.CDCONTACORRENTE, out outValue))
+                //    throw new Exception("Conta corrente não informada");
+
+                #region OBTÉM O DIRETÓRIO A SER SALVO O CSV
+                if (!Directory.Exists(pastaCSVs)) Directory.CreateDirectory(pastaCSVs);
+                string diretorio = pastaCSVs + idGrupo + "\\";
+                if (!Directory.Exists(diretorio)) Directory.CreateDirectory(diretorio);
+                #endregion
+
+                HttpRequest httpRequest = HttpContext.Current.Request;
+                if (httpRequest.Files.Count > 0)
+                {
+                    #region OBTÉM NOME ÚNICO PARA O ARQUIVO UPADO
+                    // Arquivo upado
+                    HttpPostedFile postedFile = httpRequest.Files[0];
+                    // Obtém a extensão
+                    string extensao = postedFile.FileName.LastIndexOf(".") > -1 ? postedFile.FileName.Substring(postedFile.FileName.LastIndexOf(".")) : ".csv";
+                    if (!extensao.ToLower().Equals(".csv"))
+                        throw new Exception("Só são aceitos arquivos do tipo CSV");
+                    
+                    
+                    // Obtém o nome do arquivo upado
+                    string nomeArquivo = (postedFile.FileName.LastIndexOf(".") > -1 ? postedFile.FileName.Substring(0, postedFile.FileName.LastIndexOf(".")) : postedFile.FileName) + "_0" + extensao;
+
+                    // Remove caracteres inválidos para nome de arquivo
+                    nomeArquivo = Path.GetInvalidFileNameChars().Aggregate(nomeArquivo, (current, c) => current.Replace(c.ToString(), string.Empty));
+
+                    // Valida o nome do arquivo dentro do diretório => deve ser único
+                    int cont = 0;
+                    while (File.Exists(diretorio + nomeArquivo))
+                    {
+                        // Novo nome
+                        nomeArquivo = nomeArquivo.Substring(0, nomeArquivo.LastIndexOf("_") + 1);
+                        nomeArquivo += ++cont + extensao;
+                    }
+                    #endregion
+
+                    #region SALVA ARQUIVO NO DISCO
+                    string filePath = diretorio + nomeArquivo;
+                    // Salva o arquivo
+                    try
+                    {
+                        postedFile.SaveAs(filePath);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception("Não foi possível salvar o arquivo '" + filePath + "'! " + e.Message);
+                    }
+                    #endregion
+
+                    // Loga o nome do arquivo
+                    if (log != null) log.dsJson = filePath;
+
+                    // CNPJs pertencentes ao grupo
+                    List<string> CNPJSEmpresa = _db.empresas.Where(e => e.id_grupo == idGrupo).Select(e => e.nu_cnpj).ToList<string>();
+
+                    Retorno retorno = new Retorno();
+
+                    List<dynamic> titulosERPCSV = new List<dynamic>();
+                    // Lê arquivo e preenche lista
+                    using (CSVReader leitor = new CSVReader(filePath))
+                    {
+                        int contLinha = 1;
+                        CSVFileira fileira = new CSVFileira();
+                        while (leitor.LerLinha(fileira))
+                        {
+                            if (fileira == null || fileira.Count < 10)
+                                throw new Exception("Linha " + contLinha + " do arquivo é inválida!");
+
+                            // CNPJ
+                            string nrCNPJ = fileira[0].Trim();
+                            if (nrCNPJ.Equals(""))
+                                throw new Exception("CNPJ não informado na linha " + contLinha + "!");
+                            
+                            // CNPJ do grupo?
+                            if (!CNPJSEmpresa.Contains(nrCNPJ))
+                                throw new Exception("CNPJ " + nrCNPJ + " não está cadastrado no grupo " + _db.grupo_empresa.Where(e => e.id_grupo == idGrupo).Select(e => e.ds_nome.ToUpper()).First());
+
+                            // NSU
+                            string nrNSU = fileira[1].Trim();
+                            if (nrNSU.Equals(""))
+                            {
+                                if(fileira.Count < 11)
+                                    throw new Exception("NSU e código do ERP não informados na linha " + contLinha + "!");
+
+                                nrNSU = "T" + fileira[10]; // "T" + cdERP
+                            }
+
+                            DateTime dtTitulo = DateTime.Now;
+                            try
+                            {
+                                dtTitulo = Convert.ToDateTime(formataDataDoCSV(fileira[7]));
+                            }
+                            catch
+                            {
+                                throw new Exception("Data do título não está no formato esperado (linha " + contLinha + ")!");
+                            }
+                            int nrParcela = 0;
+                            try
+                            {
+                                nrParcela = Convert.ToInt32(fileira[9]);
+                            }
+                            catch
+                            {
+                                throw new Exception("Número da parcela não está no formato esperado (linha " + contLinha + ")!");
+                            };
+
+                            titulosERPCSV.Add(new {
+                                nrCNPJ = nrCNPJ,
+                                nrNSU = nrNSU,
+                                dtVenda = Convert.ToDateTime(formataDataDoCSV(fileira[2])),
+                                cdAdquirente = Convert.ToInt32(fileira[3].Trim()),
+                                dsBandeira = fileira[4],
+                                vlVenda = Convert.ToDouble(fileira[5]),
+                                qtParcelas = Convert.ToInt32(fileira[6]),
+                                dtTitulo = dtTitulo,
+                                vlParcela = Convert.ToDouble(fileira[8]),
+                                nrParcela = nrParcela,
+                                cdERP = fileira.Count < 11 ? (string) null : fileira[10],
+                                dtBaixaERP = fileira.Count < 12 ? (DateTime?)null : Convert.ToDateTime(formataDataDoCSV(fileira[11]))
+                            });
+
+                            contLinha++;        
+                            
+                        }
+                    }
+
+                    if(titulosERPCSV.Count > 0)
+                    {
+                        // Importa os títulos em background
+                        retorno.Registros = titulosERPCSV;
+                        retorno.TotalDeRegistros = titulosERPCSV.Count;
+
+                        Semaphore semaforo = new Semaphore(0, 1);
+
+                        BackgroundWorker bw = new BackgroundWorker();
+                        bw.WorkerReportsProgress = false;
+                        bw.WorkerSupportsCancellation = false;
+                        bw.DoWork += bw_DoWork;
+                        List<object> args = new List<object>();
+                        args.Add(_db);
+                        args.Add(semaforo);
+                        args.Add(retorno);
+                        bw.RunWorkerAsync(args);
+
+                        semaforo.WaitOne();
+                    }
+
+                    // Teve erro?
+                    object outValue = null;
+                    if (retorno.Totais != null && retorno.Totais.TryGetValue("erro", out outValue))
+                        throw new Exception(retorno.Totais["erro"].ToString());
+                }
+            }
+            catch (Exception e)
+            {
+                // Rollback
+                //transaction.Rollback();
+                /*if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao enviar extrato" : erro);
+                }*/
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
+        }
+
+
+        private static string formataDataDoCSV(string data)
+        {
+            if (data == null || data.Length < 7 || data.Length > 8)
+                return data;
+
+
+            if (data.Length == 7) data = "0" + data;
+
+            return data.Substring(0, 2) + "/" + data.Substring(2, 2) + "/" + data.Substring(4, 4);
         }
 
     }

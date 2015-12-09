@@ -365,6 +365,7 @@ namespace api.Negocios.Card
                     CollectionTbRecebimentoTitulo = query.Select(e => new
                     {
                         idRecebimentoTitulo = e.idRecebimentoTitulo,
+                        nrNSU = e.nrNSU,
                         empresa = _db.empresas.Where(f => f.nu_cnpj.Equals(e.nrCNPJ))
                                               .Select(f => new
                                               {

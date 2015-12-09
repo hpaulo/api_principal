@@ -102,5 +102,46 @@ namespace api.Controllers.Card
                 _db.Dispose();
             }
         }
+
+
+        // PATCH: /TitulosErp/token/ => upload de um arquivo csv
+        public HttpResponseMessage Patch(string token)
+        {
+            // Abre nova conexão
+            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+            try
+            {
+                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Patch", _db);
+
+                HttpResponseMessage retorno = new HttpResponseMessage();
+                if (Permissoes.Autenticado(token))
+                {
+                    GatewayTitulosErp.Patch(token, log, _db);
+                    log.codResposta = (int)HttpStatusCode.OK;
+                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                    return Request.CreateResponse(HttpStatusCode.OK);
+                }
+                else
+                {
+                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                }
+            }
+            catch (Exception e)
+            {
+                log.codResposta = (int)HttpStatusCode.InternalServerError;
+                log.msgErro = e.Message;
+                Bibliotecas.LogAcaoUsuario.Save(log);
+                return Request.CreateResponse(HttpStatusCode.InternalServerError, e.Message);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
+            }
+        }
     }
 }

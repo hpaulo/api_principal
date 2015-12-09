@@ -771,6 +771,9 @@ namespace api.Negocios.Card
                     string dsArquivo = filePath.Length > 255 ? filePath.Substring(filePath.Length - 255) : filePath;
                         
                     DateTime dataGeracaoExtrato = Convert.ToDateTime(ofxDocument.SignOn.DTServer.ToShortDateString());
+                    if (dataGeracaoExtrato.Year == 1 && dataGeracaoExtrato.Month == 1 && dataGeracaoExtrato.Day == 1)
+                        // Não veio no documento => Usa a data atual
+                        dataGeracaoExtrato = Convert.ToDateTime(DateTime.Now.ToShortDateString());
 
                     #region ARMAZENA MOVIMENTAÇÕES BANCÁRIAS
                     foreach (var transacao in ofxDocument.Transactions)

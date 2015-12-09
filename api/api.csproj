@@ -260,6 +260,7 @@
     <Compile Include="Bibliotecas\CertificadoDigital.cs" />
     <Compile Include="Bibliotecas\CodigoCompensacaoBancos.cs" />
     <Compile Include="Bibliotecas\Converter.cs" />
+    <Compile Include="Bibliotecas\CSVReader.cs" />
     <Compile Include="Bibliotecas\Device.cs" />
     <Compile Include="Bibliotecas\iMessenger.cs" />
     <Compile Include="Bibliotecas\LogAcaoUsuario.cs" />
