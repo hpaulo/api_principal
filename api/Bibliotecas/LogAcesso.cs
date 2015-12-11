@@ -31,7 +31,7 @@ namespace api.Bibliotecas
             }
             catch(Exception e)
             {
-                throw new Exception("Mensagem: " + e.Message);
+                throw new Exception("Mensagem: " + (e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message));
             }
         }
     }

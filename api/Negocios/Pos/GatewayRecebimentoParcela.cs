@@ -530,7 +530,7 @@ namespace api.Negocios.Pos
                 }
 
                 if (colecao == 0 || colecao == 8)
-                {   // coleções que não fazem groupby
+                {   // coleção que não faz groupby
                     // PAGINAÇÃO
                     int skipRows = (pageNumber - 1) * pageSize;
                     if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
@@ -869,13 +869,14 @@ namespace api.Negocios.Pos
 
                         if (ajustes.Count > 0)
                         {
+                            retorno.TotalDeRegistros += ajustes.Count;
+
                             // Atualiza total líquido de parcela
                             retorno.Totais["valorParcelaBruta"] = (decimal)retorno.Totais["valorParcelaBruta"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorParcela).Cast<decimal>().Sum()) : new decimal(0.0));
                             retorno.Totais["valorParcelaLiquida"] = (decimal)retorno.Totais["valorParcelaLiquida"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorLiquida).Cast<decimal>().Sum()) : new decimal(0.0));
                             retorno.Totais["valorDescontado"] = (decimal)retorno.Totais["valorDescontado"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorDescontado).Cast<decimal>().Sum()) : new decimal(0.0));
 
                             // Armazena os ajustes
-
                             foreach (var ajuste in ajustes) CollectionRecebimentoParcela.Add(ajuste);
 
                             // Ordena e refaz a paginação

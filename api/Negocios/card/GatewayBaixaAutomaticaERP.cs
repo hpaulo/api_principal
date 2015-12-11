@@ -75,11 +75,13 @@ namespace api.Negocios.Card
                     throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
 
                 string url = "http://" + grupo_empresa.dsAPI + DOMINIO;
+                //string url = "http://localhost:60049/";
                 string complemento = "titulos/baixaautomatica/" + token + "?" + ("" + (int)CAMPOS.IDEXTRATO) + "=" + idExtrato;
 
 
                 HttpClient client = new System.Net.Http.HttpClient();
                 client.BaseAddress = new Uri(url);
+                client.Timeout = TimeSpan.FromMinutes(5); // 5 minutos de timeout
                 client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
                 client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36");
                 System.Net.Http.HttpResponseMessage response = client.GetAsync(complemento).Result;

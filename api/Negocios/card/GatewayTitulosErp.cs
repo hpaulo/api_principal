@@ -58,6 +58,7 @@ namespace api.Negocios.Card
 
             HttpClient client = new System.Net.Http.HttpClient();
             client.BaseAddress = new Uri(url);
+            client.Timeout = TimeSpan.FromMinutes(5); // 5 minutos de timeout
             client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
             client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36");
             System.Net.Http.HttpResponseMessage response = client.GetAsync(complemento).Result;

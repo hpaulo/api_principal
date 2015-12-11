@@ -289,9 +289,9 @@ namespace api.Controllers.Login
                     controllers = controllers,
                 };
             }
-            catch
+            catch(Exception e)
             {
-                return null;
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
             finally
             {
