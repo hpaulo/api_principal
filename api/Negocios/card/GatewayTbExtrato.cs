@@ -13,6 +13,7 @@ using System.IO;
 using System.Data.Entity.Validation;
 using api.Controllers.Util;
 using System.Data.Entity;
+using api.Negocios.Util;
 
 namespace api.Negocios.Card
 {
@@ -682,15 +683,18 @@ namespace api.Negocios.Card
                     else if (extensao.ToLower().Equals(".pdf"))
                     {
                         // PDF
-                        if (!conta.cdBanco.Equals("033"))
+                        if (!conta.cdBanco.Equals("033") && !conta.cdBanco.Equals("004"))
                         {
                             File.Delete(filePath); // Deleta o arquivo
-                            throw new Exception("Só é aceito PDF de contas do banco Santander (033) !");
+                            throw new Exception("Só é aceito PDF de contas do banco do Nordeste (004) e do Santander (033) !");
                         }
                         // Parser
                         try
                         {
-                            ofxDocument = ExtratoPDFSantanderController.Import(filePath);
+                            if (conta.cdBanco.Equals("033"))
+                                ofxDocument = ExtratoPDFSantander.Import(filePath);
+                            else
+                                ofxDocument = ExtratoPDFBNB.Import(filePath);
                         }
                         catch (Exception e)
                         {
@@ -698,6 +702,7 @@ namespace api.Negocios.Card
                             File.Delete(filePath);
                             throw new Exception("Arquivo não é um .pdf válido! " + e.Message);
                         }
+
                     }
                     else
                     {

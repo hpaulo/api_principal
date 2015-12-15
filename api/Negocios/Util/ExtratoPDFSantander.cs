@@ -12,28 +12,8 @@ using System.Xml;
 
 namespace api.Controllers.Util
 {
-    public class ExtratoPDFSantanderController : ApiController
+    public class ExtratoPDFSantander : ApiController
     {
-
-        /*public class DadosSantander
-        {
-            public string cdBanco { get; set; }
-            public string nrAgencia { get; set; }
-            public string nrConta { get; set; }
-            public List<LinhaExtrato> linhasExtrato { get; set; }
-
-        }
-
-        public class LinhaExtrato
-        {
-            public string nrDocumento { get; set; }
-            public System.DateTime dtExtrato { get; set; }
-            public string dsDocumento { get; set; }
-            public decimal vlMovimento { get; set; }
-            public string dsTipo { get; set; }
-            public string row { get; set; }
-        }*/
-
 
         private static bool iniciaComData(string text)
         {
@@ -57,10 +37,7 @@ namespace api.Controllers.Util
 
         public static OFXDocument Import(string pathFilename)
         {
-            //DadosSantander dados = new DadosSantander();
-            //dados.cdBanco = "033";
 
-            //List<LinhaExtrato> list = new List<LinhaExtrato>();
             OFXDocument document = new OFXDocument();
             document.Account = new Account();
             document.Account.BankID = "033";
@@ -68,7 +45,6 @@ namespace api.Controllers.Util
             document.SignOn = new SignOn();
 
             string strText = string.Empty;
-            string[] PdfData = null;
             bool tratamento = false;
             int rowsTratamento = 0;
             string stringTratamento1 = String.Empty;
@@ -76,8 +52,6 @@ namespace api.Controllers.Util
             string stringTratamento3 = String.Empty;
             int iof = 0;
 
-            /*try
-            {*/
             PdfReader reader = new PdfReader((string)pathFilename);
             for (int page = 1; page <= reader.NumberOfPages; page++)
             {
@@ -85,16 +59,11 @@ namespace api.Controllers.Util
                 String cipherText = PdfTextExtractor.GetTextFromPage(reader, page, its);
                 cipherText = Encoding.UTF8.GetString(ASCIIEncoding.Convert(Encoding.Default, Encoding.UTF8, Encoding.Default.GetBytes(cipherText)));
                 strText = strText + "\n" + cipherText;
-                PdfData = strText.Split('\n');
             }
             reader.Close();
-            /*}
-            catch (Exception ex)
-            {
-            }*/
 
 
-            List<string> temp = PdfData.ToList();
+            List<string> temp = strText.Split('\n').ToList();
 
             int contAjuste = 0;
 
@@ -112,11 +81,10 @@ namespace api.Controllers.Util
                         // [Agência e Conta Corrente]
                         if (!temp[i].ToString().Contains("Agência:")) { i++; contAjuste++; }
                         value = temp[i].ToString().Substring((temp[i].ToString().IndexOf("Agência:") + 8), 6);
-                        //dados.nrAgencia = value.Trim().TrimStart().TrimEnd();
+                        // Agência
                         document.Account.BranchID = value.Trim().TrimStart().TrimEnd();
-
+                        // Conta
                         value = temp[i].ToString().Substring((temp[i].ToString().IndexOf("Corrente:") + 9), 12);
-                        //dados.nrConta = value.Trim().TrimStart().TrimEnd();
                         document.Account.AccountID = value.Trim().TrimStart().TrimEnd();
                         // Avalia se tem o código da operação antes
                         if (document.Account.AccountID.IndexOf("-") != document.Account.AccountID.LastIndexOf("-"))
@@ -163,7 +131,6 @@ namespace api.Controllers.Util
                         {
 
                             //LinhaExtrato row = new LinhaExtrato();
-
                             String cipherText = String.Empty;
                             try
                             {
@@ -198,31 +165,14 @@ namespace api.Controllers.Util
                                 {
                                     if (iniciaComData(cipherText) && !tratamento)
                                     {
-                                        //row.row = cipherText;
-
-                                        //string[] verify = cipherText.Split(',');
-                                        //if (verify.Length > 2)
-                                        //    cipherText = cipherText.Replace(cipherText.Substring((cipherText.IndexOf(',') + 3), cipherText.Length - (cipherText.IndexOf(',') + 3)), "");
-
-                                        //string[] verify2 = cipherText.Split('/');
-                                        //if (verify2.Length > 4)
-                                        //{
-                                        //    cipherText = cipherText.Replace(cipherText.Substring((cipherText.IndexOf(',') + 3), cipherText.Length - (cipherText.IndexOf(',') + 3)), "");
-                                        //    string StringTemp = verify2[2].Substring(5, verify2[2].Length - 8);
-                                        //    string StringReplace = cipherText.Substring(cipherText.IndexOf(StringTemp) + StringTemp.Length, 11);
-                                        //    cipherText = cipherText.Replace(StringReplace, "");
-                                        //}
-
                                         Transaction transaction = new Transaction();
 
-                                        //row.dtExtrato = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
                                         try
                                         {
                                             transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
                                         }
                                         catch
                                         {
-                                            //transaction.Date = new DateTime();
                                             throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (1)");
                                         }
                                         // Procura valor e nrDocumento
@@ -250,27 +200,9 @@ namespace api.Controllers.Util
                                             index = auxiliar.LastIndexOf(" ");
                                             Convert.ToInt32(auxiliar.Substring(index + 1));
                                         }
-                                        //string nrDocumento = Regex.Match(cipherText.Substring(10, cipherText.Length - 10), @"\d+").Value;
-                                        //if (nrDocumento.Length > 6)
-                                        //    nrDocumento = Regex.Match(cipherText.Replace(nrDocumento, "").Substring(10, cipherText.Replace(nrDocumento, "").Length - 10), @"\d+").Value;
-                                        //row.nrDocumento = nrDocumento;
-                                        transaction.CheckNum = auxiliar.Substring(index + 1);//nrDocumento;
-
-                                        //string val = (cipherText.Substring(cipherText.IndexOf(nrDocumento) + nrDocumento.Length, (cipherText.Length - (cipherText.IndexOf(nrDocumento) + nrDocumento.Length)))).Trim().TrimStart().TrimEnd().Replace(" ", "");
-                                        //string val = cipherText.Substring(cipherText.IndexOf(nrDocumento) + nrDocumento.Length).TrimStart();
-                                        //if (val.Contains(" ")) val = val.Substring(0, val.IndexOf(" "));
-                                        ////row.vlMovimento = Convert.ToDecimal(val);
-                                        //try
-                                        //{
-                                        //    transaction.Amount = Convert.ToDecimal(val);
-                                        //}
-                                        //catch
-                                        //{
-                                        //    transaction.Amount = new decimal(0.0);
-                                        //}
+                                        transaction.CheckNum = auxiliar.Substring(index + 1);
                                         transaction.Amount = amount;
-                                        //row.dsDocumento = cipherText.Substring(11, cipherText.IndexOf(row.nrDocumento) - 11);
-                                        transaction.Memo = auxiliar.Substring(0, index).TrimEnd();//cipherText.Substring(11, cipherText.IndexOf(nrDocumento) - 11);
+                                        transaction.Memo = auxiliar.Substring(0, index).TrimEnd();
                                         // Legenda?
                                         if (transaction.Memo.EndsWith(" a")) // Bloqueio Dia / ADM
                                             transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a"));
@@ -283,8 +215,6 @@ namespace api.Controllers.Util
 
                                         // Adiciona a transaction
                                         document.Transactions.Add(transaction);
-                                        //list.Add(row);
-                                        //row = new LinhaExtrato();
                                     }
                                     else if (cipherText.StartsWith("https://www.") || cipherText.StartsWith("Internet Banking Página"))
                                         continue;
@@ -303,27 +233,9 @@ namespace api.Controllers.Util
                                             {
                                                 stringTratamento3 = cipherText.Replace('/', '|');
                                                 cipherText = stringTratamento2.Substring(0, 11) + stringTratamento1 + " " + stringTratamento3 + " " + stringTratamento2.Substring(11, stringTratamento2.Length - 11);
-                                                ////row.row = cipherText;
-                                                //string filter = String.Empty;
-                                                //filter = cipherText.Replace(stringTratamento3, " ");
-
-                                                ///*string[] verify = filter.Split(',');
-                                                //if (verify.Length > 2) 
-                                                //    filter = cipherText.Replace(filter.Substring((filter.IndexOf(',') + 3), filter.Length - (filter.IndexOf(',') + 3)), "");
-                                                //*/
-
-                                                //string[] verify2 = filter.Split('/');
-                                                //if (verify2.Length > 4)
-                                                //{
-                                                //    filter = filter.Replace(filter.Substring((filter.IndexOf(',') + 3), filter.Length - (filter.IndexOf(',') + 3)), "");
-                                                //    string StringTemp = verify2[2].Substring(5, verify2[2].Length - 8);
-                                                //    string StringReplace = filter.Substring(filter.IndexOf(StringTemp) + StringTemp.Length, 11);
-                                                //    filter = filter.Replace(StringReplace, "");
-                                                //}
 
                                                 Transaction transaction = new Transaction();
 
-                                                //row.dtExtrato = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
                                                 try
                                                 {
                                                     transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
@@ -332,15 +244,6 @@ namespace api.Controllers.Util
                                                 {
                                                     throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (2)");
                                                 }
-                                                ////row.nrDocumento = Regex.Match(filter.Substring(10, filter.Length - 10), @"\d+").Value;
-                                                //transaction.CheckNum = Regex.Match(filter.Substring(10, filter.Length - 10), @"\d+").Value;
-                                                ////row.vlMovimento = Convert.ToDecimal(filter.Substring(filter.IndexOf(row.nrDocumento) + row.nrDocumento.Length, (filter.Length - (filter.IndexOf(row.nrDocumento) + row.nrDocumento.Length))).Trim().TrimStart().TrimEnd());
-                                                //string amount = filter.Substring(filter.IndexOf(transaction.CheckNum) + transaction.CheckNum.Length).TrimStart();
-                                                //if (amount.Contains(" ")) amount = amount.Substring(0, amount.IndexOf(" "));
-                                                //transaction.Amount = Convert.ToDecimal(amount);//filter.Substring(filter.IndexOf(transaction.CheckNum) + transaction.CheckNum.Length, (filter.Length - (filter.IndexOf(transaction.CheckNum) + transaction.CheckNum.Length))).Trim().TrimStart().TrimEnd());
-                                                ////row.dsDocumento = cipherText.Substring(11, cipherText.IndexOf(row.nrDocumento) - 11);
-                                                //transaction.Memo = cipherText.Substring(11, cipherText.IndexOf(transaction.CheckNum) - 11);
-
 
                                                 // Procura valor e nrDocumento
                                                 string auxiliar = cipherText.Substring(10).TrimEnd();
@@ -378,13 +281,10 @@ namespace api.Controllers.Util
                                                     transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b"));
                                                 else if (transaction.Memo.EndsWith(" p")) // Lançamento Provisionado
                                                     transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p"));
-                                                //row.dsTipo = row.vlMovimento > 0 ? "CREDIT" : "DEBIT";
                                                 transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
 
                                                 // Adiciona a transaction
                                                 document.Transactions.Add(transaction);
-                                                //list.Add(row);
-                                                //row = new LinhaExtrato();
 
                                                 rowsTratamento = 0;
                                                 tratamento = false;
@@ -396,7 +296,6 @@ namespace api.Controllers.Util
                                             }
                                         }
                                     }
-                                    //}
                                 }
                                 else
                                 {
@@ -421,13 +320,9 @@ namespace api.Controllers.Util
                                         iof = 0;
                                         stringTratamento3 = cipherText.Replace('/', '-');
                                         cipherText = stringTratamento2.Substring(0, 11) + stringTratamento1 + " " + stringTratamento3 + " " + stringTratamento2.Substring(11, stringTratamento2.Length - 11);
-                                        //row.row = cipherText;
-                                        //string filter = String.Empty;
-                                        //filter = cipherText.Replace(stringTratamento3, " ");
-
+   
                                         Transaction transaction = new Transaction();
 
-                                        //row.dtExtrato = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
                                         try
                                         {
                                             transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
@@ -436,12 +331,6 @@ namespace api.Controllers.Util
                                         {
                                             throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (3)");
                                         }
-                                        //row.nrDocumento = Regex.Match(filter.Substring(10, filter.Length - 10), @"\d+").Value;
-                                        //transaction.CheckNum = Regex.Match(filter.Substring(10, filter.Length - 10), @"\d+").Value;
-                                        ////row.vlMovimento = Convert.ToDecimal(filter.Substring(filter.IndexOf(row.nrDocumento) + row.nrDocumento.Length, (filter.Length - (filter.IndexOf(row.nrDocumento) + row.nrDocumento.Length))).Trim().TrimStart().TrimEnd());
-                                        //transaction.Amount = Convert.ToDecimal(filter.Substring(filter.IndexOf(transaction.CheckNum) + transaction.CheckNum.Length, (filter.Length - (filter.IndexOf(transaction.CheckNum) + transaction.CheckNum.Length))).Trim().TrimStart().TrimEnd());
-                                        ////row.dsDocumento = cipherText.Substring(11, cipherText.IndexOf(row.nrDocumento) - 11);
-                                        //transaction.Memo = cipherText.Substring(11, cipherText.IndexOf(transaction.CheckNum) - 11);
 
                                         // Procura valor e nrDocumento
                                         string auxiliar = cipherText.Substring(10).TrimEnd();
@@ -480,13 +369,10 @@ namespace api.Controllers.Util
                                         else if (transaction.Memo.EndsWith(" p")) // Lançamento Provisionado
                                             transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p"));
 
-                                        //row.dsTipo = row.vlMovimento > 0 ? "CREDIT" : "DEBIT";
                                         transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
 
                                         // Adiciona a transaction
                                         document.Transactions.Add(transaction);
-                                        //list.Add(row);
-                                        //row = new LinhaExtrato();
                                     }
                                 }
                             }
@@ -499,7 +385,6 @@ namespace api.Controllers.Util
                 }
             }
 
-            //return list;
             return document;
         }
 
