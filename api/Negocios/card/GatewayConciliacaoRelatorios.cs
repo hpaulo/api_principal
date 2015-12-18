@@ -163,15 +163,15 @@ namespace api.Negocios.Card
                 List<ConciliacaoRelatorios> rRecebimentoExtrato = queryExtrato.Select(t => new ConciliacaoRelatorios
                 {
                     tipo = "E",
-                    adquirente = /*GatewayTbExtrato.*/_db.tbBancoParametro.Where(p => p.dsMemo.Equals(t.dsDocumento))
+                    adquirente = _db.tbBancoParametro.Where(p => p.dsMemo.Equals(t.dsDocumento))
                                                                                                  .Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco))
                                                                                                  .Select(p => p.tbAdquirente.nmAdquirente.ToUpper())
                                                                                                  .FirstOrDefault() ?? "Indefinida",
-                    bandeira = /*GatewayTbExtrato.*/_db.tbBancoParametro.
+                    bandeira = _db.tbBancoParametro.
                                                     Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco)
                                                     && p.dsMemo.Equals(t.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? "Indefinida"
                                                     ).FirstOrDefault() ?? "Indefinida",
-                    tipocartao = /*GatewayTbExtrato.*/_db.tbBancoParametro.
+                    tipocartao = _db.tbBancoParametro.
                                                     Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco)
                                                     && p.dsMemo.Equals(t.dsDocumento)).Select(p => p.dsTipoCartao ?? ""
                                                     ).FirstOrDefault() ?? "",
@@ -182,7 +182,32 @@ namespace api.Negocios.Card
                     competencia = t.dtExtrato,
                     idExtrato = t.RecebimentoParcelas.Count + t.tbRecebimentoAjustes.Count,
                     taxaCashFlow = new decimal(0.0)
-                }).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
+                }).OrderBy(t => t.competencia).ThenBy(t => t.adquirente).ToList<ConciliacaoRelatorios>();
+
+                //List<dynamic> temp = queryExtrato.Select(t => new
+                //{
+                //    t.idExtrato,
+                //    t.dsDocumento,
+                //    conta = new { t.tbContaCorrente.cdContaCorrente, t.tbContaCorrente.cdBanco, t.tbContaCorrente.nrAgencia, t.tbContaCorrente.nrConta },
+                //    adquirente = _db.tbBancoParametro.Where(p => p.dsMemo.Equals(t.dsDocumento))
+                //                                                                                 .Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco))
+                //                                                                                 .Select(p => p.tbAdquirente.nmAdquirente.ToUpper())
+                //                                                                                 .FirstOrDefault() ?? "Indefinida",
+                //    bandeira = _db.tbBancoParametro.
+                //                                    Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco)
+                //                                    && p.dsMemo.Equals(t.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? "Indefinida"
+                //                                    ).FirstOrDefault() ?? "Indefinida",
+                //    tipocartao = _db.tbBancoParametro.
+                //                                    Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco)
+                //                                    && p.dsMemo.Equals(t.dsDocumento)).Select(p => p.dsTipoCartao ?? ""
+                //                                    ).FirstOrDefault() ?? "",
+                //    valorBruto = t.vlMovimento ?? new decimal(0.0),
+                //    valorDescontado = new decimal(0.0),
+                //    valorDescontadoAntecipacao = new decimal(0.0),
+                //    valorLiquido = t.vlMovimento ?? new decimal(0.0),
+                //    competencia = t.dtExtrato,
+                //    taxaCashFlow = new decimal(0.0)
+                //}).Where(t => t.adquirente.Equals("AMEX")).OrderByDescending(t => t.competencia).ThenBy(t => t.adquirente).ToList<dynamic>();
 
                 List<ConciliacaoRelatorios> listaCompleta = rRecebimentoParcela.Concat(rRecebimentoAjuste).Concat(rRecebimentoExtrato).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
 
