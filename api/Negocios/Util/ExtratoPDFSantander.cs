@@ -72,7 +72,7 @@ namespace api.Controllers.Util
             {
                 try
                 {
-                    //if (i == 21)
+                    //if (i == 149)
                     //    Console.WriteLine("Line: " + i + " Total: " + temp.Count + " | " + temp[i].ToString());
                     string value = String.Empty;
 
@@ -161,220 +161,223 @@ namespace api.Controllers.Util
                                 )
                             {
 
-                                if (cipherText.IndexOf("IOF") < 0 && iof == 0)
-                                {
-                                    if (iniciaComData(cipherText) && !tratamento)
-                                    {
-                                        Transaction transaction = new Transaction();
+                                //if (cipherText.IndexOf("IOF") < 0 && iof == 0)
+                                //{
+                                //if (cipherText.Contains("01/12/2015"))
+                                //    cipherText = cipherText + "";
 
-                                        try
-                                        {
-                                            transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                                        }
-                                        catch
-                                        {
-                                            throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (1)");
-                                        }
-                                        // Procura valor e nrDocumento
-                                        string auxiliar = cipherText.Substring(10).TrimEnd();
-                                        int index = auxiliar.LastIndexOf(" ");
-                                        decimal amount = new decimal(0.0);
-                                        try
-                                        {
-                                            amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
-                                        }
-                                        catch
-                                        {
-                                            throw new Exception("'" + auxiliar.Substring(index + 1) + "' não corresponde a um valor monetário (1)");
-                                        }
+                                if (iniciaComData(cipherText) && !tratamento)
+                                {
+                                    Transaction transaction = new Transaction();
+
+                                    try
+                                    {
+                                        transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                    }
+                                    catch
+                                    {
+                                        throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (1)");
+                                    }
+                                    // Procura valor e nrDocumento
+                                    string auxiliar = cipherText.Substring(10).TrimEnd();
+                                    int index = auxiliar.LastIndexOf(" ");
+                                    decimal amount = new decimal(0.0);
+                                    try
+                                    {
+                                        amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
+                                    }
+                                    catch
+                                    {
+                                        throw new Exception("'" + auxiliar.Substring(index + 1) + "' não corresponde a um valor monetário (1)");
+                                    }
+                                    auxiliar = auxiliar.Substring(0, index).TrimEnd();
+                                    index = auxiliar.LastIndexOf(" ");
+                                    try
+                                    {
+                                        Convert.ToInt32(auxiliar.Substring(index + 1));
+                                    }
+                                    catch
+                                    {
+                                        amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
                                         auxiliar = auxiliar.Substring(0, index).TrimEnd();
                                         index = auxiliar.LastIndexOf(" ");
-                                        try
-                                        {
-                                            Convert.ToInt32(auxiliar.Substring(index + 1));
-                                        }
-                                        catch
-                                        {
-                                            amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
-                                            auxiliar = auxiliar.Substring(0, index).TrimEnd();
-                                            index = auxiliar.LastIndexOf(" ");
-                                            Convert.ToInt32(auxiliar.Substring(index + 1));
-                                        }
-                                        transaction.CheckNum = auxiliar.Substring(index + 1);
-                                        transaction.Amount = amount;
-                                        transaction.Memo = auxiliar.Substring(0, index).TrimEnd();
-                                        // Legenda?
-                                        if (transaction.Memo.EndsWith(" a")) // Bloqueio Dia / ADM
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a"));
-                                        else if (transaction.Memo.EndsWith(" b")) // Bloqueado
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b"));
-                                        else if (transaction.Memo.EndsWith(" p")) // Lançamento Provisionado
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p"));
-                                        //row.dsTipo = row.vlMovimento > 0 ? "CREDIT" : "DEBIT";
-                                        transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
-
-                                        // Adiciona a transaction
-                                        document.Transactions.Add(transaction);
+                                        Convert.ToInt32(auxiliar.Substring(index + 1));
                                     }
-                                    else if (cipherText.StartsWith("https://www.") || cipherText.StartsWith("Internet Banking Página"))
-                                        continue;
-                                    else
-                                    {
-                                        tratamento = true;
-                                        rowsTratamento++;
+                                    transaction.CheckNum = auxiliar.Substring(index + 1);
+                                    transaction.Amount = amount;
+                                    transaction.Memo = auxiliar.Substring(0, index).TrimEnd();
+                                    // Legenda?
+                                    if (transaction.Memo.EndsWith(" a")) // Bloqueio Dia / ADM
+                                        transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a"));
+                                    else if (transaction.Memo.EndsWith(" b")) // Bloqueado
+                                        transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b"));
+                                    else if (transaction.Memo.EndsWith(" p")) // Lançamento Provisionado
+                                        transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p"));
+                                    //row.dsTipo = row.vlMovimento > 0 ? "CREDIT" : "DEBIT";
+                                    transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
 
-                                        if (rowsTratamento == 1)// && tratamento)
-                                            stringTratamento1 = cipherText.Replace('/', '|');
-                                        else if (rowsTratamento == 2)// && tratamento)
-                                            stringTratamento2 = cipherText;
-                                        else if (rowsTratamento == 3)// && tratamento)
-                                        {
-                                            if (stringTratamento1.Length > 10)
-                                            {
-                                                stringTratamento3 = cipherText.Replace('/', '|');
-                                                cipherText = stringTratamento2.Substring(0, 11) + stringTratamento1 + " " + stringTratamento3 + " " + stringTratamento2.Substring(11, stringTratamento2.Length - 11);
-
-                                                Transaction transaction = new Transaction();
-
-                                                try
-                                                {
-                                                    transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                                                }
-                                                catch
-                                                {
-                                                    throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (2)");
-                                                }
-
-                                                // Procura valor e nrDocumento
-                                                string auxiliar = cipherText.Substring(10).TrimEnd();
-                                                int index = auxiliar.LastIndexOf(" ");
-                                                decimal amount = new decimal(0.0);
-                                                try
-                                                {
-                                                    amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
-                                                }
-                                                catch
-                                                {
-                                                    throw new Exception("'" + auxiliar.Substring(index + 1) + "' não corresponde a um valor monetário (2)");
-                                                }
-                                                auxiliar = auxiliar.Substring(0, index).TrimEnd();
-                                                index = auxiliar.LastIndexOf(" ");
-                                                try
-                                                {
-                                                    Convert.ToInt32(auxiliar.Substring(index + 1));
-                                                }
-                                                catch
-                                                {
-                                                    amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
-                                                    auxiliar = auxiliar.Substring(0, index).TrimEnd();
-                                                    index = auxiliar.LastIndexOf(" ");
-                                                    Convert.ToInt32(auxiliar.Substring(index + 1));
-                                                }
-                                                transaction.CheckNum = auxiliar.Substring(index + 1);
-                                                transaction.Amount = amount;
-                                                transaction.Memo = auxiliar.Substring(0, index).TrimEnd();
-
-                                                // Legenda?
-                                                if (transaction.Memo.EndsWith(" a")) // Bloqueio Dia / ADM
-                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a"));
-                                                else if (transaction.Memo.EndsWith(" b")) // Bloqueado
-                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b"));
-                                                else if (transaction.Memo.EndsWith(" p")) // Lançamento Provisionado
-                                                    transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p"));
-                                                transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
-
-                                                // Adiciona a transaction
-                                                document.Transactions.Add(transaction);
-
-                                                rowsTratamento = 0;
-                                                tratamento = false;
-                                            }
-                                            else
-                                            {
-                                                rowsTratamento = 0;
-                                                tratamento = false;
-                                            }
-                                        }
-                                    }
+                                    // Adiciona a transaction
+                                    document.Transactions.Add(transaction);
                                 }
+                                else if (cipherText.StartsWith("https://www.") || cipherText.StartsWith("Internet Banking Página"))
+                                    continue;
                                 else
                                 {
-                                    if (iof == 0)
-                                    {
-                                        iof++;
-                                        if (cipherText.IndexOf('/') > 0)
-                                        {
-                                            string[] tempFilter = cipherText.Split(':');
-                                            stringTratamento1 = tempFilter[0];
-                                        }
-                                        else
-                                            stringTratamento1 = cipherText;
-                                    }
-                                    else if (iof == 1)
-                                    {
-                                        iof++;
+                                    tratamento = true;
+                                    rowsTratamento++;
+
+                                    if (rowsTratamento == 1)// && tratamento)
+                                        stringTratamento1 = cipherText.Replace('/', '|');
+                                    else if (rowsTratamento == 2)// && tratamento)
                                         stringTratamento2 = cipherText;
-                                    }
-                                    else if (iof == 2)
+                                    else if (rowsTratamento == 3)// && tratamento)
                                     {
-                                        iof = 0;
-                                        stringTratamento3 = cipherText.Replace('/', '-');
-                                        cipherText = stringTratamento2.Substring(0, 11) + stringTratamento1 + " " + stringTratamento3 + " " + stringTratamento2.Substring(11, stringTratamento2.Length - 11);
-   
-                                        Transaction transaction = new Transaction();
+                                        if (stringTratamento1.Length > 10)
+                                        {
+                                            stringTratamento3 = cipherText.Replace('/', '|');
+                                            cipherText = stringTratamento2.Substring(0, 11) + stringTratamento1 + " " + stringTratamento3 + " " + stringTratamento2.Substring(11, stringTratamento2.Length - 11);
 
-                                        try
-                                        {
-                                            transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                                        }
-                                        catch
-                                        {
-                                            throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (3)");
-                                        }
+                                            Transaction transaction = new Transaction();
 
-                                        // Procura valor e nrDocumento
-                                        string auxiliar = cipherText.Substring(10).TrimEnd();
-                                        int index = auxiliar.LastIndexOf(" ");
-                                        decimal amount = new decimal(0.0);
-                                        try
-                                        {
-                                            amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
-                                        }
-                                        catch
-                                        {
-                                            //amount = new decimal(0.0);
-                                            throw new Exception("'" + auxiliar.Substring(index + 1) + "' não corresponde a um valor monetário (3)");
-                                        }
-                                        auxiliar = auxiliar.Substring(0, index).TrimEnd();
-                                        index = auxiliar.LastIndexOf(" ");
-                                        try
-                                        {
-                                            Convert.ToInt32(auxiliar.Substring(index + 1));
-                                        }
-                                        catch
-                                        {
-                                            amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
+                                            try
+                                            {
+                                                transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                            }
+                                            catch
+                                            {
+                                                throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (2)");
+                                            }
+
+                                            // Procura valor e nrDocumento
+                                            string auxiliar = cipherText.Substring(10).TrimEnd();
+                                            int index = auxiliar.LastIndexOf(" ");
+                                            decimal amount = new decimal(0.0);
+                                            try
+                                            {
+                                                amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
+                                            }
+                                            catch
+                                            {
+                                                throw new Exception("'" + auxiliar.Substring(index + 1) + "' não corresponde a um valor monetário (2)");
+                                            }
                                             auxiliar = auxiliar.Substring(0, index).TrimEnd();
                                             index = auxiliar.LastIndexOf(" ");
-                                            Convert.ToInt32(auxiliar.Substring(index + 1));
+                                            try
+                                            {
+                                                Convert.ToInt32(auxiliar.Substring(index + 1));
+                                            }
+                                            catch
+                                            {
+                                                amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
+                                                auxiliar = auxiliar.Substring(0, index).TrimEnd();
+                                                index = auxiliar.LastIndexOf(" ");
+                                                Convert.ToInt32(auxiliar.Substring(index + 1));
+                                            }
+                                            transaction.CheckNum = auxiliar.Substring(index + 1);
+                                            transaction.Amount = amount;
+                                            transaction.Memo = auxiliar.Substring(0, index).TrimEnd();
+
+                                            // Legenda?
+                                            if (transaction.Memo.EndsWith(" a")) // Bloqueio Dia / ADM
+                                                transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a"));
+                                            else if (transaction.Memo.EndsWith(" b")) // Bloqueado
+                                                transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b"));
+                                            else if (transaction.Memo.EndsWith(" p")) // Lançamento Provisionado
+                                                transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p"));
+                                            transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
+
+                                            // Adiciona a transaction
+                                            document.Transactions.Add(transaction);
+
+                                            rowsTratamento = 0;
+                                            tratamento = false;
                                         }
-                                        transaction.CheckNum = auxiliar.Substring(index + 1);
-                                        transaction.Amount = amount;
-                                        transaction.Memo = auxiliar.Substring(0, index).TrimEnd();
-                                        // Legenda?
-                                        if (transaction.Memo.EndsWith(" a")) // Bloqueio Dia / ADM
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a"));
-                                        else if (transaction.Memo.EndsWith(" b")) // Bloqueado
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b"));
-                                        else if (transaction.Memo.EndsWith(" p")) // Lançamento Provisionado
-                                            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p"));
-
-                                        transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
-
-                                        // Adiciona a transaction
-                                        document.Transactions.Add(transaction);
+                                        else
+                                        {
+                                            rowsTratamento = 0;
+                                            tratamento = false;
+                                        }
                                     }
                                 }
+                                //}
+                                //else
+                                //{
+                                //    if (iof == 0)
+                                //    {
+                                //        iof++;
+                                //        if (cipherText.IndexOf('/') > 0)
+                                //        {
+                                //            string[] tempFilter = cipherText.Split(':');
+                                //            stringTratamento1 = tempFilter[0];
+                                //        }
+                                //        else
+                                //            stringTratamento1 = cipherText;
+                                //    }
+                                //    else if (iof == 1)
+                                //    {
+                                //        iof++;
+                                //        stringTratamento2 = cipherText;
+                                //    }
+                                //    else if (iof == 2)
+                                //    {
+                                //        iof = 0;
+                                //        stringTratamento3 = cipherText.Replace('/', '-');
+                                //        cipherText = stringTratamento2.Substring(0, 11) + stringTratamento1 + " " + stringTratamento3 + " " + stringTratamento2.Substring(11, stringTratamento2.Length - 11);
+   
+                                //        Transaction transaction = new Transaction();
+
+                                //        try
+                                //        {
+                                //            transaction.Date = DateTime.ParseExact(cipherText.Substring(0, 10) + " 00:00:00.000", "dd/MM/yyyy HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                //        }
+                                //        catch
+                                //        {
+                                //            throw new Exception("'" + cipherText.Substring(0, 10) + "' não corresponde a uma data válida (3)");
+                                //        }
+
+                                //        // Procura valor e nrDocumento
+                                //        string auxiliar = cipherText.Substring(10).TrimEnd();
+                                //        int index = auxiliar.LastIndexOf(" ");
+                                //        decimal amount = new decimal(0.0);
+                                //        try
+                                //        {
+                                //            amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
+                                //        }
+                                //        catch
+                                //        {
+                                //            //amount = new decimal(0.0);
+                                //            throw new Exception("'" + auxiliar.Substring(index + 1) + "' não corresponde a um valor monetário (3)");
+                                //        }
+                                //        auxiliar = auxiliar.Substring(0, index).TrimEnd();
+                                //        index = auxiliar.LastIndexOf(" ");
+                                //        try
+                                //        {
+                                //            Convert.ToInt32(auxiliar.Substring(index + 1));
+                                //        }
+                                //        catch
+                                //        {
+                                //            amount = Convert.ToDecimal(auxiliar.Substring(index + 1));
+                                //            auxiliar = auxiliar.Substring(0, index).TrimEnd();
+                                //            index = auxiliar.LastIndexOf(" ");
+                                //            Convert.ToInt32(auxiliar.Substring(index + 1));
+                                //        }
+                                //        transaction.CheckNum = auxiliar.Substring(index + 1);
+                                //        transaction.Amount = amount;
+                                //        transaction.Memo = auxiliar.Substring(0, index).TrimEnd();
+                                //        // Legenda?
+                                //        if (transaction.Memo.EndsWith(" a")) // Bloqueio Dia / ADM
+                                //            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" a"));
+                                //        else if (transaction.Memo.EndsWith(" b")) // Bloqueado
+                                //            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" b"));
+                                //        else if (transaction.Memo.EndsWith(" p")) // Lançamento Provisionado
+                                //            transaction.Memo = transaction.Memo.Substring(0, transaction.Memo.IndexOf(" p"));
+
+                                //        transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
+
+                                //        // Adiciona a transaction
+                                //        document.Transactions.Add(transaction);
+                                //    }
+                                //}
                             }
                         }
                     }

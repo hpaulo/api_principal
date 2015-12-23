@@ -808,9 +808,10 @@ namespace api.Negocios.Card
                         #endregion
                         
                         // Não importa movimentações em que a data é igual a data da geração do extrato
-                        if (/*dataGeracaoExtrato.Year != 1 && 
-                            dataGeracaoExtrato.Month != 1 &&
-                            dataGeracaoExtrato.Day != 1 &&*/ dataGeracaoExtrato < extrato.dtExtrato)
+                        if (dataGeracaoExtrato.Year < extrato.dtExtrato.Year ||
+                            (dataGeracaoExtrato.Year == extrato.dtExtrato.Year && dataGeracaoExtrato.Month < extrato.dtExtrato.Month) ||
+                            (dataGeracaoExtrato.Year == extrato.dtExtrato.Year && dataGeracaoExtrato.Month == extrato.dtExtrato.Month && dataGeracaoExtrato.Day <= extrato.dtExtrato.Day))
+                            //dataGeracaoExtrato <= extrato.dtExtrato)
                                 continue; // Não importa
 
                         DbContextTransaction transaction = _db.Database.BeginTransaction();
@@ -862,7 +863,10 @@ namespace api.Negocios.Card
                                         {
                                             _db.SaveChanges();
                                         }
-                                        catch { }
+                                        catch(Exception e) 
+                                        {
+                                            _db.Entry(ext).Reload();
+                                        }
                                     }
                                     // Ainda tem movimentações referenciando o arquivo antigo?
                                     if (totalTransacoesOld <= 1)
@@ -885,7 +889,10 @@ namespace api.Negocios.Card
                                         {
                                             _db.SaveChanges();
                                         }
-                                        catch { }
+                                        catch(Exception e)
+                                        {
+                                            _db.Entry(ext).Reload();
+                                        }
                                     }
                                 }
                                 #endregion
@@ -922,6 +929,11 @@ namespace api.Negocios.Card
                         catch(Exception e)
                         {
                             transaction.Rollback();
+                            if (e is DbEntityValidationException)
+                            {
+                                string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                                throw new Exception(erro.Equals("") ? "Falha ao salvar movimentação bancária" : erro);
+                            }
                             throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
                         }
                     }
