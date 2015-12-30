@@ -50,6 +50,12 @@ namespace api.Controllers.Card
                 return Request.CreateResponse(httpStatus, e.Message);
                 //throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
+            }
         }
 
         // POST /tbBancoParametro/token/
@@ -83,6 +89,12 @@ namespace api.Controllers.Card
                 log.msgErro = e.Message;
                 Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
 
         }
@@ -119,6 +131,12 @@ namespace api.Controllers.Card
                 Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
+            }
         }
 
         // DELETE /tbBancoParametro/token/cdBanco
@@ -152,6 +170,12 @@ namespace api.Controllers.Card
                 log.msgErro = e.Message;
                 Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                 throw new HttpResponseException(HttpStatusCode.InternalServerError);
+            }
+            finally
+            {
+                // Fecha conexão
+                _db.Database.Connection.Close();
+                _db.Dispose();
             }
         }
     }

@@ -7,19 +7,20 @@ using System.Linq.Expressions;
 using System.Globalization;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
     public class GatewayTbAdquirente
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTbAdquirente()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -55,7 +56,7 @@ namespace api.Negocios.Card
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<tbAdquirente> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<tbAdquirente> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.tbAdquirentes.AsQueryable<tbAdquirente>();
@@ -94,12 +95,12 @@ namespace api.Negocios.Card
                     case CAMPOS.CNPJ:
                         string cnpj = Convert.ToString(item.Value);
                         List<string> nmOperadoras = _db.Operadoras.Where(o => o.LoginOperadoras.Where(l => l.cnpj.Equals(cnpj)).Count() > 0).Select(o => o.nmOperadora).ToList<string>();
-                        entity = entity.Where(e => nmOperadoras.Contains(e.dsAdquirente)).AsQueryable<tbAdquirente>();
+                        entity = entity.Where(e => nmOperadoras.Contains(e.nmAdquirente)).AsQueryable<tbAdquirente>();
                         break;
                     case CAMPOS.ID_GRUPO:
                         int id_grupo = Convert.ToInt32(item.Value);
                         List<string> nmOperadorasG = _db.Operadoras.Where(o => o.LoginOperadoras.Where(l => l.empresa.id_grupo == id_grupo).Count() > 0).Select(o => o.nmOperadora).ToList<string>();
-                        entity = entity.Where(e => nmOperadorasG.Contains(e.dsAdquirente)).AsQueryable<tbAdquirente>();
+                        entity = entity.Where(e => nmOperadorasG.Contains(e.nmAdquirente)).AsQueryable<tbAdquirente>();
                         break;
 
                     case CAMPOS.DATA:
@@ -186,100 +187,124 @@ namespace api.Negocios.Card
         /// Retorna TbAdquirente/TbAdquirente
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbAdquirente = new List<dynamic>();
-            Retorno retorno = new Retorno();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
 
-            string outValue = null;
-            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-            if (IdGrupo != 0)
-            {
-                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+            try { 
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbAdquirente = new List<dynamic>();
+                Retorno retorno = new Retorno();
+
+                string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                if (!CnpjEmpresa.Equals(""))
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.CNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.CNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.CNPJ, CnpjEmpresa);
+                }
+
+                // GET QUERY
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = query.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
                 else
-                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
-            }
-            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-            if (!CnpjEmpresa.Equals(""))
-            {
-                if (queryString.TryGetValue("" + (int)CAMPOS.CNPJ, out outValue))
-                    queryString["" + (int)CAMPOS.CNPJ] = CnpjEmpresa;
-                else
-                    queryString.Add("" + (int)CAMPOS.CNPJ, CnpjEmpresa);
-            }
+                    pageNumber = 1;
 
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
 
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = query.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
-            {
-                CollectionTbAdquirente = query.Select(e => new
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
                 {
-
-                    cdAdquirente = e.cdAdquirente,
-                    nmAdquirente = e.nmAdquirente,
-                    dsAdquirente = e.dsAdquirente,
-                    stAdquirente = e.stAdquirente,
-                    hrExecucao = e.hrExecucao,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionTbAdquirente = query.Select(e => new
-                {
-
-                    cdAdquirente = e.cdAdquirente,
-                    nmAdquirente = e.nmAdquirente,
-                    dsAdquirente = e.dsAdquirente,
-                    stAdquirente = e.stAdquirente,
-                    hrExecucao = e.hrExecucao,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2) // Conciliação Relatórios
-            {
-                CollectionTbAdquirente = query.Select(e => new
-                {
-
-                    cdAdquirente = e.cdAdquirente,
-                    nmAdquirente = e.nmAdquirente,
-                    bandeiras = e.tbBandeiras.Select(b => new
+                    CollectionTbAdquirente = query.Select(e => new
                     {
-                        cdBandeira = b.cdBandeira,
-                        dsBandeira = b.dsBandeira,
 
-                        ajustesCredito = b.tbRecebimentoAjustes.Where(a => a.vlAjuste > new decimal(0.0)).Count() > 0 ?
-                                        b.tbRecebimentoAjustes
-                                            .Where(a => a.vlAjuste > new decimal(0.0))
-                                            .Sum(a => a.vlAjuste) : new decimal(0.0),
-                        ajustesDebito = b.tbRecebimentoAjustes.Where(a => a.vlAjuste > new decimal(0.0)).Count() > 0 ?
-                                        b.tbRecebimentoAjustes
-                                            .Where(a => a.vlAjuste < new decimal(0.0))
-                                            .Sum(a => a.vlAjuste) : new decimal(0.0),                        
-                    }),                    
-                }).ToList<dynamic>();
+                        cdAdquirente = e.cdAdquirente,
+                        nmAdquirente = e.nmAdquirente,
+                        dsAdquirente = e.dsAdquirente,
+                        stAdquirente = e.stAdquirente,
+                        hrExecucao = e.hrExecucao,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbAdquirente = query.Select(e => new
+                    {
+
+                        cdAdquirente = e.cdAdquirente,
+                        nmAdquirente = e.nmAdquirente,
+                        dsAdquirente = e.dsAdquirente,
+                        stAdquirente = e.stAdquirente,
+                        hrExecucao = e.hrExecucao,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2) // Conciliação Relatórios
+                {
+                    CollectionTbAdquirente = query.Select(e => new
+                    {
+
+                        cdAdquirente = e.cdAdquirente,
+                        nmAdquirente = e.nmAdquirente,
+                        bandeiras = e.tbBandeiras.Select(b => new
+                        {
+                            cdBandeira = b.cdBandeira,
+                            dsBandeira = b.dsBandeira,
+
+                            ajustesCredito = b.tbRecebimentoAjustes.Where(a => a.vlAjuste > new decimal(0.0)).Count() > 0 ?
+                                            b.tbRecebimentoAjustes
+                                                .Where(a => a.vlAjuste > new decimal(0.0))
+                                                .Sum(a => a.vlAjuste) : new decimal(0.0),
+                            ajustesDebito = b.tbRecebimentoAjustes.Where(a => a.vlAjuste > new decimal(0.0)).Count() > 0 ?
+                                            b.tbRecebimentoAjustes
+                                                .Where(a => a.vlAjuste < new decimal(0.0))
+                                                .Sum(a => a.vlAjuste) : new decimal(0.0),                        
+                        }),                    
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbAdquirente;
+
+                return retorno;
             }
-
-            retorno.Registros = CollectionTbAdquirente;
-
-            return retorno;
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar parâmetros bancários" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -289,11 +314,35 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbAdquirente param)
+        public static Int32 Add(string token, tbAdquirente param, painel_taxservices_dbContext _dbContext = null)
         {
-            _db.tbAdquirentes.Add(param);
-            _db.SaveChanges();
-            return param.cdAdquirente;
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
+            try { 
+                _db.tbAdquirentes.Add(param);
+                _db.SaveChanges();
+                return param.cdAdquirente;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar parâmetros bancários" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -302,10 +351,34 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 cdAdquirente)
+        public static void Delete(string token, Int32 cdAdquirente, painel_taxservices_dbContext _dbContext = null)
         {
-            _db.tbAdquirentes.Remove(_db.tbAdquirentes.Where(e => e.cdAdquirente.Equals(cdAdquirente)).First());
-            _db.SaveChanges();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
+            try { 
+                _db.tbAdquirentes.Remove(_db.tbAdquirentes.Where(e => e.cdAdquirente.Equals(cdAdquirente)).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar parâmetros bancários" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -315,24 +388,48 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbAdquirente param)
+        public static void Update(string token, tbAdquirente param, painel_taxservices_dbContext _dbContext = null)
         {
-            tbAdquirente value = _db.tbAdquirentes
-                    .Where(e => e.cdAdquirente.Equals(param.cdAdquirente))
-                    .First<tbAdquirente>();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
+            try { 
+                tbAdquirente value = _db.tbAdquirentes
+                        .Where(e => e.cdAdquirente.Equals(param.cdAdquirente))
+                        .First<tbAdquirente>();
 
 
-            if (param.cdAdquirente != value.cdAdquirente)
-                value.cdAdquirente = param.cdAdquirente;
-            if (param.nmAdquirente != null && param.nmAdquirente != value.nmAdquirente)
-                value.nmAdquirente = param.nmAdquirente;
-            if (param.dsAdquirente != null && param.dsAdquirente != value.dsAdquirente)
-                value.dsAdquirente = param.dsAdquirente;
-            if (param.stAdquirente != value.stAdquirente)
-                value.stAdquirente = param.stAdquirente;
-            if (param.hrExecucao != null && param.hrExecucao != value.hrExecucao)
-                value.hrExecucao = param.hrExecucao;
-            _db.SaveChanges();
+                if (param.cdAdquirente != value.cdAdquirente)
+                    value.cdAdquirente = param.cdAdquirente;
+                if (param.nmAdquirente != null && param.nmAdquirente != value.nmAdquirente)
+                    value.nmAdquirente = param.nmAdquirente;
+                if (param.dsAdquirente != null && param.dsAdquirente != value.dsAdquirente)
+                    value.dsAdquirente = param.dsAdquirente;
+                if (param.stAdquirente != value.stAdquirente)
+                    value.stAdquirente = param.stAdquirente;
+                if (param.hrExecucao != null && param.hrExecucao != value.hrExecucao)
+                    value.hrExecucao = param.hrExecucao;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar parâmetros bancários" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
 
         }
 
