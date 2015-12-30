@@ -636,6 +636,7 @@ namespace api.Negocios.Tax
                         .Join(_db.tbEmpresaFiliais, m => m.nrCNPJ, f => f.nrCNPJ, (m, f) => new { m, f })
                         .Join(_db.tbEmpresas, j => j.f.nrCNPJBase, e => e.nrCNPJBase, (j, e) => new { j, e })
                         .Where(e => e.j.m.cdSituacaoManifesto == null && e.j.m.cdSituacaoDownload == null)
+                        .Take(100)
                         .Select(e => new
                         {
                             idManifesto = e.j.m.idManifesto,
