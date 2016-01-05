@@ -160,29 +160,340 @@ namespace api.Negocios.Card
                     taxaCashFlow = new decimal(0.0) 
                 }).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
 
-                List<ConciliacaoRelatorios> rRecebimentoExtrato = queryExtrato.Select(t => new ConciliacaoRelatorios
+
+                // Agrupa
+                List<dynamic> listaFinal = rRecebimentoParcela.Concat(rRecebimentoAjuste).GroupBy(t => t.competencia)
+                                                           .Select(t => new
+                                                           {
+                                                               competencia = t.Key.ToShortDateString(),
+                                                               taxaMedia = t.Where(x => x.tipo.Equals("R")).Count() == 0 ? new decimal(0.0) : (t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado) * new decimal(100.0)) / t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),//t.Where(x => x.tipo.Equals("R")).Sum(x => x.taxaCashFlow) / t.Where(x => x.tipo.Equals("R")).Count(),
+                                                               vendas = t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),
+                                                               valorDescontadoTaxaADM = t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado),
+                                                               ajustesCredito = t.Where(x => x.tipo.Equals("A")).Sum(x => x.valorBruto),
+                                                               ajustesDebito = t.Where(x => x.tipo.Equals("A")).Sum(x => x.valorDescontado),
+                                                               valorLiquido = t.Sum(x => x.valorLiquido),
+                                                               valorDescontadoAntecipacao = t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                               valorLiquidoTotal = t.Sum(x => x.valorLiquido) - t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                               extratoBancario = new decimal(0.0),
+                                                               diferenca = t.Sum(x => x.valorLiquido),
+                                                               status = t.Where(x => x.idExtrato == null).Count() > 0 ? "Não conciliado" : "Conciliado",
+
+                                                               adquirentes = t.GroupBy(c => c.adquirente)
+                                                                               .OrderBy(c => c.Key)
+                                                                               .Select(c => new
+                                                                               {
+                                                                                   adquirente = c.Key,
+                                                                                   taxaMedia = c.Where(x => x.tipo.Equals("R")).Count() == 0 ? new decimal(0.0) : (c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado) * new decimal(100.0)) / c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),//c.Where(x => x.tipo.Equals("R")).Sum(x => x.taxaCashFlow) / c.Where(x => x.tipo.Equals("R")).Count(),
+                                                                                   vendas = c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),
+                                                                                   valorDescontadoTaxaADM = c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado),
+                                                                                   ajustesCredito = c.Where(x => x.tipo.Equals("A")).Sum(x => x.valorBruto),
+                                                                                   ajustesDebito = c.Where(x => x.tipo.Equals("A")).Sum(x => x.valorDescontado),
+                                                                                   valorLiquido = c.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido),
+                                                                                   valorDescontadoAntecipacao = c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                                                   valorLiquidoTotal = c.Where(x => !x.tipo.Equals("E")).Sum(x => x.valorLiquido) - c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                                                   extratoBancario = new decimal(0.0),
+                                                                                   diferenca = c.Sum(x => x.valorLiquido),
+                                                                                   status = c.Where(x => x.idExtrato == null).Count() > 0 ? "Não conciliado" : "Conciliado",
+
+                                                                                   bandeiras = c.GroupBy(b => new { b.bandeira, b.tipocartao })
+                                                                                                .OrderBy(b => b.Key.bandeira)
+                                                                                                .ThenBy(b => b.Key.tipocartao)
+                                                                                                .Select(b => new
+                                                                                                {
+                                                                                                    bandeira = b.Key.bandeira,
+                                                                                                    taxaMedia = b.Where(x => x.tipo.Equals("R")).Count() == 0 ? new decimal(0.0) : (b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado) * new decimal(100.0)) / b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),//b.Where(x => x.tipo.Equals("R")).Sum(x => x.taxaCashFlow) / b.Where(x => x.tipo.Equals("R")).Count(),
+                                                                                                    vendas = b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorBruto),
+                                                                                                    valorDescontadoTaxaADM = b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontado),
+                                                                                                    ajustesCredito = b.Where(x => x.tipo.Equals("A")).Sum(x => x.valorBruto),
+                                                                                                    ajustesDebito = b.Where(x => x.tipo.Equals("A")).Sum(x => x.valorDescontado),
+                                                                                                    valorLiquido = b.Sum(x => x.valorLiquido),
+                                                                                                    valorDescontadoAntecipacao = b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                                                                    valorLiquidoTotal = b.Sum(x => x.valorLiquido) - b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
+                                                                                                    extratoBancario = new decimal(0.0),
+                                                                                                    diferenca = b.Sum(x => x.valorLiquido),
+                                                                                                    status = b.Where(x => x.idExtrato == null).Count() > 0 ? "Não conciliado" : "Conciliado",
+
+                                                                                                }).ToList<dynamic>()
+                                                                               }).ToList<dynamic>(),
+
+                                                           })
+                                                           .ToList<dynamic>();
+
+
+
+                List<tbExtrato> extratos = queryExtrato.ToList<tbExtrato>();
+                int competenciaListaFinal = 0;
+                foreach (tbExtrato extrato in extratos)
                 {
-                    tipo = "E",
-                    adquirente = _db.tbBancoParametro.Where(p => p.dsMemo.Equals(t.dsDocumento))
-                                                                                                 .Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco))
-                                                                                                 .Select(p => p.tbAdquirente.nmAdquirente.ToUpper())
-                                                                                                 .FirstOrDefault() ?? "Indefinida",
-                    bandeira = _db.tbBancoParametro.
-                                                    Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco)
-                                                    && p.dsMemo.Equals(t.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? "Indefinida"
-                                                    ).FirstOrDefault() ?? "Indefinida",
-                    tipocartao = _db.tbBancoParametro.
-                                                    Where(p => p.cdBanco.Equals(t.tbContaCorrente.cdBanco)
-                                                    && p.dsMemo.Equals(t.dsDocumento)).Select(p => p.dsTipoCartao ?? ""
-                                                    ).FirstOrDefault() ?? "",
-                    valorBruto = t.vlMovimento ?? new decimal(0.0),
-                    valorDescontado = new decimal(0.0),
-                    valorDescontadoAntecipacao = new decimal(0.0),
-                    valorLiquido = t.vlMovimento ?? new decimal(0.0),
-                    competencia = t.dtExtrato,
-                    idExtrato = t.RecebimentoParcelas.Count + t.tbRecebimentoAjustes.Count,
-                    taxaCashFlow = new decimal(0.0)
-                }).OrderBy(t => t.competencia).ThenBy(t => t.adquirente).ToList<ConciliacaoRelatorios>();
+                    ConciliacaoRelatorios e = new ConciliacaoRelatorios();
+                    e.tipo = "E";
+                    e.valorBruto = extrato.vlMovimento != null ? extrato.vlMovimento.Value : new decimal(0.0);
+                    e.valorDescontado = new decimal(0.0);
+                    e.valorDescontadoAntecipacao = new decimal(0.0);
+                    e.valorLiquido = extrato.vlMovimento != null ? extrato.vlMovimento.Value : new decimal(0.0);
+                    e.competencia = extrato.dtExtrato;
+                    e.idExtrato = extrato.RecebimentoParcelas.Count + extrato.tbRecebimentoAjustes.Count;
+                    e.taxaCashFlow = new decimal(0.0);
+
+                    bool extratoConciliado = extrato.RecebimentoParcelas.Count > 0 || extrato.tbRecebimentoAjustes.Count > 0;
+
+                    #region COMPETENCIA
+                    // Lista agrupada
+                    var competencia = listaFinal[competenciaListaFinal];
+                    //var item = listaFinal[competenciaListaFinal];
+                    while (Convert.ToDateTime(competencia.competencia) < e.competencia && competenciaListaFinal < listaFinal.Count - 1)
+                        competencia = listaFinal[++competenciaListaFinal];
+                    
+                    // TEMP
+                    //if (competenciaListaFinal > 2)
+                    //    break;
+
+                    bool competenciaExistente = Convert.ToDateTime(competencia.competencia) == e.competencia;
+
+                    var competenciaAtualizada = new
+                    {
+                        competencia = e.competencia.ToShortDateString(),
+                        taxaMedia = !competenciaExistente ? new decimal(0.0) : competencia.taxaMedia,
+                        vendas = !competenciaExistente ?  new decimal(0.0) : competencia.vendas,
+                        valorDescontadoTaxaADM = !competenciaExistente ?  new decimal(0.0) : competencia.valorDescontadoTaxaADM,
+                        ajustesCredito = !competenciaExistente ?  new decimal(0.0) : competencia.ajustesCredito,
+                        ajustesDebito = !competenciaExistente ?  new decimal(0.0) : competencia.ajustesDebito,
+                        valorLiquido = !competenciaExistente ?  new decimal(0.0) : competencia.valorLiquido,
+                        valorDescontadoAntecipacao = !competenciaExistente ?  new decimal(0.0) : competencia.valorDescontadoAntecipacao,
+                        valorLiquidoTotal = !competenciaExistente ?  new decimal(0.0) : competencia.valorLiquidoTotal,
+                        extratoBancario = competenciaExistente ? competencia.extratoBancario + e.valorLiquido : e.valorLiquido,
+                        diferenca = competenciaExistente ? Math.Abs(competencia.valorLiquido - competencia.extratoBancario - e.valorLiquido) : e.valorLiquido,
+                        status = !competenciaExistente ? extratoConciliado ? "Conciliado" : "Não Conciliado" :
+                                        competencia.status.Equals("Não conciliado") || !extratoConciliado ?
+                                            competencia.diferenca <= new decimal(0.3) ? "Pré-Conciliado" : "Não conciliado" : 
+                                            "Conciliado",
+
+                        adquirentes = !competenciaExistente ? new List<dynamic>() : competencia.adquirentes
+                    };
+
+                   
+                    // Verifica se a data consta na lista
+                    if (!competenciaExistente)
+                    {
+                        if (Convert.ToDateTime(competencia.competencia) < e.competencia)
+                        {
+                            if (competenciaListaFinal < listaFinal.Count - 1)
+                                listaFinal.Insert(competenciaListaFinal + 1, competenciaAtualizada);
+                            else
+                                listaFinal.Add(competenciaAtualizada);
+                        }
+                        else
+                            listaFinal.Insert(competenciaListaFinal, competenciaAtualizada);
+                    }
+                    else
+                    { 
+                        // Remove a antiga e re-adiciona
+                        listaFinal.RemoveAt(competenciaListaFinal);
+                        listaFinal.Insert(competenciaListaFinal, competenciaAtualizada);
+                    }
+
+                    #endregion
+
+                    #region PARÂMETRO BANCÁRIO
+                    tbBancoParametro parametro = _db.tbBancoParametro.Where(p => p.dsMemo.Equals(extrato.dsDocumento))
+                                                                     .Where(p => p.cdBanco.Equals(extrato.tbContaCorrente.cdBanco))
+                                                                     .FirstOrDefault();
+
+                    if (parametro == null)
+                    {
+                        e.adquirente = "Indefinida";
+                        e.bandeira = "Indefinida";
+                        e.tipocartao = "";
+                    }
+                    else
+                    {
+                        e.adquirente = parametro.cdAdquirente != null ? parametro.tbAdquirente.nmAdquirente : "Indefinida";
+                        e.bandeira = parametro.cdBandeira != null ? parametro.tbBandeira.dsBandeira : "Indefinida";
+                        e.tipocartao = parametro.dsTipoCartao != null ? parametro.dsTipoCartao : "";
+                    }
+
+                    List<dynamic> bandeiras = new List<dynamic>() { new { bandeira = e.bandeira, tipocartao = e.tipocartao } };
+
+                    // Analisa pela conciliação a adquirente e bandeira
+                    if (extratoConciliado)
+                    {
+                        // Memo sem adquirente?
+                        if (e.adquirente.Equals("Indefinida"))
+                        {
+                            if (extrato.RecebimentoParcelas.Count > 0)
+                                e.adquirente = extrato.RecebimentoParcelas.First().Recebimento.tbBandeira.tbAdquirente.nmAdquirente;
+                            else
+                                e.adquirente = extrato.tbRecebimentoAjustes.First().tbBandeira.tbAdquirente.nmAdquirente;
+                        }
+
+                        // Memo sem bandeira?
+                        if (e.bandeira.Equals("Indefinida"))
+                        {
+                            // Obtém as bandeiras
+                            List<dynamic> bandeirasConciliadasParcelas = extrato.RecebimentoParcelas.GroupBy(r => new { r.Recebimento.tbBandeira.dsBandeira, r.Recebimento.tbBandeira.dsTipo }).Select(r => new { bandeira = r.Key.dsBandeira, tipocartao = r.Key.dsTipo } ).ToList<dynamic>();
+                            List<dynamic> bandeirasConciliadasAjustes = extrato.tbRecebimentoAjustes.GroupBy(r => new { r.tbBandeira.dsBandeira, r.tbBandeira.dsTipo }).Select(r => new { bandeira = r.Key.dsBandeira, tipocartao = r.Key.dsTipo }).ToList<dynamic>();
+                            bandeiras = bandeirasConciliadasParcelas.Concat(bandeirasConciliadasAjustes).OrderBy(r => r.bandeira).ToList<dynamic>();
+                        }
+                    }
+                    #endregion
+
+                    #region ADQUIRENTE
+                    int adquirenteListaFinal = 0;
+                    // Procura a adquirente
+                    var adquirente = competencia.adquirentes.Count > 0 ? competencia.adquirentes[adquirenteListaFinal] : 
+                                                new
+                                                {
+                                                    adquirente = e.adquirente,
+                                                    taxaMedia = new decimal(0.0),
+                                                    vendas = new decimal(0.0),
+                                                    valorDescontadoTaxaADM = new decimal(0.0),
+                                                    ajustesCredito = new decimal(0.0),
+                                                    ajustesDebito = new decimal(0.0),
+                                                    valorLiquido = new decimal(0.0),
+                                                    valorDescontadoAntecipacao = new decimal(0.0),
+                                                    valorLiquidoTotal = new decimal(0.0),
+                                                    extratoBancario = new decimal(0.0),
+                                                    diferenca = new decimal(0.0),
+                                                    status = "Não conciliado",
+
+                                                    bandeiras = new List<dynamic>()
+                                                };
+
+                    while (string.Compare(e.adquirente, adquirente.adquirente, StringComparison.Ordinal) > 0 && adquirenteListaFinal < competencia.adquirentes.Count - 1)
+                        adquirente = competencia.adquirentes[++adquirenteListaFinal];
+
+
+                    bool adquirenteExistente = adquirente.adquirente.Equals(e.adquirente);
+
+                    var adquirenteAtualizada = new
+                    {
+                        adquirente = e.adquirente,
+                        taxaMedia =  !adquirenteExistente ? new decimal(0.0) : adquirente.taxaMedia,
+                        vendas = !adquirenteExistente ? new decimal(0.0) : adquirente.vendas,
+                        valorDescontadoTaxaADM = !adquirenteExistente ? new decimal(0.0) : adquirente.valorDescontadoTaxaADM,
+                        ajustesCredito = !adquirenteExistente ? new decimal(0.0) : adquirente.ajustesCredito,
+                        ajustesDebito = !adquirenteExistente ?  new decimal(0.0) : adquirente.ajustesDebito,
+                        valorLiquido = !adquirenteExistente ? new decimal(0.0) : adquirente.valorLiquido,
+                        valorDescontadoAntecipacao = !adquirenteExistente ? new decimal(0.0) : adquirente.valorDescontadoAntecipacao,
+                        valorLiquidoTotal = !adquirenteExistente ? new decimal(0.0) : adquirente.valorLiquidoTotal,
+                        extratoBancario = adquirenteExistente ? adquirente.extratoBancario + e.valorLiquido : e.valorLiquido,
+                        diferenca = adquirenteExistente ? Math.Abs(adquirente.valorLiquido - adquirente.extratoBancario - e.valorLiquido) : e.valorLiquido,
+                        status = !adquirenteExistente ? extratoConciliado ? "Conciliado" : "Não Conciliado" :
+                                        adquirente.status.Equals("Não conciliado") || !extratoConciliado ?
+                                            adquirente.diferenca <= new decimal(0.3) ? "Pré-Conciliado" : "Não conciliado" :
+                                            "Conciliado",
+
+                        bandeiras = !adquirenteExistente ? new List<dynamic>() : adquirente.bandeiras
+                    };
+
+
+                    // Verifica se a adquirente consta na competência
+                    if (!adquirenteExistente)
+                    {
+                        if (string.Compare(e.adquirente, adquirente.adquirente, StringComparison.Ordinal) > 0)
+                        {
+                            if (adquirenteListaFinal < competencia.adquirentes.Count - 1)
+                                competencia.adquirentes.Insert(adquirenteListaFinal + 1, adquirenteAtualizada);
+                            else
+                                competencia.adquirentes.Add(adquirenteAtualizada);
+                        }
+                        else
+                            competencia.adquirentes.Insert(adquirenteListaFinal, adquirenteAtualizada);
+                    }
+                    else
+                    {
+                        // Remove a antiga e re-adiciona
+                        competencia.adquirentes.RemoveAt(adquirenteListaFinal);
+                        competencia.adquirentes.Insert(adquirenteListaFinal, adquirenteAtualizada);
+                    }
+
+                    #endregion
+
+                    #region BANDEIRA
+                    decimal valorLiquidoRestante = e.valorLiquido;
+                    foreach (var bd in bandeiras)
+                    {
+                        // Procura a bandeira
+                        int bandeiraListaFinal = 0;
+                        var band = adquirente.bandeiras.Count > 0 ? adquirente.bandeiras[bandeiraListaFinal] :
+                                                    new
+                                                    {
+                                                        bandeira = bd.bandeira + (!bd.bandeira.Equals("Indefinida") || bd.tipocartao.Equals("") ? "" : " (" + bd.tipocartao + ")"),
+                                                        taxaMedia = new decimal(0.0),
+                                                        vendas = new decimal(0.0),
+                                                        valorDescontadoTaxaADM = new decimal(0.0),
+                                                        ajustesCredito = new decimal(0.0),
+                                                        ajustesDebito = new decimal(0.0),
+                                                        valorLiquido = new decimal(0.0),
+                                                        valorDescontadoAntecipacao = new decimal(0.0),
+                                                        valorLiquidoTotal = new decimal(0.0),
+                                                        extratoBancario = new decimal(0.0),
+                                                        diferenca = new decimal(0.0),
+                                                        status = "Não conciliado",
+                                                    };
+
+                        while (string.Compare(bd.bandeira, band.bandeira, StringComparison.Ordinal) > 0 && bandeiraListaFinal < adquirente.bandeiras.Count - 1)
+                            band = adquirente.bandeiras[++bandeiraListaFinal];
+
+
+                        bool bandeiraExistente = band.bandeira.Equals(bd.bandeira);
+                        bool extratoMaiorQueRecebiveis = valorLiquidoRestante > band.diferenca;
+
+                        var bandeiraAtualizada = new
+                        {
+                            bandeira = bd.bandeira + (!bd.bandeira.Equals("Indefinida") || bd.tipocartao.Equals("") ? "" : " (" + bd.tipocartao + ")"),
+                            taxaMedia = !bandeiraExistente ? new decimal(0.0) : band.taxaMedia,
+                            vendas = !bandeiraExistente ? new decimal(0.0) : band.vendas,
+                            valorDescontadoTaxaADM = !bandeiraExistente ? new decimal(0.0) : band.valorDescontadoTaxaADM,
+                            ajustesCredito = !bandeiraExistente ?  new decimal(0.0) : band.ajustesCredito,
+                            ajustesDebito = !bandeiraExistente ? new decimal(0.0) : band.ajustesDebito,
+                            valorLiquido = !bandeiraExistente ? new decimal(0.0) : band.valorLiquido,
+                            valorDescontadoAntecipacao = !bandeiraExistente ? new decimal(0.0) : band.valorDescontadoAntecipacao,
+                            valorLiquidoTotal = !bandeiraExistente ? new decimal(0.0) : band.valorLiquidoTotal,
+                            extratoBancario = !bandeiraExistente ? e.valorLiquido :
+                                                 bandeiras.Count == 1 || !extratoMaiorQueRecebiveis ?
+                                                    band.extratoBancario + valorLiquidoRestante :
+                                                    band.extratoBancario + band.valorLiquido,
+                            diferenca = !bandeiraExistente ? e.valorLiquido :
+                                            bandeiras.Count == 1 || !extratoMaiorQueRecebiveis ?
+                                                Math.Abs(band.diferenca - valorLiquidoRestante) :
+                                                new decimal(0.0),
+                            status = !bandeiraExistente ? extratoConciliado ? "Conciliado" : "Não Conciliado" :
+                                        !band.status.Equals("Não conciliado") && extratoConciliado ? "Conciliado" :
+                                            bandeiras.Count == 1 || !extratoMaiorQueRecebiveis ?
+                                                 Math.Abs(band.diferenca - valorLiquidoRestante) <= new decimal(0.3) ? "Pré-Conciliado" : "Não conciliado" : 
+                                                 "Pré-Conciliado"
+                        };
+
+                        // Decrementa valor usado
+                        if(bandeiras.Count > 1 && extratoMaiorQueRecebiveis)
+                            valorLiquidoRestante -= band.diferenca;
+
+
+                        // Verifica se a adquirente consta na competência
+                        if (!bandeiraExistente)
+                        {
+                            if (string.Compare(bd.bandeira, band.bandeira, StringComparison.Ordinal) > 0)
+                            {
+                                if (bandeiraListaFinal < adquirente.bandeiras.Count - 1)
+                                    adquirente.bandeiras.Insert(bandeiraListaFinal + 1, bandeiraAtualizada);
+                                else
+                                    adquirente.bandeiras.Add(bandeiraAtualizada);
+                            }
+                            else
+                                adquirente.bandeiras.Insert(bandeiraListaFinal, bandeiraAtualizada);
+                        }
+                        else
+                        {
+                            // Remove a antiga e re-adiciona
+                            adquirente.bandeiras.RemoveAt(bandeiraListaFinal);
+                            adquirente.bandeiras.Insert(bandeiraListaFinal, bandeiraAtualizada);
+                        }
+                        
+                    }
+
+                    #endregion
+                }
 
                 //List<dynamic> temp = queryExtrato.Select(t => new
                 //{
@@ -209,7 +520,7 @@ namespace api.Negocios.Card
                 //    taxaCashFlow = new decimal(0.0)
                 //}).Where(t => t.adquirente.Equals("AMEX")).OrderByDescending(t => t.competencia).ThenBy(t => t.adquirente).ToList<dynamic>();
 
-                List<ConciliacaoRelatorios> listaCompleta = rRecebimentoParcela.Concat(rRecebimentoAjuste).Concat(rRecebimentoExtrato).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
+                /*List<ConciliacaoRelatorios> listaCompleta = rRecebimentoParcela.Concat(rRecebimentoAjuste).Concat(rRecebimentoExtrato).OrderBy(t => t.competencia).ToList<ConciliacaoRelatorios>();
 
                 List<dynamic> listaFinal = listaCompleta.GroupBy(t => t.competencia)
                                                            .Select(t => new
@@ -268,7 +579,7 @@ namespace api.Negocios.Card
                                                                                }).ToList<dynamic>(),
 
                                                            })
-                                                           .ToList<dynamic>();
+                                                           .ToList<dynamic>();*/
                 //for(int n = 0; n < listCompleta.Count; n++)
                 //{
                 //    ConciliacaoBancaria item1 = listCompleta[n];

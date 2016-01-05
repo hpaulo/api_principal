@@ -15,7 +15,7 @@ namespace api.Models
         public painel_taxservices_dbContext()
             : base("Name=painel_taxservices_dbContext")
         {
-            Database.CommandTimeout = 60; // 1 minuto
+            Database.CommandTimeout = 300; // 5 minutos
         }
 
         public DbSet<ConnectionString> ConnectionStrings { get; set; }
