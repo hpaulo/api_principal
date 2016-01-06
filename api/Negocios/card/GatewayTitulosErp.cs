@@ -332,6 +332,7 @@ namespace api.Negocios.Card
                                                             .Where(e => e.nrNSU.Equals(tbRecebimentoTitulo.nrNSU))
                                                             .Where(e => e.dtTitulo.Equals(tbRecebimentoTitulo.dtTitulo))
                                                             .Where(e => e.nrParcela == tbRecebimentoTitulo.nrParcela)
+                                                            .Where(e => e.cdERP == tbRecebimentoTitulo.cdERP)
                                                             .FirstOrDefault();
 
                     if (titulo == null)
@@ -361,7 +362,7 @@ namespace api.Negocios.Card
                         titulo.vlVenda = tbRecebimentoTitulo.vlVenda;
                         titulo.qtParcelas = tbRecebimentoTitulo.qtParcelas;
                         titulo.vlParcela = tbRecebimentoTitulo.vlParcela;
-                        titulo.cdERP = tbRecebimentoTitulo.cdERP;
+                        //titulo.cdERP = tbRecebimentoTitulo.cdERP;
                         titulo.dtBaixaERP = tbRecebimentoTitulo.dtBaixaERP;
                         //try
                         //{
