@@ -295,6 +295,7 @@ namespace api.Negocios.Card
                                         adquirente = recebimento.Adquirente,
                                         tipo = recebimento.TipoCartao,
                                         filial = recebimento.Filial,
+                                        diferenca = Math.Abs(item.Sum(t => t.Valor) - extrato.ValorTotal),
                                         grupo = item.OrderBy(gp => gp.Bandeira).ThenBy(gp => gp.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>()
                                     });
                                 }
@@ -311,7 +312,7 @@ namespace api.Negocios.Card
                         bandeira = extrato.Bandeira,
                         tipo = extrato.TipoCartao,
                         filial = extrato.Filial,
-                        recebimento = grupos
+                        recebimento = grupos.OrderBy(t => t.diferenca).ThenBy(t => t.grupo.Count).ToList()
                     });
                 }
             }
@@ -321,7 +322,7 @@ namespace api.Negocios.Card
             {
                 #region PROCESSA COMBINAÇÕES E CONCILIA EVITANDO DUPLICIDADES
                 // Ordena por total de combinações encontradas
-                gruposExtrato = gruposExtrato.OrderBy(g => g.recebimento.Count).ToList<dynamic>();
+                //gruposExtrato = gruposExtrato.OrderBy(g => g.recebimento.Count).ToList<dynamic>();
                 //Dictionary<Int32, bool> recebimentosPreConciliados = new Dictionary<Int32, bool>();
                 List<RecebimentosParcela.RecebParcela> recebimentosPreConciliados = new List<RecebimentosParcela.RecebParcela>();
                 // Com os grupos que combinados resultam no valor do extrato, 
@@ -843,7 +844,7 @@ namespace api.Negocios.Card
 
 
                     // TEM ELEMENTOS PARA CONCILIAR?
-                    if (recebimentosParcela.Count == 0 || extratoBancario.Count == 0)
+                    if (filtroTipoNaoConciliado || recebimentosParcela.Count == 0 || extratoBancario.Count == 0)
                     {
                         if (!filtroTipoPreConciliado)
                         {
@@ -871,7 +872,7 @@ namespace api.Negocios.Card
                                                                         Filial = r.Key.Filial
                                                                     }).ToList<ConciliacaoBancaria>());
                             }
-                            else if (extratoBancario.Count > 0)
+                            if (extratoBancario.Count > 0)
                             {
                                 adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
                             }
@@ -1148,6 +1149,7 @@ namespace api.Negocios.Card
                                             else
                                             {
                                                 #region PASSO 4) TENTA ENCONTRAR SUBGRUPOS DE CADA AGRUPAMENTO ENVOLVENDO DATA, ADQUIRENTE E BANDEIRA NO RECEBIMENTO PARCELA
+                                                extratoBancario =  extratoBancario.OrderByDescending(t => t.ValorTotal).ToList<ConciliacaoBancaria>();
                                                 conciliaSubGrupos(CollectionConciliacaoBancaria, recebimentosParcelaAgrupados, extratoBancario, !filtroTipoNaoConciliado);
                                                 #endregion
 
