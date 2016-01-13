@@ -35,6 +35,9 @@ namespace api.Models.Mapping
             this.Property(t => t.codResumoVenda)
                 .HasMaxLength(255);
 
+            this.Property(t => t.nrCartao)
+                .HasMaxLength(20);
+
             // Table & Column Mappings
             this.ToTable("Recebimento", "pos");
             this.Property(t => t.id).HasColumnName("id");
@@ -53,6 +56,8 @@ namespace api.Models.Mapping
             this.Property(t => t.codResumoVenda).HasColumnName("codResumoVenda");
             this.Property(t => t.numParcelaTotal).HasColumnName("numParcelaTotal");
             this.Property(t => t.cdBandeira).HasColumnName("cdBandeira");
+            this.Property(t => t.idResumoVenda).HasColumnName("idResumoVenda");
+            this.Property(t => t.nrCartao).HasColumnName("nrCartao");
 
             // Relationships
             this.HasRequired(t => t.empresa)
@@ -67,7 +72,9 @@ namespace api.Models.Mapping
             this.HasOptional(t => t.tbBandeira)
                 .WithMany(t => t.Recebimentos)
                 .HasForeignKey(d => d.cdBandeira);
-
+            this.HasOptional(t => t.tbResumoVenda)
+                .WithMany(t => t.Recebimentos)
+                .HasForeignKey(d => d.idResumoVenda);
         }
     }
 }

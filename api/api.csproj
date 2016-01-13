@@ -365,6 +365,8 @@
     <Compile Include="Controllers\Tax\TbManifestoController.cs" />
     <Compile Include="Controllers\Util\BancosController.cs" />
     <Compile Include="Controllers\Util\ExportarController.cs" />
+    <Compile Include="Models\Mapping\tbResumoVendaMap.cs" />
+    <Compile Include="Models\tbResumoVenda.cs" />
     <Compile Include="Negocios\Util\ExtratoPDFBNB.cs" />
     <Compile Include="Negocios\Util\ExtratoPDFSantander.cs" />
     <Compile Include="Controllers\Util\UtilNfeController.cs" />

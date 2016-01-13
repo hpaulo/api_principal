@@ -465,7 +465,8 @@ namespace api.Negocios.Pos
                         codVendaERP = e.codVendaERP,
                         codResumoVenda = e.codResumoVenda,
                         numParcelaTotal = e.numParcelaTotal,
-                        cdBandeira = e.cdBandeira
+                        cdBandeira = e.cdBandeira,
+                        nrCartao = e.nrCartao,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -488,7 +489,8 @@ namespace api.Negocios.Pos
                         codVendaERP = e.codVendaERP,
                         codResumoVenda = e.codResumoVenda,
                         numParcelaTotal = e.numParcelaTotal,
-                        cdBandeira = e.cdBandeira
+                        cdBandeira = e.cdBandeira,
+                        nrCartao = e.nrCartao,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2)
@@ -681,7 +683,8 @@ namespace api.Negocios.Pos
                          e.BandeiraPos.desBandeira,//e.tbBandeira.dsBandeira
                          e.nsu,
                          e.cdAutorizador,
-                         e.valorVendaBruta
+                         e.valorVendaBruta,
+                         e.nrCartao,
                      }).ToList<dynamic>();
 
 

@@ -239,6 +239,7 @@ namespace api.Models
         public DbSet<tbTerminalLogico> tbTerminalLogicos { get; set; }
         public DbSet<tbRecebimentoResumoManual> tbRecebimentoResumoManuals { get; set; }
         public DbSet<tbRecebimentoTitulo> tbRecebimentoTitulos { get; set; }
+        public DbSet<tbResumoVenda> tbResumoVendas { get; set; }
 
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -464,6 +465,7 @@ namespace api.Models
             modelBuilder.Configurations.Add(new tbTerminalLogicoMap());
             modelBuilder.Configurations.Add(new tbRecebimentoResumoManualMap());
             modelBuilder.Configurations.Add(new tbRecebimentoTituloMap());
+            modelBuilder.Configurations.Add(new tbResumoVendaMap());
         }
     }
 }

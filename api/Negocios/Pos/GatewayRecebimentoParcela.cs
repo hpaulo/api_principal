@@ -578,6 +578,7 @@ namespace api.Negocios.Pos
                         codVendaERP = e.Recebimento.codVendaERP,
                         codResumoVenda = e.Recebimento.codResumoVenda,
                         numParcelaTotal = e.Recebimento.numParcelaTotal,
+                        nrCartao = e.Recebimento.nrCartao,
 
 
                         idRecebimento = e.idRecebimento,
@@ -840,7 +841,8 @@ namespace api.Negocios.Pos
                                                     dtBaixaERP = e.idRecebimentoTitulo != null ? e.tbRecebimentoTitulo.dtBaixaERP : null,
                                                     cdBanco = e.idExtrato == null ? "" : e.tbExtrato.tbContaCorrente.cdBanco,
                                                     nrAgencia = e.idExtrato == null ? "" : e.tbExtrato.tbContaCorrente.nrAgencia,
-                                                    nrConta = e.idExtrato == null ? "" : e.tbExtrato.tbContaCorrente.nrConta
+                                                    nrConta = e.idExtrato == null ? "" : e.tbExtrato.tbContaCorrente.nrConta,
+                                                    //nrCartao = e.Recebimento.nrCartao
                                                 }).ToList<dynamic>();
                     }
                     else
@@ -868,6 +870,7 @@ namespace api.Negocios.Pos
                             valorLiquida = e.valorParcelaLiquida,
                             valorDescontado = e.valorDescontado,
                             vlDescontadoAntecipacao = e.vlDescontadoAntecipacao,
+                            nrCartao = e.Recebimento.nrCartao,
                         }).ToList<dynamic>();
 
                         // Obtém os ajustes se teve filtro de data de recebimento
