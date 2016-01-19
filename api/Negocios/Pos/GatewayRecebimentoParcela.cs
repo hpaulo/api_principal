@@ -41,6 +41,7 @@ namespace api.Negocios.Pos
             DTARECEBIMENTOEFETIVO = 107,
             VLDESCONTADOANTECIPACAO = 108,
             IDRECEBIMENTOTITULO = 109, // -1 para = null, 0 para != null
+            FLANTECIPADO = 110,
 
             // EMPRESA
             NU_CNPJ = 300,
@@ -201,7 +202,7 @@ namespace api.Negocios.Pos
                                                         (e.dtaRecebimentoEfetivo.Value.Year > dtaIni.Year || (e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month > dtaIni.Month) || (e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaIni.Month && e.dtaRecebimentoEfetivo.Value.Day >= dtaIni.Day)) && 
                                                         (e.dtaRecebimentoEfetivo.Value.Year < dtaFim.Year || (e.dtaRecebimentoEfetivo.Value.Year == dtaFim.Year && e.dtaRecebimentoEfetivo.Value.Month < dtaFim.Month) || (e.dtaRecebimentoEfetivo.Value.Year == dtaFim.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaFim.Month && e.dtaRecebimentoEfetivo.Value.Day <= dtaFim.Day))
                                                        ) ||
-                                                       (e.dtaRecebimentoEfetivo == null && 
+                                                       (e.dtaRecebimentoEfetivo == null && e.flAntecipado == false &&
                                                         (e.dtaRecebimento.Year > dtaIni.Year || (e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month > dtaIni.Month) || (e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Day >= dtaIni.Day)) && 
                                                         (e.dtaRecebimento.Year < dtaFim.Year || (e.dtaRecebimento.Year == dtaFim.Year && e.dtaRecebimento.Month < dtaFim.Month) || (e.dtaRecebimento.Year == dtaFim.Year && e.dtaRecebimento.Month == dtaFim.Month && e.dtaRecebimento.Day <= dtaFim.Day))
                                                        ));
@@ -210,32 +211,36 @@ namespace api.Negocios.Pos
                         {
                             string busca = item.Value.Replace(">", "");
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value >= dta) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento >= dta));
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value >= dta) || (e.dtaRecebimentoEfetivo == null && e.flAntecipado == false && e.dtaRecebimento >= dta));
                         }
                         else if (item.Value.Contains("<")) // MENOR IGUAL
                         {
                             string busca = item.Value.Replace("<", "");
                             DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value <= dta) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento <= dta));
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value <= dta) || (e.dtaRecebimentoEfetivo == null && e.flAntecipado == false && e.dtaRecebimento <= dta));
                         }
                         else if (item.Value.Length == 4)
                         {
                             string busca = item.Value + "0101";
                             DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento.Year == dtaIni.Year));
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year) || (e.dtaRecebimentoEfetivo == null && e.flAntecipado == false && e.dtaRecebimento.Year == dtaIni.Year));
                         }
                         else if (item.Value.Length == 6)
                         {
                             string busca = item.Value + "01";
                             DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaIni.Month) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month));
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaIni.Month) || (e.dtaRecebimentoEfetivo == null && e.flAntecipado == false && e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month));
                         }
                         else // IGUAL
                         {
                             string busca = item.Value;
                             DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaIni.Month && e.dtaRecebimentoEfetivo.Value.Day == dtaIni.Day) || (e.dtaRecebimentoEfetivo == null && e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Day == dtaIni.Day));
+                            entity = entity.Where(e => (e.dtaRecebimentoEfetivo != null && e.dtaRecebimentoEfetivo.Value.Year == dtaIni.Year && e.dtaRecebimentoEfetivo.Value.Month == dtaIni.Month && e.dtaRecebimentoEfetivo.Value.Day == dtaIni.Day) || (e.dtaRecebimentoEfetivo == null && e.flAntecipado == false && e.dtaRecebimento.Year == dtaIni.Year && e.dtaRecebimento.Month == dtaIni.Month && e.dtaRecebimento.Day == dtaIni.Day));
                         }
+                        break;
+                    case CAMPOS.FLANTECIPADO:
+                        bool flAntecipado = Convert.ToBoolean(item.Value);
+                        entity = entity.Where(e => e.flAntecipado == flAntecipado);
                         break;
 
 
@@ -438,12 +443,15 @@ namespace api.Negocios.Pos
 
         }
 
-        private static Dictionary<string, string>  getQueryStringAjustes(Dictionary<string, string> queryStringRecebimentoParcela)
+        private static Dictionary<string, string>  getQueryStringAjustes(Dictionary<string, string> queryStringRecebimentoParcela, bool semAjustesAntecipacao = true)
         {
             if (queryStringRecebimentoParcela == null) return null;
 
             Dictionary<string, string> queryStringAjustes = new Dictionary<string, string>();
             string outValue = null;
+
+            if (semAjustesAntecipacao)
+                queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.SEM_AJUSTES_ANTECIPACAO, true.ToString());
 
             if (queryStringRecebimentoParcela.TryGetValue("" + (int)CAMPOS.CDADQUIRENTE, out outValue))
                 queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.CDADQUIRENTE, queryStringRecebimentoParcela["" + (int)CAMPOS.CDADQUIRENTE]);
@@ -554,8 +562,8 @@ namespace api.Negocios.Pos
                         valorParcelaLiquida = e.valorParcelaLiquida,
                         dtaRecebimento = e.dtaRecebimento,
                         valorDescontado = e.valorDescontado,
-                        vlDescontadoAntecipacao = e.vlDescontadoAntecipacao
-
+                        vlDescontadoAntecipacao = e.vlDescontadoAntecipacao,
+                        flAntecipado = e.flAntecipado
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -587,7 +595,8 @@ namespace api.Negocios.Pos
                         valorParcelaLiquida = e.valorParcelaLiquida,
                         dtaRecebimento = e.dtaRecebimento,
                         valorDescontado = e.valorDescontado,
-                        vlDescontadoAntecipacao = e.vlDescontadoAntecipacao
+                        vlDescontadoAntecipacao = e.vlDescontadoAntecipacao,
+                        flAntecipado = e.flAntecipado
 
                     }).ToList<dynamic>();
                 }
@@ -871,6 +880,7 @@ namespace api.Negocios.Pos
                             valorDescontado = e.valorDescontado,
                             vlDescontadoAntecipacao = e.vlDescontadoAntecipacao,
                             nrCartao = e.Recebimento.nrCartao,
+                            flAntecipado = e.flAntecipado
                         }).ToList<dynamic>();
 
                         // Obtém os ajustes se teve filtro de data de recebimento

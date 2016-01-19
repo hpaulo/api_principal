@@ -576,6 +576,8 @@ namespace api.Negocios.Card
 
                     Int32 idRecebimento = Convert.ToInt32(queryString["" + (int)CAMPOS.IDRECEBIMENTO]);
                     Int32 numParcela = Convert.ToInt32(queryString["" + (int)CAMPOS.NUMPARCELA]);
+                    Int32 numParcela2 = numParcela;
+                    if (numParcela2 == 0) numParcela2 = 1;
                     RecebimentoParcela recebimento = _db.RecebimentoParcelas.Where(e => e.idRecebimento == idRecebimento)
                                                                             .Where(e => e.numParcela == numParcela)
                                                                             .FirstOrDefault();
@@ -591,7 +593,7 @@ namespace api.Negocios.Card
                     DateTime dataFim = data.AddDays(RANGE_DIAS_POSTERIOR);
 
                     // Consulta títulos com a mesma data da venda
-                    List<tbRecebimentoTitulo> titulos = _db.tbRecebimentoTitulos.Where(e => e.dtVenda != null && /*(e.dtVenda.Value.Year == recebimento.Recebimento.dtaVenda.Year &&
+                    List<dynamic> titulos = _db.tbRecebimentoTitulos.Where(e => e.dtVenda != null && /*(e.dtVenda.Value.Year == recebimento.Recebimento.dtaVenda.Year &&
                                                                                                                   e.dtVenda.Value.Month == recebimento.Recebimento.dtaVenda.Month &&
                                                                                                                   e.dtVenda.Value.Day == recebimento.Recebimento.dtaVenda.Day))*/
                                                                                             e.dtVenda.Value >= dataIni && e.dtVenda.Value <= dataFim)
@@ -602,16 +604,41 @@ namespace api.Negocios.Card
                                                                                 .Where(e => e.RecebimentoParcelas.Count == 0)
                                                                                 //.Where(e => (e.vlParcela >= recebimento.valorParcelaLiquida && (e.vlParcela - recebimento.valorParcelaLiquida <= TOLERANCIA)) ||
                                                                                 //            (e.vlParcela < recebimento.valorParcelaLiquida && (recebimento.valorParcelaLiquida - e.vlParcela <= TOLERANCIA)))
-                                                                                .ToList<tbRecebimentoTitulo>();
+                                                                                .Select(e => new
+                                                                                {
+                                                                                    e.idRecebimentoTitulo,
+                                                                                    e.nrParcela,
+                                                                                    e.nrNSU,
+                                                                                    bandeira = e.dsBandeira.ToUpper(),
+                                                                                    e.dtVenda,
+                                                                                    e.dtTitulo,
+                                                                                    empresa = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
+                                                                                    e.vlParcela,
+                                                                                    tbAdquirente = e.tbAdquirente.nmAdquirente.ToUpper(),
+                                                                                    // Malandragens
+                                                                                    diferencaValorVenda = e.vlVenda >= recebimento.Recebimento.valorVendaBruta ? e.vlVenda - recebimento.Recebimento.valorVendaBruta :
+                                                                                                                                                            recebimento.Recebimento.valorVendaBruta - e.vlVenda,
+                                                                                    diferencaValorParcela = e.vlParcela >= recebimento.valorParcelaBruta ? e.vlParcela - recebimento.valorParcelaBruta :
+                                                                                                                                                          recebimento.valorParcelaBruta - e.vlParcela,
+                                                                                    diferencaDtVenda = e.dtVenda < recebimento.Recebimento.dtaVenda ? DbFunctions.DiffDays(e.dtVenda, recebimento.Recebimento.dtaVenda) :
+                                                                                                                                                      DbFunctions.DiffDays(recebimento.Recebimento.dtaVenda, e.dtVenda),
+                                                                                })
+                                                                                .OrderBy(e => e.diferencaDtVenda)
+                                                                                .ThenBy(e => e.diferencaValorVenda)
+                                                                                .ThenBy(e => e.diferencaValorParcela)
+                                                                                .ThenByDescending(e => e.nrNSU.StartsWith("T"))
+                                                                                .ToList<dynamic>();
 
                     // Mesma parcela
-                    List<tbRecebimentoTitulo> titulosParcela = titulos.Where(e => e.nrParcela == numParcela)
-                                                                      .OrderBy(e => e.vlParcela)
-                                                                      .ToList<tbRecebimentoTitulo>();
+                    List<dynamic> titulosParcela; 
+                    if(numParcela2 != numParcela)
+                        titulosParcela = titulos.Where(e => e.nrParcela == numParcela || e.nrParcela == numParcela2).ToList<dynamic>();
+                    else
+                        titulosParcela = titulos.Where(e => e.nrParcela == numParcela).ToList<dynamic>();
                     if (titulosParcela.Count > 0)
                     {
                         // Envia somente eles
-                        foreach (tbRecebimentoTitulo t in titulosParcela)
+                        foreach (var t in titulosParcela)
                         {
                             CollectionConciliacaoTitulos.Add(new ConciliacaoTitulos
                                                     {
@@ -620,19 +647,19 @@ namespace api.Negocios.Card
                                                         NumParcela = t.nrParcela,
                                                         Nsu = t.nrNSU,
                                                         //CodResumoVendas = null,
-                                                        Bandeira = t.dsBandeira.ToUpper(),
+                                                        Bandeira = t.bandeira,
                                                         DataVenda = t.dtVenda,
                                                         Data = t.dtTitulo,
-                                                        Filial = t.empresa.ds_fantasia + (t.empresa.filial != null ? " " + t.empresa.filial : ""),
+                                                        Filial = t.empresa,
                                                         Valor = t.vlParcela,
-                                                        Adquirente = t.tbAdquirente.nmAdquirente.ToUpper(),
+                                                        Adquirente = t.tbAdquirente,
                                                     });
                         }
                     }
                     else
                     {
                         // Envia todos
-                        foreach (tbRecebimentoTitulo t in titulos)
+                        foreach (var t in titulos)
                         {
                             CollectionConciliacaoTitulos.Add(new ConciliacaoTitulos
                             {
@@ -641,12 +668,12 @@ namespace api.Negocios.Card
                                 NumParcela = t.nrParcela,
                                 Nsu = t.nrNSU,
                                 //CodResumoVendas = null,
-                                Bandeira = t.dsBandeira.ToUpper(),
+                                Bandeira = t.bandeira,
                                 DataVenda = t.dtVenda,
                                 Data = t.dtTitulo,
-                                Filial = t.empresa.ds_fantasia + (t.empresa.filial != null ? " " + t.empresa.filial : ""),
+                                Filial = t.empresa,
                                 Valor = t.vlParcela,
-                                Adquirente = t.tbAdquirente.nmAdquirente.ToUpper(),
+                                Adquirente = t.tbAdquirente,
                             });
                         }
                     }

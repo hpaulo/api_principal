@@ -323,6 +323,7 @@ namespace api.Negocios.Card
                 #region PROCESSA COMBINAÇÕES E CONCILIA EVITANDO DUPLICIDADES
                 // Ordena por total de combinações encontradas
                 //gruposExtrato = gruposExtrato.OrderBy(g => g.recebimento.Count).ToList<dynamic>();
+                gruposExtrato = gruposExtrato.OrderByDescending(g => g.valorExtrato).ToList<dynamic>();
                 //Dictionary<Int32, bool> recebimentosPreConciliados = new Dictionary<Int32, bool>();
                 List<RecebimentosParcela.RecebParcela> recebimentosPreConciliados = new List<RecebimentosParcela.RecebParcela>();
                 // Com os grupos que combinados resultam no valor do extrato, 
@@ -558,6 +559,11 @@ namespace api.Negocios.Card
                 }
 
 
+                // Sem ajustes de antecipação
+                queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.SEM_AJUSTES_ANTECIPACAO, true.ToString());
+
+
+
                 // OBTÉM AS QUERIES
                 IQueryable<tbRecebimentoAjuste> queryAjustes = GatewayTbRecebimentoAjuste.getQuery(_db, 0, (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, 0, 0, queryStringAjustes);
                 IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(_db, 0, (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, 0, 0, 0, queryStringRecebimentoParcela);
@@ -590,6 +596,7 @@ namespace api.Negocios.Card
                     }
                 }
 
+                
                 // VALOR TOTAL ASSOCIADO A CADA LADO DA CONCILIAÇÃO
                 decimal totalRecebimento = new decimal(0.0);
                 decimal totalExtrato = new decimal(0.0);
@@ -1149,7 +1156,7 @@ namespace api.Negocios.Card
                                             else
                                             {
                                                 #region PASSO 4) TENTA ENCONTRAR SUBGRUPOS DE CADA AGRUPAMENTO ENVOLVENDO DATA, ADQUIRENTE E BANDEIRA NO RECEBIMENTO PARCELA
-                                                extratoBancario =  extratoBancario.OrderByDescending(t => t.ValorTotal).ToList<ConciliacaoBancaria>();
+                                                //extratoBancario =  extratoBancario.OrderByDescending(t => t.ValorTotal).ToList<ConciliacaoBancaria>();
                                                 conciliaSubGrupos(CollectionConciliacaoBancaria, recebimentosParcelaAgrupados, extratoBancario, !filtroTipoNaoConciliado);
                                                 #endregion
 

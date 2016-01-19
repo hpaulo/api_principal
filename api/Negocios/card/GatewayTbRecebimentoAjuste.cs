@@ -24,6 +24,16 @@ namespace api.Negocios.Card
             //_db.Configuration.ProxyCreationEnabled = false;
         }
 
+        public static string[] AJUSTES_ANTECIPACAO_AMEX = { "DEBITO ANTECIPACAO A VISTA",
+                                                            "DEBITO ANTECIPACAO PARCELADO" }; // STARTS WITH!
+        public static string[] AJUSTES_ANTECIPACAO_BANESE = { "DÉBITO ANTECIPAÇÃO",
+                                                              "PAGAMENTO ANTECIPAÇÃO" };
+        public static string[] AJUSTES_ANTECIPACAO_CIELO = { "AJUSTE DEB ARV",
+                                                             "AJUSTE DEB ARV (EC)",
+                                                             "CRÉDITO ARV",
+                                                             "CREDITO DE ANTECIPAÇÃO",
+                                                             "CRÉDITO DE ANTECIPAÇÃO" };
+
         /// <summary>
         /// Enum CAMPOS
         /// </summary>
@@ -42,6 +52,9 @@ namespace api.Negocios.Card
 
             CDADQUIRENTE = 302,
             DSTIPO = 303,
+
+            // EXTRA
+            SEM_AJUSTES_ANTECIPACAO = 400
         };
 
         /// <summary>
@@ -135,6 +148,11 @@ namespace api.Negocios.Card
                     case CAMPOS.DSTIPO:
                         string dsTipo = Convert.ToString(item.Value).TrimEnd();
                         entity = entity.Where(e => e.tbBandeira.dsTipo.TrimEnd().Equals(dsTipo)).AsQueryable<tbRecebimentoAjuste>();
+                        break;
+                    case CAMPOS.SEM_AJUSTES_ANTECIPACAO:
+                        if (Convert.ToBoolean(item.Value))
+                            // Por enquanto, só trata da Cielo
+                            entity = entity.Where(e => e.tbBandeira.cdAdquirente != 2 || !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)).AsQueryable<tbRecebimentoAjuste>();
                         break;
                 }
             }
