@@ -123,6 +123,9 @@ namespace api.Negocios.Card
                 // PARA O EXTRATO, SÓ CONSIDERA OS TIPO CREDIT
                 queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.DSTIPO, OFXSharp.OFXTransactionType.CREDIT.ToString());
 
+                // Sem ajustes de antecipação
+                queryStringTbRecebimentoAjuste.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.SEM_AJUSTES_ANTECIPACAO, true.ToString());
+
 
                 // OBTÉM AS QUERIES                
                 IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(_db, 0, (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, 0, 0, 0, queryStringRecebimentoParcela);

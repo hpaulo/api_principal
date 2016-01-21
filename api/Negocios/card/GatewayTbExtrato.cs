@@ -780,6 +780,8 @@ namespace api.Negocios.Card
                         // Não veio no documento => Usa a data atual
                         dataGeracaoExtrato = Convert.ToDateTime(DateTime.Now.ToShortDateString());
 
+                    //List<Transaction> transacoes = ofxDocument.Transactions.Where(t => t.Date.Year == 1 && t.Date.Month == 1 && t.Date.Day == 1).ToList();
+
                     #region ARMAZENA MOVIMENTAÇÕES BANCÁRIAS
                     foreach (var transacao in ofxDocument.Transactions)
                     {

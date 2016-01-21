@@ -122,7 +122,10 @@ namespace api.Negocios.Card
 
                 // SOMENTE PARCELAS E AJUSTES DE BANDEIRAS TIPO CRÉDITO
                 queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.DSTIPO, "CRÉDITO");
-                queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DSTIPO, "CRÉDITO");                
+                queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DSTIPO, "CRÉDITO");
+
+                // Sem ajustes de antecipação
+                queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.SEM_AJUSTES_ANTECIPACAO, true.ToString());
 
 
                 // OBTÉM AS QUERIES
