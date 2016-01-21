@@ -519,7 +519,7 @@ namespace api.Negocios.Card
                             qtParcelas = e.qtParcelas ?? 0,
                             tipoProduto = e.tbProdutoTef.tbTipoProdutoTef.dsTipoProdutoTef ?? "",
                             nrNSUTEF = e.nrNSUTEF,
-                            //e.nrNSUHost,
+                            nrNSUHost = e.nrNSUHost,
                             nrPDVTEF = e.nrPDVTEF,
                             dsEstadoTransacaoTef = e.tbEstadoTransacaoTef.dsEstadoTransacaoTef ?? "",
                             tbRedeTEF = e.cdRedeTEF != null ? _db.tbRedeTefs.Where(r => r.cdRedeTef == e.cdRedeTEF).Select(r => new { r.cdRedeTef, r.dsRedeTef }).FirstOrDefault() : null,
