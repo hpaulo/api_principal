@@ -852,7 +852,7 @@ namespace api.Negocios.Pos
                                                     nrAgencia = e.idExtrato == null ? "" : e.tbExtrato.tbContaCorrente.nrAgencia,
                                                     nrConta = e.idExtrato == null ? "" : e.tbExtrato.tbContaCorrente.nrConta,
                                                     dtPrevista = e.dtaRecebimento,
-                                                    dtEfetiva = e.dtaRecebimentoEfetivo != null ? e.dtaRecebimentoEfetivo.Value.ToShortDateString() : ""
+                                                    dtEfetiva = e.dtaRecebimentoEfetivo,
                                                     //nrCartao = e.Recebimento.nrCartao
                                                 }).ToList<dynamic>();
                     }
