@@ -59,6 +59,13 @@ namespace api.Models.Object
             set { bandeira = value; }
         }
 
+        private int lote;
+        public int Lote
+        {
+            get { return lote; }
+            set { lote = value; }
+        }
+
         private string tipoCartao;
         public string TipoCartao
         {
@@ -140,6 +147,13 @@ namespace api.Models.Object
                 set { bandeira = value; }
             }
 
+            private int lote;
+            public int Lote
+            {
+                get { return lote; }
+                set { lote = value; }
+            }
+
             private string tipoCartao;
             public string TipoCartao
             {
@@ -201,6 +215,17 @@ namespace api.Models.Object
                 set { nrConta = value; }
             }
 
+        }
+
+
+        public class ConciliacaoLote
+        {
+            public int Lote { get; set; }
+            public string Filial { get; set; }
+            public DateTime? DtVenda { get; set; }
+            public DateTime DtRecebimento { get; set; }
+            public string Bandeira { get; set; }
+            public decimal Valor { get; set; }
         }
 
 

@@ -15,34 +15,34 @@ namespace api.Bibliotecas
         public static byte[] ListToCSV<T>(T[] ArrayToSave)
         {
             MemoryStream stream = new MemoryStream();
-                string line = String.Empty;
-                string head = String.Empty;
-                bool header = true;
-                int l = 0;
-                foreach (T item in ArrayToSave)
+            string line = String.Empty;
+            string head = String.Empty;
+            bool header = true;
+            int l = 0;
+            foreach (T item in ArrayToSave)
+            {
+                foreach (var itemProp in item.GetType().GetProperties())
                 {
-                    foreach (var itemProp in item.GetType().GetProperties())
-                    {
-                        string chave = itemProp.Name;
-                        object v = itemProp.GetValue(item, null);
-                        string valor = v != null ? v.ToString() : String.Empty;
+                    string chave = itemProp.Name;
+                    object v = itemProp.GetValue(item, null);
+                    string valor = v != null ? v.ToString() : String.Empty;
 
-                        if(header)
-                            head = head.Length > 0 ? head + ";" + chave : chave;
-                        line = line.Length > 0 ? line + ";" + valor : valor;
-                    }
                     if (header)
-                        head = head + Environment.NewLine;
-                    header = false;
-                    line = line + Environment.NewLine;
+                        head = head.Length > 0 ? head + ";" + chave : chave;
+                    line = line.Length > 0 ? line + ";" + valor : valor;
                 }
+                if (header)
+                    head = head + Environment.NewLine;
+                header = false;
+                line = line + Environment.NewLine;
+            }
 
-                StreamWriter file = new StreamWriter(stream, Encoding.UTF8, 512);
-                file.Write(head.Replace("\r\n;", "\r\n"));
-                file.Write(line.Replace("\r\n;", "\r\n"));
-                file.Flush();
-                file.Close();
-                return stream.GetBuffer();
+            StreamWriter file = new StreamWriter(stream, Encoding.UTF8, 512);
+            file.Write(head.Replace("\r\n;", "\r\n"));
+            file.Write(line.Replace("\r\n;", "\r\n"));
+            file.Flush();
+            file.Close();
+            return stream.GetBuffer();
         }
 
 
@@ -65,7 +65,7 @@ namespace api.Bibliotecas
             PropertyDescriptorCollection properties =
             TypeDescriptor.GetProperties(typeof(T));
             DataTable table = new DataTable();
-            
+
             foreach (T item in data)
             {
                 foreach (var itemProp in item.GetType().GetProperties())
