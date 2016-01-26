@@ -433,7 +433,7 @@ namespace api.Negocios.Pos
                     // TOTAL DE REGISTROS
                     retorno.TotalDeRegistros = query.Count();
 
-                    retorno.Totais.Add("valorVendaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorVendaBruta)) : 0);
+                    retorno.Totais.Add("valorVendaBruta", query.Count() > 0 ? /*decimal.Round(*/Convert.ToDecimal(query.Sum(r => r.valorVendaBruta))/*, 2)*/ : 0);
 
                     int skipRows = (pageNumber - 1) * pageSize;
                     if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)

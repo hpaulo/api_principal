@@ -16,6 +16,13 @@ namespace api.Models.Mapping
                 .IsFixedLength()
                 .HasMaxLength(14);
 
+            this.Property(t => t.valorVendaBruta)
+                .HasPrecision(9, 3)
+                .IsRequired();
+
+            this.Property(t => t.valorVendaLiquida)
+               .HasPrecision(9, 3);
+
             this.Property(t => t.nsu)
                 .HasMaxLength(255);
 

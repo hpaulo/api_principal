@@ -69,7 +69,7 @@ namespace api.Negocios.Card
         private static void adicionaElementosNaoConciliadosNaLista(List<dynamic> listaConciliacao,
                                                                    List<ConciliacaoTitulos> listaNaoConciliado)
         {
-            foreach (var item in listaNaoConciliado)
+            foreach (ConciliacaoTitulos item in listaNaoConciliado)
             {
                 listaConciliacao.Add(new
                 {
@@ -80,7 +80,7 @@ namespace api.Negocios.Card
                         NumParcela = item.NumParcela,
                         Nsu = item.Nsu,
                         DataVenda = item.DataVenda,
-                        Valor = item.Valor,
+                        Valor = /*decimal.Round(*/item.Valor/*, 2)*/,
                         Bandeira = item.Bandeira,
                         Data = item.Data,
                         Filial = item.Filial,
@@ -92,7 +92,7 @@ namespace api.Negocios.Card
                         Nsu = item.Nsu,
                         CodResumoVendas = item.CodResumoVendas,
                         DataVenda = item.DataVenda,
-                        Valor = item.Valor,
+                        Valor = /*decimal.Round(*/item.Valor/*, 2)*/,
                         Bandeira = item.Bandeira,
                         Data = item.Data,
                         Filial = item.Filial,
@@ -127,7 +127,7 @@ namespace api.Negocios.Card
                         NumParcela = titulo.NumParcela,
                         Nsu = titulo.Nsu,
                         DataVenda = titulo.DataVenda,
-                        Valor = titulo.Valor,
+                        Valor = /*decimal.Round(*/titulo.Valor/*, 2)*/,
                         Bandeira = titulo.Bandeira,
                         Data = titulo.Data,
                         Filial = titulo.Filial,
@@ -139,7 +139,7 @@ namespace api.Negocios.Card
                         Nsu = recebimento.Nsu,
                         CodResumoVendas = recebimento.CodResumoVendas,
                         DataVenda = recebimento.DataVenda,
-                        Valor = recebimento.Valor,
+                        Valor = /*decimal.Round(*/recebimento.Valor/*, 2)*/,
                         Bandeira = recebimento.Bandeira,
                         Data = recebimento.Data,
                         Filial = recebimento.Filial,
@@ -404,7 +404,7 @@ namespace api.Negocios.Card
                                                                     DataVenda = r.Recebimento.dtaVenda,
                                                                     Data = r.dtaRecebimentoEfetivo ?? r.dtaRecebimento,
                                                                     Filial = r.Recebimento.empresa.ds_fantasia + (r.Recebimento.empresa.filial != null ? " " + r.Recebimento.empresa.filial : ""),
-                                                                    Valor = r.valorParcelaBruta,//r.valorParcelaLiquida ?? new decimal(0.0),
+                                                                    Valor = /*decimal.Round(*/r.valorParcelaBruta/*, 2)*/,//r.valorParcelaLiquida ?? new decimal(0.0),
                                                                     Adquirente = r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente.ToUpper(),
                                                                 }).ToList<ConciliacaoTitulos>();
 

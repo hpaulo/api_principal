@@ -113,7 +113,7 @@ namespace api.Negocios.Card
                     dataRecebimento = r.dtaRecebimentoEfetivo != null ? r.dtaRecebimentoEfetivo.Value : r.dtaRecebimento,
                     recebeu = (r.dtaRecebimentoEfetivo != null && r.dtaRecebimentoEfetivo.Value < dataNow) || (r.dtaRecebimentoEfetivo == null && r.dtaRecebimento < dataNow),
                     valorBruto = r.valorParcelaBruta,
-                    valorLiquido = r.valorParcelaLiquida.Value,
+                    valorLiquido = r.valorParcelaLiquida != null ? r.valorParcelaLiquida.Value : new decimal(0.0),
                     valorDescontado = r.valorDescontado,
                     bandeira = r.Recebimento.cdBandeira != null ? r.Recebimento.tbBandeira.dsBandeira : r.Recebimento.BandeiraPos.desBandeira,
                     adquirente = r.Recebimento.cdBandeira != null ? r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente : r.Recebimento.BandeiraPos.Operadora.nmOperadora
@@ -134,21 +134,21 @@ namespace api.Negocios.Card
                                                     .Select(f => new
                                                     {
                                                         adquirente = f.Key,
-                                                        valorBruto = f.Sum(x => x.valorBruto),
-                                                        valorDescontado = f.Sum(x => x.valorDescontado),
-                                                        valorLiquido = f.Sum(x => x.valorLiquido),
-                                                        valorRecebido = f.Where(x => x.recebeu == true).Sum(x => x.valorLiquido),
-                                                        valorAReceber = f.Where(x => x.recebeu == false).Sum(x => x.valorLiquido),
+                                                        valorBruto = /*decimal.Round(*/f.Sum(x => x.valorBruto)/*, 2)*/,
+                                                        valorDescontado = /*decimal.Round(*/f.Sum(x => x.valorDescontado)/*, 2)*/,
+                                                        valorLiquido = /*decimal.Round(*/f.Sum(x => x.valorLiquido)/*, 2)*/,
+                                                        valorRecebido = /*decimal.Round(*/f.Where(x => x.recebeu == true).Sum(x => x.valorLiquido)/*, 2)*/,
+                                                        valorAReceber = /*decimal.Round(*/f.Where(x => x.recebeu == false).Sum(x => x.valorLiquido)/*, 2)*/,
                                                         bandeiras = f.GroupBy(x => x.bandeira)
                                                         .OrderBy(x => x.Key)
                                                         .Select(x => new
                                                         {
                                                             bandeira = x.Key,
-                                                            valorBruto = x.Sum(y => y.valorBruto),
-                                                            valorDescontado = x.Sum(y => y.valorDescontado),
-                                                            valorLiquido = x.Sum(y => y.valorLiquido),
-                                                            valorRecebido = x.Where(y => y.recebeu == true).Sum(y => y.valorLiquido),
-                                                            valorAReceber = x.Where(y => y.recebeu == false).Sum(y => y.valorLiquido),
+                                                            valorBruto = /*decimal.Round(*/x.Sum(y => y.valorBruto)/*, 2)*/,
+                                                            valorDescontado = /*decimal.Round(*/x.Sum(y => y.valorDescontado)/*, 2)*/,
+                                                            valorLiquido = /*decimal.Round(*/x.Sum(y => y.valorLiquido)/*, 2)*/,
+                                                            valorRecebido = /*decimal.Round(*/x.Where(y => y.recebeu == true).Sum(y => y.valorLiquido)/*, 2)*/,
+                                                            valorAReceber = /*decimal.Round(*/x.Where(y => y.recebeu == false).Sum(y => y.valorLiquido)/*, 2)*/,
                                                         }).ToList<dynamic>(),
                                                     }).ToList<dynamic>(),
                                                 }).ToList<dynamic>();

@@ -79,9 +79,9 @@ namespace api.Negocios.Card
                     Bandeira = item.Bandeira,
                     Lote = item.Tipo == TIPO_RECEBIMENTO ? item.Lote : 0,
                     Data = item.Data,
-                    ValorTotalBruto =  item.Tipo == TIPO_RECEBIMENTO ? item.ValorTotalBruto : new decimal(0.0),
-                    ValorTotalRecebimento = item.Tipo == TIPO_RECEBIMENTO ? item.ValorTotal : new decimal(0.0),
-                    ValorTotalExtrato = item.Tipo == TIPO_EXTRATO ? item.ValorTotal : new decimal(0.0),
+                    ValorTotalBruto = item.Tipo == TIPO_RECEBIMENTO ? /*decimal.Round(*/Convert.ToDecimal(item.ValorTotalBruto)/*, 2)*/ : new decimal(0.0),
+                    ValorTotalRecebimento = item.Tipo == TIPO_RECEBIMENTO ? /*decimal.Round(*/Convert.ToDecimal(item.ValorTotal)/*, 2)*/ : new decimal(0.0),
+                    ValorTotalExtrato = item.Tipo == TIPO_EXTRATO ? /*decimal.Round(*/Convert.ToDecimal(item.ValorTotal)/*, 2)*/ : new decimal(0.0),
                     Memo = item.Memo,
                     Conta = item.Tipo == TIPO_RECEBIMENTO ? null :
                     new
@@ -125,9 +125,9 @@ namespace api.Negocios.Card
                     Lote = recebimento.Lote,
                     Memo = movimentacao.Memo,
                     Data = recebimento.Data,
-                    ValorTotalBruto = recebimento.ValorTotalBruto,
-                    ValorTotalRecebimento = recebimento.ValorTotal,
-                    ValorTotalExtrato = movimentacao.ValorTotal,
+                    ValorTotalBruto = recebimento.ValorTotalBruto != null ? /*decimal.Round(*/recebimento.ValorTotalBruto.Value/*, 2)*/ : new decimal(0.0),
+                    ValorTotalRecebimento = /*decimal.Round(*/recebimento.ValorTotal/*, 2)*/,
+                    ValorTotalExtrato = /*decimal.Round(*/movimentacao.ValorTotal/*, 2)*/,
                     Conta = new
                     {
                         cdContaCorrente = movimentacao.Conta.CdContaCorrente,
@@ -285,7 +285,8 @@ namespace api.Negocios.Card
                                                                                          /*.OrderByDescending(g => g.Valor)*/
                                                                                          .OrderBy(g => Guid.NewGuid()).Take(20) // OTIMIZAÇÃO: encontrar a soma dentro de um grupo é conhecido como Subset Sum Problem, que é um problema NP. Em virtude disso, um conjunto com muitos elementos pode gerar um processamento muito longo e, por isso, foi escolhido apenas os 20 maiores valores para tentar "casar" com o valor total
                                                                                          .ToList<ConciliacaoBancaria.ConciliacaoGrupo>();
-                        if (gs.Select(g => g.Valor).Sum() >= extrato.ValorTotal + TOLERANCIA)
+                        decimal sumGrupo = gs.Select(g => g.Valor).Sum();
+                        if (sumGrupo >= extrato.ValorTotal - TOLERANCIA)
                         {
                             foreach (List<List<ConciliacaoBancaria.ConciliacaoGrupo>> g in GetCombinations(gs, extrato.ValorTotal))
                             //foreach (ConciliacaoBancaria.ConciliacaoGrupo[] item in KnapsackConciliacaoBancaria.MatchTotalConciliacaoBancaria(recebimento.Grupo, extrato.ValorTotal, TOLERANCIA))
@@ -513,7 +514,8 @@ namespace api.Negocios.Card
                                                                     .OrderBy(g => Guid.NewGuid()).Take(20) // OTIMIZAÇÃO: encontrar a soma dentro de um grupo é conhecido como Subset Sum Problem, que é um problema NP. Em virtude disso, um conjunto com muitos elementos pode gerar um processamento muito longo e, por isso, foi escolhido apenas os 20 maiores valores para tentar "casar" com o valor total
                                                                     .ToList<ConciliacaoBancaria.ConciliacaoLote>();
 
-                if (lotes.Select(g => g.Valor).Sum() >= extrato.ValorTotal + TOLERANCIA_LOTE)
+                decimal sumLote = lotes.Select(g => g.Valor).Sum();
+                if (sumLote >= extrato.ValorTotal - TOLERANCIA_LOTE)
                 {
                     foreach (List<List<ConciliacaoBancaria.ConciliacaoLote>> g in GetCombinations(lotes, extrato.ValorTotal))
                     {
@@ -546,8 +548,8 @@ namespace api.Negocios.Card
             if (gruposExtrato.Count > 0)
             {
                 #region PROCESSA COMBINAÇÕES E CONCILIA EVITANDO DUPLICIDADES
-                // Ordena por total de combinações encontradas
-                gruposExtrato = gruposExtrato.OrderBy(g => g.lotes[0].diferenca).OrderBy(g => g.lotes.Count).ToList<dynamic>();
+                // Ordena por total de combinações encontradas, priorizando aqueles que tem bandeira
+                gruposExtrato = gruposExtrato.OrderByDescending(g => g.bandeira).ThenByDescending(g => g.tipo).ThenBy(g => g.lotes[0].diferenca).OrderBy(g => g.lotes.Count).ToList<dynamic>();
                 List<ConciliacaoBancaria.ConciliacaoLote> lotesPreConciliados = new List<ConciliacaoBancaria.ConciliacaoLote>();
                 // Com os grupos que combinados resultam no valor do extrato, 
                 // usar combinações que não gerem inconsistências e duplicidades
@@ -829,7 +831,7 @@ namespace api.Negocios.Card
                                                                                 Id = x.idRecebimento,
                                                                                 NumParcela = x.numParcela,
                                                                                 Documento = x.Recebimento.nsu,
-                                                                                Valor = x.valorParcelaLiquida ?? new decimal(0.0),
+                                                                                Valor = x.valorParcelaLiquida != null ? x.valorParcelaLiquida.Value : new decimal(0.0),
                                                                                 ValorBruto = x.valorParcelaBruta,
                                                                                 Bandeira = x.Recebimento.tbBandeira.dsBandeira.ToUpper(),
                                                                                 Lote = x.Recebimento.idResumoVenda ?? 0,
@@ -844,7 +846,7 @@ namespace api.Negocios.Card
                                                                             .ThenBy(x => x.DataPrevista)
                                                                             .ThenBy(x => x.Valor)
                                                                             .ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
-                                                                        ValorTotal = r.Select(x => x.valorParcelaLiquida ?? new decimal(0.0)).Sum(),
+                                                                        ValorTotal = r.Select(x => x.valorParcelaLiquida != null ? x.valorParcelaLiquida.Value : new decimal(0.0)).Sum(),
                                                                         ValorTotalBruto = r.Select(x => x.valorParcelaBruta).Sum(),
                                                                         Data = r.Select(x => x.dtaRecebimentoEfetivo ?? x.dtaRecebimento).FirstOrDefault(),
                                                                         Adquirente = r.Select(x => x.Recebimento.tbBandeira.tbAdquirente.nmAdquirente.ToUpper()).FirstOrDefault(),
@@ -961,7 +963,7 @@ namespace api.Negocios.Card
                                                                     NumParcela = r.numParcela,
                                                                     Lote = r.Recebimento.idResumoVenda ?? 0,
                                                                     Documento = r.Recebimento.nsu,
-                                                                    Valor = r.valorParcelaLiquida ?? new decimal(0.0),
+                                                                    Valor = r.valorParcelaLiquida != null ? r.valorParcelaLiquida.Value : new decimal(0.0),
                                                                     ValorBruto = r.valorParcelaBruta,
                                                                     Bandeira = r.Recebimento.tbBandeira.dsBandeira.ToUpper(),
                                                                     TipoCartao = r.Recebimento.tbBandeira.dsTipo.ToUpper().TrimEnd(),
@@ -970,7 +972,7 @@ namespace api.Negocios.Card
                                                                     Filial = r.Recebimento.empresa.ds_fantasia + (r.Recebimento.empresa.filial != null ? " " + r.Recebimento.empresa.filial : "")
                                                                 }
                                                             },
-                                                            ValorTotal = r.valorParcelaLiquida ?? new decimal(0.0),
+                                                            ValorTotal = r.valorParcelaLiquida != null ? r.valorParcelaLiquida.Value : new decimal(0.0),
                                                             ValorTotalBruto = r.valorParcelaBruta,
                                                             Data = r.dtaRecebimentoEfetivo ?? r.dtaRecebimento,
                                                             DataVenda = r.Recebimento.dtaVenda,
@@ -1895,8 +1897,9 @@ namespace api.Negocios.Card
             //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
-                foreach (ConciliaRecebimentoParcela grupoExtrato in param)
+                for (int k = 0; k < param.Count; k++)
                 {
+                    ConciliaRecebimentoParcela grupoExtrato = param[k];
                     if (grupoExtrato.recebimentosParcela != null)
                     {
                         // Avalia o extrato
@@ -1908,8 +1911,9 @@ namespace api.Negocios.Card
                         }
 
 
-                        foreach (ConciliaRecebimentoParcela.RecebParcela recebimentoParcela in grupoExtrato.recebimentosParcela)
+                        for (int g = 0; g < grupoExtrato.recebimentosParcela.Count; g++)
                         {
+                            ConciliaRecebimentoParcela.RecebParcela recebimentoParcela = grupoExtrato.recebimentosParcela[g];
                             DbContextTransaction transaction = _db.Database.BeginTransaction();
                             try
                             {

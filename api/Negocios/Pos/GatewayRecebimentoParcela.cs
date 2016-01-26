@@ -529,11 +529,11 @@ namespace api.Negocios.Pos
 
                 if (colecao != 9) // relatório sintético
                 {
-                    retorno.Totais.Add("valorBruto", query.Count() > 0 ? Convert.ToDecimal(query.GroupBy(r => r.Recebimento).Sum(r => r.Key.valorVendaBruta)) : 0);
-                    retorno.Totais.Add("valorDescontado", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorDescontado)) : 0);
-                    retorno.Totais.Add("vlDescontadoAntecipacao", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.vlDescontadoAntecipacao)) : 0);
-                    retorno.Totais.Add("valorParcelaBruta", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaBruta)) : 0);
-                    retorno.Totais.Add("valorParcelaLiquida", query.Count() > 0 ? Convert.ToDecimal(query.Sum(r => r.valorParcelaLiquida)) : 0);
+                    retorno.Totais.Add("valorBruto", query.Count() > 0 ? /*decimal.Round(*/Convert.ToDecimal(query.GroupBy(r => r.Recebimento).Sum(r => r.Key.valorVendaBruta))/*, 2)*/ : 0);
+                    retorno.Totais.Add("valorDescontado", query.Count() > 0 ? /*decimal.Round(*/Convert.ToDecimal(query.Sum(r => r.valorDescontado))/*, 2)*/ : 0);
+                    retorno.Totais.Add("vlDescontadoAntecipacao", query.Count() > 0 ? /*decimal.Round(*/Convert.ToDecimal(query.Sum(r => r.vlDescontadoAntecipacao))/*, 2)*/ : 0);
+                    retorno.Totais.Add("valorParcelaBruta", query.Count() > 0 ? /*decimal.Round(*/Convert.ToDecimal(query.Sum(r => r.valorParcelaBruta))/*, 2)*/ : 0);
+                    retorno.Totais.Add("valorParcelaLiquida", query.Count() > 0 ? /*decimal.Round(*/Convert.ToDecimal(query.Sum(r => r.valorParcelaLiquida))/*, 2)*/ : 0);
                     retorno.Totais.Add("taxaCashFlow", query.Count() > 0 ? Convert.ToDecimal((query.Select(r => (r.valorDescontado * new decimal(100.0))/ r.valorParcelaBruta).Sum()) / (decimal)query.Count()) : 0);
                 }
 
@@ -558,11 +558,11 @@ namespace api.Negocios.Pos
                     {
                         idRecebimento = e.idRecebimento,
                         numParcela = e.numParcela,
-                        valorParcelaBruta = e.valorParcelaBruta,
-                        valorParcelaLiquida = e.valorParcelaLiquida,
+                        valorParcelaBruta = /*decimal.Round(*/e.valorParcelaBruta/*, 2)*/,
+                        valorParcelaLiquida = e.valorParcelaLiquida != null ? /*decimal.Round(*/e.valorParcelaLiquida.Value/*, 2)*/ : new decimal(0.0),
                         dtaRecebimento = e.dtaRecebimento,
-                        valorDescontado = e.valorDescontado,
-                        vlDescontadoAntecipacao = e.vlDescontadoAntecipacao,
+                        valorDescontado = /*decimal.Round(*/e.valorDescontado/*, 2)*/,
+                        vlDescontadoAntecipacao = /*decimal.Round(*/e.vlDescontadoAntecipacao/*, 2)*/,
                         flAntecipado = e.flAntecipado
                     }).ToList<dynamic>();
                 }
@@ -577,7 +577,7 @@ namespace api.Negocios.Pos
                         nsu = e.Recebimento.nsu,
                         cdAutorizador = e.Recebimento.cdAutorizador,
                         dtaVenda = e.Recebimento.dtaVenda,
-                        valorVendaBruta = e.Recebimento.valorVendaBruta,
+                        valorVendaBruta = /*decimal.Round(*/e.Recebimento.valorVendaBruta/*, 2)*/,
                         valorVendaLiquida = e.Recebimento.valorVendaLiquida,
                         loteImportacao = e.Recebimento.loteImportacao,
                         //dtaRecebimento = projecao.recebimento.dtaRecebimento,
@@ -591,11 +591,11 @@ namespace api.Negocios.Pos
 
                         idRecebimento = e.idRecebimento,
                         numParcela = e.numParcela,
-                        valorParcelaBruta = e.valorParcelaBruta,
-                        valorParcelaLiquida = e.valorParcelaLiquida,
+                        valorParcelaBruta = /*decimal.Round(*/e.valorParcelaBruta/*, 2)*/,
+                        valorParcelaLiquida = e.valorParcelaLiquida != null ? /*decimal.Round(*/e.valorParcelaLiquida.Value/*, 2)*/ : new decimal(0.0),
                         dtaRecebimento = e.dtaRecebimento,
-                        valorDescontado = e.valorDescontado,
-                        vlDescontadoAntecipacao = e.vlDescontadoAntecipacao,
+                        valorDescontado = /*decimal.Round(*/e.valorDescontado/*, 2)*/,
+                        vlDescontadoAntecipacao = /*decimal.Round(*/e.vlDescontadoAntecipacao/*, 2)*/,
                         flAntecipado = e.flAntecipado
 
                     }).ToList<dynamic>();
@@ -610,10 +610,10 @@ namespace api.Negocios.Pos
                             nrAno = e.Key.Year,
                             nmMes = ((MES)e.Key.Month).ToString(),
                             nrMes = e.Key.Month,
-                            vlParcela = (e.Sum(p => p.valorParcelaBruta)),
-                            vlDescontado = (e.Sum(p => p.valorDescontado)),
-                            vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
-                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
+                            vlParcela = /*decimal.Round(*/e.Sum(p => p.valorParcelaBruta)/*, 2)*/,
+                            vlDescontado = /*decimal.Round(*/e.Sum(p => p.valorDescontado)/*, 2)*/,
+                            vlLiquido = /*decimal.Round(*/e.Sum(p => p.valorParcelaLiquida != null ? p.valorParcelaLiquida.Value : new decimal(0.0))/*, 2)*/,
+                            vlDescontadoAntecipacao = /*decimal.Round(*/e.Sum(p => p.vlDescontadoAntecipacao)/*, 2)*/,
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
 
@@ -642,10 +642,10 @@ namespace api.Negocios.Pos
                         {
                             cdGrupo = e.Key.id_grupo,
                             nrDia = e.Key.Day,
-                            vlParcela = (e.Sum(p => p.valorParcelaBruta)),
-                            vlDescontado = (e.Sum(p => p.valorDescontado)),
-                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
-                            vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
+                            vlParcela = /*decimal.Round(*/e.Sum(p => p.valorParcelaBruta)/*, 2)*/,
+                            vlDescontado = /*decimal.Round(*/e.Sum(p => p.valorDescontado)/*, 2)*/,
+                            vlDescontadoAntecipacao = /*decimal.Round(*/e.Sum(p => p.vlDescontadoAntecipacao)/*, 2)*/,
+                            vlLiquido = /*decimal.Round(*/e.Sum(p => p.valorParcelaLiquida != null ? p.valorParcelaLiquida.Value : new decimal(0.0))/*, 2)*/,
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
 
@@ -674,10 +674,10 @@ namespace api.Negocios.Pos
                             cdGrupo = e.Key.id_grupo,
                             nuCnpj = e.Key.cnpj,
                             nrDia = e.Key.Day,
-                            vlParcela = (e.Sum(p => p.valorParcelaBruta)),
-                            vlDescontado = (e.Sum(p => p.valorDescontado)),
-                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
-                            vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
+                            vlParcela = /*decimal.Round(*/e.Sum(p => p.valorParcelaBruta)/*, 2)*/,
+                            vlDescontado = /*decimal.Round(*/e.Sum(p => p.valorDescontado)/*, 2)*/,
+                            vlDescontadoAntecipacao = /*decimal.Round(*/e.Sum(p => p.vlDescontadoAntecipacao)/*, 2)*/,
+                            vlLiquido = /*decimal.Round(*/e.Sum(p => p.valorParcelaLiquida != null ? p.valorParcelaLiquida.Value : new decimal(0.0))/*, 2)*/,
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
 
@@ -705,10 +705,10 @@ namespace api.Negocios.Pos
                         {
                             cdGrupo = e.Key.id_grupo,
                             dsAdquirente = e.Key.nmOperadora,
-                            vlParcela = (e.Sum(p => p.valorParcelaBruta)),
-                            vlDescontado = (e.Sum(p => p.valorDescontado)),
-                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
-                            vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
+                            vlParcela = /*decimal.Round(*/e.Sum(p => p.valorParcelaBruta)/*, 2)*/,
+                            vlDescontado = /*decimal.Round(*/e.Sum(p => p.valorDescontado)/*, 2)*/,
+                            vlDescontadoAntecipacao = /*decimal.Round(*/e.Sum(p => p.vlDescontadoAntecipacao)/*, 2)*/,
+                            vlLiquido = /*decimal.Round(*/e.Sum(p => p.valorParcelaLiquida != null ? p.valorParcelaLiquida.Value : new decimal(0.0))/*, 2)*/,
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
 
@@ -738,10 +738,10 @@ namespace api.Negocios.Pos
                             cdGrupo = e.Key.id_grupo,
                             nrDia = e.Key.Day,
                             dsAdquirente = e.Key.nmOperadora,
-                            vlParcela = (e.Sum(p => p.valorParcelaBruta)),
-                            vlDescontado = (e.Sum(p => p.valorDescontado)),
-                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
-                            vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
+                            vlParcela = /*decimal.Round(*/e.Sum(p => p.valorParcelaBruta)/*, 2)*/,
+                            vlDescontado = /*decimal.Round(*/e.Sum(p => p.valorDescontado)/*, 2)*/,
+                            vlDescontadoAntecipacao = /*decimal.Round(*/e.Sum(p => p.vlDescontadoAntecipacao)/*, 2)*/,
+                            vlLiquido = /*decimal.Round(*/e.Sum(p => p.valorParcelaLiquida != null ? p.valorParcelaLiquida.Value : new decimal(0.0))/*, 2)*/,
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
 
@@ -771,10 +771,10 @@ namespace api.Negocios.Pos
                             nuCnpj = e.Key.cnpj,
                             dsfantasia = e.Key.ds_fantasia,
                             nrFilial = e.Key.filial,
-                            vlParcela = (e.Sum(p => p.valorParcelaBruta)),
-                            vlDescontado = (e.Sum(p => p.valorDescontado)),
-                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
-                            vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
+                            vlParcela = /*decimal.Round(*/e.Sum(p => p.valorParcelaBruta)/*, 2)*/,
+                            vlDescontado = /*decimal.Round(*/e.Sum(p => p.valorDescontado)/*, 2)*/,
+                            vlDescontadoAntecipacao = /*decimal.Round(*/e.Sum(p => p.vlDescontadoAntecipacao)/*, 2)*/,
+                            vlLiquido = /*decimal.Round(*/e.Sum(p => p.valorParcelaLiquida != null ? p.valorParcelaLiquida.Value : new decimal(0.0))/*, 2)*/,
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
 
@@ -803,10 +803,10 @@ namespace api.Negocios.Pos
                             nrDia = e.Key.Day,
                             cdGrupo = e.Key.id_grupo,
                             nuCnpj = e.Key.cnpj,
-                            vlParcela = (e.Sum(p => p.valorParcelaBruta)),
-                            vlDescontado = (e.Sum(p => p.valorDescontado)),
-                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
-                            vlLiquido = (e.Sum(p => p.valorParcelaLiquida)),
+                            vlParcela = /*decimal.Round(*/e.Sum(p => p.valorParcelaBruta)/*, 2)*/,
+                            vlDescontado = /*decimal.Round(*/e.Sum(p => p.valorDescontado)/*, 2)*/,
+                            vlDescontadoAntecipacao = /*decimal.Round(*/e.Sum(p => p.vlDescontadoAntecipacao)/*, 2)*/,
+                            vlLiquido = /*decimal.Round(*/e.Sum(p => p.valorParcelaLiquida != null ? p.valorParcelaLiquida.Value : new decimal(0.0))/*, 2)*/,
                             nrTaxa = ((e.Sum(p => p.valorDescontado)) / (e.Sum(p => p.valorParcelaBruta))) * 100
                         });
 
@@ -839,12 +839,12 @@ namespace api.Negocios.Pos
                                                     dsAdquirente = e.Recebimento.cdBandeira != null ? e.Recebimento.tbBandeira.tbAdquirente.nmAdquirente : e.Recebimento.BandeiraPos.Operadora.nmOperadora,
                                                     dsBandeira = e.Recebimento.cdBandeira != null ? e.Recebimento.tbBandeira.dsBandeira : e.Recebimento.BandeiraPos.desBandeira,
                                                     dtVenda = e.Recebimento.dtaVenda,
-                                                    vlVendaBruta = e.Recebimento.valorVendaBruta,
-                                                    vlVendaLiquida = e.Recebimento.valorVendaLiquida,
+                                                    vlVendaBruta = /*decimal.Round(*/e.Recebimento.valorVendaBruta/*, 2)*/,
+                                                    vlVendaLiquida = e.Recebimento.valorVendaLiquida != null ? /*decimal.Round(*/e.Recebimento.valorVendaLiquida.Value/*, 2)*/ : new decimal(0.0),
                                                     qtTotalParcelas = e.Recebimento.numParcelaTotal, 
                                                     dtPagamento = e.dtaRecebimentoEfetivo != null ? e.dtaRecebimentoEfetivo.Value : e.dtaRecebimento,
-                                                    vlParcelaBruta = e.valorParcelaBruta,
-                                                    vlParcelaLiquida = e.valorParcelaLiquida,
+                                                    vlParcelaBruta = /*decimal.Round(*/e.valorParcelaBruta/*, 2)*/,
+                                                    vlParcelaLiquida = e.valorParcelaLiquida != null ? /*decimal.Round(*/e.valorParcelaLiquida.Value/*, 2)*/ : new decimal(0.0),
                                                     nrParcela = e.numParcela,
                                                     cdTituloERP = e.Recebimento.codTituloERP != null ? e.Recebimento.codTituloERP : "",
                                                     dtBaixaERP = e.idRecebimentoTitulo != null ? e.tbRecebimentoTitulo.dtBaixaERP : null,
@@ -876,13 +876,14 @@ namespace api.Negocios.Pos
                             nsu = e.Recebimento.nsu,
                             cdAutorizador = e.Recebimento.cdAutorizador,
                             numParcela = e.numParcela + " de " + e.Recebimento.numParcelaTotal,
-                            valorBruto = e.Recebimento.valorVendaBruta,
-                            valorParcela = e.valorParcelaBruta,
-                            valorLiquida = e.valorParcelaLiquida,
-                            valorDescontado = e.valorDescontado,
-                            vlDescontadoAntecipacao = e.vlDescontadoAntecipacao,
+                            valorBruto = /*decimal.Round(*/e.Recebimento.valorVendaBruta/*, 2)*/,
+                            valorParcela = /*decimal.Round(*/e.valorParcelaBruta/*, 2)*/,
+                            valorLiquida = e.valorParcelaLiquida != null ? /*decimal.Round(*/e.valorParcelaLiquida.Value/*, 2)*/ : new decimal(0.0),
+                            valorDescontado = /*decimal.Round(*/e.valorDescontado/*, 2)*/,
+                            vlDescontadoAntecipacao = /*decimal.Round(*/e.vlDescontadoAntecipacao/*, 2)*/,
                             nrCartao = e.Recebimento.nrCartao,
-                            flAntecipado = e.flAntecipado
+                            flAntecipado = e.flAntecipado,
+                            lote = e.Recebimento.idResumoVenda != null ? e.Recebimento.idResumoVenda.Value : 0
                         }).ToList<dynamic>();
 
                         // Obtém os ajustes se teve filtro de data de recebimento
@@ -969,11 +970,12 @@ namespace api.Negocios.Pos
                                         {
                                             empresa = e.Key.empresa.ds_fantasia + (e.Key.empresa.filial ?? ""),
                                             bandeira = e.Key.tbBandeira.dsBandeira ?? e.Select(p => p.Recebimento.BandeiraPos.desBandeira).FirstOrDefault(),
-                                            valorBruto = e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta),
-                                            valorParcela = e.Sum(p => p.valorParcelaBruta),
-                                            valorLiquida = e.Sum(p => p.valorParcelaLiquida),
-                                            valorDescontado = e.Sum(p => p.valorDescontado),
-                                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
+                                            valorBruto = /*decimal.Round(*/e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta)/*, 2)*/,
+                                            valorParcela = /*decimal.Round(*/e.Sum(p => p.valorParcelaBruta)/*, 2)*/,
+                                            valorLiquida = /*decimal.Round(*/e.Sum(p => p.valorDescontado)/*, 2)*/,
+                                            valorDescontado = /*decimal.Round(*/e.Sum(p => p.valorDescontado)/*, 2)*/,
+                                            vlDescontadoAntecipacao = /*decimal.Round(*/e.Sum(p => p.vlDescontadoAntecipacao)/*, 2)*/,
+                                            vlLiquido = /*decimal.Round(*/e.Sum(p => p.valorParcelaLiquida != null ? p.valorParcelaLiquida.Value : new decimal(0.0))/*, 2)*/,
                                             totalTransacoes = e.Count()
                                         });
 
@@ -1025,11 +1027,11 @@ namespace api.Negocios.Pos
                                                 cdBandeira = p.Recebimento.BandeiraPos.id,
                                                 cdAdquirente = p.Recebimento.BandeiraPos.idOperadora
                                             }).FirstOrDefault(),
-                                            valorBruto = e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta),
-                                            valorParcela = e.Sum(p => p.valorParcelaBruta),
-                                            valorLiquida = e.Sum(p => p.valorParcelaLiquida),
-                                            valorDescontado = e.Sum(p => p.valorDescontado),
-                                            vlDescontadoAntecipacao = e.Sum(p => p.vlDescontadoAntecipacao),
+                                            valorBruto = /*decimal.Round(*/e.GroupBy(p => p.Recebimento).Sum(p => p.Key.valorVendaBruta)/*, 2)*/,
+                                            valorParcela = /*decimal.Round(*/e.Sum(p => p.valorParcelaBruta)/*, 2)*/,
+                                            valorLiquida = /*decimal.Round(*/e.Sum(p => p.valorParcelaLiquida != null ? p.valorParcelaLiquida.Value : new decimal(0.0))/*, 2)*/,
+                                            valorDescontado = /*decimal.Round(*/e.Sum(p => p.valorDescontado)/*, 2)*/,
+                                            vlDescontadoAntecipacao = /*decimal.Round(*/e.Sum(p => p.vlDescontadoAntecipacao)/*, 2)*/,
                                             totalTransacoes = e.Count()
                                         });
 

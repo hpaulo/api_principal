@@ -14,13 +14,20 @@ namespace api.Models.Mapping
             this.Property(t => t.dtaRecebimento)
                 .IsRequired();
 
+            this.Property(t => t.valorParcelaBruta)
+               .HasPrecision(9, 3)
+               .IsRequired();
+
             this.Property(t => t.valorDescontado)
+                .HasPrecision(9, 3)
                 .IsRequired();
 
             this.Property(t => t.valorParcelaLiquida)
+                .HasPrecision(9, 3)
                 .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
 
             this.Property(t => t.vlDescontadoAntecipacao)
+                .HasPrecision(9, 3)
                 .IsRequired();
 
             this.Property(t => t.flAntecipado)
