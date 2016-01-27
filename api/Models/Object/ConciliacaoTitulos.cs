@@ -49,6 +49,13 @@ namespace api.Models.Object
             set { data = value; }
         }
 
+        private DateTime? dataEfetiva;
+        public DateTime? DataEfetiva
+        {
+            get { return dataEfetiva; }
+            set { dataEfetiva = value; }
+        }
+
         private Nullable<DateTime> dataVenda; // data do extrato ou do recebimento
         public Nullable<DateTime> DataVenda
         {

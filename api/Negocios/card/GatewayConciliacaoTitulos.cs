@@ -95,6 +95,7 @@ namespace api.Negocios.Card
                         Valor = /*decimal.Round(*/item.Valor/*, 2)*/,
                         Bandeira = item.Bandeira,
                         Data = item.Data,
+                        DataEfetiva = item.DataEfetiva,
                         Filial = item.Filial,
                     },
                     Adquirente = item.Adquirente,         
@@ -142,6 +143,7 @@ namespace api.Negocios.Card
                         Valor = /*decimal.Round(*/recebimento.Valor/*, 2)*/,
                         Bandeira = recebimento.Bandeira,
                         Data = recebimento.Data,
+                        DataEfetiva = recebimento.DataEfetiva,
                         Filial = recebimento.Filial,
                     },
                     Adquirente = recebimento.Adquirente,
@@ -283,7 +285,8 @@ namespace api.Negocios.Card
                                                                             CodResumoVendas = r.Recebimento.codResumoVenda,
                                                                             Bandeira = r.Recebimento.tbBandeira.dsBandeira.ToUpper(),
                                                                             DataVenda = r.Recebimento.dtaVenda,
-                                                                            Data = r.dtaRecebimentoEfetivo ?? r.dtaRecebimento,
+                                                                            Data = r.dtaRecebimento,
+                                                                            DataEfetiva = r.dtaRecebimentoEfetivo,
                                                                             Filial = r.Recebimento.empresa.ds_fantasia + (r.Recebimento.empresa.filial != null ? " " + r.Recebimento.empresa.filial : ""),
                                                                             Valor = r.valorParcelaBruta,//r.valorParcelaLiquida ?? new decimal(0.0),
                                                                             Adquirente = r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente.ToUpper(),
@@ -307,6 +310,7 @@ namespace api.Negocios.Card
                                                                 Bandeira = recebParcela.Bandeira,
                                                                 DataVenda = recebParcela.DataVenda,
                                                                 Data = recebParcela.Data,
+                                                                DataEfetiva = recebParcela.DataEfetiva,
                                                                 Filial = recebParcela.Filial,
                                                                 Valor = recebParcela.Valor,
                                                                 Adquirente = recebParcela.Adquirente,
@@ -402,7 +406,8 @@ namespace api.Negocios.Card
                                                                     CodResumoVendas = r.Recebimento.codResumoVenda,
                                                                     Bandeira = r.Recebimento.tbBandeira.dsBandeira.ToUpper(),
                                                                     DataVenda = r.Recebimento.dtaVenda,
-                                                                    Data = r.dtaRecebimentoEfetivo ?? r.dtaRecebimento,
+                                                                    Data =  r.dtaRecebimento,
+                                                                    DataEfetiva = r.dtaRecebimentoEfetivo,
                                                                     Filial = r.Recebimento.empresa.ds_fantasia + (r.Recebimento.empresa.filial != null ? " " + r.Recebimento.empresa.filial : ""),
                                                                     Valor = /*decimal.Round(*/r.valorParcelaBruta/*, 2)*/,//r.valorParcelaLiquida ?? new decimal(0.0),
                                                                     Adquirente = r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente.ToUpper(),
@@ -553,9 +558,9 @@ namespace api.Negocios.Card
 
                     // Ordena
                     CollectionConciliacaoTitulos = CollectionConciliacaoTitulos
-                                                                    .OrderBy(c => c.RecebimentoParcela.Data.Year)
-                                                                    .ThenBy(c => c.RecebimentoParcela.Data.Month)
-                                                                    .ThenBy(c => c.RecebimentoParcela.Data.Day)
+                                                                    .OrderBy(c => c.RecebimentoParcela.DataEfetiva ?? c.RecebimentoParcela.Data)
+                                                                    //.ThenBy(c => c.RecebimentoParcela.Data.Month)
+                                                                    //.ThenBy(c => c.RecebimentoParcela.Data.Day)
                                                                     .ThenBy(c => c.RecebimentoParcela.Valor)
                                                                     .ThenBy(c => c.Adquirente)
                                                                     .ThenBy(c => c.RecebimentoParcela.Bandeira)

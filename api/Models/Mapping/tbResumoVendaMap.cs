@@ -24,10 +24,18 @@ namespace api.Models.Mapping
             this.Property(t => t.vlTotal)
                 .IsRequired();
 
-            this.Property(t => t.qtVCs)
+            this.Property(t => t.qtCVs)
                 .IsRequired();
 
             this.Property(t => t.cdBandeira)
+                .IsRequired();
+
+            this.Property(t => t.nrCNPJ)
+                .IsFixedLength()
+                .HasMaxLength(14)
+                .IsRequired();
+
+            this.Property(t => t.nrLinha)
                 .IsRequired();
 
             // Table & Column Mappings
@@ -36,12 +44,18 @@ namespace api.Models.Mapping
             this.Property(t => t.cdResumoVenda).HasColumnName("cdResumoVenda");
             this.Property(t => t.dtRecebimentoPrevisto).HasColumnName("dtRecebimentoPrevisto");
             this.Property(t => t.vlTotal).HasColumnName("vlTotal");
-            this.Property(t => t.qtVCs).HasColumnName("qtVCs");
+            this.Property(t => t.qtCVs).HasColumnName("qtCVs");
+            this.Property(t => t.cdBandeira).HasColumnName("cdBandeira");
+            this.Property(t => t.nrCNPJ).HasColumnName("nrCNPJ");
+            this.Property(t => t.nrLinha).HasColumnName("nrLinha");
 
             // Relationships
             this.HasRequired(t => t.tbBandeira)
                 .WithMany(t => t.tbResumoVendas)
                 .HasForeignKey(d => d.cdBandeira);
+            this.HasRequired(t => t.empresa)
+                .WithMany(t => t.tbResumoVendas)
+                .HasForeignKey(d => d.nrCNPJ);
         }
     }
 }

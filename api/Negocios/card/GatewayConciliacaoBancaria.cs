@@ -868,6 +868,7 @@ namespace api.Negocios.Card
                                                                             {
                                                                                 Id = x.idRecebimentoAjuste,
                                                                                 NumParcela = -1,
+                                                                                Lote = x.idResumoVenda ?? 0,
                                                                                 Documento = x.dsMotivo,
                                                                                 Valor = x.vlAjuste,
                                                                                 ValorBruto = new decimal(0.0),
@@ -888,6 +889,7 @@ namespace api.Negocios.Card
                                                                         Data = r.Select(x => x.dtAjuste).FirstOrDefault(),
                                                                         Adquirente = r.Select(x => x.tbBandeira.tbAdquirente.nmAdquirente.ToUpper()).FirstOrDefault(),
                                                                         Bandeira = r.GroupBy(x => x.tbBandeira.cdBandeira).Count() == 1 ? r.Select(x => x.tbBandeira.dsBandeira.ToUpper()).FirstOrDefault() : "",
+                                                                        Lote = r.GroupBy(x => x.idResumoVenda).Count() == 1 ? r.Select(x => x.idResumoVenda).FirstOrDefault() ?? 0 : 0,
                                                                         TipoCartao = r.GroupBy(x => x.tbBandeira.dsTipo).Count() == 1 ? r.Select(x => x.tbBandeira.dsTipo.ToUpper().TrimEnd()).FirstOrDefault() : "",
                                                                         Filial = r.GroupBy(x => x.empresa).Count() == 1 ? r.Select(x => x.empresa.ds_fantasia + (x.empresa.filial != null ? " " + x.empresa.filial : "")).FirstOrDefault() : ""
                                                                     }).FirstOrDefault<ConciliacaoBancaria>();
@@ -992,6 +994,7 @@ namespace api.Negocios.Card
                                                                 new ConciliacaoBancaria.ConciliacaoGrupo {
                                                                     Id = r.idRecebimentoAjuste,
                                                                     NumParcela = -1,
+                                                                    Lote = r.idResumoVenda ?? 0,
                                                                     Documento = r.dsMotivo,
                                                                     Valor = r.vlAjuste,
                                                                     ValorBruto = new decimal(0.0),
@@ -1008,6 +1011,7 @@ namespace api.Negocios.Card
                                                             DataVenda = r.dtAjuste,
                                                             Adquirente = r.tbBandeira.tbAdquirente.nmAdquirente.ToUpper(),
                                                             Bandeira = r.tbBandeira.dsBandeira.ToUpper(),
+                                                            Lote = r.idResumoVenda ?? 0,
                                                             TipoCartao = r.tbBandeira.dsTipo.ToUpper().TrimEnd(),
                                                             Filial = r.empresa.ds_fantasia + (r.empresa.filial != null ? " " + r.empresa.filial : "")
                                                         }).ToList<ConciliacaoBancaria>();
