@@ -13,6 +13,8 @@ using api.Models;
 using System.IO;
 using System.Net.Http.Headers;
 using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
 
 namespace api.Controllers.Pos
 {
@@ -69,6 +71,8 @@ namespace api.Controllers.Pos
                 _db.Database.Connection.Close();
                 _db.Dispose();
             }
+            //    }
+            //}
         }
 
         // POST /RecebimentoParcela/token/

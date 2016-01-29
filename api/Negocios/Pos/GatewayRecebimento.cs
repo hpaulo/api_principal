@@ -24,6 +24,8 @@ namespace api.Negocios.Pos
            // _db.Configuration.ProxyCreationEnabled = false;
         }
 
+        public static string SIGLA_QUERY = "RB";
+
         /// <summary>
         /// Enum CAMPOS
         /// </summary>
@@ -86,297 +88,310 @@ namespace api.Negocios.Pos
         /// <returns></returns>
         private static IQueryable<Recebimento> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
-            // DEFINE A QUERY PRINCIPAL 
-            var entity = _db.Recebimentoes.AsQueryable();
-
-            #region WHERE - ADICIONA OS FILTROS A QUERY
-
-            // ADICIONA OS FILTROS A QUERY
-            foreach (var item in queryString)
+            IQueryable<Recebimento> entity;
+            //declare the transaction options
+            System.Transactions.TransactionOptions transactionOptions = new System.Transactions.TransactionOptions();
+            //set it to read uncommited
+            transactionOptions.IsolationLevel = System.Transactions.IsolationLevel.ReadUncommitted;
+            //create the transaction scope, passing our options in
+            using (System.Transactions.TransactionScope transactionScope = new System.Transactions.TransactionScope(System.Transactions.TransactionScopeOption.Required, transactionOptions))
             {
-                int key = Convert.ToInt16(item.Key);
-                CAMPOS filtroEnum = (CAMPOS)key;
-                switch (filtroEnum)
+                //declare our context
+                using (painel_taxservices_dbContext _dbContext = new painel_taxservices_dbContext())
                 {
+                    
+                    // DEFINE A QUERY PRINCIPAL 
+                    entity = _dbContext.Recebimentoes.AsQueryable();
+
+                    #region WHERE - ADICIONA OS FILTROS A QUERY
+
+                    // ADICIONA OS FILTROS A QUERY
+                    foreach (var item in queryString)
+                    {
+                        int key = Convert.ToInt16(item.Key);
+                        CAMPOS filtroEnum = (CAMPOS)key;
+                        switch (filtroEnum)
+                        {
 
 
-                    case CAMPOS.ID:
-                        Int32 id = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.id.Equals(id)).AsQueryable();
-                        break;
-                    case CAMPOS.IDBANDEIRA:
-                        Int32 idBandeira = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idBandeira.Equals(idBandeira)).AsQueryable();
-                        break;
-                    case CAMPOS.CNPJ:
-                        string cnpj = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.cnpj.Equals(cnpj)).AsQueryable();
-                        break;
-                    case CAMPOS.NSU:
-                        string nsu = Convert.ToString(item.Value);
-                        if (nsu.Contains("%")) // usa LIKE => STARTS WITH
-                        {
-                            string busca = nsu.Replace("%", "").ToString();
-                            entity = entity.Where(e => e.nsu.StartsWith(busca));
-                        }
-                        else
-                            entity = entity.Where(e => e.nsu.Equals(nsu)).AsQueryable();
-                        break;
-                    case CAMPOS.CDAUTORIZADOR:
-                        string cdAutorizador = Convert.ToString(item.Value);
-                        if (cdAutorizador.Contains("%")) // usa LIKE => STARTS WITH
-                        {
-                            string busca = cdAutorizador.Replace("%", "").ToString();
-                            entity = entity.Where(e => e.cdAutorizador.StartsWith(busca));
-                        }
-                        else
-                            entity = entity.Where(e => e.cdAutorizador.Equals(cdAutorizador)).AsQueryable();
-                        break;
-                    case CAMPOS.DTAVENDA:
-                        //DateTime dtaVenda = Convert.ToDateTime(item.Value);
-                        //entity = entity.Where(e => e.dtaVenda.Equals(dtaVenda)).AsQueryable();
-                        //break;
+                            case CAMPOS.ID:
+                                Int32 id = Convert.ToInt32(item.Value);
+                                entity = entity.Where(e => e.id.Equals(id)).AsQueryable();
+                                break;
+                            case CAMPOS.IDBANDEIRA:
+                                Int32 idBandeira = Convert.ToInt32(item.Value);
+                                entity = entity.Where(e => e.idBandeira.Equals(idBandeira)).AsQueryable();
+                                break;
+                            case CAMPOS.CNPJ:
+                                string cnpj = Convert.ToString(item.Value);
+                                entity = entity.Where(e => e.cnpj.Equals(cnpj)).AsQueryable();
+                                break;
+                            case CAMPOS.NSU:
+                                string nsu = Convert.ToString(item.Value);
+                                if (nsu.Contains("%")) // usa LIKE => STARTS WITH
+                                {
+                                    string busca = nsu.Replace("%", "").ToString();
+                                    entity = entity.Where(e => e.nsu.StartsWith(busca));
+                                }
+                                else
+                                    entity = entity.Where(e => e.nsu.Equals(nsu)).AsQueryable();
+                                break;
+                            case CAMPOS.CDAUTORIZADOR:
+                                string cdAutorizador = Convert.ToString(item.Value);
+                                if (cdAutorizador.Contains("%")) // usa LIKE => STARTS WITH
+                                {
+                                    string busca = cdAutorizador.Replace("%", "").ToString();
+                                    entity = entity.Where(e => e.cdAutorizador.StartsWith(busca));
+                                }
+                                else
+                                    entity = entity.Where(e => e.cdAutorizador.Equals(cdAutorizador)).AsQueryable();
+                                break;
+                            case CAMPOS.DTAVENDA:
+                                //DateTime dtaVenda = Convert.ToDateTime(item.Value);
+                                //entity = entity.Where(e => e.dtaVenda.Equals(dtaVenda)).AsQueryable();
+                                //break;
 
-                        if (item.Value.Contains("|")) // BETWEEN
-                        {
-                            string[] busca = item.Value.Split('|');
-                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            //entity = entity.Where(e => e.dtaVenda >= dtaIni && e.dtaVenda <= dtaFim);
-                            entity = entity.Where(e => (e.dtaVenda.Year > dtaIni.Year || (e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month > dtaIni.Month) ||
-                                                                                          (e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month && e.dtaVenda.Day >= dtaIni.Day))
-                                                    && (e.dtaVenda.Year < dtaFim.Year || (e.dtaVenda.Year == dtaFim.Year && e.dtaVenda.Month < dtaFim.Month) ||
-                                                                                          (e.dtaVenda.Year == dtaFim.Year && e.dtaVenda.Month == dtaFim.Month && e.dtaVenda.Day <= dtaFim.Day)));
-                        }
-                        else if (item.Value.Contains(">")) // MAIOR IGUAL
-                        {
-                            string busca = item.Value.Replace(">", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtaVenda >= dta);
-                        }
-                        else if (item.Value.Contains("<")) // MENOR IGUAL
-                        {
-                            string busca;
-                            if (item.Value.Length == 10)
-                            {                               
-                                string ano = item.Value.Substring(0, 4);
-                                string mes = item.Value.Substring(5, 2);
-                                string dia = item.Value.Substring(7, 2);
-                                busca = ano + mes + dia;
-                            }
-                            else if (item.Value.Length == 8)
-                            {
-                                string dia = item.Value.Substring(6, 1);
-                                string anoMes = item.Value.Substring(0, 6);
-                                busca = anoMes + "0" + dia;
-                            }
-                            else
-                            {
-                                busca = item.Value.Replace("<", "");
-                            }
-                            //busca = item.Value.Replace("<", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtaVenda <= dta);
-                        }
-                        else if (item.Value.Length == 4)
-                        {
-                            string busca = item.Value + "0101";
-                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year);
-                        }
-                        else if (item.Value.Length == 6)
-                        {
-                            string busca = item.Value + "01";
-                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month);
-                        }
-                        else if (item.Value.Length == 7)
-                        {
-                            string dia = item.Value.Substring(6, 1);
-                            string anoMes = item.Value.Substring(0, 6);
-                            string busca = anoMes + "0" + dia;
-                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month && e.dtaVenda.Day == dtaIni.Day);
-                        }
-                        else // IGUAL
-                        {
-                            string busca = item.Value;
-                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month && e.dtaVenda.Day == dtaIni.Day);
-                        }
-                        break;
-                    case CAMPOS.VALORVENDABRUTA:
-                        decimal valorVendaBruta = Convert.ToDecimal(item.Value);
-                        entity = entity.Where(e => e.valorVendaBruta.Equals(valorVendaBruta)).AsQueryable();
-                        break;
-                    case CAMPOS.VALORVENDALIQUIDA:
-                        decimal valorVendaLiquida = Convert.ToDecimal(item.Value);
-                        entity = entity.Where(e => e.valorVendaLiquida.Equals(valorVendaLiquida)).AsQueryable();
-                        break;
-                    case CAMPOS.LOTEIMPORTACAO:
-                        string loteImportacao = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.loteImportacao.Equals(loteImportacao)).AsQueryable();
-                        break;
-                    case CAMPOS.DTARECEBIMENTO:
-                        DateTime dtaRecebimento = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtaRecebimento.Equals(dtaRecebimento)).AsQueryable();
-                        break;
-                    case CAMPOS.IDLOGICOTERMINAL:
-                        Int32 idLogicoTerminal = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idLogicoTerminal.Equals(idLogicoTerminal)).AsQueryable();
-                        break;
-                    case CAMPOS.CODTITULOERP:
-                        string codTituloERP = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.codTituloERP.Equals(codTituloERP)).AsQueryable();
-                        break;
-                    case CAMPOS.CODVENDAERP:
-                        string codVendaERP = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.codVendaERP.Equals(codVendaERP)).AsQueryable();
-                        break;
-                    case CAMPOS.CODRESUMOVENDA:
-                        string codResumoVenda = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.codResumoVenda.Equals(codResumoVenda)).AsQueryable();
-                        break;
-                    case CAMPOS.NUMPARCELATOTAL:
-                        Int32 numParcelaTotal = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.numParcelaTotal.Equals(numParcelaTotal)).AsQueryable();
-                        break;
-                    case CAMPOS.CDBANDEIRA:
-                        Int32 cdBandeira = Convert.ToInt32(item.Value);
-                        if (cdBandeira == -1)                        
-                            entity = entity.Where(e => e.cdBandeira == null).AsQueryable();
-                        else if (cdBandeira == 0)
-                            entity = entity.Where(e => e.cdBandeira != null).AsQueryable();
-                        else                        
-                            entity = entity.Where(e => e.cdBandeira == cdBandeira).AsQueryable();                        
-                        break;
+                                if (item.Value.Contains("|")) // BETWEEN
+                                {
+                                    string[] busca = item.Value.Split('|');
+                                    DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                    DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                    //entity = entity.Where(e => e.dtaVenda >= dtaIni && e.dtaVenda <= dtaFim);
+                                    entity = entity.Where(e => (e.dtaVenda.Year > dtaIni.Year || (e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month > dtaIni.Month) ||
+                                                                                                  (e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month && e.dtaVenda.Day >= dtaIni.Day))
+                                                            && (e.dtaVenda.Year < dtaFim.Year || (e.dtaVenda.Year == dtaFim.Year && e.dtaVenda.Month < dtaFim.Month) ||
+                                                                                                  (e.dtaVenda.Year == dtaFim.Year && e.dtaVenda.Month == dtaFim.Month && e.dtaVenda.Day <= dtaFim.Day)));
+                                }
+                                else if (item.Value.Contains(">")) // MAIOR IGUAL
+                                {
+                                    string busca = item.Value.Replace(">", "");
+                                    DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                    entity = entity.Where(e => e.dtaVenda >= dta);
+                                }
+                                else if (item.Value.Contains("<")) // MENOR IGUAL
+                                {
+                                    string busca;
+                                    if (item.Value.Length == 10)
+                                    {
+                                        string ano = item.Value.Substring(0, 4);
+                                        string mes = item.Value.Substring(5, 2);
+                                        string dia = item.Value.Substring(7, 2);
+                                        busca = ano + mes + dia;
+                                    }
+                                    else if (item.Value.Length == 8)
+                                    {
+                                        string dia = item.Value.Substring(6, 1);
+                                        string anoMes = item.Value.Substring(0, 6);
+                                        busca = anoMes + "0" + dia;
+                                    }
+                                    else
+                                    {
+                                        busca = item.Value.Replace("<", "");
+                                    }
+                                    //busca = item.Value.Replace("<", "");
+                                    DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                    entity = entity.Where(e => e.dtaVenda <= dta);
+                                }
+                                else if (item.Value.Length == 4)
+                                {
+                                    string busca = item.Value + "0101";
+                                    DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                    entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year);
+                                }
+                                else if (item.Value.Length == 6)
+                                {
+                                    string busca = item.Value + "01";
+                                    DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                    entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month);
+                                }
+                                else if (item.Value.Length == 7)
+                                {
+                                    string dia = item.Value.Substring(6, 1);
+                                    string anoMes = item.Value.Substring(0, 6);
+                                    string busca = anoMes + "0" + dia;
+                                    DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                    entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month && e.dtaVenda.Day == dtaIni.Day);
+                                }
+                                else // IGUAL
+                                {
+                                    string busca = item.Value;
+                                    DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                    entity = entity.Where(e => e.dtaVenda.Year == dtaIni.Year && e.dtaVenda.Month == dtaIni.Month && e.dtaVenda.Day == dtaIni.Day);
+                                }
+                                break;
+                            case CAMPOS.VALORVENDABRUTA:
+                                decimal valorVendaBruta = Convert.ToDecimal(item.Value);
+                                entity = entity.Where(e => e.valorVendaBruta.Equals(valorVendaBruta)).AsQueryable();
+                                break;
+                            case CAMPOS.VALORVENDALIQUIDA:
+                                decimal valorVendaLiquida = Convert.ToDecimal(item.Value);
+                                entity = entity.Where(e => e.valorVendaLiquida.Equals(valorVendaLiquida)).AsQueryable();
+                                break;
+                            case CAMPOS.LOTEIMPORTACAO:
+                                string loteImportacao = Convert.ToString(item.Value);
+                                entity = entity.Where(e => e.loteImportacao.Equals(loteImportacao)).AsQueryable();
+                                break;
+                            case CAMPOS.DTARECEBIMENTO:
+                                DateTime dtaRecebimento = Convert.ToDateTime(item.Value);
+                                entity = entity.Where(e => e.dtaRecebimento.Equals(dtaRecebimento)).AsQueryable();
+                                break;
+                            case CAMPOS.IDLOGICOTERMINAL:
+                                Int32 idLogicoTerminal = Convert.ToInt32(item.Value);
+                                entity = entity.Where(e => e.idLogicoTerminal.Equals(idLogicoTerminal)).AsQueryable();
+                                break;
+                            case CAMPOS.CODTITULOERP:
+                                string codTituloERP = Convert.ToString(item.Value);
+                                entity = entity.Where(e => e.codTituloERP.Equals(codTituloERP)).AsQueryable();
+                                break;
+                            case CAMPOS.CODVENDAERP:
+                                string codVendaERP = Convert.ToString(item.Value);
+                                entity = entity.Where(e => e.codVendaERP.Equals(codVendaERP)).AsQueryable();
+                                break;
+                            case CAMPOS.CODRESUMOVENDA:
+                                string codResumoVenda = Convert.ToString(item.Value);
+                                entity = entity.Where(e => e.codResumoVenda.Equals(codResumoVenda)).AsQueryable();
+                                break;
+                            case CAMPOS.NUMPARCELATOTAL:
+                                Int32 numParcelaTotal = Convert.ToInt32(item.Value);
+                                entity = entity.Where(e => e.numParcelaTotal.Equals(numParcelaTotal)).AsQueryable();
+                                break;
+                            case CAMPOS.CDBANDEIRA:
+                                Int32 cdBandeira = Convert.ToInt32(item.Value);
+                                if (cdBandeira == -1)
+                                    entity = entity.Where(e => e.cdBandeira == null).AsQueryable();
+                                else if (cdBandeira == 0)
+                                    entity = entity.Where(e => e.cdBandeira != null).AsQueryable();
+                                else
+                                    entity = entity.Where(e => e.cdBandeira == cdBandeira).AsQueryable();
+                                break;
 
 
-                    // PERSONALIZADO
+                            // PERSONALIZADO
 
-                    case CAMPOS.IDOPERADORA:
-                        Int32 idOperadora = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.BandeiraPos.Operadora.id == idOperadora).AsQueryable();
-                        break;
-                    case CAMPOS.NMOPERADORA:
-                        string nmOperadora = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.BandeiraPos.Operadora.nmOperadora.Equals(nmOperadora)).AsQueryable();
-                        break;
+                            case CAMPOS.IDOPERADORA:
+                                Int32 idOperadora = Convert.ToInt32(item.Value);
+                                entity = entity.Where(e => e.BandeiraPos.Operadora.id == idOperadora).AsQueryable();
+                                break;
+                            case CAMPOS.NMOPERADORA:
+                                string nmOperadora = Convert.ToString(item.Value);
+                                entity = entity.Where(e => e.BandeiraPos.Operadora.nmOperadora.Equals(nmOperadora)).AsQueryable();
+                                break;
 
-                    case CAMPOS.ID_GRUPO:
-                        Int32 id_grupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.empresa.id_grupo == id_grupo).AsQueryable();
-                        break;
-                    case CAMPOS.DS_FANTASIA:
-                        string dsfantasia = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.empresa.ds_fantasia.Equals(dsfantasia)).AsQueryable();
-                        break;
-                    case CAMPOS.CDADQUIRENTE:
-                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdBandeira != null && e.tbBandeira.cdAdquirente == cdAdquirente).AsQueryable();
-                        break;
+                            case CAMPOS.ID_GRUPO:
+                                Int32 id_grupo = Convert.ToInt32(item.Value);
+                                entity = entity.Where(e => e.empresa.id_grupo == id_grupo).AsQueryable();
+                                break;
+                            case CAMPOS.DS_FANTASIA:
+                                string dsfantasia = Convert.ToString(item.Value);
+                                entity = entity.Where(e => e.empresa.ds_fantasia.Equals(dsfantasia)).AsQueryable();
+                                break;
+                            case CAMPOS.CDADQUIRENTE:
+                                Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                                entity = entity.Where(e => e.cdBandeira != null && e.tbBandeira.cdAdquirente == cdAdquirente).AsQueryable();
+                                break;
 
+                        }
+                    }
+                    #endregion
+
+                    #region ORDER BY - ADICIONA A ORDENAÇÃO A QUERY
+                    // ADICIONA A ORDENAÇÃO A QUERY
+                    CAMPOS filtro = (CAMPOS)campo;
+                    switch (filtro)
+                    {
+
+                        case CAMPOS.ID:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.id).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.id).AsQueryable();
+                            break;
+                        case CAMPOS.IDBANDEIRA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.idBandeira).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.idBandeira).AsQueryable();
+                            break;
+                        case CAMPOS.CNPJ:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.cnpj).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.cnpj).AsQueryable();
+                            break;
+                        case CAMPOS.NSU:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.nsu).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.nsu).AsQueryable();
+                            break;
+                        case CAMPOS.CDAUTORIZADOR:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.cdAutorizador).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.cdAutorizador).AsQueryable();
+                            break;
+                        case CAMPOS.DTAVENDA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).ThenBy(e => e.dtaVenda).ThenBy(e => e.BandeiraPos.desBandeira).ThenBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
+                            else entity = entity.OrderBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).ThenByDescending(e => e.dtaVenda).ThenBy(e => e.BandeiraPos.desBandeira).ThenBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
+                            break;
+                        case CAMPOS.VALORVENDABRUTA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.valorVendaBruta).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.valorVendaBruta).AsQueryable();
+                            break;
+                        case CAMPOS.VALORVENDALIQUIDA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.valorVendaLiquida).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.valorVendaLiquida).AsQueryable();
+                            break;
+                        case CAMPOS.LOTEIMPORTACAO:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.loteImportacao).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.loteImportacao).AsQueryable();
+                            break;
+                        case CAMPOS.DTARECEBIMENTO:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.dtaRecebimento).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.dtaRecebimento).AsQueryable();
+                            break;
+                        case CAMPOS.IDLOGICOTERMINAL:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.idLogicoTerminal).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.idLogicoTerminal).AsQueryable();
+                            break;
+                        case CAMPOS.CODTITULOERP:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.codTituloERP).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.codTituloERP).AsQueryable();
+                            break;
+                        case CAMPOS.CODVENDAERP:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.codVendaERP).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.codVendaERP).AsQueryable();
+                            break;
+                        case CAMPOS.CODRESUMOVENDA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.codResumoVenda).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.codResumoVenda).AsQueryable();
+                            break;
+                        case CAMPOS.NUMPARCELATOTAL:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.numParcelaTotal).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.numParcelaTotal).AsQueryable();
+                            break;
+                        case CAMPOS.CDBANDEIRA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.cdBandeira).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.cdBandeira).AsQueryable();
+                            break;
+
+
+                        // PERSONALIZADO
+
+                        case CAMPOS.IDOPERADORA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.BandeiraPos.Operadora.id).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.BandeiraPos.Operadora.id).AsQueryable();
+                            break;
+                        case CAMPOS.NMOPERADORA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.BandeiraPos.Operadora.nmOperadora).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.BandeiraPos.Operadora.nmOperadora).AsQueryable();
+                            break;
+                        case CAMPOS.DS_FANTASIA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.empresa.ds_fantasia).ThenByDescending(e => e.empresa.filial).AsQueryable();
+                            break;
+                        case CAMPOS.DESBANDEIRA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.BandeiraPos.desBandeira).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.BandeiraPos.desBandeira).AsQueryable();
+                            break;
+                        case CAMPOS.DSTERMINALLOGICO:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
+                            else entity = entity.OrderByDescending(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
+                            break;
+                    }
+                    #endregion
                 }
             }
-            #endregion
-
-            #region ORDER BY - ADICIONA A ORDENAÇÃO A QUERY
-            // ADICIONA A ORDENAÇÃO A QUERY
-            CAMPOS filtro = (CAMPOS)campo;
-            switch (filtro)
-            {
-
-                case CAMPOS.ID:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.id).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.id).AsQueryable();
-                    break;
-                case CAMPOS.IDBANDEIRA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.idBandeira).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.idBandeira).AsQueryable();
-                    break;
-                case CAMPOS.CNPJ:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cnpj).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.cnpj).AsQueryable();
-                    break;
-                case CAMPOS.NSU:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.nsu).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.nsu).AsQueryable();
-                    break;
-                case CAMPOS.CDAUTORIZADOR:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdAutorizador).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.cdAutorizador).AsQueryable();
-                    break;
-                case CAMPOS.DTAVENDA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).ThenBy(e => e.dtaVenda).ThenBy(e => e.BandeiraPos.desBandeira).ThenBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
-                    else entity = entity.OrderBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).ThenByDescending(e => e.dtaVenda).ThenBy(e => e.BandeiraPos.desBandeira).ThenBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
-                    break;
-                case CAMPOS.VALORVENDABRUTA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.valorVendaBruta).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.valorVendaBruta).AsQueryable();
-                    break;
-                case CAMPOS.VALORVENDALIQUIDA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.valorVendaLiquida).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.valorVendaLiquida).AsQueryable();
-                    break;
-                case CAMPOS.LOTEIMPORTACAO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.loteImportacao).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.loteImportacao).AsQueryable();
-                    break;
-                case CAMPOS.DTARECEBIMENTO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtaRecebimento).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.dtaRecebimento).AsQueryable();
-                    break;
-                case CAMPOS.IDLOGICOTERMINAL:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.idLogicoTerminal).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.idLogicoTerminal).AsQueryable();
-                    break;
-                case CAMPOS.CODTITULOERP:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.codTituloERP).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.codTituloERP).AsQueryable();
-                    break;
-                case CAMPOS.CODVENDAERP:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.codVendaERP).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.codVendaERP).AsQueryable();
-                    break;
-                case CAMPOS.CODRESUMOVENDA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.codResumoVenda).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.codResumoVenda).AsQueryable();
-                    break;
-                case CAMPOS.NUMPARCELATOTAL:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.numParcelaTotal).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.numParcelaTotal).AsQueryable();
-                    break;
-                case CAMPOS.CDBANDEIRA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdBandeira).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.cdBandeira).AsQueryable();
-                    break;
-
-
-                // PERSONALIZADO
-
-                case CAMPOS.IDOPERADORA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.BandeiraPos.Operadora.id).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.BandeiraPos.Operadora.id).AsQueryable();
-                    break;
-                case CAMPOS.NMOPERADORA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.BandeiraPos.Operadora.nmOperadora).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.BandeiraPos.Operadora.nmOperadora).AsQueryable();
-                    break;
-                case CAMPOS.DS_FANTASIA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.empresa.ds_fantasia).ThenBy(e => e.empresa.filial).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.empresa.ds_fantasia).ThenByDescending(e => e.empresa.filial).AsQueryable();
-                    break;
-                case CAMPOS.DESBANDEIRA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.BandeiraPos.desBandeira).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.BandeiraPos.desBandeira).AsQueryable();
-                    break;
-                case CAMPOS.DSTERMINALLOGICO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
-                    else entity = entity.OrderByDescending(e => e.TerminalLogico.dsTerminalLogico).AsQueryable();
-                    break;
-            }
-            #endregion
-
             return entity;
 
 

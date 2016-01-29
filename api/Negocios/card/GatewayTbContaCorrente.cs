@@ -24,6 +24,8 @@ namespace api.Negocios.Card
             //_db.Configuration.ProxyCreationEnabled = false;
         }
 
+        public static string SIGLA_QUERY = "CC";
+
         /// <summary>
         /// Enum CAMPOS
         /// </summary>
@@ -282,6 +284,27 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+
+            // Avalia grupo
+            Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
+            if (IdGrupo > 0)
+            {
+                param.cdGrupo = IdGrupo;
+                if (_db.empresas.Where(t => t.nu_cnpj.Equals(param.nrCnpj)).Select(t => t.id_grupo).FirstOrDefault() != IdGrupo)
+                    throw new Exception("Filial não pertence ao grupo que o usuário está associado!");
+            }
+            else
+            {
+                IdGrupo = _db.empresas.Where(t => t.nu_cnpj.Equals(param.nrCnpj)).Select(t => t.id_grupo).FirstOrDefault();
+                if (IdGrupo == 0) 
+                    throw new Exception("Filial inválida!");
+
+                if(!Permissoes.usuarioPodeSeAssociarAoGrupo(token, IdGrupo, _db))
+                    throw new Exception("Unauthorized");
+
+                param.cdGrupo = IdGrupo;
+            } 
+
             DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
@@ -381,6 +404,27 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+
+            // Avalia grupo
+            Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
+            if (IdGrupo > 0)
+            {
+                param.cdGrupo = IdGrupo;
+                if (_db.empresas.Where(t => t.nu_cnpj.Equals(param.nrCnpj)).Select(t => t.id_grupo).FirstOrDefault() != IdGrupo)
+                    throw new Exception("Filial não pertence ao grupo que o usuário está associado!");
+            }
+            else
+            {
+                IdGrupo = _db.empresas.Where(t => t.nu_cnpj.Equals(param.nrCnpj)).Select(t => t.id_grupo).FirstOrDefault();
+                if (IdGrupo == 0)
+                    throw new Exception("Filial inválida!");
+
+                if (!Permissoes.usuarioPodeSeAssociarAoGrupo(token, IdGrupo, _db))
+                    throw new Exception("Unauthorized");
+
+                param.cdGrupo = IdGrupo;
+            } 
+
             DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {

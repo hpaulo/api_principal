@@ -21,6 +21,8 @@ namespace api.Negocios.Card
             _db.Configuration.ProxyCreationEnabled = false;
         }
 
+        public static string SIGLA_QUERY = "BD";
+
         /// <summary>
         /// Enum CAMPOS
         /// </summary>

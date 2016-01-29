@@ -29,6 +29,8 @@ namespace api.Negocios.Card
             //_db.Configuration.ProxyCreationEnabled = false;
         }
 
+        public static string SIGLA_QUERY = "EX";
+
         /// <summary>
         /// Enum CAMPOS
         /// </summary>

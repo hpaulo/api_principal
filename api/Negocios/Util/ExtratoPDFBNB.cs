@@ -192,7 +192,7 @@ namespace api.Negocios.Util
                             transaction.Memo = auxiliar.Substring(0, index).TrimEnd();
                             transaction.TransType = transaction.Amount > 0 ? OFXTransactionType.CREDIT : OFXTransactionType.DEBIT;
 
-                            if (!tratamento)
+                            if (!tratamento && !transaction.Memo.Trim().Equals(""))
                             {
                                 document.Transactions.Add(transaction);
                                 transaction = new Transaction();

@@ -12,6 +12,9 @@ using Microsoft.Ajax.Utilities;
 using api.Negocios.Util;
 using System.Data.SqlClient;
 using System.Data.Entity;
+using System.Configuration;
+using api.Negocios.Cliente;
+using System.Data;
 
 namespace api.Negocios.Card
 {
@@ -764,7 +767,7 @@ namespace api.Negocios.Card
 
                 // OBTÉM AS QUERIES
                 IQueryable<tbRecebimentoAjuste> queryAjustes = GatewayTbRecebimentoAjuste.getQuery(_db, 0, (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, 0, 0, queryStringAjustes);
-                IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(_db, 0, (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, 0, 0, 0, queryStringRecebimentoParcela);
+                IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(_db, 0, (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, 0, 0, 0, queryStringRecebimentoParcela);
                 IQueryable<tbExtrato> queryExtrato = GatewayTbExtrato.getQuery(_db, 0, (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, 0, 0, 0, queryStringExtrato);
 
                 // SE TIVER CONTA CORRENTE ASSOCIADA E NENHUMA FILIAL FOR ESPECIFICADA, SÓ OBTÉM OS DADOS DAS FILIAIS ASSOCIADAS À CONTA (O MESMO VALE PARA ADQUIRENTE)
@@ -800,45 +803,131 @@ namespace api.Negocios.Card
                 decimal totalExtrato = new decimal(0.0);
 
 
+                SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString);
+
+                try
+                {
+                    connection.Open();
+                }
+                catch
+                {
+                    throw new Exception("Não foi possível estabelecer conexão com a base de dados");
+                }
+
+                // Obtém componentes da query
+                SimpleDataBaseQuery dataBaseQuery = GatewayRecebimentoParcela.getQuery((int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, 0, queryStringRecebimentoParcela);
+
+                // Adiciona join com tbBandeira e tbAdquirente, caso não exista
+                if (!dataBaseQuery.join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
+                    dataBaseQuery.join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".id = " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idRecebimento");
+                if (!dataBaseQuery.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                    dataBaseQuery.join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
+                if (!dataBaseQuery.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                    dataBaseQuery.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
+                if (!dataBaseQuery.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                    dataBaseQuery.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+
+                dataBaseQuery.select = new string[] { GatewayRecebimento.SIGLA_QUERY + ".id",
+                                                          GatewayRecebimentoParcela.SIGLA_QUERY + ".numParcela",
+                                                          GatewayEmpresa.SIGLA_QUERY + ".ds_fantasia",
+                                                          GatewayEmpresa.SIGLA_QUERY + ".filial",
+                                                          GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira",
+                                                          GatewayTbBandeira.SIGLA_QUERY + ".dsTipo",
+                                                          GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",
+                                                          GatewayRecebimento.SIGLA_QUERY + ".dtaVenda",
+                                                          GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimento",
+                                                          GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo",
+                                                          GatewayRecebimento.SIGLA_QUERY + ".nsu",
+                                                          GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta",
+                                                          GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaLiquida",
+                                                          GatewayRecebimento.SIGLA_QUERY + ".idResumoVenda AS lote"                                                          
+                                                        };
+
+                // Sem ordem
+                dataBaseQuery.groupby = null;
+                dataBaseQuery.orderby = new string[] { "CASE WHEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NOT NULL THEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo ELSE " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimento END",
+                                                       GatewayRecebimento.SIGLA_QUERY + ".dtaVenda"};
+
+
                 // Só busca por conciliações já concretizadas se não tiver sido requisitado um filtro do tipo PRE-CONCILIADO ou NÃO CONCILIADO
                 if (!filtroTipoPreConciliado && !filtroTipoNaoConciliado)
                 {
+                    // Adiciona na cláusula where IDEXTRATO IS NOT NULL
+                    SimpleDataBaseQuery queryRpConciliados = new SimpleDataBaseQuery(dataBaseQuery);
+                    
+                    queryRpConciliados.where = new string[dataBaseQuery.where.Length + 1];
+                    for (int k = 0; k < dataBaseQuery.where.Length; k++)
+                        queryRpConciliados.where[k] = dataBaseQuery.where[k];
+                    queryRpConciliados.where[dataBaseQuery.where.Length] = GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato IS NOT NULL";
+                    queryRpConciliados.groupby = new string[] { GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato" };
+                    queryRpConciliados.orderby = null;
+                    queryRpConciliados.select = new string[] { GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato" };
+
                     #region OBTÉM AS INFORMAÇÕES DE DADOS JÁ CONCILIADOS PREVIAMENTE
                     // EXTRATOS JÁ CONCILIADOS, COM SEUS RESPECTIVOS RECEBIMENTOS CONCILIADOS
-                    List<int> idsExtratosConciliados = queryRecebimentoParcela.Where(e => e.idExtrato != null)
-                                                                              .GroupBy(e => e.idExtrato.Value)
-                                                                              .Select(e => e.Key)
-                                                                              .ToList<int>();
+                    List<int> idsExtratosConciliados = new List<int>();
+                    List<IDataRecord> resultado = DataBaseQueries.SqlQuery(queryRpConciliados.Script(), connection);
+
+                    if (resultado != null && resultado.Count > 0)
+                    {
+                        // Obtém ids extratos
+                        idsExtratosConciliados = resultado.Select(t => Convert.ToInt32(t["idExtrato"])).ToList<int>();
+                    }
 
                     // Total dos elementos já conciliados
                     if (idsExtratosConciliados.Count > 0)
                     {
+                        queryRpConciliados.groupby = null;
+                        queryRpConciliados.orderby = dataBaseQuery.orderby;
+                        queryRpConciliados.select = dataBaseQuery.select;
+
                         // Adiciona como conciliados
                         foreach (Int32 idExtrato in idsExtratosConciliados)
                         {
+                            queryRpConciliados.where[dataBaseQuery.where.Length] = GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato = " + idExtrato;
+                            
+                            resultado = DataBaseQueries.SqlQuery(queryRpConciliados.Script(), connection);
+                            List<dynamic> rps = new List<dynamic>();
+
+                            if (resultado != null && resultado.Count > 0)
+                            {
+                                rps = resultado.Select(t => new
+                                {
+                                    Id = Convert.ToInt32(t["id"]),
+                                    NumParcela = Convert.ToInt32(t["numParcela"]),
+                                    Documento = Convert.ToString(t["nsu"]),
+                                    Valor = Convert.ToDecimal(t["valorParcelaLiquida"].Equals(DBNull.Value) ? 0.0 : t["valorParcelaLiquida"]),
+                                    ValorBruto = Convert.ToDecimal(t["valorParcelaBruta"]),
+                                    Adquirente = Convert.ToString(t["nmAdquirente"]),
+                                    Bandeira = Convert.ToString(t["dsBandeira"]),
+                                    Lote = t["lote"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(t["lote"]),
+                                    TipoCartao = Convert.ToString(t["dsTipo"]),
+                                    DataVenda = (DateTime)t["dtaVenda"],
+                                    DataPrevista = (DateTime)t["dtaRecebimento"],
+                                    DataEfetiva = t["dtaRecebimentoEfetivo"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)t["dtaRecebimentoEfetivo"],
+                                    Filial = Convert.ToString(t["ds_fantasia"]) + (t["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(t["filial"])),    
+                                }).ToList<dynamic>();
+                            }
+                            
                             // Recebimento
-                            ConciliacaoBancaria recebimento = _db.RecebimentoParcelas
-                                                                    .Where(e => e.idExtrato == idExtrato)
-                                                                    .OrderBy(r => r.dtaRecebimentoEfetivo ?? r.dtaRecebimento)
-                                                                    .ThenBy(r => r.Recebimento.dtaVenda)
-                                                                    .GroupBy(r => r.tbExtrato) // agrupa pelo mesmo extrato para se tornar um único registro
+                            ConciliacaoBancaria recebimento = rps.GroupBy(r => r.Adquirente) // agrupa pela mesma adquirente registro
                                                                     .Select(r => new ConciliacaoBancaria
                                                                     {
                                                                         Tipo = TIPO_RECEBIMENTO, // recebimento
                                                                         Grupo = r.Select(x =>
                                                                             new ConciliacaoBancaria.ConciliacaoGrupo
                                                                             {
-                                                                                Id = x.idRecebimento,
-                                                                                NumParcela = x.numParcela,
-                                                                                Documento = x.Recebimento.nsu,
-                                                                                Valor = x.valorParcelaLiquida != null ? x.valorParcelaLiquida.Value : new decimal(0.0),
-                                                                                ValorBruto = x.valorParcelaBruta,
-                                                                                Bandeira = x.Recebimento.tbBandeira.dsBandeira.ToUpper(),
-                                                                                Lote = x.Recebimento.idResumoVenda ?? 0,
-                                                                                TipoCartao = x.Recebimento.tbBandeira.dsTipo.ToUpper().TrimEnd(),
-                                                                                DataVenda = x.Recebimento.dtaVenda,
-                                                                                DataPrevista = x.dtaRecebimento,
-                                                                                Filial = x.Recebimento.empresa.ds_fantasia + (x.Recebimento.empresa.filial != null ? " " + x.Recebimento.empresa.filial : "")
+                                                                                Id = x.Id,
+                                                                                NumParcela = x.NumParcela,
+                                                                                Documento = x.Documento,
+                                                                                Valor = x.Valor,
+                                                                                ValorBruto = x.ValorBruto,
+                                                                                Bandeira = x.Bandeira.ToUpper(),
+                                                                                Lote = x.Lote,
+                                                                                TipoCartao = x.TipoCartao.ToUpper().TrimEnd(),
+                                                                                DataVenda = x.DataVenda,
+                                                                                DataPrevista = x.DataPrevista,
+                                                                                Filial = x.Filial.ToUpper()
                                                                             })
                                                                             .OrderBy(x => x.Filial)
                                                                             .ThenBy(x => x.Bandeira)
@@ -846,14 +935,14 @@ namespace api.Negocios.Card
                                                                             .ThenBy(x => x.DataPrevista)
                                                                             .ThenBy(x => x.Valor)
                                                                             .ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
-                                                                        ValorTotal = r.Select(x => x.valorParcelaLiquida != null ? x.valorParcelaLiquida.Value : new decimal(0.0)).Sum(),
-                                                                        ValorTotalBruto = r.Select(x => x.valorParcelaBruta).Sum(),
-                                                                        Data = r.Select(x => x.dtaRecebimentoEfetivo ?? x.dtaRecebimento).FirstOrDefault(),
-                                                                        Adquirente = r.Select(x => x.Recebimento.tbBandeira.tbAdquirente.nmAdquirente.ToUpper()).FirstOrDefault(),
-                                                                        Bandeira = r.GroupBy(x => x.Recebimento.cdBandeira).Count() == 1 ? r.Select(x => x.Recebimento.tbBandeira.dsBandeira.ToUpper()).FirstOrDefault() : "",
-                                                                        Lote = r.GroupBy(x => x.Recebimento.idResumoVenda).Count() == 1 ? r.Select(x => x.Recebimento.idResumoVenda).FirstOrDefault() ?? 0 : 0,
-                                                                        TipoCartao = r.GroupBy(x => x.Recebimento.tbBandeira.dsTipo).Count() == 1 ? r.Select(x => x.Recebimento.tbBandeira.dsTipo.ToUpper().TrimEnd()).FirstOrDefault() : "",
-                                                                        Filial = r.GroupBy(x => x.Recebimento.empresa).Count() == 1 ? r.Select(x => x.Recebimento.empresa.ds_fantasia + (x.Recebimento.empresa.filial != null ? " " + x.Recebimento.empresa.filial : "")).FirstOrDefault() : ""
+                                                                        ValorTotal = r.Select(x => x.Valor).Cast<decimal>().Sum(),
+                                                                        ValorTotalBruto = r.Select(x => x.ValorBruto).Cast<decimal>().Sum(),
+                                                                        Data = r.Select(x => x.DataEfetiva ?? x.DataPrevista).FirstOrDefault(),
+                                                                        Adquirente = r.Key.ToUpper(),
+                                                                        Bandeira = r.GroupBy(x => x.Bandeira).Count() == 1 ? r.Select(x => x.Bandeira.ToUpper()).FirstOrDefault() : "",
+                                                                        Lote = r.GroupBy(x => x.Lote).Count() == 1 ? r.Select(x => x.Lote).FirstOrDefault() ?? 0 : 0,
+                                                                        TipoCartao = r.GroupBy(x => x.TipoCartao).Count() == 1 ? r.Select(x => x.TipoCartao.ToUpper().TrimEnd()).FirstOrDefault() : "",
+                                                                        Filial = r.GroupBy(x => x.Filial).Count() == 1 ? r.Select(x => x.Filial.ToUpper()).FirstOrDefault() : ""
                                                                     }).FirstOrDefault<ConciliacaoBancaria>();
 
                             ConciliacaoBancaria ajustes = _db.tbRecebimentoAjustes
@@ -876,7 +965,7 @@ namespace api.Negocios.Card
                                                                                 TipoCartao = x.tbBandeira.dsTipo.ToUpper().TrimEnd(),
                                                                                 DataVenda = x.dtAjuste,
                                                                                 DataPrevista = x.dtAjuste,
-                                                                                Filial = x.empresa.ds_fantasia + (x.empresa.filial != null ? " " + x.empresa.filial : "")
+                                                                                Filial = x.empresa.ds_fantasia.ToUpper() + (x.empresa.filial != null ? " " + x.empresa.filial.ToUpper() : "")
                                                                             })
                                                                             .OrderBy(x => x.Filial)
                                                                             .ThenBy(x => x.Bandeira)
@@ -891,7 +980,7 @@ namespace api.Negocios.Card
                                                                         Bandeira = r.GroupBy(x => x.tbBandeira.cdBandeira).Count() == 1 ? r.Select(x => x.tbBandeira.dsBandeira.ToUpper()).FirstOrDefault() : "",
                                                                         Lote = r.GroupBy(x => x.idResumoVenda).Count() == 1 ? r.Select(x => x.idResumoVenda).FirstOrDefault() ?? 0 : 0,
                                                                         TipoCartao = r.GroupBy(x => x.tbBandeira.dsTipo).Count() == 1 ? r.Select(x => x.tbBandeira.dsTipo.ToUpper().TrimEnd()).FirstOrDefault() : "",
-                                                                        Filial = r.GroupBy(x => x.empresa).Count() == 1 ? r.Select(x => x.empresa.ds_fantasia + (x.empresa.filial != null ? " " + x.empresa.filial : "")).FirstOrDefault() : ""
+                                                                        Filial = r.GroupBy(x => x.empresa).Count() == 1 ? r.Select(x => x.empresa.ds_fantasia.ToUpper() + (x.empresa.filial != null ? " " + x.empresa.filial.ToUpper() : "")).FirstOrDefault() : ""
                                                                     }).FirstOrDefault<ConciliacaoBancaria>();
 
                             if (recebimento == null && ajustes == null) continue; // falha!
@@ -921,7 +1010,7 @@ namespace api.Negocios.Card
                                             Id = e.idExtrato,
                                             Documento = e.nrDocumento,
                                             Valor = e.vlMovimento ?? new decimal(0.0),
-                                            Filial = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia + (p.empresa.filial != null ? " " + p.empresa.filial : "")) ?? "").FirstOrDefault() ?? "",
+                                            Filial = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia.ToUpper() + (p.empresa.filial != null ? " " + p.empresa.filial.ToUpper() : "")) ?? "").FirstOrDefault() ?? "",
                                         }
                                     },
                                     ValorTotal = e.vlMovimento ?? new decimal(0.0),
@@ -935,9 +1024,9 @@ namespace api.Negocios.Card
                                                 NrConta = e.tbContaCorrente.nrConta,
                                                 CdBanco = e.tbContaCorrente.cdBanco
                                             },
-                                    Bandeira = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? "").FirstOrDefault() ?? "",
-                                    TipoCartao = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.dsTipoCartao ?? "").FirstOrDefault() ?? "",
-                                    Filial = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia + (p.empresa.filial != null ? " " + p.empresa.filial : "")) ?? "").FirstOrDefault() ?? "",
+                                    Bandeira = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.tbBandeira.dsBandeira.ToUpper() ?? "").FirstOrDefault() ?? "",
+                                    TipoCartao = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.dsTipoCartao.ToUpper().TrimEnd() ?? "").FirstOrDefault() ?? "",
+                                    Filial = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia.ToUpper() + (p.empresa.filial != null ? " " + p.empresa.filial.ToUpper() : "")) ?? "").FirstOrDefault() ?? "",
                                 }).FirstOrDefault();
 
                             // Adiciona
@@ -954,36 +1043,47 @@ namespace api.Negocios.Card
                     #region OBTÉM AS INFORMAÇÕES DE DADOS NÃO-CONCILIADOS E BUSCA PRÉ-CONCILIAÇÕES
 
                     #region OBTÉM SOMENTE OS RECEBIMENTOS PARCELAS NÃO-CONCILIADOS
-                    List<ConciliacaoBancaria> recebimentosParcela = queryRecebimentoParcela
-                                                        .Where(r => r.idExtrato == null)
-                                                        .Select(r => new ConciliacaoBancaria
-                                                        {
-                                                            Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                            Grupo = new List<ConciliacaoBancaria.ConciliacaoGrupo> {
-                                                                new ConciliacaoBancaria.ConciliacaoGrupo {
-                                                                    Id = r.idRecebimento,
-                                                                    NumParcela = r.numParcela,
-                                                                    Lote = r.Recebimento.idResumoVenda ?? 0,
-                                                                    Documento = r.Recebimento.nsu,
-                                                                    Valor = r.valorParcelaLiquida != null ? r.valorParcelaLiquida.Value : new decimal(0.0),
-                                                                    ValorBruto = r.valorParcelaBruta,
-                                                                    Bandeira = r.Recebimento.tbBandeira.dsBandeira.ToUpper(),
-                                                                    TipoCartao = r.Recebimento.tbBandeira.dsTipo.ToUpper().TrimEnd(),
-                                                                    DataVenda = r.Recebimento.dtaVenda,
-                                                                    DataPrevista = r.dtaRecebimento,
-                                                                    Filial = r.Recebimento.empresa.ds_fantasia + (r.Recebimento.empresa.filial != null ? " " + r.Recebimento.empresa.filial : "")
-                                                                }
-                                                            },
-                                                            ValorTotal = r.valorParcelaLiquida != null ? r.valorParcelaLiquida.Value : new decimal(0.0),
-                                                            ValorTotalBruto = r.valorParcelaBruta,
-                                                            Data = r.dtaRecebimentoEfetivo ?? r.dtaRecebimento,
-                                                            DataVenda = r.Recebimento.dtaVenda,
-                                                            Adquirente = r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente.ToUpper(),
-                                                            Bandeira = r.Recebimento.tbBandeira.dsBandeira.ToUpper(),
-                                                            Lote = r.Recebimento.idResumoVenda ?? 0,
-                                                            TipoCartao = r.Recebimento.tbBandeira.dsTipo.ToUpper().TrimEnd(),
-                                                            Filial = r.Recebimento.empresa.ds_fantasia + (r.Recebimento.empresa.filial != null ? " " + r.Recebimento.empresa.filial : "")
-                                                        }).ToList<ConciliacaoBancaria>();
+                    // Adiciona na cláusula where IDEXTRATO IS NOT NULL
+                    SimpleDataBaseQuery queryRpNaoConciliados = new SimpleDataBaseQuery(dataBaseQuery);
+                    queryRpNaoConciliados.where = new string[dataBaseQuery.where.Length + 1];
+                    for (int k = 0; k < dataBaseQuery.where.Length; k++)
+                        queryRpNaoConciliados.where[k] = dataBaseQuery.where[k];
+                    queryRpNaoConciliados.where[dataBaseQuery.where.Length] = GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato IS NULL";
+
+                    List<ConciliacaoBancaria> recebimentosParcela = new List<ConciliacaoBancaria>();
+                    
+                    List<IDataRecord> resultado = DataBaseQueries.SqlQuery(queryRpNaoConciliados.Script(), connection);
+                    if (resultado != null && resultado.Count > 0)
+                    {
+                        recebimentosParcela = resultado.Select(t => new ConciliacaoBancaria
+                        {
+                            Tipo = TIPO_RECEBIMENTO, // recebimento
+                            Grupo = new List<ConciliacaoBancaria.ConciliacaoGrupo> {
+                                new ConciliacaoBancaria.ConciliacaoGrupo {
+                                    Id = Convert.ToInt32(t["id"]),
+                                    NumParcela =Convert.ToInt32(t["numParcela"]),
+                                    Lote = t["lote"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(t["lote"]),
+                                    Documento = Convert.ToString(t["nsu"]),
+                                    Valor = Convert.ToDecimal(t["valorParcelaLiquida"].Equals(DBNull.Value) ? 0.0 : t["valorParcelaLiquida"]),
+                                    ValorBruto = Convert.ToDecimal(t["valorParcelaBruta"]),
+                                    Bandeira = Convert.ToString(t["dsBandeira"]).ToUpper(),
+                                    TipoCartao = Convert.ToString(t["dsTipo"]).ToUpper().TrimEnd(),
+                                    DataVenda = (DateTime)t["dtaVenda"],
+                                    DataPrevista = (DateTime)t["dtaRecebimento"],
+                                    Filial = Convert.ToString(t["ds_fantasia"]).ToUpper() + (t["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(t["filial"]).ToUpper())
+                                }
+                            },
+                            ValorTotal = Convert.ToDecimal(t["valorParcelaLiquida"].Equals(DBNull.Value) ? 0.0 : t["valorParcelaLiquida"]),
+                            ValorTotalBruto = Convert.ToDecimal(t["valorParcelaBruta"]),
+                            Data = t["dtaRecebimentoEfetivo"].Equals(DBNull.Value) ? (DateTime)t["dtaRecebimento"] : (DateTime)t["dtaRecebimentoEfetivo"],
+                            DataVenda = (DateTime)t["dtaVenda"],
+                            Adquirente = Convert.ToString(t["nmAdquirente"]).ToUpper(),
+                            Bandeira = Convert.ToString(t["dsBandeira"]).ToUpper(),
+                            Lote = t["lote"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(t["lote"]),
+                            TipoCartao = Convert.ToString(t["dsTipo"]).ToUpper().TrimEnd(),
+                            Filial = Convert.ToString(t["ds_fantasia"]).ToUpper() + (t["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(t["filial"]).ToUpper())
+                        }).ToList<ConciliacaoBancaria>();
+                    }
 
                     List<ConciliacaoBancaria> ajustes = queryAjustes
                                                         .Where(r => r.idExtrato == null)
@@ -1832,6 +1932,12 @@ namespace api.Negocios.Card
                     }
                     #endregion
                 }
+
+                try
+                {
+                    connection.Close();
+                }
+                catch { }
 
                 // Ordena
                 CollectionConciliacaoBancaria = CollectionConciliacaoBancaria

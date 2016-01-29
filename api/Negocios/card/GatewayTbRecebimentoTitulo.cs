@@ -24,6 +24,9 @@ namespace api.Negocios.Card
             //_db.Configuration.ProxyCreationEnabled = false;
         }
 
+
+        public static string SIGLA_QUERY = "TI";
+
         /// <summary>
         /// Enum CAMPOS
         /// </summary>

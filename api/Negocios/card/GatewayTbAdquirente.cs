@@ -23,6 +23,9 @@ namespace api.Negocios.Card
             //_db.Configuration.ProxyCreationEnabled = false;
         }
 
+
+        public static string SIGLA_QUERY = "AD";
+
         /// <summary>
         /// Enum CAMPOS
         /// </summary>

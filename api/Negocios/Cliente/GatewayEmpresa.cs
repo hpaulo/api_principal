@@ -23,6 +23,8 @@ namespace api.Negocios.Cliente
            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
+        public static string SIGLA_QUERY = "EM";
+
         /// <summary>
         /// Enum CAMPOS
         /// </summary>

@@ -22,6 +22,8 @@ namespace api.Negocios.Pos
             _db.Configuration.ProxyCreationEnabled = false;
         }
 
+        public static string SIGLA_QUERY = "OP";
+
         /// <summary>
         /// Enum CAMPOS
         /// </summary>
