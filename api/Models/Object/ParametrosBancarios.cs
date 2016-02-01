@@ -65,6 +65,13 @@ namespace api.Models.Object
             set { flVisivel = value; }
         }
 
+        private Nullable<bool> flAntecipacao;
+        public Nullable<bool> FlAntecipacao
+        {
+            get { return flAntecipacao; }
+            set { flAntecipacao = value; }
+        }
+
         private bool deletar;
         public bool Deletar
         {

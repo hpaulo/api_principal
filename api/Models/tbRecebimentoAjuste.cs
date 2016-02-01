@@ -12,6 +12,7 @@ namespace api.Models
         public decimal vlAjuste { get; set; }
         public Nullable<int> idExtrato { get; set; }
         public Nullable<int> idResumoVenda { get; set; }
+        public bool flAntecipacao { get; set; }
         public virtual tbBandeira tbBandeira { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual tbExtrato tbExtrato { get; set; }

@@ -1331,8 +1331,8 @@ namespace api.Negocios.Pos
                             if (!dataBaseQuery.join.ContainsKey("LEFT JOIN card.tbExtrato " + GatewayTbExtrato.SIGLA_QUERY))
                                 dataBaseQuery.join.Add("LEFT JOIN card.tbExtrato " + GatewayTbExtrato.SIGLA_QUERY, " ON " + GatewayTbExtrato.SIGLA_QUERY + ".idExtrato = " + SIGLA_QUERY + ".idExtrato");
                             // Join de Extrato para Conta
-                            if (!dataBaseQuery.join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
-                                dataBaseQuery.join.Add("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + GatewayTbExtrato.SIGLA_QUERY + ".cdContaCorrente");
+                            if (!dataBaseQuery.join.ContainsKey("LEFT JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
+                                dataBaseQuery.join.Add("LEFT JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + GatewayTbExtrato.SIGLA_QUERY + ".cdContaCorrente");
 
                             dataBaseQuery.select = new string[] { GatewayRecebimento.SIGLA_QUERY + ".cnpj AS nrCNPJ",
                                                           GatewayRecebimento.SIGLA_QUERY + ".nsu AS nrNSU",
@@ -1347,7 +1347,7 @@ namespace api.Negocios.Pos
                                                           SIGLA_QUERY + ".valorParcelaBruta AS vlParcelaBruta",
                                                           SIGLA_QUERY + ".valorParcelaLiquida AS vlParcelaLiquida",
                                                           SIGLA_QUERY + ".numParcela AS nrParcela",
-                                                          SIGLA_QUERY + ".codTituloERP AS cdTituloERP",
+                                                          GatewayRecebimento.SIGLA_QUERY + ".codTituloERP AS cdTituloERP",
                                                           GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtBaixaERP AS dtBaixaERP",
                                                           GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AS cdBanco",
                                                           GatewayTbContaCorrente.SIGLA_QUERY + ".nrAgencia AS nrAgencia",
@@ -1362,6 +1362,26 @@ namespace api.Negocios.Pos
                             {
                                 foreach (IDataRecord record in resultado)
                                 {
+                                    //string nrCNPJ = Convert.ToString(record["nrCNPJ"]);
+                                    //string nrNSU = Convert.ToString(record["nrNSU"]);
+                                    //Int32 cdAdquirente = Convert.ToInt32(record["cdAdquirente"]);
+                                    //string dsAdquirente = Convert.ToString(record["dsAdquirente"]);
+                                    //string dsBandeira = Convert.ToString(record["dsBandeira"]);
+                                    //DateTime dtVenda = (DateTime)record["dtVenda"];
+                                    //decimal vlVendaBruta = Convert.ToDecimal(record["vlVendaBruta"]);
+                                    //decimal vlVendaLiquida = Convert.ToDecimal(record["vlVendaLiquida"].Equals(DBNull.Value) ? 0.0 : record["vlVendaBruta"]);
+                                    //Int32 qtTotalParcelas = Convert.ToInt32(record["qtTotalParcelas"]);
+                                    //DateTime dtPagamento = record["dtEfetiva"].Equals(DBNull.Value) ? (DateTime)record["dtPrevista"] : (DateTime)record["dtEfetiva"];
+                                    //decimal vlParcelaBruta = Convert.ToDecimal(record["vlParcelaBruta"]);
+                                    //decimal vlParcelaLiquida = Convert.ToDecimal(record["vlParcelaLiquida"].Equals(DBNull.Value) ? 0.0 : record["vlParcelaLiquida"]);
+                                    //Int32 nrParcela = Convert.ToInt32(record["nrParcela"]);
+                                    //string cdTituloERP = record["cdTituloERP"].Equals(DBNull.Value) ? "" : Convert.ToString(record["cdTituloERP"]);
+                                    //DateTime? dtBaixaERP = record["dtBaixaERP"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)record["dtBaixaERP"];
+                                    //string cdBanco = record["cdBanco"].Equals(DBNull.Value) ? "" : Convert.ToString(record["cdBanco"]);
+                                    //string nrAgencia = record["nrAgencia"].Equals(DBNull.Value) ? "" : Convert.ToString(record["nrAgencia"]);
+                                    //string nrConta = record["nrConta"].Equals(DBNull.Value) ? "" : Convert.ToString(record["nrConta"]);
+                                    //DateTime dtPrevista = (DateTime)record["dtPrevista"];
+                                    //DateTime? dtEfetiva = record["dtEfetiva"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)record["dtEfetiva"];
                                     CollectionRecebimentoParcela.Add(new
                                     {
                                         nrCNPJ = Convert.ToString(record["nrCNPJ"]),
@@ -1373,7 +1393,7 @@ namespace api.Negocios.Pos
                                         vlVendaBruta = Convert.ToDecimal(record["vlVendaBruta"]),
                                         vlVendaLiquida = Convert.ToDecimal(record["vlVendaLiquida"].Equals(DBNull.Value) ? 0.0 : record["vlVendaBruta"]),
                                         qtTotalParcelas = Convert.ToInt32(record["qtTotalParcelas"]),
-                                        dtPagamento = Convert.ToDecimal(record["dtEfetiva"].Equals(DBNull.Value) ? (DateTime)record["dtEfetiva"] : (DateTime)record["dtPrevista"]),
+                                        dtPagamento = record["dtEfetiva"].Equals(DBNull.Value) ? (DateTime)record["dtPrevista"] : (DateTime)record["dtEfetiva"],
                                         vlParcelaBruta = Convert.ToDecimal(record["vlParcelaBruta"]),
                                         vlParcelaLiquida = Convert.ToDecimal(record["vlParcelaLiquida"].Equals(DBNull.Value) ? 0.0 : record["vlParcelaLiquida"]),
                                         nrParcela = Convert.ToInt32(record["nrParcela"]),

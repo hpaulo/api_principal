@@ -16,7 +16,6 @@ namespace api.Negocios.Util
         public string[] where { get; set; }
         public string[] groupby { get; set; }
         public string[] orderby { get; set; }
-        public int skip { get; set; }
         public int take { get; set; }
 
         public SimpleDataBaseQuery(SimpleDataBaseQuery simpleDataBaseQuery)
@@ -27,7 +26,6 @@ namespace api.Negocios.Util
             this.where = simpleDataBaseQuery.where;
             this.groupby = simpleDataBaseQuery.groupby;
             this.orderby = simpleDataBaseQuery.orderby;
-            this.skip = simpleDataBaseQuery.skip;
             this.take = simpleDataBaseQuery.take;
         }
 
@@ -36,7 +34,7 @@ namespace api.Negocios.Util
             this.from = String.Empty;
         }
 
-        public SimpleDataBaseQuery(string[] select, string from, Dictionary<string, string> join, string[] where, string[] groupby, string[] orderby, int skip = 0, int take = 0, Dictionary<string, string> left_join = null)
+        public SimpleDataBaseQuery(string[] select, string from, Dictionary<string, string> join, string[] where, string[] groupby, string[] orderby, int take = 0, Dictionary<string, string> left_join = null)
         {
             this.select = select;
             this.join = join != null ? join : new Dictionary<string, string>(); ;
@@ -44,13 +42,25 @@ namespace api.Negocios.Util
             this.where = where;
             this.groupby = groupby;
             this.orderby = orderby;
-            this.skip = skip;
             this.take = take;
+        }
+
+        public void AddWhereClause(string clause)
+        {
+            if (clause == null) return;
+            string[] aux = this.where;
+            this.where = new string[aux.Length + 1];
+            int k = 0;
+            for (; k < aux.Length; k++)
+                this.where[k] = aux[k];
+            this.where[k] = clause;
         }
 
         public string Script()
         {
             string script = "SELECT ";
+            if (take > 0)
+                script += "TOP(" + take + ") ";
             if (select != null)
             {
                 foreach (string s in select)
@@ -89,7 +99,6 @@ namespace api.Negocios.Util
                 // Remove a última vírgula
                 script = script.Remove(script.Length - 2);
             }
-            // sem funcionalidade de skip e take!
             return script; 
         }
     }

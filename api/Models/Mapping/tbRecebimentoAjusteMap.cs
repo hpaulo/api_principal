@@ -29,6 +29,9 @@ namespace api.Models.Mapping
             this.Property(t => t.vlAjuste)
                 .IsRequired();
 
+            this.Property(t => t.flAntecipacao)
+                .IsRequired();
+
             // Table & Column Mappings
             this.ToTable("tbRecebimentoAjuste", "card");
             this.Property(t => t.idRecebimentoAjuste).HasColumnName("idRecebimentoAjuste");
@@ -39,6 +42,7 @@ namespace api.Models.Mapping
             this.Property(t => t.vlAjuste).HasColumnName("vlAjuste");
             this.Property(t => t.idExtrato).HasColumnName("idExtrato");
             this.Property(t => t.idResumoVenda).HasColumnName("idResumoVenda");
+            this.Property(t => t.flAntecipacao).HasColumnName("flAntecipacao");
 
             // Relationships
             this.HasRequired(t => t.tbBandeira)

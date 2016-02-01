@@ -281,7 +281,8 @@ namespace api.Negocios.Card
                         flVisivel = e.flVisivel,
                         nrCnpj = e.nrCnpj,
                         dsTipoCartao = e.dsTipoCartao.TrimEnd(),
-                        cdBandeira = e.cdBandeira
+                        cdBandeira = e.cdBandeira,
+                        flAntecipacao = e.flAntecipacao
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -296,7 +297,8 @@ namespace api.Negocios.Card
                         flVisivel = e.flVisivel,
                         nrCnpj = e.nrCnpj,
                         dsTipoCartao = e.dsTipoCartao.TrimEnd(),
-                        cdBandeira = e.cdBandeira
+                        cdBandeira = e.cdBandeira,
+                        flAntecipacao = e.flAntecipacao
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2) // [WEB] 
@@ -313,6 +315,7 @@ namespace api.Negocios.Card
                                         },
                         dsTipo = e.dsTipo,
                         flVisivel = e.flVisivel,
+                        flAntecipacao = e.flAntecipacao,
                         dsTipoCartao = e.dsTipoCartao.TrimEnd(),
                         empresa = e.nrCnpj == null ? null : new
                         {
@@ -344,6 +347,7 @@ namespace api.Negocios.Card
                             adquirente = bancoParametro.adquirente,
                             dsTipo = bancoParametro.dsTipo,
                             flVisivel = bancoParametro.flVisivel,
+                            flAntecipacao = bancoParametro.flAntecipacao,
                             empresa = bancoParametro.empresa,
                             grupoempresa = bancoParametro.grupoempresa,
                             bandeira = bancoParametro.bandeira,
@@ -530,6 +534,9 @@ namespace api.Negocios.Card
                             }
                             // Visibilidade
                             if (param.FlVisivel != value.flVisivel) value.flVisivel = param.FlVisivel;
+                            // Antecipação
+                            if (param.FlAntecipacao != null && param.FlAntecipacao.Value != value.flAntecipacao) 
+                                value.flAntecipacao = param.FlAntecipacao.Value;
                             // Salva
                             _db.SaveChanges();
                             transaction.Commit();

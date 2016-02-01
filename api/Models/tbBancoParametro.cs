@@ -16,6 +16,7 @@ namespace api.Models.Object
         public string nrCnpj { get; set; }
         public string dsTipoCartao { get; set; }
         public Nullable<int> cdBandeira { get; set; }
+        public bool flAntecipacao { get; set; }
         public virtual tbAdquirente tbAdquirente { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual tbBandeira tbBandeira { get; set; }

@@ -101,6 +101,13 @@ namespace api.Models.Object
             set { conta = value; }
         }
 
+        private Nullable<bool> antecipado;
+        public Nullable<bool> Antecipado
+        {
+            get { return antecipado; }
+            set { antecipado = value; }
+        }
+
 
 
         public class ConciliacaoGrupo
@@ -180,6 +187,13 @@ namespace api.Models.Object
             {
                 get { return numParcela; }
                 set { numParcela = value; }
+            }
+
+            private Nullable<bool> antecipado;
+            public Nullable<bool> Antecipado
+            {
+                get { return antecipado; }
+                set { antecipado = value; }
             }
         }
 
