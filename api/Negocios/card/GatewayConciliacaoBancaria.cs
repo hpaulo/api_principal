@@ -892,6 +892,7 @@ namespace api.Negocios.Card
                                                         };
 
                 // Sem ordem
+                dataBaseQuery.readUncommited = true;
                 dataBaseQuery.groupby = null;
                 dataBaseQuery.orderby = new string[] { "CASE WHEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NOT NULL THEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo ELSE " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimento END",
                                                        GatewayRecebimento.SIGLA_QUERY + ".dtaVenda"};
@@ -1424,97 +1425,96 @@ namespace api.Negocios.Card
                             // - Depois por lote
                             // - Depois, se estiver selecionada uma conta, agrupa todas as filiais com vigência em vigor
 
-                            List<ConciliacaoBancaria> extratoBancarioAntecipacao = extratoBancario.Where(t => t.Antecipado != null && t.Antecipado.Value)
-                                                                                                  .ToList<ConciliacaoBancaria>();
-
-                            if (extratoBancarioAntecipacao.Count > 0)
-                            {
-                                #region CONCILIA MOVIMENTAÇÕES BANCÁRIA DE ANTECIPAÇÃO
-
-                                // Obtém parcelas antecipadas por filial
-                                List<ConciliacaoBancaria> parcelasAntecipadas = recebimentosParcela.Where(t => t.Antecipado != null && t.Antecipado.Value)
-                                                                                                   .GroupBy(t => new { t.Adquirente, t.Data, t.Filial })
-                                                                                                   .Select(t => new ConciliacaoBancaria
-                                                                                                   {
-                                                                                                       Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                                                       Grupo = t.Select(r => r.Grupo.First()).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
-                                                                                                       ValorTotal = t.Select(r => r.ValorTotal).Sum(),
-                                                                                                       ValorTotalBruto = t.Select(r => r.ValorTotalBruto).Sum(),
-                                                                                                       Data = t.Key.Data,
-                                                                                                       DataVenda = t.GroupBy(r => r.DataVenda).Count() == 1 ? t.Select(r => r.DataVenda).FirstOrDefault() : (DateTime?)null,
-                                                                                                       Adquirente = t.Key.Adquirente,
-                                                                                                       Bandeira = t.GroupBy(r => r.Bandeira).Count() == 1 ? t.Select(r => r.Bandeira).FirstOrDefault() : "",
-                                                                                                       Lote = t.GroupBy(r => r.Lote).Count() == 1 ? t.Select(r => r.Lote).FirstOrDefault() : 0,
-                                                                                                       TipoCartao = t.GroupBy(r => r.TipoCartao).Count() == 1 ? t.Select(r => r.TipoCartao).FirstOrDefault() : "",
-                                                                                                       Antecipado = true,
-                                                                                                       Filial = t.Key.Filial
-                                                                                                    })
-                                                                                                    .ToList<ConciliacaoBancaria>();
-
-                                if (parcelasAntecipadas.Count > 0)
-                                {
-                                    // Pré-concilia com a menor diferença encontrada
-                                    for (int e = 0; e < extratoBancarioAntecipacao.Count; e++)
-                                    {
-                                        ConciliacaoBancaria movimentacao = extratoBancarioAntecipacao[e];
-
-                                        // Parcelas da mesma adquirente, data
-                                        List<ConciliacaoBancaria> parcelas = parcelasAntecipadas.Where(t => movimentacao.Adquirente.Equals("") || t.Adquirente.Equals(movimentacao.Adquirente))
-                                                                                                .Where(t => movimentacao.Filial.Equals("") || t.Filial.Equals(movimentacao.Filial))
-                                                                                                .Where(t => movimentacao.Data.Year == t.Data.Year)
-                                                                                                .Where(t => movimentacao.Data.Month == t.Data.Month)
-                                                                                                .Where(t => movimentacao.Data.Day == t.Data.Day)
+                            // Obtém parcelas antecipadas por filial
+                            List<ConciliacaoBancaria> parcelasAntecipadas = recebimentosParcela.Where(t => t.Antecipado != null && t.Antecipado.Value)
+                                                                                               .GroupBy(t => new { t.Adquirente, t.Data, t.Filial })
+                                                                                               .Select(t => new ConciliacaoBancaria
+                                                                                               {
+                                                                                                   Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                                                   Grupo = t.Select(r => r.Grupo.First()).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                                   ValorTotal = t.Select(r => r.ValorTotal).Sum(),
+                                                                                                   ValorTotalBruto = t.Select(r => r.ValorTotalBruto).Sum(),
+                                                                                                   Data = t.Key.Data,
+                                                                                                   DataVenda = t.GroupBy(r => r.DataVenda).Count() == 1 ? t.Select(r => r.DataVenda).FirstOrDefault() : (DateTime?)null,
+                                                                                                   Adquirente = t.Key.Adquirente,
+                                                                                                   Bandeira = t.GroupBy(r => r.Bandeira).Count() == 1 ? t.Select(r => r.Bandeira).FirstOrDefault() : "",
+                                                                                                   Lote = t.GroupBy(r => r.Lote).Count() == 1 ? t.Select(r => r.Lote).FirstOrDefault() : 0,
+                                                                                                   TipoCartao = t.GroupBy(r => r.TipoCartao).Count() == 1 ? t.Select(r => r.TipoCartao).FirstOrDefault() : "",
+                                                                                                   Antecipado = true,
+                                                                                                   Filial = t.Key.Filial
+                                                                                               })
                                                                                                 .ToList<ConciliacaoBancaria>();
 
-                                        if (parcelas.Count == 0) 
+                            if (parcelasAntecipadas.Count > 0)
+                            {
+                                // Remove todas elas das parcelas a serem pré-conciliadas com as movimentações que não são de antecipação
+                                //recebimentosParcela = parcelasAntecipadas.Where(e => parcelasAntecipadas.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id && g.NumParcela == e.Grupo[0].NumParcela)))
+                                //                                                .OrderBy(e => e.Data)
+                                //                                                .ThenBy(e => e.Filial)
+                                //                                                .ThenBy(e => e.Adquirente)
+                                //                                                .ThenBy(e => e.Bandeira)
+                                //                                                .ThenBy(e => e.Lote)
+                                //                                                .ToList<ConciliacaoBancaria>();
+                                recebimentosParcela.RemoveAll(t => t.Antecipado != null && t.Antecipado.Value);
+
+                                // tem parcelas antecipadas!
+                                List<ConciliacaoBancaria> extratoBancarioAntecipacao = extratoBancario.Where(t => t.Antecipado != null && t.Antecipado.Value)
+                                                                                                      .ToList<ConciliacaoBancaria>();
+                                if (extratoBancarioAntecipacao.Count > 0)
+                                {
+                                    // Tenta pré-conciliar com movimentações de antecipação
+                                    foreach (ConciliacaoBancaria recebimento in parcelasAntecipadas)
+                                    {
+                                        // Movimentações da mesma adquirente, data e filial
+                                        List<ConciliacaoBancaria> movimentacoes = extratoBancarioAntecipacao.Where(t => t.Adquirente.Equals("") || t.Adquirente.Equals(recebimento.Adquirente))
+                                                                                                .Where(t => t.Filial.Equals("") || t.Filial.Equals(recebimento.Filial))
+                                                                                                .Where(t => t.Data.Year == recebimento.Data.Year)
+                                                                                                .Where(t => t.Data.Month == recebimento.Data.Month)
+                                                                                                .Where(t => t.Data.Day == recebimento.Data.Day)
+                                                                                                .ToList<ConciliacaoBancaria>();
+                                        if (movimentacoes.Count == 0)
+                                        {
+                                            if (!filtroTipoNaoConciliado)
+                                                // Adiciona o cupom como não conciliado
+                                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, new List<ConciliacaoBancaria>() { recebimento });
+                                            
                                             continue;
+                                        }
 
                                         decimal menorDiferenca = decimal.MaxValue;
                                         int indice = -1;
                                         // Procura a menor diferença
-                                        for (int p = 0; p < parcelas.Count; p++)
+                                        for (int m = 0; m < movimentacoes.Count; m++)
                                         {
-                                            ConciliacaoBancaria parc = parcelasAntecipadas[p];
-                                            decimal diferenca = Math.Abs(movimentacao.ValorTotal - parc.ValorTotal);
+                                            ConciliacaoBancaria mov = movimentacoes[m];
+                                            decimal diferenca = Math.Abs(recebimento.ValorTotal - mov.ValorTotal);
                                             if (diferenca < menorDiferenca)
                                             {
-                                                indice = p;
+                                                indice = m;
                                                 menorDiferenca = diferenca;
                                             }
                                         }
 
                                         // Pega a parcela de menor diferença
-                                        ConciliacaoBancaria recebimento = parcelas[indice];
+                                        ConciliacaoBancaria movimentacao = movimentacoes[indice];
 
-                                        // Deleta das coleções
-                                        parcelasAntecipadas.Remove(recebimento);
+                                        // Deleta a movimentação já pré-conciliada
                                         extratoBancarioAntecipacao.Remove(movimentacao);
-                                        e--;
+                                        extratoBancario.Remove(movimentacao);
 
                                         // Adiciona na lista de pré-conciliados
                                         if (!filtroTipoNaoConciliado)
                                             adicionaElementosConciliadosNaLista(CollectionConciliacaoBancaria, recebimento, movimentacao, TIPO_CONCILIADO.PRE_CONCILIADO);
                                     }
-
-                                    #region REMOVE DAS LISTAS OS ELEMENTOS JÁ PRÉ-CONCILIADOS
-                                    recebimentosParcela = parcelasAntecipadas.Where(e => parcelasAntecipadas.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id && g.NumParcela == e.Grupo[0].NumParcela)))
-                                                                                .OrderBy(e => e.Data)
-                                                                                .ThenBy(e => e.Filial)
-                                                                                .ThenBy(e => e.Adquirente)
-                                                                                .ThenBy(e => e.Bandeira)
-                                                                                .ThenBy(e => e.Lote)
-                                                                                .ToList<ConciliacaoBancaria>();
-
-                                    extratoBancario = extratoBancarioAntecipacao.Where(e => extratoBancarioAntecipacao.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id)))
-                                                                            .OrderBy(e => e.Data)
-                                                                            .ThenBy(e => e.Adquirente)
-                                                                            .ThenBy(e => e.Memo)
-                                                                            .ToList<ConciliacaoBancaria>();
-                                    #endregion
+                                }
+                                else if (!filtroTipoNaoConciliado)
+                                {
+                                    // Adiciona cupom a cupom como não conciliado
+                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, parcelasAntecipadas);
                                 }
 
-                                
-                                #endregion
+                                // Limpa a lista
+                                parcelasAntecipadas.Clear();
                             }
                         }
                         
@@ -2158,7 +2158,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            //DbContextTransaction transaction = _db.Database.BeginTransaction();
+    
             try
             {
                 for (int k = 0; k < param.Count; k++)
@@ -2175,66 +2175,46 @@ namespace api.Negocios.Card
                         }
 
 
+                        List<ConciliaRecebimentoParcela.RecebParcela> groupBy = grupoExtrato.recebimentosParcela.GroupBy(t => new { t.idRecebimento, t.numParcela })
+                                                                                .Select(t => new ConciliaRecebimentoParcela.RecebParcela
+                                                                                {
+                                                                                    idRecebimento = t.Key.idRecebimento,
+                                                                                    numParcela = t.Key.numParcela
+                                                                                }).ToList<ConciliaRecebimentoParcela.RecebParcela>();
+
+                        int? idExtrato = grupoExtrato.idExtrato == -1 ? (int?)null : grupoExtrato.idExtrato;
                         for (int g = 0; g < grupoExtrato.recebimentosParcela.Count; g++)
                         {
                             ConciliaRecebimentoParcela.RecebParcela recebimentoParcela = grupoExtrato.recebimentosParcela[g];
-                            DbContextTransaction transaction = _db.Database.BeginTransaction();
-                            try
+                            if (recebimentoParcela.numParcela == -1)
                             {
-                                if (recebimentoParcela.numParcela == -1)
-                                {
-                                    // AJUSTE
-                                    tbRecebimentoAjuste value = _db.tbRecebimentoAjustes
-                                                                            .Where(e => e.idRecebimentoAjuste == recebimentoParcela.idRecebimento)
-                                                                            .FirstOrDefault();
-                                    if (value != null)
-                                    {
-                                        if (grupoExtrato.idExtrato == -1) value.idExtrato = null;
-                                        else
-                                        {
-                                            value.idExtrato = extrato.idExtrato;
-                                            //value.dtAjuste = extrato.dtExtrato; // atualiza data efetiva do ajuste
-                                        }
-                                        _db.SaveChanges();
-                                    }
-                                }
-                                else
-                                {
-                                    // RECEBIMENTO PARCELA
-                                    RecebimentoParcela value = _db.RecebimentoParcelas
-                                                                            .Where(e => e.idRecebimento == recebimentoParcela.idRecebimento)
-                                                                            .Where(e => e.numParcela == recebimentoParcela.numParcela)
-                                                                            .FirstOrDefault();
-                                    if (value != null)
-                                    {
-                                        if (grupoExtrato.idExtrato == -1) value.idExtrato = null;
-                                        else
-                                        {
-                                            value.idExtrato = extrato.idExtrato;
-                                            value.dtaRecebimentoEfetivo = extrato.dtExtrato; // atualiza data efetiva de recebimento
-                                        }
-                                        _db.SaveChanges();
-                                    }
-                                }
-                                transaction.Commit();
+                                // AJUSTE
+                                _db.Database.ExecuteSqlCommand(
+                                        "UPDATE " + GatewayTbRecebimentoAjuste.SIGLA_QUERY +
+                                        " SET " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idExtrato = " + idExtrato +
+                                        " FROM card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY +
+                                        " WHERE " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idRecebimentoAjuste = " + recebimentoParcela.idRecebimento 
+                                        );
+
                             }
-                            catch (Exception e)
+                            else
                             {
-                                // Rollback
-                                transaction.Rollback();
-                                if (e is DbEntityValidationException)
-                                {
-                                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                                    throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento parcela" : erro);
-                                }
-                                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+                                // RECEBIMENTO PARCELA
+                                _db.Database.ExecuteSqlCommand(
+                                        "UPDATE " + GatewayRecebimentoParcela.SIGLA_QUERY +
+                                        " SET " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato = " + idExtrato +
+                                        (idExtrato == null ? "" : ", " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo = '" + DataBaseQueries.GetDate(extrato.dtExtrato)) + "'" +
+                                        " FROM pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY +
+                                        " WHERE " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idRecebimento = " + recebimentoParcela.idRecebimento +
+                                            " AND " + GatewayRecebimentoParcela.SIGLA_QUERY + ".numParcela = " + recebimentoParcela.numParcela
+                                        );
+
                             }
+                            _db.SaveChanges();
                         }
                     }
 
                 }
-                // Commit
-                //transaction.Commit();
 
             }
             catch (Exception e)
@@ -2277,48 +2257,32 @@ namespace api.Negocios.Card
 
                 foreach (RecebimentosParcela.RecebParcela recebimentoParcela in param.recebimentosParcela)
                 {
-                    DbContextTransaction transaction = _db.Database.BeginTransaction();
-                    try
+                    if (recebimentoParcela.numParcela == -1)
                     {
-                        if (recebimentoParcela.numParcela == -1)
-                        {
-                            // AJUSTE
-                            tbRecebimentoAjuste ajuste = _db.tbRecebimentoAjustes.Where(e => e.idRecebimentoAjuste == recebimentoParcela.idRecebimento)
-                                                                                 .FirstOrDefault();
-                            if (ajuste != null && ajuste.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
-                            {
-                                ajuste.dtAjuste = param.dtaRecebimentoEfetivo;
-                                _db.SaveChanges();
-                            }
-                        }
-                        else
-                        {
-                            // PARCELA
+                        // AJUSTE
+                        _db.Database.ExecuteSqlCommand(
+                                "UPDATE " + GatewayTbRecebimentoAjuste.SIGLA_QUERY +
+                                " SET " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste = '" + DataBaseQueries.GetDate(param.dtaRecebimentoEfetivo) + "'" +
+                                " FROM card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY +
+                                " WHERE " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idRecebimentoAjuste = " + recebimentoParcela.idRecebimento +
+                                  " AND " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idExtrato IS NULL"
+                                );
 
-                            RecebimentoParcela recebimento = _db.RecebimentoParcelas
-                                                                    .Where(e => e.idRecebimento == recebimentoParcela.idRecebimento)
-                                                                    .Where(e => e.numParcela == recebimentoParcela.numParcela)
-                                                                    .FirstOrDefault();
-
-                            if (recebimento != null && recebimento.idExtrato == null) // só altera a data se não tiver envolvido em uma conciliação bancária
-                            {
-                                recebimento.dtaRecebimentoEfetivo = param.dtaRecebimentoEfetivo;
-                                _db.SaveChanges();
-                            }
-                        }
-                        transaction.Commit();
                     }
-                    catch (Exception e)
+                    else
                     {
-                        // Rollback
-                        transaction.Rollback();
-                        if (e is DbEntityValidationException)
-                        {
-                            string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                            throw new Exception(erro.Equals("") ? "Falha ao alterar recebimento parcela" : erro);
-                        }
-                        throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+                        // RECEBIMENTO PARCELA
+                        _db.Database.ExecuteSqlCommand(
+                                "UPDATE " + GatewayRecebimentoParcela.SIGLA_QUERY +
+                                " SET " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo = '" + DataBaseQueries.GetDate(param.dtaRecebimentoEfetivo) + "'" +
+                                " FROM pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY +
+                                " WHERE " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idRecebimento = " + recebimentoParcela.idRecebimento +
+                                    " AND " + GatewayRecebimentoParcela.SIGLA_QUERY + ".numParcela = " + recebimentoParcela.numParcela +
+                                    " AND " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato IS NULL"
+                                );
+
                     }
+                    _db.SaveChanges();
                 }
             }
             catch (Exception e)

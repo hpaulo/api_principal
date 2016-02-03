@@ -17,6 +17,7 @@ namespace api.Negocios.Util
         public string[] groupby { get; set; }
         public string[] orderby { get; set; }
         public int take { get; set; }
+        public bool readUncommited { get; set; }
 
         public SimpleDataBaseQuery(SimpleDataBaseQuery simpleDataBaseQuery)
         {
@@ -27,6 +28,7 @@ namespace api.Negocios.Util
             this.groupby = simpleDataBaseQuery.groupby;
             this.orderby = simpleDataBaseQuery.orderby;
             this.take = simpleDataBaseQuery.take;
+            this.readUncommited = simpleDataBaseQuery.readUncommited;
         }
 
         public SimpleDataBaseQuery()
@@ -34,7 +36,7 @@ namespace api.Negocios.Util
             this.from = String.Empty;
         }
 
-        public SimpleDataBaseQuery(string[] select, string from, Dictionary<string, string> join, string[] where, string[] groupby, string[] orderby, int take = 0, Dictionary<string, string> left_join = null)
+        public SimpleDataBaseQuery(string[] select, string from, Dictionary<string, string> join, string[] where, string[] groupby, string[] orderby, int take = 0, bool readUncommited = false, Dictionary<string, string> left_join = null)
         {
             this.select = select;
             this.join = join != null ? join : new Dictionary<string, string>(); ;
@@ -43,6 +45,7 @@ namespace api.Negocios.Util
             this.groupby = groupby;
             this.orderby = orderby;
             this.take = take;
+            this.readUncommited = readUncommited;
         }
 
         public void AddWhereClause(string clause)
@@ -69,6 +72,7 @@ namespace api.Negocios.Util
                 script = script.Remove(script.Length - 2);
             }
             script += " FROM " + from;
+            if (readUncommited) script += " (NOLOCK)";
             if(join != null)
             {
                 script += " ";

@@ -24,6 +24,8 @@ namespace api.Negocios.Card
             //_db.Configuration.ProxyCreationEnabled = false;
         }
 
+        public static string SIGLA_QUERY = "AJ";
+
         public static string[] AJUSTES_ANTECIPACAO_AMEX = { "DEBITO ANTECIPACAO A VISTA",
                                                             "DEBITO ANTECIPACAO PARCELADO" }; // STARTS WITH!
         public static string[] AJUSTES_ANTECIPACAO_BANESE = { "DÉBITO ANTECIPAÇÃO",

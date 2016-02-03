@@ -20,16 +20,6 @@ namespace api.Controllers.Card
         // GET /ConciliacaoBancaria/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
-            ////declare the transaction options
-            //System.Transactions.TransactionOptions transactionOptions = new System.Transactions.TransactionOptions();
-            ////set it to read uncommited
-            //transactionOptions.IsolationLevel = System.Transactions.IsolationLevel.ReadUncommitted;
-            ////create the transaction scope, passing our options in
-            //using (System.Transactions.TransactionScope transactionScope = new System.Transactions.TransactionScope(System.Transactions.TransactionScopeOption.Required, transactionOptions))
-            //{
-            //    //declare our context
-            //    using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
-            //    {
             // Abre nova conexão
             painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
             tbLogAcessoUsuario log = new tbLogAcessoUsuario();
@@ -66,8 +56,6 @@ namespace api.Controllers.Card
                 _db.Database.Connection.Close();
                 _db.Dispose();
             }
-            //    }
-            //}
         }
 
 

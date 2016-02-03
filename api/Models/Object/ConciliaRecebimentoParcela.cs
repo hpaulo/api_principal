@@ -22,6 +22,11 @@ namespace api.Models.Object
         {
             public Int32 idRecebimento;
             public Int32 numParcela;
+
+            public override string ToString()
+            {
+                return "ID: " + idRecebimento + " Parcela: " + numParcela;
+            }
         }
 
     }

@@ -1318,6 +1318,8 @@ namespace api.Negocios.Pos
                     if (!dataBaseQuery.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
                         dataBaseQuery.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
 
+                    // Leitura suja
+                    dataBaseQuery.readUncommited = true;
 
                     if (colecao == 8)
                     {
