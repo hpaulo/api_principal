@@ -10,6 +10,7 @@ namespace api.Models
         {
             this.tbContaCorrente_tbLoginAdquirenteEmpresas = new List<tbContaCorrente_tbLoginAdquirenteEmpresa>();
             this.tbExtratos = new List<tbExtrato>();
+            this.tbAntecipacaoBancarias = new List<tbAntecipacaoBancaria>();
         }
 
         public int cdContaCorrente { get; set; }
@@ -23,5 +24,6 @@ namespace api.Models
         public virtual ICollection<tbExtrato> tbExtratos { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual grupo_empresa grupo_empresa { get; set; }
+        public virtual ICollection<tbAntecipacaoBancaria> tbAntecipacaoBancarias { get; set; }
     }
 }
