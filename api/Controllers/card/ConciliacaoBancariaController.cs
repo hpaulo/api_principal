@@ -21,40 +21,42 @@ namespace api.Controllers.Card
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             // Abre nova conexão
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
-            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
-            try
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get", _db);
+                tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+                try
+                {
+                    log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get", _db);
 
-                Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
-                HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token, _db))
-                {
-                    Retorno dados = GatewayConciliacaoBancaria.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString, _db);
-                    log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+                    Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
+                    HttpResponseMessage retorno = new HttpResponseMessage();
+                    if (Permissoes.Autenticado(token, _db))
+                    {
+                        Retorno dados = GatewayConciliacaoBancaria.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString, _db);
+                        log.codResposta = (int)HttpStatusCode.OK;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+                    }
+                    else
+                    {
+                        log.codResposta = (int)HttpStatusCode.Unauthorized;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    log.codResposta = (int)HttpStatusCode.Unauthorized;
-                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
+                    log.msgErro = e.Message;
+                    Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
+                    throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
-            }
-            catch (Exception e)
-            {
-                log.codResposta = (int)HttpStatusCode.InternalServerError;
-                log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
-            }
-            finally
-            {
-                // Fecha conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                //finally
+                //{
+                //    // Fecha conexão
+                //    _db.Database.Connection.Close();
+                //    _db.Dispose();
+                //}
             }
         }
 
@@ -63,39 +65,41 @@ namespace api.Controllers.Card
         public HttpResponseMessage Post(string token, [FromBody]List<ConciliaRecebimentoParcela> param)
         {
             // Abre nova conexão
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
-            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
-            try
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post", _db);
+                tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+                try
+                {
+                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post", _db);
 
-                HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token, _db))
-                {
-                    GatewayConciliacaoBancaria.Post(token, param, _db);
-                    log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
-                    return Request.CreateResponse(HttpStatusCode.OK);
+                    HttpResponseMessage retorno = new HttpResponseMessage();
+                    if (Permissoes.Autenticado(token, _db))
+                    {
+                        GatewayConciliacaoBancaria.Post(token, param, _db);
+                        log.codResposta = (int)HttpStatusCode.OK;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.OK);
+                    }
+                    else
+                    {
+                        log.codResposta = (int)HttpStatusCode.Unauthorized;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    log.codResposta = (int)HttpStatusCode.Unauthorized;
-                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
+                    log.msgErro = e.Message;
+                    Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
+                    throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
-            }
-            catch (Exception e)
-            {
-                log.codResposta = (int)HttpStatusCode.InternalServerError;
-                log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
-            }
-            finally
-            {
-                // Fecha conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                //finally
+                //{
+                //    // Fecha conexão
+                //    _db.Database.Connection.Close();
+                //    _db.Dispose();
+                //}
             }
         }
        
@@ -103,39 +107,41 @@ namespace api.Controllers.Card
         public HttpResponseMessage Put(string token, [FromBody]RecebimentosParcela param)
         {
             // Abre nova conexão
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
-            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
-            try
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put", _db);
+                tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+                try
+                {
+                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put", _db);
 
-                HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token, _db))
-                {
-                    GatewayConciliacaoBancaria.Update(token, param, _db);
-                    log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
-                    return Request.CreateResponse(HttpStatusCode.OK);
+                    HttpResponseMessage retorno = new HttpResponseMessage();
+                    if (Permissoes.Autenticado(token, _db))
+                    {
+                        GatewayConciliacaoBancaria.Update(token, param, _db);
+                        log.codResposta = (int)HttpStatusCode.OK;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.OK);
+                    }
+                    else
+                    {
+                        log.codResposta = (int)HttpStatusCode.Unauthorized;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    log.codResposta = (int)HttpStatusCode.Unauthorized;
-                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
+                    log.msgErro = e.Message;
+                    Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
+                    throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
-            }
-            catch (Exception e)
-            {
-                log.codResposta = (int)HttpStatusCode.InternalServerError;
-                log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
-            }
-            finally
-            {
-                // Fecha conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                //finally
+                //{
+                //    // Fecha conexão
+                //    _db.Database.Connection.Close();
+                //    _db.Dispose();
+                //}
             }
         }
 
@@ -144,66 +150,68 @@ namespace api.Controllers.Card
         public HttpResponseMessage Patch(string token, [FromBody]List<BaixaTitulos> param)
         {
             // Abre nova conexão
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
-            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
-            try
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Patch", _db);
-
-                HttpResponseMessage retorno = new HttpResponseMessage();
-                if (Permissoes.Autenticado(token, _db))
+                tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+                try
                 {
-                    List<List<string>> arquivos = GatewayConciliacaoBancaria.Patch(token, param, _db);
-                    log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Patch", _db);
 
-                    HttpResponseMessage result = Request.CreateResponse(HttpStatusCode.OK);
-
-                    List<string> nomesArquivo = new List<string>();
-                    foreach (BaixaTitulos p in param)
-                        //nomesArquivo.Add(p.dataRecebimento + "_" + p.idsRecebimento.Count);
-                        nomesArquivo.Add(p.idExtrato.ToString());
-
-                    if (arquivos.Count == 1)
+                    HttpResponseMessage retorno = new HttpResponseMessage();
+                    if (Permissoes.Autenticado(token, _db))
                     {
-                        string nmArquivo = nomesArquivo[0] + ".csv";
-                        result.Content = new StreamContent(new MemoryStream(Bibliotecas.Converter.ListToCSV(arquivos[0])));
-                        result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
-                        result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                        result.Content.Headers.ContentDisposition.FileName = nmArquivo;
-                        result.Content.Headers.Add("x-filename", nmArquivo);
+                        List<List<string>> arquivos = GatewayConciliacaoBancaria.Patch(token, param, _db);
+                        log.codResposta = (int)HttpStatusCode.OK;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+
+                        HttpResponseMessage result = Request.CreateResponse(HttpStatusCode.OK);
+
+                        List<string> nomesArquivo = new List<string>();
+                        foreach (BaixaTitulos p in param)
+                            //nomesArquivo.Add(p.dataRecebimento + "_" + p.idsRecebimento.Count);
+                            nomesArquivo.Add(p.idExtrato.ToString());
+
+                        if (arquivos.Count == 1)
+                        {
+                            string nmArquivo = nomesArquivo[0] + ".csv";
+                            result.Content = new StreamContent(new MemoryStream(Bibliotecas.Converter.ListToCSV(arquivos[0])));
+                            result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
+                            result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                            result.Content.Headers.ContentDisposition.FileName = nmArquivo;
+                            result.Content.Headers.Add("x-filename", nmArquivo);
+                        }
+                        else if (arquivos.Count > 1)
+                        {
+                            string nmArquivo = "file" + DateTime.Now.ToString().Replace("/", "-") + ".zip";
+                            result.Content = new StreamContent(new MemoryStream(GatewayUtilNfe.DownloadZipCSVs(arquivos, nomesArquivo)));
+                            result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
+                            result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+                            result.Content.Headers.ContentDisposition.FileName = nmArquivo;
+                            result.Content.Headers.Add("x-filename", nmArquivo);
+                        }
+                        return result;
                     }
-                    else if(arquivos.Count > 1)
+                    else
                     {
-                        string nmArquivo = "file" + DateTime.Now.ToString().Replace("/", "-") + ".zip";
-                        result.Content = new StreamContent(new MemoryStream(GatewayUtilNfe.DownloadZipCSVs(arquivos, nomesArquivo)));
-                        result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("attachment");
-                        result.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
-                        result.Content.Headers.ContentDisposition.FileName = nmArquivo;
-                        result.Content.Headers.Add("x-filename", nmArquivo);
+                        log.codResposta = (int)HttpStatusCode.Unauthorized;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.Unauthorized);
                     }
-                    return result;
                 }
-                else
+                catch (Exception e)
                 {
-                    log.codResposta = (int)HttpStatusCode.Unauthorized;
-                    Bibliotecas.LogAcaoUsuario.Save(log, _db);
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
+                    log.msgErro = e.Message;
+                    Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
+                    //throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                    return Request.CreateResponse(HttpStatusCode.InternalServerError, e.Message);
                 }
-            }
-            catch (Exception e)
-            {
-                log.codResposta = (int)HttpStatusCode.InternalServerError;
-                log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
-                //throw new HttpResponseException(HttpStatusCode.InternalServerError);
-                return Request.CreateResponse(HttpStatusCode.InternalServerError, e.Message);
-            }
-            finally
-            {
-                // Fecha conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                //finally
+                //{
+                //    // Fecha conexão
+                //    _db.Database.Connection.Close();
+                //    _db.Dispose();
+                //}
             }
         }
 

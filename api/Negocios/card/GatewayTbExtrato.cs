@@ -354,6 +354,223 @@ namespace api.Negocios.Card
         }
 
 
+        public static SimpleDataBaseQuery getQuery(int campo, int orderby, Dictionary<string, string> queryString)
+        {
+            Dictionary<string, string> join = new Dictionary<string, string>();
+            List<string> where = new List<string>();
+            List<string> order = new List<string>();
+
+            #region WHERE - ADICIONA OS FILTROS A QUERY
+
+            // ADICIONA OS FILTROS A QUERY
+            foreach (KeyValuePair<string, string> item in queryString)
+            {
+                int key = Convert.ToInt16(item.Key);
+                CAMPOS filtroEnum = (CAMPOS)key;
+                switch (filtroEnum)
+                {
+                    case CAMPOS.IDEXTRATO:
+                        Int32 idExtrato = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".idExtrato = " + idExtrato);
+                        break;
+                    case CAMPOS.CDCONTACORRENTE:
+                        Int32 cdContaCorrente = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".cdContaCorrente = " + cdContaCorrente);
+                        break;
+                    case CAMPOS.NRDOCUMENTO:
+                        string nrDocumento = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".nrDocumento = '" + nrDocumento + "'");
+                        break;
+                    case CAMPOS.DTEXTRATO:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dtInicio = DataBaseQueries.GetDate(dtaIni);
+                            string dtFim = DataBaseQueries.GetDate(dtaFim);
+                            where.Add(SIGLA_QUERY + ".dtExtrato >= '" + dtInicio + "' AND " + SIGLA_QUERY + ".dtExtrato <= '" + dtFim + "'");
+                        }
+                        else if (item.Value.Length == 6) // ANO + MES
+                        {
+                            string busca = item.Value + "01";
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            where.Add("DATEPART(YEAR, " + SIGLA_QUERY + ".dtExtrato) = " + data.Year + " AND DATEPART(MONTH, " + SIGLA_QUERY + ".dtExtrato) = " + data.Month);
+                        }
+                        else // ANO + MES + DIA
+                        {
+                            string busca = item.Value;
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(data);
+                            where.Add(SIGLA_QUERY + ".dtExtrato = '" + dt + "'");
+                        }
+                        break;
+                    case CAMPOS.DSDOCUMENTO:
+                        decimal dsDocumento = Convert.ToDecimal(item.Value);
+                        where.Add(SIGLA_QUERY + ".dsDocumento = '" + dsDocumento + "'");
+                        break;
+                    case CAMPOS.VLMOVIMENTO:
+                        decimal vlMovimento = Convert.ToDecimal(item.Value);
+                        where.Add(SIGLA_QUERY + ".vlMovimento = " + vlMovimento.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                        break;
+                    case CAMPOS.DSTIPO:
+                        string dsTipo = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".dsTipo = '" + dsTipo + "'");
+                        break;
+                    case CAMPOS.DSARQUIVO:
+                        string dsArquivo = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".dsArquivo = '" + dsArquivo + "'");
+                        break;
+
+                    // PERSONALIZADO
+                    case CAMPOS.ID_GRUPO:
+                        int id_grupo = Convert.ToInt32(item.Value);
+                        if (!join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + SIGLA_QUERY + ".cdContaCorrente");
+                        where.Add(GatewayTbContaCorrente.SIGLA_QUERY + ".cdGrupo = " + id_grupo); // somente as movimentações referentes às contas do grupo
+                        break;
+                    case CAMPOS.NU_CNPJ:
+                        string nrCnpj = Convert.ToString(item.Value);
+                        if (!join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + SIGLA_QUERY + ".cdContaCorrente");
+                        if (!join.ContainsKey("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + SIGLA_QUERY + ".dsDocumento");
+                        where.Add(GatewayTbBancoParametro.SIGLA_QUERY + ".nrCnpj IS NULL OR " + GatewayTbBancoParametro.SIGLA_QUERY + ".nrCnpj = '" + nrCnpj +  "'"); // somente as movimentações que se referem a filial => os memos "genéricos" ou específicos da filial (identificado pelo estabelecimento)
+                        break;
+                    case CAMPOS.CDADQUIRENTE:
+                        if (!join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + SIGLA_QUERY + ".cdContaCorrente");
+                        if (!join.ContainsKey("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + SIGLA_QUERY + ".dsDocumento");
+                        if (item.Value.Contains("!"))
+                        {
+                            // Considera também os que tem dsTipo != null
+                            int cdAdquirente = Convert.ToInt32(item.Value.Replace("!", ""));
+                            if (cdAdquirente == -1)
+                                where.Add(GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente IS NULL AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsTipoCartao IS NOT NULL");
+                            else if (cdAdquirente == 0)
+                                where.Add(GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente IS NOT NULL OR (" + GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente IS NULL AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsTipoCartao IS NOT NULL)");
+                            else
+                                where.Add(GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente + " OR (" + GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente IS NULL AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsTipoCartao IS NOT NULL)");
+                        }
+                        else
+                        {
+                            int cdAdquirente = Convert.ToInt32(item.Value);
+                            if (cdAdquirente == -1)
+                                where.Add(GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente IS NULL");
+                            else if (cdAdquirente == 0)
+                                where.Add(GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente IS NOT NULL");
+                            else
+                                where.Add(GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente);
+                        }
+                        break;
+                    case CAMPOS.VIGENCIA:
+                        string[] vigencia = item.Value.Split('!');
+                        if (vigencia.Length < 1) continue;
+
+                        if (!join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + SIGLA_QUERY + ".cdContaCorrente");
+                        if (!join.ContainsKey("INNER JOIN card.tbContaCorrente_tbLoginAdquirenteEmpresa " + GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbContaCorrente_tbLoginAdquirenteEmpresa " + GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY, " ON " + GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".cdContaCorrente = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente");
+                        if (!join.ContainsKey("INNER JOIN card.tbLoginAdquirenteEmpresa " + GatewayTbLoginAdquirenteEmpresa.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbLoginAdquirenteEmpresa " + GatewayTbLoginAdquirenteEmpresa.SIGLA_QUERY, " ON " + GatewayTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".cdLoginAdquirenteEmpresa = " + GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".cdLoginAdquirenteEmpresa");
+                        
+
+                        string cnpj = vigencia[0].Trim();
+                        string dtv = vigencia.Length > 1 ? vigencia[1] : "null";
+
+                        // Filial
+                        if (!cnpj.Equals(""))
+                            where.Add(GatewayTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".nrCnpj = '" + cnpj + "'");
+
+                        // Adquirente
+                        if (vigencia.Length > 2)
+                            where.Add(GatewayTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".cdAdquirente = " + Convert.ToInt32(vigencia[2]));
+                        
+                        // Período de vigência
+                        if (dtv.Contains("|"))
+                        {
+                            string[] dts = dtv.Split('|');
+                            DateTime dtIni = DateTime.ParseExact(dts[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtFim = DateTime.ParseExact(dts[1] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+
+                            where.Add(GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".dtInicio <= '" + DataBaseQueries.GetDate(dtIni) + "'");
+                            where.Add(GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".dtFim IS NULL OR (" + GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".dtFim >= '" + DataBaseQueries.GetDate(dtIni) + "')");
+                            where.Add(GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".dtInicio <= '" + DataBaseQueries.GetDate(dtFim) + "'");
+                            where.Add(GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".dtFim IS NULL OR (" + GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".dtFim >= '" + DataBaseQueries.GetDate(dtFim) + "')");
+                        }
+                        else if (!dtv.Equals("null"))
+                        {
+                            DateTime dtIni = DateTime.ParseExact(dtv + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+
+                            where.Add(GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".dtInicio <= '" + DataBaseQueries.GetDate(dtIni) + "'");
+                            where.Add(GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".dtFim IS NULL OR (" + GatewayTbContaCorrenteTbLoginAdquirenteEmpresa.SIGLA_QUERY + ".dtFim >= '" + DataBaseQueries.GetDate(dtIni) + "')");
+                        }
+                        break;
+                }
+            }
+            #endregion
+
+            #region ORDER BY - ADICIONA A ORDENAÇÃO A QUERY
+            // ADICIONA A ORDENAÇÃO A QUERY
+            CAMPOS filtro = (CAMPOS)campo;
+            switch (filtro)
+            {
+                case CAMPOS.IDEXTRATO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".idExtrato ASC");
+                    else order.Add(SIGLA_QUERY + ".idExtrato DESC");
+                    break;
+                case CAMPOS.CDCONTACORRENTE:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdContaCorrente ASC");
+                    else order.Add(SIGLA_QUERY + ".cdContaCorrente DESC");
+                    break;
+                case CAMPOS.NRDOCUMENTO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".nrDocumento ASC");
+                    else order.Add(SIGLA_QUERY + ".nrDocumento DESC");
+                    break;
+                case CAMPOS.DTEXTRATO:
+                    if (orderby == 0)
+                    {
+                        order.Add(SIGLA_QUERY + ".dtExtrato ASC");
+                        order.Add(SIGLA_QUERY + ".dsTipo ASC");
+                        order.Add(SIGLA_QUERY + ".dsDocumento ASC");
+                        order.Add(SIGLA_QUERY + ".vlMovimento ASC");
+                        order.Add(SIGLA_QUERY + ".idExtrato ASC");
+                    }
+                    else
+                    {
+                        order.Add(SIGLA_QUERY + ".dtExtrato DESC");
+                        order.Add(SIGLA_QUERY + ".dsTipo DESC");
+                        order.Add(SIGLA_QUERY + ".dsDocumento DESC");
+                        order.Add(SIGLA_QUERY + ".vlMovimento DESC");
+                        order.Add(SIGLA_QUERY + ".idExtrato DESC");
+                    }
+                    break;
+                case CAMPOS.DSDOCUMENTO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dsDocumento ASC");
+                    else order.Add(SIGLA_QUERY + ".dsDocumento DESC");
+                    break;
+                case CAMPOS.VLMOVIMENTO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".vlMovimento ASC");
+                    else order.Add(SIGLA_QUERY + ".vlMovimento DESC");
+                    break;
+                case CAMPOS.DSTIPO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dsTipo ASC");
+                    else order.Add(SIGLA_QUERY + ".dsTipo DESC");
+                    break;
+                case CAMPOS.DSARQUIVO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dsArquivo ASC");
+                    else order.Add(SIGLA_QUERY + ".dsArquivo DESC");
+                    break;
+            }
+            #endregion
+
+            return new SimpleDataBaseQuery(null, "card.tbExtrato " + SIGLA_QUERY,
+                                           join, where.ToArray(), null, order.ToArray());
+
+        }
+
+
         /// <summary>
         /// Retorna TbExtrato/TbExtrato
         /// </summary>
@@ -433,6 +650,22 @@ namespace api.Negocios.Card
                         vlMovimento = e.vlMovimento,
                         dsTipo = e.dsTipo,
                         dsArquivo = e.dsArquivo,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2)
+                {
+                    CollectionTbExtrato = query.Select(e => new
+                    {
+
+                        idExtrato = e.idExtrato,
+                        cdContaCorrente = e.cdContaCorrente,
+                        nrDocumento = e.nrDocumento,
+                        dtExtrato = e.dtExtrato,
+                        dsDocumento = e.dsDocumento,
+                        vlMovimento = e.vlMovimento,
+                        dsTipo = e.dsTipo,
+                        dsArquivo = e.dsArquivo,
+                        conciliado = e.RecebimentoParcelas.Count > 0 || e.tbRecebimentoAjustes.Count > 0
                     }).ToList<dynamic>();
                 }
 
@@ -526,6 +759,9 @@ namespace api.Negocios.Card
             {
                 tbExtrato extrato = _db.tbExtratos.Where(e => e.idExtrato == idExtrato).FirstOrDefault();
                 if (extrato == null) throw new Exception("Extrato inexistente");
+                if(extrato.RecebimentoParcelas.Count > 0 || extrato.tbRecebimentoAjustes.Count > 0)
+                    throw new Exception("Movimentação bancária está envolvida em uma conciliação bancária!");
+
                 // Remove o arquivo associado do disco, caso não tenha mais nenhum registro referenciando esse arquivo
                 if (!extrato.dsArquivo.Equals("") && _db.tbExtratos.Where(e => e.dsArquivo.Equals(extrato.dsArquivo)).FirstOrDefault() == null)
                 {

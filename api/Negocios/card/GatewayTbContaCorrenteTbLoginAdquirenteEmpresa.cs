@@ -25,6 +25,8 @@ namespace api.Negocios.Card
             //_db.Configuration.ProxyCreationEnabled = false;
         }
 
+        public static string SIGLA_QUERY = "VG";
+
         /// <summary>
         /// Enum CAMPOS
         /// </summary>

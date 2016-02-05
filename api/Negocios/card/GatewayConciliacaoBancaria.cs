@@ -1388,31 +1388,29 @@ namespace api.Negocios.Card
 
                                     #endregion
                                     
-                                    if (listaNaoConciliado.Count > 0)
-                                    {
-                                        #region REMOVE DAS LISTAS OS ELEMENTOS JÁ PRÉ-CONCILIADOS
-                                        recebimentosParcelaAgrupados = listaNaoConciliado.Where(r => r.Tipo.Equals(TIPO_RECEBIMENTO))
-                                                                                .OrderBy(r => r.Data)
-                                                                                .ThenBy(r => r.DataVenda)
-                                                                                .ThenBy(r => r.Filial)
-                                                                                .ThenBy(r => r.Adquirente)
-                                                                                .ThenBy(r => r.Bandeira)
-                                                                                .ToList<ConciliacaoBancaria>();
+                                    #region REMOVE DAS LISTAS OS ELEMENTOS JÁ PRÉ-CONCILIADOS
+                                    recebimentosParcelaAgrupados = listaNaoConciliado.Where(r => r.Tipo.Equals(TIPO_RECEBIMENTO))
+                                                                            .OrderBy(r => r.Data)
+                                                                            .ThenBy(r => r.DataVenda)
+                                                                            .ThenBy(r => r.Filial)
+                                                                            .ThenBy(r => r.Adquirente)
+                                                                            .ThenBy(r => r.Bandeira)
+                                                                            .ToList<ConciliacaoBancaria>();
 
-                                        recebimentosParcela = recebimentosParcela.Where(e => recebimentosParcelaAgrupados.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id && g.NumParcela == e.Grupo[0].NumParcela)))
-                                                                                .OrderBy(e => e.Data)
-                                                                                .ThenBy(r => r.Filial)
-                                                                                .ThenBy(e => e.Adquirente)
-                                                                                .ThenBy(e => e.Bandeira)
-                                                                                .ToList<ConciliacaoBancaria>();
+                                    recebimentosParcela = recebimentosParcela.Where(e => recebimentosParcelaAgrupados.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id && g.NumParcela == e.Grupo[0].NumParcela)))
+                                                                            .OrderBy(e => e.Data)
+                                                                            .ThenBy(r => r.Filial)
+                                                                            .ThenBy(e => e.Adquirente)
+                                                                            .ThenBy(e => e.Bandeira)
+                                                                            .ToList<ConciliacaoBancaria>();
 
-                                        extratoBancario = listaNaoConciliado.Where(e => e.Tipo.Equals(TIPO_EXTRATO))
-                                                                                .OrderBy(e => e.Data)
-                                                                                .ThenBy(e => e.Adquirente)
-                                                                                .ThenBy(e => e.Memo)
-                                                                                .ToList<ConciliacaoBancaria>();
-                                        #endregion
-                                    }
+                                    extratoBancario = listaNaoConciliado.Where(e => e.Tipo.Equals(TIPO_EXTRATO))
+                                                                            .OrderBy(e => e.Data)
+                                                                            .ThenBy(e => e.Adquirente)
+                                                                            .ThenBy(e => e.Memo)
+                                                                            .ToList<ConciliacaoBancaria>();
+                                    #endregion
+                                    
                                 }
                             }
                         }
@@ -1840,29 +1838,7 @@ namespace api.Negocios.Card
                                                     //                  .ThenByDescending(c => c.Lote)
                                                     //                  .ToList<ConciliacaoBancaria>();
 
-                                                    //// Faz a conciliação
-                                                    //listaNaoConciliado.Clear();
-                                                    //Concilia(CollectionConciliacaoBancaria, listaCandidatos, listaNaoConciliado, !filtroTipoNaoConciliado);
-
-                                                    //// Remove elementos
-                                                    //recebimentosParcelaAgrupados = listaNaoConciliado.Where(r => r.Tipo.Equals(TIPO_RECEBIMENTO))
-                                                    //                                .OrderBy(r => r.Data)
-                                                    //                                .ThenBy(r => r.Filial)
-                                                    //                                .ThenBy(r => r.Adquirente)
-                                                    //                                .ThenBy(r => r.Bandeira)
-                                                    //                                .ToList<ConciliacaoBancaria>();
-
-                                                    //extratoBancario = listaNaoConciliado.Where(e => e.Tipo.Equals(TIPO_EXTRATO))
-                                                    //                                        .OrderBy(e => e.Data)
-                                                    //                                        .ThenBy(e => e.Adquirente)
-                                                    //                                        .ThenBy(e => e.Memo)
-                                                    //                                        .ToList<ConciliacaoBancaria>();
-
-                                                    //if (recebimentosParcelaAgrupados.Count > 0 && extratoBancario.Count > 0)
-                                                    //{
-                                                    // Agrupado por lotes, tenta encontrar combinações entre eles para pré-conciliar com os extratos
                                                     conciliaPorLotes(CollectionConciliacaoBancaria, recebimentosParcelaAgrupados, extratoBancario, !filtroTipoNaoConciliado);
-                                                    //}
                                                     #endregion
                                                 }
 
@@ -2040,10 +2016,7 @@ namespace api.Negocios.Card
                                                     Concilia(CollectionConciliacaoBancaria, listaCandidatos, listaNaoConciliado, !filtroTipoNaoConciliado);
 
                                                     #endregion
-                                                }
 
-                                                if (listaNaoConciliado.Count > 0)
-                                                {
                                                     #region REMOVE DA LISTA OS ELEMENTOS JÁ PRÉ-CONCILIADOS
                                                     recebimentosParcelaAgrupados = listaNaoConciliado.Where(r => r.Tipo.Equals(TIPO_RECEBIMENTO))
                                                                                                 .OrderBy(r => r.Data)
@@ -2060,22 +2033,23 @@ namespace api.Negocios.Card
                                                                                             .ToList<ConciliacaoBancaria>();
 
                                                     #endregion
-
-                                                    if (!filtroTipoPreConciliado)
-                                                    {
-                                                        #region PASSO 7) ADICIONA OS ELEMENTOS QUE SOBRARAM COMO NÃO CONCILIADOS
-                                                        if (recebimentosParcelaAgrupados.Count > 0)
-                                                        {
-                                                            adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, recebimentosParcelaAgrupados);
-                                                        }
-                                                        if (extratoBancario.Count > 0)
-                                                        {
-                                                            //totalExtrato += extratoBancario.Sum(r => r.ValorTotal);
-                                                            adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
-                                                        }
-                                                        #endregion
-                                                    }
                                                 }
+
+                                                if (!filtroTipoPreConciliado)
+                                                {
+                                                    #region PASSO 7) ADICIONA OS ELEMENTOS QUE SOBRARAM COMO NÃO CONCILIADOS
+                                                    if (recebimentosParcelaAgrupados.Count > 0)
+                                                    {
+                                                        adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, recebimentosParcelaAgrupados);
+                                                    }
+                                                    if (extratoBancario.Count > 0)
+                                                    {
+                                                        //totalExtrato += extratoBancario.Sum(r => r.ValorTotal);
+                                                        adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, extratoBancario);
+                                                    }
+                                                    #endregion
+                                                }
+                                                
                                             }
                                         }
                                     }
@@ -2182,7 +2156,6 @@ namespace api.Negocios.Card
                                                                                     numParcela = t.Key.numParcela
                                                                                 }).ToList<ConciliaRecebimentoParcela.RecebParcela>();
 
-                        int? idExtrato = grupoExtrato.idExtrato == -1 ? (int?)null : grupoExtrato.idExtrato;
                         for (int g = 0; g < grupoExtrato.recebimentosParcela.Count; g++)
                         {
                             ConciliaRecebimentoParcela.RecebParcela recebimentoParcela = grupoExtrato.recebimentosParcela[g];
@@ -2191,7 +2164,7 @@ namespace api.Negocios.Card
                                 // AJUSTE
                                 _db.Database.ExecuteSqlCommand(
                                         "UPDATE " + GatewayTbRecebimentoAjuste.SIGLA_QUERY +
-                                        " SET " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idExtrato = " + idExtrato +
+                                        " SET " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idExtrato = " + (grupoExtrato.idExtrato == -1 ? "NULL" : grupoExtrato.idExtrato.ToString()) +
                                         " FROM card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY +
                                         " WHERE " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idRecebimentoAjuste = " + recebimentoParcela.idRecebimento 
                                         );
@@ -2202,8 +2175,8 @@ namespace api.Negocios.Card
                                 // RECEBIMENTO PARCELA
                                 _db.Database.ExecuteSqlCommand(
                                         "UPDATE " + GatewayRecebimentoParcela.SIGLA_QUERY +
-                                        " SET " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato = " + idExtrato +
-                                        (idExtrato == null ? "" : ", " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo = '" + DataBaseQueries.GetDate(extrato.dtExtrato)) + "'" +
+                                        " SET " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato = " + (grupoExtrato.idExtrato == -1 ? "NULL" : 
+                                        grupoExtrato.idExtrato.ToString() + ", " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo = '" + DataBaseQueries.GetDate(extrato.dtExtrato) + "'") +
                                         " FROM pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY +
                                         " WHERE " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idRecebimento = " + recebimentoParcela.idRecebimento +
                                             " AND " + GatewayRecebimentoParcela.SIGLA_QUERY + ".numParcela = " + recebimentoParcela.numParcela

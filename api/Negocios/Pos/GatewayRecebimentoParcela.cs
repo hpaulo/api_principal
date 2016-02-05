@@ -457,11 +457,11 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.VALORPARCELABRUTA:
                         decimal valorParcelaBruta = Convert.ToDecimal(item.Value);
-                        where.Add(SIGLA_QUERY + ".valorParcelaBruta = " + valorParcelaBruta);
+                        where.Add(SIGLA_QUERY + ".valorParcelaBruta = " + valorParcelaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")));
                         break;
                     case CAMPOS.VALORPARCELALIQUIDA:
                         decimal valorParcelaLiquida = Convert.ToDecimal(item.Value);
-                        where.Add(SIGLA_QUERY + ".valorParcelaLiquida = " + valorParcelaLiquida);
+                        where.Add(SIGLA_QUERY + ".valorParcelaLiquida = " + valorParcelaLiquida.ToString(CultureInfo.GetCultureInfo("en-GB")));
                         break;
                     case CAMPOS.IDEXTRATO:
                         Int32 idExtrato = Convert.ToInt32(item.Value);
@@ -524,11 +524,11 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.VALORDESCONTADO:
                         decimal valorDescontado = Convert.ToDecimal(item.Value);
-                        where.Add(SIGLA_QUERY + ".valorDescontado = " + valorDescontado);
+                        where.Add(SIGLA_QUERY + ".valorDescontado = " + valorDescontado.ToString(CultureInfo.GetCultureInfo("en-GB")));
                         break;
                     case CAMPOS.VLDESCONTADOANTECIPACAO:
                         decimal vlDescontadoAntecipacao = Convert.ToDecimal(item.Value);
-                        where.Add(SIGLA_QUERY + ".vlDescontadoAntecipacao = " + vlDescontadoAntecipacao);
+                        where.Add(SIGLA_QUERY + ".vlDescontadoAntecipacao = " + vlDescontadoAntecipacao.ToString(CultureInfo.GetCultureInfo("en-GB")));
                         break;
                     case CAMPOS.DTARECEBIMENTOEFETIVO: // Para os que este campo for null, pega o dtaRecebimento
                         if (item.Value.Trim().Equals(""))
@@ -1338,7 +1338,6 @@ namespace api.Negocios.Pos
 
                             dataBaseQuery.select = new string[] { GatewayRecebimento.SIGLA_QUERY + ".cnpj AS nrCNPJ",
                                                           GatewayRecebimento.SIGLA_QUERY + ".nsu AS nrNSU",
-                                                          GatewayRecebimento.SIGLA_QUERY + ".nsu AS nrNSU",
                                                           GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente AS cdAdquirente",
                                                           GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente AS dsAdquirente",
                                                           GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira AS dsBandeira",
@@ -1394,7 +1393,7 @@ namespace api.Negocios.Pos
                                         dtVenda = (DateTime)record["dtVenda"],
                                         vlVendaBruta = Convert.ToDecimal(record["vlVendaBruta"]),
                                         vlVendaLiquida = Convert.ToDecimal(record["vlVendaLiquida"].Equals(DBNull.Value) ? 0.0 : record["vlVendaBruta"]),
-                                        qtTotalParcelas = Convert.ToInt32(record["qtTotalParcelas"]),
+                                        qtTotalParcelas = Convert.ToInt32(record["qtTotalParcelas"].Equals(DBNull.Value) ? 0 : record["qtTotalParcelas"]),
                                         dtPagamento = record["dtEfetiva"].Equals(DBNull.Value) ? (DateTime)record["dtPrevista"] : (DateTime)record["dtEfetiva"],
                                         vlParcelaBruta = Convert.ToDecimal(record["vlParcelaBruta"]),
                                         vlParcelaLiquida = Convert.ToDecimal(record["vlParcelaLiquida"].Equals(DBNull.Value) ? 0.0 : record["vlParcelaLiquida"]),
@@ -1432,11 +1431,11 @@ namespace api.Negocios.Pos
                             if (resultado != null && resultado.Count > 0)
                             {
                                 retorno.TotalDeRegistros = Convert.ToInt32(resultado[0]["totalRegistros"]);
-                                retorno.Totais.Add("valorDescontado", Convert.ToDecimal(resultado[0]["valorDescontado"]));
-                                retorno.Totais.Add("vlDescontadoAntecipacao", Convert.ToDecimal(resultado[0]["valorDescontado"]));
-                                retorno.Totais.Add("valorParcelaBruta", Convert.ToDecimal(resultado[0]["valorParcelaBruta"]));
-                                retorno.Totais.Add("valorParcelaLiquida", Convert.ToDecimal(resultado[0]["valorParcelaLiquida"]));
-                                retorno.Totais.Add("taxaCashFlow", Convert.ToDecimal(resultado[0]["taxaCashFlow"]) / ((decimal)retorno.TotalDeRegistros));
+                                retorno.Totais.Add("valorDescontado", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorDescontado"] : 0.0));
+                                retorno.Totais.Add("vlDescontadoAntecipacao", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorDescontado"] : 0.0));
+                                retorno.Totais.Add("valorParcelaBruta", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorParcelaBruta"] : 0.0));
+                                retorno.Totais.Add("valorParcelaLiquida", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorParcelaLiquida"] : 0.0));
+                                retorno.Totais.Add("taxaCashFlow", retorno.TotalDeRegistros > 0 ? Convert.ToDecimal(resultado[0]["taxaCashFlow"]) / ((decimal)retorno.TotalDeRegistros) : new decimal(0.0));
                             }
                             #endregion
 
@@ -1448,7 +1447,7 @@ namespace api.Negocios.Pos
 
                             if (resultado != null && resultado.Count > 0)
                             {
-                                retorno.Totais.Add("valorBruto", Convert.ToDecimal(resultado[0]["valorBruto"]));
+                                retorno.Totais.Add("valorBruto", Convert.ToDecimal(resultado[0]["valorBruto"].Equals(DBNull.Value) ? 0.0 : resultado[0]["valorBruto"]));
                             }
                             #endregion
 
@@ -1500,8 +1499,8 @@ namespace api.Negocios.Pos
                                         dtaRecebimentoEfetivo = record["dtaRecebimentoEfetivo"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)record["dtaRecebimentoEfetivo"],
                                         codResumoVenda = Convert.ToString(record["codResumoVenda"]),
                                         nsu = Convert.ToString(record["nsu"]),
-                                        cdAutorizador = Convert.ToString(record["cdAutorizador"]),
-                                        numParcela = Convert.ToInt32(record["numParcela"]) + " de " + Convert.ToInt32(record["numParcelaTotal"]),
+                                        cdAutorizador = Convert.ToString(record["cdAutorizador"].Equals(DBNull.Value) ? "" : record["cdAutorizador"]),
+                                        numParcela = Convert.ToInt32(record["numParcela"]) + " de " + Convert.ToInt32(record["numParcelaTotal"].Equals(DBNull.Value) ? 0 : record["numParcelaTotal"]),
                                         valorBruto = Convert.ToDecimal(record["valorBruto"]),
                                         valorParcela = Convert.ToDecimal(record["valorParcela"]),
                                         valorLiquida = Convert.ToDecimal(record["valorLiquida"].Equals(DBNull.Value) ? 0.0 : record["valorLiquida"]),
@@ -1512,68 +1511,69 @@ namespace api.Negocios.Pos
                                         lote = record["lote"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(record["lote"]),
                                     });
                                 }
+                            }
 
-                                // Obtém os ajustes se teve filtro de data de recebimento
-                                if (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
-                                    queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue))
+                            // Obtém os ajustes se teve filtro de data de recebimento
+                            if (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
+                                queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue))
+                            {
+                                List<dynamic> ajustes = GatewayTbRecebimentoAjuste.getQuery(_db, 1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
+                                                    .Select(e => new
+                                                    {
+                                                        ajuste = new { idRecebimentoAjuste = e.idRecebimentoAjuste },
+                                                        cnpj = e.nrCNPJ,
+                                                        dsFantasia = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
+                                                        dsBandeira = e.tbBandeira.dsBandeira,
+                                                        dtaVenda = e.dtAjuste,
+                                                        dtaRecebimento = e.dtAjuste,
+                                                        dtaRecebimentoEfetivo = e.dtAjuste,
+                                                        codResumoVenda = String.Empty,
+                                                        nsu = e.dsMotivo,
+                                                        numParcela = 0,
+                                                        valorBruto = new decimal(0.0),
+                                                        valorParcela = e.vlAjuste > new decimal(0.0) ? e.vlAjuste : new decimal(0.0),
+                                                        valorLiquida = e.vlAjuste,
+                                                        valorDescontado = e.vlAjuste < new decimal(0.0) ? new decimal(-1.0) * e.vlAjuste : new decimal(0.0),
+                                                        vlDescontadoAntecipacao = new decimal(0.0),
+                                                    }).ToList<dynamic>();
+
+                                if (ajustes.Count > 0)
                                 {
-                                    List<dynamic> ajustes = GatewayTbRecebimentoAjuste.getQuery(_db, 1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
-                                                        .Select(e => new
-                                                        {
-                                                            ajuste = new { idRecebimentoAjuste = e.idRecebimentoAjuste },
-                                                            cnpj = e.nrCNPJ,
-                                                            dsFantasia = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
-                                                            dsBandeira = e.tbBandeira.dsBandeira,
-                                                            dtaVenda = e.dtAjuste,
-                                                            dtaRecebimento = e.dtAjuste,
-                                                            dtaRecebimentoEfetivo = e.dtAjuste,
-                                                            codResumoVenda = String.Empty,
-                                                            nsu = e.dsMotivo,
-                                                            numParcela = 0,
-                                                            valorBruto = new decimal(0.0),
-                                                            valorParcela = e.vlAjuste > new decimal(0.0) ? e.vlAjuste : new decimal(0.0),
-                                                            valorLiquida = e.vlAjuste,
-                                                            valorDescontado = e.vlAjuste < new decimal(0.0) ? new decimal(-1.0) * e.vlAjuste : new decimal(0.0),
-                                                            vlDescontadoAntecipacao = new decimal(0.0),
-                                                        }).ToList<dynamic>();
+                                    retorno.TotalDeRegistros += ajustes.Count;
 
-                                    if (ajustes.Count > 0)
+                                    // Atualiza total líquido de parcela
+                                    retorno.Totais["valorParcelaBruta"] = (decimal)retorno.Totais["valorParcelaBruta"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorParcela).Cast<decimal>().Sum()) : new decimal(0.0));
+                                    retorno.Totais["valorParcelaLiquida"] = (decimal)retorno.Totais["valorParcelaLiquida"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorLiquida).Cast<decimal>().Sum()) : new decimal(0.0));
+                                    retorno.Totais["valorDescontado"] = (decimal)retorno.Totais["valorDescontado"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorDescontado).Cast<decimal>().Sum()) : new decimal(0.0));
+
+                                    // Armazena os ajustes
+                                    foreach (var ajuste in ajustes) CollectionRecebimentoParcela.Add(ajuste);
+
+                                    // Ordena e refaz a paginação
+                                    CAMPOS filtro = (CAMPOS)campo;
+                                    if (filtro.Equals(CAMPOS.DTARECEBIMENTOEFETIVO))
                                     {
-                                        retorno.TotalDeRegistros += ajustes.Count;
-
-                                        // Atualiza total líquido de parcela
-                                        retorno.Totais["valorParcelaBruta"] = (decimal)retorno.Totais["valorParcelaBruta"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorParcela).Cast<decimal>().Sum()) : new decimal(0.0));
-                                        retorno.Totais["valorParcelaLiquida"] = (decimal)retorno.Totais["valorParcelaLiquida"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorLiquida).Cast<decimal>().Sum()) : new decimal(0.0));
-                                        retorno.Totais["valorDescontado"] = (decimal)retorno.Totais["valorDescontado"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorDescontado).Cast<decimal>().Sum()) : new decimal(0.0));
-
-                                        // Armazena os ajustes
-                                        foreach (var ajuste in ajustes) CollectionRecebimentoParcela.Add(ajuste);
-
-                                        // Ordena e refaz a paginação
-                                        CAMPOS filtro = (CAMPOS)campo;
-                                        if (filtro.Equals(CAMPOS.DTARECEBIMENTOEFETIVO))
-                                        {
-                                            if (orderBy == 0)
-                                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(e => e.dtaRecebimentoEfetivo).ToList<dynamic>();
-                                            else
-                                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderByDescending(e => e.dtaRecebimentoEfetivo).ToList<dynamic>();
-                                        }
-                                        else if (filtro.Equals(CAMPOS.DTARECEBIMENTO))
-                                        {
-                                            if (orderBy == 0)
-                                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(e => e.dtaRecebimento).ToList<dynamic>();
-                                            else
-                                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderByDescending(e => e.dtaRecebimento).ToList<dynamic>();
-                                        }
+                                        if (orderBy == 0)
+                                            CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(e => e.dtaRecebimentoEfetivo).ToList<dynamic>();
+                                        else
+                                            CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderByDescending(e => e.dtaRecebimentoEfetivo).ToList<dynamic>();
                                     }
-
+                                    else if (filtro.Equals(CAMPOS.DTARECEBIMENTO))
+                                    {
+                                        if (orderBy == 0)
+                                            CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderBy(e => e.dtaRecebimento).ToList<dynamic>();
+                                        else
+                                            CollectionRecebimentoParcela = CollectionRecebimentoParcela.OrderByDescending(e => e.dtaRecebimento).ToList<dynamic>();
+                                    }
                                 }
 
-                                // Paginação
-                                int skipRows = (pageNumber - 1) * pageSize;
-                                if (CollectionRecebimentoParcela.Count > pageSize && pageNumber > 0 && pageSize > 0)
-                                    CollectionRecebimentoParcela = CollectionRecebimentoParcela.Skip(skipRows).Take(pageSize).ToList<dynamic>();
                             }
+
+                            // Paginação
+                            int skipRows = (pageNumber - 1) * pageSize;
+                            if (CollectionRecebimentoParcela.Count > pageSize && pageNumber > 0 && pageSize > 0)
+                                CollectionRecebimentoParcela = CollectionRecebimentoParcela.Skip(skipRows).Take(pageSize).ToList<dynamic>();
+                            
                         }
                         #endregion
                     }
