@@ -299,6 +299,7 @@
     <Compile Include="Controllers\Card\RelatorioConciliacaoTitulosController.cs" />
     <Compile Include="Controllers\Card\RecebiveisFuturosController.cs" />
     <Compile Include="Controllers\Card\RelatorioVendasController.cs" />
+    <Compile Include="Controllers\Card\TbAntecipacaoBancariaController.cs" />
     <Compile Include="Controllers\Card\TbBandeiraController.cs" />
     <Compile Include="Controllers\Card\TbLogCargaController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoBancariaController.cs" />
@@ -366,8 +367,11 @@
     <Compile Include="Controllers\Tax\TbManifestoController.cs" />
     <Compile Include="Controllers\Util\BancosController.cs" />
     <Compile Include="Controllers\Util\ExportarController.cs" />
+    <Compile Include="Models\Mapping\tbAntecipacaoBancariaMap.cs" />
     <Compile Include="Models\Mapping\tbResumoVendaMap.cs" />
+    <Compile Include="Models\tbAntecipacaoBancaria.cs" />
     <Compile Include="Models\tbResumoVenda.cs" />
+    <Compile Include="Negocios\Card\GatewayTbAntecipacaoBancaria.cs" />
     <Compile Include="Negocios\Util\DataBaseQueries.cs" />
     <Compile Include="Negocios\Util\ExtratoPDFBNB.cs" />
     <Compile Include="Negocios\Util\ExtratoPDFSantander.cs" />

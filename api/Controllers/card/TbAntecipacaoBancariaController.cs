@@ -12,12 +12,13 @@ using Newtonsoft.Json;
 
 namespace api.Controllers.Card
 {
-    public class TbBandeiraController : ApiController
+    public class TbAntecipacaoBancariaController : ApiController
     {
 
-        // GET /tbBandeira/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
+        // GET /tbAntecipacaoBancaria/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
+            // Abre nova conexão
             using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 tbLogAcessoUsuario log = new tbLogAcessoUsuario();
@@ -29,7 +30,7 @@ namespace api.Controllers.Card
                     HttpResponseMessage retorno = new HttpResponseMessage();
                     if (Permissoes.Autenticado(token))
                     {
-                        Retorno dados = GatewayTbBandeira.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString, _db);
+                        Retorno dados = GatewayTbAntecipacaoBancaria.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString, _db);
                         log.codResposta = (int)HttpStatusCode.OK;
                         Bibliotecas.LogAcaoUsuario.Save(log, _db);
                         return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
@@ -45,16 +46,17 @@ namespace api.Controllers.Card
                 {
                     log.codResposta = (int)HttpStatusCode.InternalServerError;
                     log.msgErro = e.Message;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                     throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
             }
         }
 
 
-        // POST /tbBandeira/token/
-        public HttpResponseMessage Post(string token, [FromBody]tbBandeira param)
+        // POST /tbAntecipacaoBancaria/token/
+        public HttpResponseMessage Post(string token, [FromBody]tbAntecipacaoBancaria param)
         {
+            // Abre nova conexão
             using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 tbLogAcessoUsuario log = new tbLogAcessoUsuario();
@@ -65,7 +67,7 @@ namespace api.Controllers.Card
                     HttpResponseMessage retorno = new HttpResponseMessage();
                     if (Permissoes.Autenticado(token, _db))
                     {
-                        Int32 dados = GatewayTbBandeira.Add(token, param, _db);
+                        Int32 dados = GatewayTbAntecipacaoBancaria.Add(token, param, _db);
                         log.codResposta = (int)HttpStatusCode.OK;
                         Bibliotecas.LogAcaoUsuario.Save(log, _db);
                         return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
@@ -81,16 +83,17 @@ namespace api.Controllers.Card
                 {
                     log.codResposta = (int)HttpStatusCode.InternalServerError;
                     log.msgErro = e.Message;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                     throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
             }
         }
 
 
-        // PUT /tbBandeira/token/
-        public HttpResponseMessage Put(string token, [FromBody]tbBandeira param)
+        // PUT /tbAntecipacaoBancaria/token/
+        public HttpResponseMessage Put(string token, [FromBody]tbAntecipacaoBancaria param)
         {
+            // Abre nova conexão
             using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 tbLogAcessoUsuario log = new tbLogAcessoUsuario();
@@ -101,7 +104,7 @@ namespace api.Controllers.Card
                     HttpResponseMessage retorno = new HttpResponseMessage();
                     if (Permissoes.Autenticado(token, _db))
                     {
-                        GatewayTbBandeira.Update(token, param, _db);
+                        GatewayTbAntecipacaoBancaria.Update(token, param, _db);
                         log.codResposta = (int)HttpStatusCode.OK;
                         Bibliotecas.LogAcaoUsuario.Save(log, _db);
                         return Request.CreateResponse(HttpStatusCode.OK);
@@ -117,27 +120,28 @@ namespace api.Controllers.Card
                 {
                     log.codResposta = (int)HttpStatusCode.InternalServerError;
                     log.msgErro = e.Message;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                     throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
             }
         }
 
 
-        // DELETE /tbBandeira/token/cdBandeira
-        public HttpResponseMessage Delete(string token, Int32 cdBandeira)
+        // DELETE /tbAntecipacaoBancaria/token/idAntecipacaoBancaria
+        public HttpResponseMessage Delete(string token, Int32 idAntecipacaoBancaria)
         {
+            // Abre nova conexão
             using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 tbLogAcessoUsuario log = new tbLogAcessoUsuario();
                 try
                 {
-                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("cdBandeira : " + cdBandeira), "Delete", _db);
+                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("idAntecipacaoBancaria : " + idAntecipacaoBancaria), "Delete", _db);
 
                     HttpResponseMessage retorno = new HttpResponseMessage();
                     if (Permissoes.Autenticado(token, _db))
                     {
-                        GatewayTbBandeira.Delete(token, cdBandeira, _db);
+                        GatewayTbAntecipacaoBancaria.Delete(token, idAntecipacaoBancaria, _db);
                         log.codResposta = (int)HttpStatusCode.OK;
                         Bibliotecas.LogAcaoUsuario.Save(log, _db);
                         return Request.CreateResponse(HttpStatusCode.OK);
@@ -153,7 +157,7 @@ namespace api.Controllers.Card
                 {
                     log.codResposta = (int)HttpStatusCode.InternalServerError;
                     log.msgErro = e.Message;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
                     throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
             }

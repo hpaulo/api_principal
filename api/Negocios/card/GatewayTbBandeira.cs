@@ -6,6 +6,7 @@ using api.Models;
 using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
+using System.Data.Entity.Validation;
 
 namespace api.Negocios.Card
 {
@@ -118,57 +119,81 @@ namespace api.Negocios.Card
         /// Retorna TbBandeira/TbBandeira
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbBandeira = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = query.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            try
             {
-                CollectionTbBandeira = query.Select(e => new
-                {
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbBandeira = new List<dynamic>();
+                Retorno retorno = new Retorno();
 
-                    cdBandeira = e.cdBandeira,
-                    dsBandeira = e.dsBandeira,
-                    cdAdquirente = e.cdAdquirente,
-                    dsTipo = e.dsTipo,
-                }).ToList<dynamic>();
+                // GET QUERY
+                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = query.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
+
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
+                {
+                    CollectionTbBandeira = query.Select(e => new
+                    {
+
+                        cdBandeira = e.cdBandeira,
+                        dsBandeira = e.dsBandeira,
+                        cdAdquirente = e.cdAdquirente,
+                        dsTipo = e.dsTipo,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbBandeira = query.Select(e => new
+                    {
+
+                        cdBandeira = e.cdBandeira,
+                        dsBandeira = e.dsBandeira,
+                        cdAdquirente = e.cdAdquirente,
+                        dsTipo = e.dsTipo,
+                    }).ToList<dynamic>();
+                }
+
+                retorno.Registros = CollectionTbBandeira;
+
+                return retorno;
             }
-            else if (colecao == 0)
+            catch (Exception e)
             {
-                CollectionTbBandeira = query.Select(e => new
+                if (e is DbEntityValidationException)
                 {
-
-                    cdBandeira = e.cdBandeira,
-                    dsBandeira = e.dsBandeira,
-                    cdAdquirente = e.cdAdquirente,
-                    dsTipo = e.dsTipo,
-                }).ToList<dynamic>();
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar conta corrente" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
-
-            retorno.Registros = CollectionTbBandeira;
-
-            return retorno;
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -178,11 +203,35 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbBandeira param)
+        public static Int32 Add(string token, tbBandeira param, painel_taxservices_dbContext _dbContext = null)
         {
-            _db.tbBandeiras.Add(param);
-            _db.SaveChanges();
-            return param.cdBandeira;
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            try
+            {
+                _db.tbBandeiras.Add(param);
+                _db.SaveChanges();
+                return param.cdBandeira;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar conta corrente" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -191,10 +240,34 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 cdBandeira)
+        public static void Delete(string token, Int32 cdBandeira, painel_taxservices_dbContext _dbContext = null)
         {
-            _db.tbBandeiras.Remove(_db.tbBandeiras.Where(e => e.cdBandeira == cdBandeira).First());
-            _db.SaveChanges();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            try
+            {
+                _db.tbBandeiras.Remove(_db.tbBandeiras.Where(e => e.cdBandeira == cdBandeira).First());
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar conta corrente" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -204,22 +277,44 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbBandeira param)
+        public static void Update(string token, tbBandeira param, painel_taxservices_dbContext _dbContext = null)
         {
-            tbBandeira value = _db.tbBandeiras
-                    .Where(e => e.cdBandeira == param.cdBandeira)
-                    .First<tbBandeira>();
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            try
+            {
+                tbBandeira value = _db.tbBandeiras
+                        .Where(e => e.cdBandeira == param.cdBandeira)
+                        .First<tbBandeira>();
 
 
-            if (param.cdBandeira != value.cdBandeira)
-                value.cdBandeira = param.cdBandeira;
-            if (param.dsBandeira != null && param.dsBandeira != value.dsBandeira)
-                value.dsBandeira = param.dsBandeira;
-            if (param.cdAdquirente != value.cdAdquirente)
-                value.cdAdquirente = param.cdAdquirente;
-            if (param.dsTipo != null && param.dsTipo != value.dsTipo)
-                value.dsTipo = param.dsTipo;
-            _db.SaveChanges();
+                if (param.dsBandeira != null && param.dsBandeira != value.dsBandeira)
+                    value.dsBandeira = param.dsBandeira;
+                if (param.cdAdquirente != value.cdAdquirente)
+                    value.cdAdquirente = param.cdAdquirente;
+                if (param.dsTipo != null && param.dsTipo != value.dsTipo)
+                    value.dsTipo = param.dsTipo;
+                _db.SaveChanges();
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar conta corrente" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
 
         }
 
