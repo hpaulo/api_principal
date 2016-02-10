@@ -9,6 +9,7 @@ using api.Models.Object;
 using System.Data.Entity.Validation;
 using System.Data.Entity;
 using System.Data;
+using System.Globalization;
 
 namespace api.Negocios.Card
 {
@@ -68,12 +69,40 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.idAntecipacaoBancaria.Equals(idAntecipacaoBancaria)).AsQueryable<tbAntecipacaoBancaria>();
                         break;
                     case CAMPOS.DTANTECIPACAOBANCARIA:
-                        DateTime dtAntecipacaoBancaria = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtAntecipacaoBancaria.Equals(dtAntecipacaoBancaria)).AsQueryable<tbAntecipacaoBancaria>();
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtAntecipacaoBancaria.Year > dtaIni.Year || (e.dtAntecipacaoBancaria.Year == dtaIni.Year && e.dtAntecipacaoBancaria.Month > dtaIni.Month) ||
+                                                                                          (e.dtAntecipacaoBancaria.Year == dtaIni.Year && e.dtAntecipacaoBancaria.Month == dtaIni.Month && e.dtAntecipacaoBancaria.Day >= dtaIni.Day))
+                                                    && (e.dtAntecipacaoBancaria.Year < dtaFim.Year || (e.dtAntecipacaoBancaria.Year == dtaFim.Year && e.dtAntecipacaoBancaria.Month < dtaFim.Month) ||
+                                                                                          (e.dtAntecipacaoBancaria.Year == dtaFim.Year && e.dtAntecipacaoBancaria.Month == dtaFim.Month && e.dtAntecipacaoBancaria.Day <= dtaFim.Day)));
+                        }
+                        else // ANO + MES + DIA
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtAntecipacaoBancaria.Year == dtaIni.Year && e.dtAntecipacaoBancaria.Month == dtaIni.Month && e.dtAntecipacaoBancaria.Day == dtaIni.Day);
+                        }
                         break;
                     case CAMPOS.DTVENCIMENTO:
-                        DateTime dtVencimento = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtVencimento.Equals(dtVencimento)).AsQueryable<tbAntecipacaoBancaria>();
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => (e.dtVencimento.Year > dtaIni.Year || (e.dtVencimento.Year == dtaIni.Year && e.dtVencimento.Month > dtaIni.Month) ||
+                                                                                          (e.dtVencimento.Year == dtaIni.Year && e.dtVencimento.Month == dtaIni.Month && e.dtVencimento.Day >= dtaIni.Day))
+                                                    && (e.dtVencimento.Year < dtaFim.Year || (e.dtVencimento.Year == dtaFim.Year && e.dtVencimento.Month < dtaFim.Month) ||
+                                                                                          (e.dtVencimento.Year == dtaFim.Year && e.dtVencimento.Month == dtaFim.Month && e.dtVencimento.Day <= dtaFim.Day)));
+                        }
+                        else // ANO + MES + DIA
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVencimento.Year == dtaIni.Year && e.dtVencimento.Month == dtaIni.Month && e.dtVencimento.Day == dtaIni.Day);
+                        }
                         break;
                     case CAMPOS.VLANTECIPACAO:
                         decimal vlAntecipacao = Convert.ToDecimal(item.Value);
@@ -260,18 +289,35 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbAntecipacaoBancaria param, painel_taxservices_dbContext _dbContext = null)
+        public static Int32 Add(string token, AntecipacaoBancaria param, painel_taxservices_dbContext _dbContext = null)
         {
+            if (param == null || param.antecipacoes == null || param.antecipacoes.Count == 0)
+                throw new Exception("Parâmetro inválido!");
+
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
             DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
-                _db.tbAntecipacaoBancarias.Add(param);
-                _db.SaveChanges();
+                tbAntecipacaoBancaria tbAntecipacaoBancaria = new tbAntecipacaoBancaria();
+                foreach (AntecipacaoBancariaVencimentos antecipacao in param.antecipacoes)
+                {
+                    tbAntecipacaoBancaria = new tbAntecipacaoBancaria();
+                    tbAntecipacaoBancaria.cdAdquirente = param.cdAdquirente;
+                    tbAntecipacaoBancaria.cdContaCorrente = param.cdContaCorrente;
+                    tbAntecipacaoBancaria.dtAntecipacaoBancaria = param.dtAntecipacaoBancaria;
+
+                    tbAntecipacaoBancaria.cdBandeira = antecipacao.cdBandeira;
+                    tbAntecipacaoBancaria.dtVencimento = antecipacao.dtVencimento;
+                    tbAntecipacaoBancaria.vlAntecipacao = antecipacao.vlAntecipacao;
+                    tbAntecipacaoBancaria.vlAntecipacaoLiquida = antecipacao.vlAntecipacaoLiquida;
+
+                    _db.tbAntecipacaoBancarias.Add(tbAntecipacaoBancaria);
+                    _db.SaveChanges();
+                }
                 transaction.Commit();
-                return param.idAntecipacaoBancaria;
+                return tbAntecipacaoBancaria.idAntecipacaoBancaria;
             }
             catch (Exception e)
             {

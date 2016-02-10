@@ -82,7 +82,7 @@ namespace api.Negocios.Card
                     Bandeira = item.Bandeira,
                     Lote = item.Tipo == TIPO_RECEBIMENTO ? item.Lote : 0,
                     Data = item.Data,
-                    Antecipado = item.Tipo == TIPO_RECEBIMENTO ? item.Antecipado ?? false : false,
+                    Antecipado = item.Antecipado != null && item.Antecipado.Value,
                     ValorTotalBruto = item.Tipo == TIPO_RECEBIMENTO ? /*decimal.Round(*/Convert.ToDecimal(item.ValorTotalBruto)/*, 2)*/ : new decimal(0.0),
                     ValorTotalRecebimento = item.Tipo == TIPO_RECEBIMENTO ? /*decimal.Round(*/Convert.ToDecimal(item.ValorTotal)/*, 2)*/ : new decimal(0.0),
                     ValorTotalExtrato = item.Tipo == TIPO_EXTRATO ? /*decimal.Round(*/Convert.ToDecimal(item.ValorTotal)/*, 2)*/ : new decimal(0.0),
@@ -1244,6 +1244,7 @@ namespace api.Negocios.Card
                                                                         Bandeira = r.Key.Bandeira,
                                                                         Lote = r.Key.Lote,
                                                                         TipoCartao = r.Select(x => x.TipoCartao).FirstOrDefault(),
+                                                                        Antecipado = r.GroupBy(x => x.Antecipado).Count() == 1 ? r.Select(x => x.Antecipado).FirstOrDefault() : (bool?)null,
                                                                         Filial = r.Key.Filial
                                                                     }).ToList<ConciliacaoBancaria>());
                             }
