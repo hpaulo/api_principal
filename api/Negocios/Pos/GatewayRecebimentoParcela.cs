@@ -727,7 +727,8 @@ namespace api.Negocios.Pos
                             string busca = item.Value;
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             string data = DataBaseQueries.GetDate(dta);
-                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda = '" + data + "'");
+                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda BETWEEN '" + data + "' AND '" + data + " 23:59:59'");
+                            //WHERE R.dtaVenda BETWEEN '2016-01-29' AND '2016-01-29 23:59:59'
                         }
                         break;
                     case CAMPOS.NSU:

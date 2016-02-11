@@ -31,13 +31,15 @@ namespace api.Negocios.Card
         public enum CAMPOS
         {
             IDANTECIPACAOBANCARIA = 100,
-            DTANTECIPACAOBANCARIA = 101,
-            DTVENCIMENTO = 102,
-            VLANTECIPACAO = 103,
-            VLANTECIPACAOLIQUIDA = 104,
-            CDADQUIRENTE = 105,
-            CDBANDEIRA = 106,
-            CDCONTACORRENTE = 107,
+            CDCONTACORRENTE = 101,
+            DTANTECIPACAOBANCARIA = 102,
+            CDADQUIRENTE = 103,
+            VLOPERACAO = 104,
+            VLLIQUIDO = 105,
+
+            // RELACIONAMENTOS
+            DTVENCIMENTO = 202,
+            CDBANDEIRA = 205
         };
 
         /// <summary>
@@ -66,7 +68,7 @@ namespace api.Negocios.Card
                 {
                     case CAMPOS.IDANTECIPACAOBANCARIA:
                         Int32 idAntecipacaoBancaria = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.idAntecipacaoBancaria.Equals(idAntecipacaoBancaria)).AsQueryable<tbAntecipacaoBancaria>();
+                        entity = entity.Where(e => e.idAntecipacaoBancaria == idAntecipacaoBancaria).AsQueryable<tbAntecipacaoBancaria>();
                         break;
                     case CAMPOS.DTANTECIPACAOBANCARIA:
                         if (item.Value.Contains("|")) // BETWEEN
@@ -86,43 +88,44 @@ namespace api.Negocios.Card
                             entity = entity.Where(e => e.dtAntecipacaoBancaria.Year == dtaIni.Year && e.dtAntecipacaoBancaria.Month == dtaIni.Month && e.dtAntecipacaoBancaria.Day == dtaIni.Day);
                         }
                         break;
+                   
+                    case CAMPOS.CDADQUIRENTE:
+                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.cdAdquirente == cdAdquirente).AsQueryable<tbAntecipacaoBancaria>();
+                        break;
+                    case CAMPOS.CDCONTACORRENTE:
+                        Int32 cdContaCorrente = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.cdContaCorrente == cdContaCorrente).AsQueryable<tbAntecipacaoBancaria>();
+                        break;
+                    case CAMPOS.VLOPERACAO:
+                        decimal vlOperacao = Convert.ToDecimal(item.Value);
+                        entity = entity.Where(e => e.vlOperacao == vlOperacao).AsQueryable<tbAntecipacaoBancaria>();
+                        break;
+                    case CAMPOS.VLLIQUIDO:
+                        decimal vlLiquido = Convert.ToDecimal(item.Value);
+                        entity = entity.Where(e => e.vlLiquido == vlLiquido).AsQueryable<tbAntecipacaoBancaria>();
+                        break;
+
+                    // RELACIONAMENTOS
                     case CAMPOS.DTVENCIMENTO:
                         if (item.Value.Contains("|")) // BETWEEN
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => (e.dtVencimento.Year > dtaIni.Year || (e.dtVencimento.Year == dtaIni.Year && e.dtVencimento.Month > dtaIni.Month) ||
-                                                                                          (e.dtVencimento.Year == dtaIni.Year && e.dtVencimento.Month == dtaIni.Month && e.dtVencimento.Day >= dtaIni.Day))
-                                                    && (e.dtVencimento.Year < dtaFim.Year || (e.dtVencimento.Year == dtaFim.Year && e.dtVencimento.Month < dtaFim.Month) ||
-                                                                                          (e.dtVencimento.Year == dtaFim.Year && e.dtVencimento.Month == dtaFim.Month && e.dtVencimento.Day <= dtaFim.Day)));
+                            entity = entity.Where(t => t.tbAntecipacaoBancariaDetalhes.Any(e => (e.dtVencimento.Year > dtaIni.Year || (e.dtVencimento.Year == dtaIni.Year && e.dtVencimento.Month > dtaIni.Month) || (e.dtVencimento.Year == dtaIni.Year && e.dtVencimento.Month == dtaIni.Month && e.dtVencimento.Day >= dtaIni.Day))
+                                                                                                && (e.dtVencimento.Year < dtaFim.Year || (e.dtVencimento.Year == dtaFim.Year && e.dtVencimento.Month < dtaFim.Month) || (e.dtVencimento.Year == dtaFim.Year && e.dtVencimento.Month == dtaFim.Month && e.dtVencimento.Day <= dtaFim.Day))));
                         }
                         else // ANO + MES + DIA
                         {
                             string busca = item.Value;
                             DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtVencimento.Year == dtaIni.Year && e.dtVencimento.Month == dtaIni.Month && e.dtVencimento.Day == dtaIni.Day);
+                            entity = entity.Where(t => t.tbAntecipacaoBancariaDetalhes.Any(e => e.dtVencimento.Year == dtaIni.Year && e.dtVencimento.Month == dtaIni.Month && e.dtVencimento.Day == dtaIni.Day));
                         }
-                        break;
-                    case CAMPOS.VLANTECIPACAO:
-                        decimal vlAntecipacao = Convert.ToDecimal(item.Value);
-                        entity = entity.Where(e => e.vlAntecipacao.Equals(vlAntecipacao)).AsQueryable<tbAntecipacaoBancaria>();
-                        break;
-                    case CAMPOS.VLANTECIPACAOLIQUIDA:
-                        decimal vlAntecipacaoLiquida = Convert.ToDecimal(item.Value);
-                        entity = entity.Where(e => e.vlAntecipacaoLiquida.Equals(vlAntecipacaoLiquida)).AsQueryable<tbAntecipacaoBancaria>();
-                        break;
-                    case CAMPOS.CDADQUIRENTE:
-                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdAdquirente.Equals(cdAdquirente)).AsQueryable<tbAntecipacaoBancaria>();
                         break;
                     case CAMPOS.CDBANDEIRA:
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdBandeira.Equals(cdBandeira)).AsQueryable<tbAntecipacaoBancaria>();
-                        break;
-                    case CAMPOS.CDCONTACORRENTE:
-                        Int32 cdContaCorrente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdContaCorrente.Equals(cdContaCorrente)).AsQueryable<tbAntecipacaoBancaria>();
+                        entity = entity.Where(t => t.tbAntecipacaoBancariaDetalhes.Any(e => e.cdBandeira == cdBandeira)).AsQueryable<tbAntecipacaoBancaria>();
                         break;
                 }
             }
@@ -138,32 +141,24 @@ namespace api.Negocios.Card
                     else entity = entity.OrderByDescending(e => e.idAntecipacaoBancaria).AsQueryable<tbAntecipacaoBancaria>();
                     break;
                 case CAMPOS.DTANTECIPACAOBANCARIA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtAntecipacaoBancaria).ThenBy(e => e.tbAdquirente.nmAdquirente).ThenBy(e => e.dtVencimento).ThenBy(e => e.vlAntecipacao).AsQueryable<tbAntecipacaoBancaria>();
-                    else entity = entity.OrderByDescending(e => e.dtAntecipacaoBancaria).ThenByDescending(e => e.tbAdquirente.nmAdquirente).ThenByDescending(e => e.dtVencimento).ThenByDescending(e => e.vlAntecipacao).AsQueryable<tbAntecipacaoBancaria>();
-                    break;
-                case CAMPOS.DTVENCIMENTO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.dtVencimento).ThenBy(e => e.tbAdquirente.nmAdquirente).ThenBy(e => e.dtAntecipacaoBancaria).ThenBy(e => e.vlAntecipacao).AsQueryable<tbAntecipacaoBancaria>();
-                    else entity = entity.OrderByDescending(e => e.dtVencimento).ThenByDescending(e => e.tbAdquirente.nmAdquirente).ThenByDescending(e => e.dtAntecipacaoBancaria).ThenByDescending(e => e.vlAntecipacao).AsQueryable<tbAntecipacaoBancaria>();
-                    break;
-                case CAMPOS.VLANTECIPACAO:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.vlAntecipacao).AsQueryable<tbAntecipacaoBancaria>();
-                    else entity = entity.OrderByDescending(e => e.vlAntecipacao).AsQueryable<tbAntecipacaoBancaria>();
-                    break;
-                case CAMPOS.VLANTECIPACAOLIQUIDA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.vlAntecipacaoLiquida).AsQueryable<tbAntecipacaoBancaria>();
-                    else entity = entity.OrderByDescending(e => e.vlAntecipacaoLiquida).AsQueryable<tbAntecipacaoBancaria>();
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtAntecipacaoBancaria).ThenBy(e => e.tbAdquirente.nmAdquirente).ThenBy(e => e.vlOperacao).AsQueryable<tbAntecipacaoBancaria>();
+                    else entity = entity.OrderByDescending(e => e.dtAntecipacaoBancaria).ThenByDescending(e => e.tbAdquirente.nmAdquirente).ThenByDescending(e => e.vlOperacao).AsQueryable<tbAntecipacaoBancaria>();
                     break;
                 case CAMPOS.CDADQUIRENTE:
                     if (orderby == 0) entity = entity.OrderBy(e => e.cdAdquirente).AsQueryable<tbAntecipacaoBancaria>();
                     else entity = entity.OrderByDescending(e => e.cdAdquirente).AsQueryable<tbAntecipacaoBancaria>();
                     break;
-                case CAMPOS.CDBANDEIRA:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdBandeira).AsQueryable<tbAntecipacaoBancaria>();
-                    else entity = entity.OrderByDescending(e => e.cdBandeira).AsQueryable<tbAntecipacaoBancaria>();
-                    break;
                 case CAMPOS.CDCONTACORRENTE:
                     if (orderby == 0) entity = entity.OrderBy(e => e.cdContaCorrente).AsQueryable<tbAntecipacaoBancaria>();
                     else entity = entity.OrderByDescending(e => e.cdContaCorrente).AsQueryable<tbAntecipacaoBancaria>();
+                    break;
+                case CAMPOS.VLOPERACAO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.vlOperacao).AsQueryable<tbAntecipacaoBancaria>();
+                    else entity = entity.OrderByDescending(e => e.vlOperacao).AsQueryable<tbAntecipacaoBancaria>();
+                    break;
+                case CAMPOS.VLLIQUIDO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.vlLiquido).AsQueryable<tbAntecipacaoBancaria>();
+                    else entity = entity.OrderByDescending(e => e.vlLiquido).AsQueryable<tbAntecipacaoBancaria>();
                     break;
             }
             #endregion
@@ -213,14 +208,11 @@ namespace api.Negocios.Card
                 {
                     CollectionTbAntecipacaoBancaria = query.Select(e => new
                     {
-
                         idAntecipacaoBancaria = e.idAntecipacaoBancaria,
                         dtAntecipacaoBancaria = e.dtAntecipacaoBancaria,
-                        dtVencimento = e.dtVencimento,
-                        vlAntecipacao = e.vlAntecipacao,
-                        vlAntecipacaoLiquida = e.vlAntecipacaoLiquida,
+                        vlOperacao = e.vlOperacao,
+                        vlLiquido = e.vlLiquido,
                         cdAdquirente = e.cdAdquirente,
-                        cdBandeira = e.cdBandeira,
                         cdContaCorrente = e.cdContaCorrente,
                     }).ToList<dynamic>();
                 }
@@ -228,14 +220,11 @@ namespace api.Negocios.Card
                 {
                     CollectionTbAntecipacaoBancaria = query.Select(e => new
                     {
-
                         idAntecipacaoBancaria = e.idAntecipacaoBancaria,
                         dtAntecipacaoBancaria = e.dtAntecipacaoBancaria,
-                        dtVencimento = e.dtVencimento,
-                        vlAntecipacao = e.vlAntecipacao,
-                        vlAntecipacaoLiquida = e.vlAntecipacaoLiquida,
+                        vlOperacao = e.vlOperacao ?? new decimal(0.0),
+                        vlLiquido = e.vlLiquido ?? new decimal(0.0),
                         cdAdquirente = e.cdAdquirente,
-                        cdBandeira = e.cdBandeira,
                         cdContaCorrente = e.cdContaCorrente,
                     }).ToList<dynamic>();
                 }
@@ -244,17 +233,25 @@ namespace api.Negocios.Card
                     CollectionTbAntecipacaoBancaria = query.Select(e => new
                     {
                         idAntecipacaoBancaria = e.idAntecipacaoBancaria,
-                        dtAntecipacaoBancaria = e.dtAntecipacaoBancaria,
-                        dtVencimento = e.dtVencimento,
-                        vlAntecipacao = e.vlAntecipacao,
-                        vlAntecipacaoLiquida = e.vlAntecipacaoLiquida,
-                        tbAdquirente = new { cdAdquirente = e.cdAdquirente,
-                                             nmAdquirente = e.tbAdquirente.nmAdquirente
-                                           },
-                        tbBandeira = e.cdBandeira == null ? null : new { cdBandeira = e.cdBandeira,
-                                                                         dsBandeira = e.tbBandeira.dsBandeira
-                                                                       },
                         cdContaCorrente = e.cdContaCorrente,
+                        dtAntecipacaoBancaria = e.dtAntecipacaoBancaria,
+                        tbAdquirente = new
+                        {
+                            cdAdquirente = e.tbAdquirente.cdAdquirente,
+                            nmAdquirente = e.tbAdquirente.nmAdquirente
+                        },
+                        vlOperacao = e.vlOperacao ?? new decimal(0.0),
+                        vlLiquido = e.vlLiquido ?? new decimal(0.0),
+                        antecipacoes = e.tbAntecipacaoBancariaDetalhes.Select(t => new {
+                            idAntecipacaoBancariaDetalhe = t.idAntecipacaoBancariaDetalhe,
+                            dtVencimento = t.dtVencimento,
+                            vlAntecipacao = t.vlAntecipacao,
+                            vlAntecipacaoLiquida = t.vlAntecipacaoLiquida,
+                            tbBandeira = t.cdBandeira == null ? null : new { cdBandeira = t.cdBandeira,
+													                         dsBandeira = t.tbBandeira.dsBandeira 
+													                       },
+                        }).OrderBy(t => t.dtVencimento).ThenBy(t => t.vlAntecipacao).ToList<dynamic>()
+                        
                     }).ToList<dynamic>();
                 }
 
@@ -301,19 +298,24 @@ namespace api.Negocios.Card
             try
             {
                 tbAntecipacaoBancaria tbAntecipacaoBancaria = new tbAntecipacaoBancaria();
+                tbAntecipacaoBancaria.cdAdquirente = param.cdAdquirente;
+                tbAntecipacaoBancaria.cdContaCorrente = param.cdContaCorrente;
+                tbAntecipacaoBancaria.dtAntecipacaoBancaria = param.dtAntecipacaoBancaria;
+                //tbAntecipacaoBancaria.vlOperacao = param.antecipacoes.Select(t => t.vlAntecipacao).Sum();
+                //tbAntecipacaoBancaria.vlLiquido = param.antecipacoes.Select(t => t.vlAntecipacaoLiquida).Sum();
+                _db.tbAntecipacaoBancarias.Add(tbAntecipacaoBancaria);
+                _db.SaveChanges();
+
                 foreach (AntecipacaoBancariaVencimentos antecipacao in param.antecipacoes)
                 {
-                    tbAntecipacaoBancaria = new tbAntecipacaoBancaria();
-                    tbAntecipacaoBancaria.cdAdquirente = param.cdAdquirente;
-                    tbAntecipacaoBancaria.cdContaCorrente = param.cdContaCorrente;
-                    tbAntecipacaoBancaria.dtAntecipacaoBancaria = param.dtAntecipacaoBancaria;
+                    tbAntecipacaoBancariaDetalhe tbAntecipacaoBancariaDetalhe = new tbAntecipacaoBancariaDetalhe();
+                    tbAntecipacaoBancariaDetalhe.idAntecipacaoBancaria = tbAntecipacaoBancaria.idAntecipacaoBancaria;
+                    tbAntecipacaoBancariaDetalhe.cdBandeira = antecipacao.cdBandeira;
+                    tbAntecipacaoBancariaDetalhe.dtVencimento = antecipacao.dtVencimento;
+                    tbAntecipacaoBancariaDetalhe.vlAntecipacao = antecipacao.vlAntecipacao;
+                    tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = antecipacao.vlAntecipacaoLiquida;
 
-                    tbAntecipacaoBancaria.cdBandeira = antecipacao.cdBandeira;
-                    tbAntecipacaoBancaria.dtVencimento = antecipacao.dtVencimento;
-                    tbAntecipacaoBancaria.vlAntecipacao = antecipacao.vlAntecipacao;
-                    tbAntecipacaoBancaria.vlAntecipacaoLiquida = antecipacao.vlAntecipacaoLiquida;
-
-                    _db.tbAntecipacaoBancarias.Add(tbAntecipacaoBancaria);
+                    _db.tbAntecipacaoBancariaDetalhes.Add(tbAntecipacaoBancariaDetalhe);
                     _db.SaveChanges();
                 }
                 transaction.Commit();
@@ -386,8 +388,11 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbAntecipacaoBancaria param, painel_taxservices_dbContext _dbContext = null)
+        public static void Update(string token, AntecipacaoBancaria param, painel_taxservices_dbContext _dbContext = null)
         {
+            if (param == null || param.antecipacoes == null)
+                throw new Exception("Parâmetro inválido!");
+
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
@@ -395,23 +400,69 @@ namespace api.Negocios.Card
             try
             {
                 tbAntecipacaoBancaria value = _db.tbAntecipacaoBancarias
-                                .Where(e => e.idAntecipacaoBancaria.Equals(param.idAntecipacaoBancaria))
-                                .First<tbAntecipacaoBancaria>();
+                                .Where(e => e.idAntecipacaoBancaria == param.idAntecipacaoBancaria)
+                                .FirstOrDefault();
 
+                if (value == null)
+                    throw new Exception("Antecipação bancária inexistente!");
 
-                if (param.dtAntecipacaoBancaria != null && param.dtAntecipacaoBancaria != value.dtAntecipacaoBancaria)
+                if (param.dtAntecipacaoBancaria != value.dtAntecipacaoBancaria)
                     value.dtAntecipacaoBancaria = param.dtAntecipacaoBancaria;
-                if (param.dtVencimento != null && param.dtVencimento != value.dtVencimento)
-                    value.dtVencimento = param.dtVencimento;
-                if (param.vlAntecipacao != null && param.vlAntecipacao != value.vlAntecipacao)
-                    value.vlAntecipacao = param.vlAntecipacao;
-                if (param.vlAntecipacaoLiquida != null && param.vlAntecipacaoLiquida != value.vlAntecipacaoLiquida)
-                    value.vlAntecipacaoLiquida = param.vlAntecipacaoLiquida;
-                if (param.cdAdquirente != null && param.cdAdquirente != value.cdAdquirente)
+                if (param.cdAdquirente != 0 && param.cdAdquirente != value.cdAdquirente)
                     value.cdAdquirente = param.cdAdquirente;
-                if (param.cdBandeira != null && param.cdBandeira != value.cdBandeira)
-                    value.cdBandeira = param.cdBandeira;
                 _db.SaveChanges();
+
+                // Salva antecipações
+                foreach (AntecipacaoBancariaVencimentos antecipacao in param.antecipacoes)
+                {
+                    tbAntecipacaoBancariaDetalhe tbAntecipacaoBancariaDetalhe;
+
+                    if (antecipacao.idAntecipacaoBancariaDetalhe == -1)
+                    {
+                        // Novo registro
+                        tbAntecipacaoBancariaDetalhe = new tbAntecipacaoBancariaDetalhe();
+                        tbAntecipacaoBancariaDetalhe.idAntecipacaoBancaria = param.idAntecipacaoBancaria;
+                        tbAntecipacaoBancariaDetalhe.cdBandeira = antecipacao.cdBandeira;
+                        tbAntecipacaoBancariaDetalhe.dtVencimento = antecipacao.dtVencimento;
+                        tbAntecipacaoBancariaDetalhe.vlAntecipacao = antecipacao.vlAntecipacao;
+                        tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = antecipacao.vlAntecipacaoLiquida;
+                        // Adiciona
+                        _db.tbAntecipacaoBancariaDetalhes.Add(tbAntecipacaoBancariaDetalhe);
+                    }
+                    else
+                    {
+                        tbAntecipacaoBancariaDetalhe = _db.tbAntecipacaoBancariaDetalhes.Where(t => t.idAntecipacaoBancariaDetalhe == antecipacao.idAntecipacaoBancariaDetalhe).FirstOrDefault();
+
+                        if (tbAntecipacaoBancariaDetalhe == null)
+                            throw new Exception("Vencimento " + antecipacao.idAntecipacaoBancariaDetalhe + " inválido da antecipação bancária");
+
+                        if (tbAntecipacaoBancariaDetalhe.cdBandeira != antecipacao.cdBandeira)
+                            tbAntecipacaoBancariaDetalhe.cdBandeira = antecipacao.cdBandeira;
+                        if (!tbAntecipacaoBancariaDetalhe.dtVencimento.Equals(antecipacao.dtVencimento))
+                            tbAntecipacaoBancariaDetalhe.dtVencimento = antecipacao.dtVencimento;
+                        if (tbAntecipacaoBancariaDetalhe.vlAntecipacao != antecipacao.vlAntecipacao)
+                            tbAntecipacaoBancariaDetalhe.vlAntecipacao = antecipacao.vlAntecipacao;
+                        if (tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida != antecipacao.vlAntecipacaoLiquida)
+                            tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = antecipacao.vlAntecipacaoLiquida;
+                    }
+                    _db.SaveChanges();
+                }
+
+                // Deleta vencimentos
+                if (param.deletar != null && param.deletar.Count > 0)
+                {
+                    foreach (int idAntecipacaoBancariaDetalhe in param.deletar)
+                    {
+                        tbAntecipacaoBancariaDetalhe tbAntecipacaoBancariaDetalhe = _db.tbAntecipacaoBancariaDetalhes.Where(t => t.idAntecipacaoBancariaDetalhe == idAntecipacaoBancariaDetalhe).FirstOrDefault();
+
+                        if (tbAntecipacaoBancariaDetalhe == null)
+                            throw new Exception("Vencimento " + idAntecipacaoBancariaDetalhe + " inválido da antecipação bancária");
+
+                        _db.tbAntecipacaoBancariaDetalhes.Remove(tbAntecipacaoBancariaDetalhe);
+                        _db.SaveChanges();
+                    }
+                }
+
                 transaction.Commit();
             }
             catch (Exception e)

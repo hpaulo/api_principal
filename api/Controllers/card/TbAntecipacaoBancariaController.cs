@@ -91,7 +91,7 @@ namespace api.Controllers.Card
 
 
         // PUT /tbAntecipacaoBancaria/token/
-        public HttpResponseMessage Put(string token, [FromBody]tbAntecipacaoBancaria param)
+        public HttpResponseMessage Put(string token, [FromBody]AntecipacaoBancaria param)
         {
             // Abre nova conexão
             using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())

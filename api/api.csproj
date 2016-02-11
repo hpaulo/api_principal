@@ -367,10 +367,12 @@
     <Compile Include="Controllers\Tax\TbManifestoController.cs" />
     <Compile Include="Controllers\Util\BancosController.cs" />
     <Compile Include="Controllers\Util\ExportarController.cs" />
+    <Compile Include="Models\Mapping\tbAntecipacaoBancariaDetalheMap.cs" />
     <Compile Include="Models\Mapping\tbAntecipacaoBancariaMap.cs" />
     <Compile Include="Models\Mapping\tbResumoVendaMap.cs" />
     <Compile Include="Models\Object\AntecipacaoBancaria.cs" />
     <Compile Include="Models\tbAntecipacaoBancaria.cs" />
+    <Compile Include="Models\tbAntecipacaoBancariaDetalhe.cs" />
     <Compile Include="Models\tbResumoVenda.cs" />
     <Compile Include="Negocios\Card\GatewayTbAntecipacaoBancaria.cs" />
     <Compile Include="Negocios\Util\DataBaseQueries.cs" />

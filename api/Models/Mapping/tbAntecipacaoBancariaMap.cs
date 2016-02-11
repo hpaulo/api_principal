@@ -10,16 +10,15 @@ namespace api.Models.Mapping
             // Primary Key
             this.HasKey(t => t.idAntecipacaoBancaria);
 
-            this.Property(t => t.vlAntecipacao)
+            this.Property(t => t.vlOperacao)
                 .HasPrecision(9, 2)
-                .IsRequired();
+                //.IsRequired();
+                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
 
-            this.Property(t => t.vlAntecipacaoLiquida)
+            this.Property(t => t.vlLiquido)
                 .HasPrecision(9, 2)
-                .IsRequired();
-
-            this.Property(t => t.dtVencimento)
-                .IsRequired();
+                //.IsRequired();
+                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
 
             this.Property(t => t.dtAntecipacaoBancaria)
                 .IsRequired();
@@ -36,11 +35,9 @@ namespace api.Models.Mapping
             this.Property(t => t.idAntecipacaoBancaria).HasColumnName("idAntecipacaoBancaria");
             this.Property(t => t.cdAdquirente).HasColumnName("cdAdquirente");
             this.Property(t => t.cdContaCorrente).HasColumnName("cdContaCorrente");
-            this.Property(t => t.cdBandeira).HasColumnName("cdBandeira");
             this.Property(t => t.dtAntecipacaoBancaria).HasColumnName("dtAntecipacaoBancaria");
-            this.Property(t => t.dtVencimento).HasColumnName("dtVencimento");
-            this.Property(t => t.vlAntecipacao).HasColumnName("vlAntecipacao");
-            this.Property(t => t.vlAntecipacaoLiquida).HasColumnName("vlAntecipacaoLiquida");
+            this.Property(t => t.vlOperacao).HasColumnName("vlOperacao");
+            this.Property(t => t.vlLiquido).HasColumnName("vlLiquido");
 
             // Relationships
             this.HasRequired(t => t.tbAdquirente)
@@ -49,9 +46,6 @@ namespace api.Models.Mapping
             this.HasRequired(t => t.tbContaCorrente)
                 .WithMany(t => t.tbAntecipacaoBancarias)
                 .HasForeignKey(d => d.cdContaCorrente);
-            this.HasOptional(t => t.tbBandeira)
-                .WithMany(t => t.tbAntecipacaoBancarias)
-                .HasForeignKey(d => d.cdBandeira);
         }
     }
 }
