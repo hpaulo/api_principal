@@ -153,17 +153,17 @@ namespace api.Negocios.Card
                             if (cdAdquirente == -1)
                                 entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
                                                                                .Where(b => b.dsMemo.Equals(e.dsDocumento))
-                                                                               .Where(b => b.cdAdquirente == null && b.dsTipoCartao != null)
+                                                                               .Where(b => b.cdAdquirente == null && (b.dsTipoCartao != null || b.flAntecipacao))
                                                                                .Count() > 0).AsQueryable<tbExtrato>();
                             else if (cdAdquirente == 0)
                                 entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
                                                                                .Where(b => b.dsMemo.Equals(e.dsDocumento))
-                                                                               .Where(b => b.cdAdquirente != null || (b.cdAdquirente == null && b.dsTipoCartao != null))
+                                                                               .Where(b => b.cdAdquirente != null || (b.cdAdquirente == null && (b.dsTipoCartao != null || b.flAntecipacao)))
                                                                                .Count() > 0).AsQueryable<tbExtrato>();
                             else
                                 entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
                                                                                .Where(b => b.dsMemo.Equals(e.dsDocumento))
-                                                                               .Where(b => b.cdAdquirente == cdAdquirente || (b.cdAdquirente == null && b.dsTipoCartao != null))
+                                                                               .Where(b => b.cdAdquirente == cdAdquirente || (b.cdAdquirente == null && (b.dsTipoCartao != null || b.flAntecipacao)))
                                                                                .Count() > 0).AsQueryable<tbExtrato>();
                         }
                         else

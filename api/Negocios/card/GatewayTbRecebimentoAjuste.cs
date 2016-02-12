@@ -9,6 +9,8 @@ using api.Models.Object;
 using System.Globalization;
 using System.Data.Entity.Validation;
 using System.Data.Entity;
+using api.Negocios.Util;
+using api.Negocios.Cliente;
 
 namespace api.Negocios.Card
 {
@@ -48,6 +50,8 @@ namespace api.Negocios.Card
             DSMOTIVO = 104,
             VLAJUSTE = 105,
             IDEXTRATO = 106,
+            IDRESUMOVENDA = 107,
+            FLANTECIPACAO = 108,
 
             // RELACIONAMENTOS
             ID_GRUPO = 216,
@@ -56,7 +60,9 @@ namespace api.Negocios.Card
             DSTIPO = 303,
 
             // EXTRA
-            SEM_AJUSTES_ANTECIPACAO = 400
+            SEM_AJUSTES_ANTECIPACAO = 400,
+
+            CDCONTACORRENTE = 500
         };
 
         /// <summary>
@@ -156,6 +162,19 @@ namespace api.Negocios.Card
                             // Por enquanto, só trata da Cielo
                             entity = entity.Where(e => e.tbBandeira.cdAdquirente != 2 || !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)).AsQueryable<tbRecebimentoAjuste>();
                         break;
+                    case CAMPOS.CDCONTACORRENTE:
+                        Int32 cdContaCorrente = Convert.ToInt32(item.Value);
+                        if (cdContaCorrente > 0)
+                        {
+                            // Obtém as filiais da conta
+                            List<string> filiaisDaConta = Permissoes.GetFiliaisDaConta(cdContaCorrente, _db);
+                            List<int> adquirentesDaConta = Permissoes.GetAdquirentesDaConta(cdContaCorrente, _db);
+                            entity = entity.Where(e => filiaisDaConta.Contains(e.nrCNPJ))
+                                           .Where(e => adquirentesDaConta.Contains(e.tbBandeira.cdAdquirente))
+                                           .AsQueryable<tbRecebimentoAjuste>();
+                            
+                        }
+                        break;
                 }
             }
             #endregion
@@ -197,6 +216,201 @@ namespace api.Negocios.Card
             #endregion
 
             return entity;
+
+
+        }
+
+        /// <summary>
+        /// Get TbRecebimentoAjuste/TbRecebimentoAjuste
+        /// </summary>
+        /// <param name="colecao"></param>
+        /// <param name="campo"></param>
+        /// <param name="orderby"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="queryString"></param>
+        /// <returns></returns>
+        public static SimpleDataBaseQuery getQuery(int campo, int orderby, Dictionary<string, string> queryString)
+        {
+            Dictionary<string, string> join = new Dictionary<string, string>();
+            List<string> where = new List<string>();
+            List<string> order = new List<string>();
+
+            #region WHERE - ADICIONA OS FILTROS A QUERY
+            // ADICIONA OS FILTROS A QUERY
+            foreach (KeyValuePair<string, string> item in queryString)
+            {
+                int key = Convert.ToInt16(item.Key);
+                CAMPOS filtroEnum = (CAMPOS)key;
+                switch (filtroEnum)
+                {
+                    case CAMPOS.IDRECEBIMENTOAJUSTE:
+                        Int32 idRecebimentoAjuste = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".idRecebimentoAjuste = " + idRecebimentoAjuste);
+                        break;
+                    case CAMPOS.DTAJUSTE:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dtInicio = DataBaseQueries.GetDate(dtaIni);
+                            string dtFim = DataBaseQueries.GetDate(dtaFim);
+                            where.Add(SIGLA_QUERY + ".dtAjuste BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
+                        }
+                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(dta);
+                            where.Add(SIGLA_QUERY + ".dtAjuste >= '" + dt + "'");
+                        }
+                        else if (item.Value.Contains("<")) // MENOR IGUAL
+                        {
+                            string busca = item.Value.Replace("<", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(dta);
+                            where.Add(SIGLA_QUERY + ".dtAjuste <= '" + dt + " 23:59:00'");
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(data);
+                            where.Add(SIGLA_QUERY + ".dtAjuste BETWEEN '" + dt + "' AND '" + dt + " 23:59:00'");
+                        }
+                        break;
+                    case CAMPOS.NRCNPJ:
+                        string nrCNPJ = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".nrCNPJ = '" + nrCNPJ + "'");
+                        break;
+                    case CAMPOS.CDBANDEIRA:
+                        Int32 cdBandeira = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".cdBandeira = " + cdBandeira);
+                        break;
+                    case CAMPOS.DSMOTIVO:
+                        string dsMotivo = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".dsMotivo = '" + dsMotivo + "'");
+                        break;
+                    case CAMPOS.VLAJUSTE:
+                        decimal vlAjuste = Convert.ToDecimal(item.Value);
+                        where.Add(SIGLA_QUERY + ".vlAjuste = " + vlAjuste.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                        break;
+                    case CAMPOS.IDEXTRATO:
+                        Int32 idExtrato = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".idExtrato = " + idExtrato);
+                        break;
+                    case CAMPOS.IDRESUMOVENDA:
+                        Int32 idResumoVenda = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".idResumoVenda = " + idResumoVenda);
+                        break;
+                    case CAMPOS.FLANTECIPACAO:
+                        Boolean flAntecipacao = Convert.ToBoolean(item.Value);
+                        where.Add(SIGLA_QUERY + ".flAntecipacao = " + DataBaseQueries.GetBoolean(flAntecipacao));
+                        break;
+
+                    // RELACIONAMENTOS
+                    case CAMPOS.ID_GRUPO:
+                        // Adiciona os joins
+                        if (!join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                            join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj = " + SIGLA_QUERY + ".nrCNPJ");
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        where.Add(GatewayEmpresa.SIGLA_QUERY + ".id_grupo = " + id_grupo);
+                        break;
+                    case CAMPOS.CDADQUIRENTE:
+                        // Adiciona os joins
+                        if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + SIGLA_QUERY + ".cdBandeira");
+                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                        where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente);
+                        break;
+                    case CAMPOS.DSTIPO:
+                        // Adiciona os joins
+                        if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + SIGLA_QUERY + ".cdBandeira");
+                        string dsTipo = Convert.ToString(item.Value).TrimEnd();
+                        where.Add(GatewayTbBandeira.SIGLA_QUERY + ".dsTipo like '" + dsTipo + "%'");
+                        break;
+                    case CAMPOS.SEM_AJUSTES_ANTECIPACAO:
+                        if (Convert.ToBoolean(item.Value))
+                        {
+                            string ajustes = string.Join("', '", AJUSTES_ANTECIPACAO_CIELO);
+                            if (!ajustes.Equals(""))
+                            {
+                                // Por enquanto, só trata da Cielo
+                                ajustes = "'" + ajustes + "'";
+                                // Adiciona os joins
+                                if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                                    join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + SIGLA_QUERY + ".cdBandeira");
+                                where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente != 2 OR " + SIGLA_QUERY + ".dsMotivo NOT IN (" + ajustes + ")");
+                            }
+                        }
+                        break;
+                    case CAMPOS.CDCONTACORRENTE:
+                        Int32 cdContaCorrente = Convert.ToInt32(item.Value);
+                        if (cdContaCorrente > 0)
+                        {
+                            // Obtém as filiais da conta
+                            string filiaisDaConta = "'" + string.Join("', '", Permissoes.GetFiliaisDaConta(cdContaCorrente)) + "'";
+                            string adquirentesDaConta = string.Join(", ", Permissoes.GetAdquirentesDaConta(cdContaCorrente));
+                            // Adiciona os joins
+                            if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                                join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + SIGLA_QUERY + ".cdBandeira");
+                            where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente in (" + adquirentesDaConta + ")");
+                            where.Add(SIGLA_QUERY + ".nrCNPJ in (" + filiaisDaConta + ")");    
+
+                        }
+                        break;
+                }
+            }
+            #endregion
+
+            #region ORDER BY - ADICIONA A ORDENAÇÃO A QUERY
+            // ADICIONA A ORDENAÇÃO A QUERY
+            CAMPOS filtro = (CAMPOS)campo;
+            switch (filtro)
+            {
+                case CAMPOS.IDRECEBIMENTOAJUSTE:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".idRecebimentoAjuste ASC");
+                    else order.Add(SIGLA_QUERY + ".idRecebimentoAjuste DESC");
+                    break;
+                case CAMPOS.DTAJUSTE:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dtAjuste ASC");
+                    else order.Add(SIGLA_QUERY + ".dtAjuste DESC");
+                    break;
+                case CAMPOS.NRCNPJ:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".nrCNPJ ASC");
+                    else order.Add(SIGLA_QUERY + ".nrCNPJ DESC");
+                    break;
+                case CAMPOS.CDBANDEIRA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdBandeira ASC");
+                    else order.Add(SIGLA_QUERY + ".cdBandeira DESC");
+                    break;
+                case CAMPOS.DSMOTIVO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dsMotivo ASC");
+                    else order.Add(SIGLA_QUERY + ".dsMotivo DESC");
+                    break;
+                case CAMPOS.VLAJUSTE:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".vlAjuste ASC");
+                    else order.Add(SIGLA_QUERY + ".vlAjuste DESC");
+                    break;
+                case CAMPOS.IDEXTRATO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".idExtrato ASC");
+                    else order.Add(SIGLA_QUERY + ".idExtrato DESC");
+                    break;
+                case CAMPOS.IDRESUMOVENDA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".idResumoVenda ASC");
+                    else order.Add(SIGLA_QUERY + ".idResumoVenda DESC");
+                    break;
+                case CAMPOS.FLANTECIPACAO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".flAntecipacao ASC");
+                    else order.Add(SIGLA_QUERY + ".flAntecipacao DESC");
+                    break;
+            }
+            #endregion
+
+            return new SimpleDataBaseQuery(null, "card.tbRecebimentoAjuste " + SIGLA_QUERY,
+                                           join, where.ToArray(), null, order.ToArray());
 
 
         }

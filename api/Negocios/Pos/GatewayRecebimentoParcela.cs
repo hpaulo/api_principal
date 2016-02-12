@@ -75,6 +75,8 @@ namespace api.Negocios.Pos
             CDBANDEIRA = 800,
             DSTIPO = 803,
 
+            CDCONTACORRENTE = 900,
+
             //EXPORTAR
             EXPORTAR = 9999
 
@@ -367,6 +369,19 @@ namespace api.Negocios.Pos
                         string dsTipo = Convert.ToString(item.Value).TrimEnd();
                         entity = entity.Where(e => e.Recebimento.cdBandeira != null && e.Recebimento.tbBandeira.dsTipo.TrimEnd().Equals(dsTipo)).AsQueryable();
                         break;
+                    case CAMPOS.CDCONTACORRENTE:
+                        Int32 cdContaCorrente = Convert.ToInt32(item.Value);
+                        if (cdContaCorrente > 0)
+                        {
+                            // Obtém as filiais da conta
+                            List<string> filiaisDaConta = Permissoes.GetFiliaisDaConta(cdContaCorrente, _db);
+                            List<int> adquirentesDaConta = Permissoes.GetAdquirentesDaConta(cdContaCorrente, _db);
+                            entity = entity.Where(e => filiaisDaConta.Contains(e.Recebimento.cnpj))
+                                           .Where(e => adquirentesDaConta.Contains(e.Recebimento.tbBandeira.cdAdquirente))
+                                           .AsQueryable();
+
+                        }
+                        break;
                 }
             }
 
@@ -486,7 +501,7 @@ namespace api.Negocios.Pos
                             DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             string dtInicio = DataBaseQueries.GetDate(dtaIni);
                             string dtFim = DataBaseQueries.GetDate(dtaFim);
-                            where.Add(SIGLA_QUERY + ".dtaRecebimento >= '" + dtInicio + "' AND " + SIGLA_QUERY + ".dtaRecebimento <= '" + dtFim + "'");
+                            where.Add(SIGLA_QUERY + ".dtaRecebimento BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
                         }
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
                         {
@@ -500,7 +515,7 @@ namespace api.Negocios.Pos
                             string busca = item.Value.Replace("<", "");
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             string dt = DataBaseQueries.GetDate(dta);
-                            where.Add(SIGLA_QUERY + ".dtaRecebimento <= '" + dt + "'");
+                            where.Add(SIGLA_QUERY + ".dtaRecebimento <= '" + dt + " 23:59:00'");
                         }
                         else if (item.Value.Length == 4)
                         {
@@ -519,7 +534,7 @@ namespace api.Negocios.Pos
                             string busca = item.Value;
                             DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             string dt = DataBaseQueries.GetDate(data);
-                            where.Add(SIGLA_QUERY + ".dtaRecebimento = '" + dt + "'");
+                            where.Add(SIGLA_QUERY + ".dtaRecebimento BETWEEN '" + dt + "' AND '" + dt + " 23:59:00'");
                         }
                         break;
                     case CAMPOS.VALORDESCONTADO:
@@ -544,9 +559,9 @@ namespace api.Negocios.Pos
                             string dtInicio = DataBaseQueries.GetDate(dtaIni);
                             string dtFim = DataBaseQueries.GetDate(dtaFim);
                             where.Add("(" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NOT NULL AND " +
-                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:59')" +
+                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00')" +
                                       " OR (" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NULL AND " + SIGLA_QUERY + ".flAntecipado = 0 AND " +
-                                                SIGLA_QUERY + ".dtaRecebimento BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:59')");
+                                                SIGLA_QUERY + ".dtaRecebimento BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00')");
                         }
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
                         {
@@ -564,9 +579,9 @@ namespace api.Negocios.Pos
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             string dt = DataBaseQueries.GetDate(dta);
                             where.Add("(" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NOT NULL AND " +
-                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo <= '" + dt + " 23:59:59')" +
+                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo <= '" + dt + " 23:59:00')" +
                                       " OR (" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NULL AND " + SIGLA_QUERY + ".flAntecipado = 0 AND " +
-                                                SIGLA_QUERY + ".dtaRecebimento <= '" + dt + " 23:59:59')");
+                                                SIGLA_QUERY + ".dtaRecebimento <= '" + dt + " 23:59:00')");
                         }
                         else if (item.Value.Length == 4)
                         {
@@ -596,9 +611,9 @@ namespace api.Negocios.Pos
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             string dt = DataBaseQueries.GetDate(dta);
                             where.Add("(" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NOT NULL AND " +
-                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo BETWEEN '" + dt + "' AND '" + dt + " 23:59:59')" +
+                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo BETWEEN '" + dt + "' AND '" + dt + " 23:59:00')" +
                                       " OR (" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NULL AND " + SIGLA_QUERY + ".flAntecipado = 0 AND " +
-                                                SIGLA_QUERY + ".dtaRecebimento BETWEEN '" + dt + "' AND '" + dt + " 23:59:59')");
+                                                SIGLA_QUERY + ".dtaRecebimento BETWEEN '" + dt + "' AND '" + dt + " 23:59:00')");
                         }
                         break;
                     case CAMPOS.FLANTECIPADO:
@@ -690,7 +705,7 @@ namespace api.Negocios.Pos
                             string dtInicio = DataBaseQueries.GetDate(dtaIni);
                             string dtFim = DataBaseQueries.GetDate(dtaFim);
 
-                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:59'");
+                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
                             //where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda >= '" + dtInicio + "' AND " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda <= '" + dtFim + "'");
                         }
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
@@ -707,7 +722,7 @@ namespace api.Negocios.Pos
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
                             string data = DataBaseQueries.GetDate(dta);
-                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda <= '" + data + " 23:59:59'");
+                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda <= '" + data + " 23:59:00'");
                         }
                         else if (item.Value.Length == 4)
                         {
@@ -728,8 +743,8 @@ namespace api.Negocios.Pos
                             string busca = item.Value;
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             string data = DataBaseQueries.GetDate(dta);
-                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda BETWEEN '" + data + "' AND '" + data + " 23:59:59'");
-                            //WHERE R.dtaVenda BETWEEN '2016-01-29' AND '2016-01-29 23:59:59'
+                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda BETWEEN '" + data + "' AND '" + data + " 23:59:00'");
+                            //WHERE R.dtaVenda BETWEEN '2016-01-29' AND '2016-01-29 23:59:00'
                         }
                         break;
                     case CAMPOS.NSU:
@@ -790,6 +805,23 @@ namespace api.Negocios.Pos
                         if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
                             join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
                         where.Add(GatewayTbBandeira.SIGLA_QUERY + ".dsTipo like '" + dsTipo + "%'");
+                        break;
+                    case CAMPOS.CDCONTACORRENTE:
+                        Int32 cdContaCorrente = Convert.ToInt32(item.Value);
+                        if (cdContaCorrente > 0)
+                        {
+                            // Obtém as filiais da conta
+                            string filiaisDaConta = "'" + string.Join("', '", Permissoes.GetFiliaisDaConta(cdContaCorrente)) + "'";
+                            string adquirentesDaConta = string.Join(", ", Permissoes.GetAdquirentesDaConta(cdContaCorrente));
+                            // Adiciona os joins
+                            if (!join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
+                                join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".id = " + SIGLA_QUERY + ".idRecebimento");
+                            if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                                join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
+                            where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente in (" + adquirentesDaConta + ")");
+                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".cnpj in (" + filiaisDaConta + ")");
+
+                        }
                         break;
                 }
             }

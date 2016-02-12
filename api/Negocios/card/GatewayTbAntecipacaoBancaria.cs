@@ -10,6 +10,8 @@ using System.Data.Entity.Validation;
 using System.Data.Entity;
 using System.Data;
 using System.Globalization;
+using api.Negocios.Util;
+using api.Negocios.Cliente;
 
 namespace api.Negocios.Card
 {
@@ -25,6 +27,8 @@ namespace api.Negocios.Card
             //_db.Configuration.ProxyCreationEnabled = false;
         }
 
+        public static string SIGLA_QUERY = "AB";
+
         /// <summary>
         /// Enum CAMPOS
         /// </summary>
@@ -39,7 +43,9 @@ namespace api.Negocios.Card
 
             // RELACIONAMENTOS
             DTVENCIMENTO = 202,
-            CDBANDEIRA = 205
+            CDBANDEIRA = 205,
+
+            ID_GRUPO = 301,
         };
 
         /// <summary>
@@ -127,6 +133,10 @@ namespace api.Negocios.Card
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
                         entity = entity.Where(t => t.tbAntecipacaoBancariaDetalhes.Any(e => e.cdBandeira == cdBandeira)).AsQueryable<tbAntecipacaoBancaria>();
                         break;
+                    case CAMPOS.ID_GRUPO:
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        entity = entity.Where(t => t.tbContaCorrente.empresa.id_grupo == id_grupo).AsQueryable<tbAntecipacaoBancaria>();
+                        break;
                 }
             }
             #endregion
@@ -165,6 +175,156 @@ namespace api.Negocios.Card
 
             return entity;
 
+
+        }
+
+
+        private static SimpleDataBaseQuery getQuery(int campo, int orderby, Dictionary<string, string> queryString)
+        {
+            Dictionary<string, string> join = new Dictionary<string, string>();
+            List<string> where = new List<string>();
+            List<string> order = new List<string>();
+
+            #region WHERE - ADICIONA OS FILTROS A QUERY
+
+            // ADICIONA OS FILTROS A QUERY
+            foreach (KeyValuePair<string, string> item in queryString)
+            {
+                int key = Convert.ToInt16(item.Key);
+                CAMPOS filtroEnum = (CAMPOS)key;
+                switch (filtroEnum)
+                {
+                    case CAMPOS.IDANTECIPACAOBANCARIA:
+                        Int32 idAntecipacaoBancaria = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".idAntecipacaoBancaria = " + idAntecipacaoBancaria);
+                        break;
+                    case CAMPOS.DTANTECIPACAOBANCARIA:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+
+                            string dtInicio = DataBaseQueries.GetDate(dtaIni);
+                            string dtFim = DataBaseQueries.GetDate(dtaFim);
+                            where.Add(SIGLA_QUERY + ".dtAntecipacaoBancaria BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
+                        }
+                        else // ANO + MES + DIA
+                        {
+                            string busca = item.Value;
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            
+                            string dt = DataBaseQueries.GetDate(dta);
+                            where.Add(SIGLA_QUERY + ".dtAntecipacaoBancaria BETWEEN '" + dt + "' AND '" + dt + " 23:59:00'");
+                        }
+                        break;
+
+                    case CAMPOS.CDADQUIRENTE:
+                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente);
+                        break;
+                    case CAMPOS.CDCONTACORRENTE:
+                        Int32 cdContaCorrente = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".cdContaCorrente = " + cdContaCorrente);
+                        break;
+                    case CAMPOS.VLOPERACAO:
+                        decimal vlOperacao = Convert.ToDecimal(item.Value);
+                        where.Add(SIGLA_QUERY + ".vlOperacao = " + vlOperacao.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                        break;
+                    case CAMPOS.VLLIQUIDO:
+                        decimal vlLiquido = Convert.ToDecimal(item.Value);
+                        where.Add(SIGLA_QUERY + ".vlLiquido = " + vlLiquido.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                        break;
+
+                    // RELACIONAMENTOS
+                    case CAMPOS.DTVENCIMENTO:
+                        // Adiciona o join
+                        if (!join.ContainsKey("LEFT JOIN card.tbAntecipacaoBancariaDetalhe " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY))
+                            join.Add("LEFT JOIN card.tbAntecipacaoBancariaDetalhe " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY, " ON " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancaria = " + SIGLA_QUERY + ".idAntecipacaoBancaria");
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+
+                            string dtInicio = DataBaseQueries.GetDate(dtaIni);
+                            string dtFim = DataBaseQueries.GetDate(dtaFim);
+                            where.Add(GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".dtVencimento BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
+                        }
+                        else // ANO + MES + DIA
+                        {
+                            string busca = item.Value;
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(dta);
+                            where.Add(GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".dtVencimento BETWEEN '" + dt + "' AND '" + dt + " 23:59:00'");
+                        }
+                        break;
+                    case CAMPOS.CDBANDEIRA:
+                        // Adiciona o join
+                        if (!join.ContainsKey("LEFT JOIN card.tbAntecipacaoBancariaDetalhe " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY))
+                            join.Add("LEFT JOIN card.tbAntecipacaoBancariaDetalhe "+ GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY, " ON " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancaria = " + SIGLA_QUERY + ".idAntecipacaoBancaria");
+                        Int32 cdBandeira = Convert.ToInt32(item.Value);
+                        where.Add(GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".cdBandeira = " + cdBandeira);
+                        break;
+                    case CAMPOS.ID_GRUPO:
+                        // Adiciona o join
+                        if (!join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbContaCorrente "+ GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + SIGLA_QUERY + ".cdContaCorrente");
+                        if (!join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                            join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj = " + GatewayTbContaCorrente.SIGLA_QUERY + ".nrCnpj");
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        where.Add(GatewayEmpresa.SIGLA_QUERY + ".id_grupo = " + id_grupo);
+                        break;
+                }
+            }
+            #endregion
+
+            #region ORDER BY - ADICIONA A ORDENAÇÃO A QUERY
+            // ADICIONA A ORDENAÇÃO A QUERY
+            CAMPOS filtro = (CAMPOS)campo;
+            switch (filtro)
+            {
+                case CAMPOS.IDANTECIPACAOBANCARIA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".idAntecipacaoBancaria ASC");
+                    else order.Add(SIGLA_QUERY + ".idAntecipacaoBancaria DESC");
+                    break;
+                case CAMPOS.DTANTECIPACAOBANCARIA:
+                    if (!join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                       join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + SIGLA_QUERY + ".cdAdquirente");
+                    if (orderby == 0)
+                    { 
+                        order.Add(SIGLA_QUERY + ".dtAntecipacaoBancaria ASC");
+                        order.Add(GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente ASC");
+                        order.Add(SIGLA_QUERY + ".vlOperacao ASC");
+                    }
+                    else
+                    { 
+                        order.Add(SIGLA_QUERY + ".dtAntecipacaoBancaria DESC");
+                        order.Add(GatewayTbAdquirente.SIGLA_QUERY + ".idAntecipacaoBancaria DESC");
+                        order.Add(SIGLA_QUERY + ".vlOperacao DESC");
+                    }
+                    break;
+                case CAMPOS.CDADQUIRENTE:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdAdquirente ASC");
+                    else order.Add(SIGLA_QUERY + ".cdAdquirente DESC");
+                    break;
+                case CAMPOS.CDCONTACORRENTE:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdContaCorrente ASC");
+                    else order.Add(SIGLA_QUERY + ".cdContaCorrente DESC");
+                    break;
+                case CAMPOS.VLOPERACAO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".vlOperacao ASC");
+                    else order.Add(SIGLA_QUERY + ".vlOperacao DESC");
+                    break;
+                case CAMPOS.VLLIQUIDO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".vlLiquido ASC");
+                    else order.Add(SIGLA_QUERY + ".vlLiquido DESC");
+                    break;
+            }
+            #endregion
+
+            return new SimpleDataBaseQuery(null, "card.tbAntecipacaoBancaria " + SIGLA_QUERY,
+                                           join, where.ToArray(), null, order.ToArray());
 
         }
 
@@ -297,6 +457,8 @@ namespace api.Negocios.Card
             DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
+                decimal taxa = (param.vlOperacao - param.vlLiquido) / param.vlOperacao;
+
                 tbAntecipacaoBancaria tbAntecipacaoBancaria = new tbAntecipacaoBancaria();
                 tbAntecipacaoBancaria.cdAdquirente = param.cdAdquirente;
                 tbAntecipacaoBancaria.cdContaCorrente = param.cdContaCorrente;
@@ -313,7 +475,7 @@ namespace api.Negocios.Card
                     tbAntecipacaoBancariaDetalhe.cdBandeira = antecipacao.cdBandeira;
                     tbAntecipacaoBancariaDetalhe.dtVencimento = antecipacao.dtVencimento;
                     tbAntecipacaoBancariaDetalhe.vlAntecipacao = antecipacao.vlAntecipacao;
-                    tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = antecipacao.vlAntecipacaoLiquida;
+                    tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = decimal.Round(antecipacao.vlAntecipacao * (new decimal(1.0) - taxa), 3);
 
                     _db.tbAntecipacaoBancariaDetalhes.Add(tbAntecipacaoBancariaDetalhe);
                     _db.SaveChanges();
@@ -406,6 +568,8 @@ namespace api.Negocios.Card
                 if (value == null)
                     throw new Exception("Antecipação bancária inexistente!");
 
+                decimal taxa = (param.vlOperacao - param.vlLiquido) / param.vlOperacao;
+
                 if (param.dtAntecipacaoBancaria != value.dtAntecipacaoBancaria)
                     value.dtAntecipacaoBancaria = param.dtAntecipacaoBancaria;
                 if (param.cdAdquirente != 0 && param.cdAdquirente != value.cdAdquirente)
@@ -425,7 +589,7 @@ namespace api.Negocios.Card
                         tbAntecipacaoBancariaDetalhe.cdBandeira = antecipacao.cdBandeira;
                         tbAntecipacaoBancariaDetalhe.dtVencimento = antecipacao.dtVencimento;
                         tbAntecipacaoBancariaDetalhe.vlAntecipacao = antecipacao.vlAntecipacao;
-                        tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = antecipacao.vlAntecipacaoLiquida;
+                        tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = decimal.Round(antecipacao.vlAntecipacao * (new decimal(1.0) - taxa), 3);
                         // Adiciona
                         _db.tbAntecipacaoBancariaDetalhes.Add(tbAntecipacaoBancariaDetalhe);
                     }
@@ -442,8 +606,9 @@ namespace api.Negocios.Card
                             tbAntecipacaoBancariaDetalhe.dtVencimento = antecipacao.dtVencimento;
                         if (tbAntecipacaoBancariaDetalhe.vlAntecipacao != antecipacao.vlAntecipacao)
                             tbAntecipacaoBancariaDetalhe.vlAntecipacao = antecipacao.vlAntecipacao;
-                        if (tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida != antecipacao.vlAntecipacaoLiquida)
-                            tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = antecipacao.vlAntecipacaoLiquida;
+                        //if (tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida != antecipacao.vlAntecipacaoLiquida)
+                            //tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = antecipacao.vlAntecipacaoLiquida;
+                        tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = decimal.Round(antecipacao.vlAntecipacao * (new decimal(1.0) - taxa), 3);
                     }
                     _db.SaveChanges();
                 }

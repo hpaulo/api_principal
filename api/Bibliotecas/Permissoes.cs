@@ -216,7 +216,7 @@ namespace api.Bibliotecas
             // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > MÓDULOS E FUNCIONALIDADES
             controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoModulosFuncionalidades, new string[] { "GET", "DELETE", "POST", "PUT" }));
             // [PORTAL] ADMINISTRATIVO > GESTÃO DE ACESSOS > PRIVILÉGIOS
-            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoPrivilegios, new string[] { "GET" })); 
+            controllersOrigem.Add(new ControllersOrigem(idControllerPortalAdministrativoPrivilegios, new string[] { "GET" }));
             // MOBILE......
             // Adiciona
             acessoMetodosAPIs.Add(UrlAPIs.ADMINISTRACAO_WEBPAGESCONTROLLERS, controllersOrigem);
@@ -611,7 +611,7 @@ namespace api.Bibliotecas
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            try 
+            try
             {
 
                 //_db.Configuration.ProxyCreationEnabled = false;
@@ -677,7 +677,7 @@ namespace api.Bibliotecas
         public static Int32 GetIdUser(string token, painel_taxservices_dbContext _dbContext = null)
         {
             webpages_Users user = GetUser(token, _dbContext);
-            if (user != null) return (Int32) user.id_users;
+            if (user != null) return (Int32)user.id_users;
             return 0;
         }
 
@@ -722,7 +722,7 @@ namespace api.Bibliotecas
         public static Int32 GetIdGrupo(string token, painel_taxservices_dbContext _dbContext = null)
         {
             webpages_Users user = GetUser(token, _dbContext);
-            if (user != null && user.id_grupo != null) return (Int32) user.id_grupo;
+            if (user != null && user.id_grupo != null) return (Int32)user.id_grupo;
             return 0;
         }
 
@@ -775,7 +775,7 @@ namespace api.Bibliotecas
                     _db.Dispose();
                 }
             }
-            
+
         }
 
         /// <summary>
@@ -900,7 +900,7 @@ namespace api.Bibliotecas
             else _db = _dbContext;
 
             List<Int32> lista = new List<Int32>();
- 
+
             Int32 UserId = GetIdUser(token, _db);
 
             try
@@ -983,7 +983,7 @@ namespace api.Bibliotecas
 
             if (UserId == 0) return 0;
 
-           try
+            try
             {
                 //_db.Configuration.ProxyCreationEnabled = false;
                 return _db.LogAcesso1
@@ -992,18 +992,18 @@ namespace api.Bibliotecas
                             .Select(e => e.idController ?? 0)
                             .FirstOrDefault();
             }
-           catch
-           {
-               return 0;
-           }
-           finally
-           {
-               if (_dbContext == null)
-               {
-                   _db.Database.Connection.Close();
-                   _db.Dispose();
-               }
-           }
+            catch
+            {
+                return 0;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -1123,6 +1123,65 @@ namespace api.Bibliotecas
             catch
             {
                 return false;
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
+        }
+
+
+        public static List<string> GetFiliaisDaConta(Int32 cdContaCorrente, painel_taxservices_dbContext _dbContext = null)
+        {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
+            try
+            {
+                return _db.tbContaCorrente_tbLoginAdquirenteEmpresas
+                                            .Where(e => e.cdContaCorrente == cdContaCorrente)
+                                            .Where(e => e.tbLoginAdquirenteEmpresa.empresa.fl_ativo == 1)
+                                            .GroupBy(e => e.tbLoginAdquirenteEmpresa.empresa.nu_cnpj)
+                                            .Select(e => e.Key)
+                                            .ToList<string>();
+            }
+            catch
+            {
+                return new List<string>();
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
+        }
+
+
+        public static List<int> GetAdquirentesDaConta(Int32 cdContaCorrente, painel_taxservices_dbContext _dbContext = null)
+        {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
+            try
+            {
+                return _db.tbContaCorrente_tbLoginAdquirenteEmpresas
+                            .Where(e => e.cdContaCorrente == cdContaCorrente)
+                            .Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente == 1)
+                            .GroupBy(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente)
+                            .Select(e => e.Key).ToList<int>();
+            }
+            catch
+            {
+                return new List<int>();
             }
             finally
             {

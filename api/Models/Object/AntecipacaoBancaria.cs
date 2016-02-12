@@ -11,6 +11,8 @@ namespace api.Models.Object
         public DateTime dtAntecipacaoBancaria { get; set; }
         public int cdAdquirente { get; set; }
         public int cdContaCorrente { get; set; }
+        public decimal vlOperacao { get; set; }
+        public decimal vlLiquido { get; set; }
         public List<AntecipacaoBancariaVencimentos> antecipacoes { get; set; }
         public List<int> deletar { get; set; }
     }
@@ -21,6 +23,6 @@ namespace api.Models.Object
         public int? cdBandeira { get; set; }
         public DateTime dtVencimento { get; set; }
         public decimal vlAntecipacao { get; set; }
-        public decimal vlAntecipacaoLiquida { get; set; }
+        //public decimal vlAntecipacaoLiquida { get; set; }
     }
 }

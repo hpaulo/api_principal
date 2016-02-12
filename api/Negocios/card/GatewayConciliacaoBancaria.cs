@@ -710,7 +710,7 @@ namespace api.Negocios.Card
                 }
                 //else throw new Exception("Uma filial deve ser selecionada como filtro de conciliação bancária!");
                 // ADQUIRENTE
-                queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.CDADQUIRENTE, "0!"); // cdAdquirente != null ou (cdAdquirente == null && dsTipoCartao != null)
+                queryStringExtrato.Add("" + (int)GatewayTbExtrato.CAMPOS.CDADQUIRENTE, "0!"); // cdAdquirente != null ou (cdAdquirente == null && (dsTipoCartao != null || flAntecipacao))
                 string cdAdquirente = String.Empty;
                 if (queryString.TryGetValue("" + (int)CAMPOS.CDADQUIRENTE, out outValue))
                 {
@@ -774,9 +774,15 @@ namespace api.Negocios.Card
                 // Sem ajustes de antecipação
                 queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.SEM_AJUSTES_ANTECIPACAO, true.ToString());
 
+                // CONTA CORRENTE
+                if (!contaCorrente.Equals(""))
+                {
+                    queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.CDCONTACORRENTE, contaCorrente);
+                    queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.CDCONTACORRENTE, contaCorrente);
+                }
 
-                List<string> filiaisDaConta = null;
-                List<int> adquirentesDaConta = null;
+                //List<string> filiaisDaConta = null;
+                //List<int> adquirentesDaConta = null;
 
                 // OBTÉM AS QUERIES
                 IQueryable<tbRecebimentoAjuste> queryAjustes = GatewayTbRecebimentoAjuste.getQuery(_db, 0, (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, 0, 0, queryStringAjustes);
@@ -784,31 +790,22 @@ namespace api.Negocios.Card
                 IQueryable<tbExtrato> queryExtrato = GatewayTbExtrato.getQuery(_db, 0, (int)GatewayTbExtrato.CAMPOS.DTEXTRATO, 0, 0, 0, queryStringExtrato);
 
                 // SE TIVER CONTA CORRENTE ASSOCIADA E NENHUMA FILIAL FOR ESPECIFICADA, SÓ OBTÉM OS DADOS DAS FILIAIS ASSOCIADAS À CONTA (O MESMO VALE PARA ADQUIRENTE)
-                if (!contaCorrente.Equals(""))
-                {
-                    int cdContaCorrente = Convert.ToInt32(contaCorrente);
-                    if (CnpjEmpresa.Equals(""))
-                    {
-                        filiaisDaConta = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
-                            .Where(e => e.cdContaCorrente == cdContaCorrente)
-                            .Where(e => e.tbLoginAdquirenteEmpresa.empresa.fl_ativo == 1)
-                            .GroupBy(e => e.tbLoginAdquirenteEmpresa.empresa.nu_cnpj)
-                            .Select(e => e.Key).ToList<string>();
-
-                        queryAjustes = queryAjustes.Where(e => filiaisDaConta.Contains(e.nrCNPJ)).AsQueryable<tbRecebimentoAjuste>();
-                        //queryRecebimentoParcela = queryRecebimentoParcela.Where(e => filiaisDaConta.Contains(e.Recebimento.cnpj)).AsQueryable<RecebimentoParcela>();
-                    }
-                    if (cdAdquirente.Equals(""))
-                    {
-                        adquirentesDaConta = _db.tbContaCorrente_tbLoginAdquirenteEmpresas
-                            .Where(e => e.cdContaCorrente == cdContaCorrente)
-                            .Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente == 1)
-                            .GroupBy(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente)
-                            .Select(e => e.Key).ToList<int>();
-                        queryAjustes = queryAjustes.Where(e => adquirentesDaConta.Contains(e.tbBandeira.cdAdquirente)).AsQueryable<tbRecebimentoAjuste>();
-                        //queryRecebimentoParcela = queryRecebimentoParcela.Where(e => adquirentesDaConta.Contains(e.Recebimento.tbBandeira.cdAdquirente)).AsQueryable<RecebimentoParcela>();
-                    }
-                }
+                //if (!contaCorrente.Equals(""))
+                //{
+                //    int cdContaCorrente = Convert.ToInt32(contaCorrente);
+                //    if (CnpjEmpresa.Equals(""))
+                //    {
+                //        filiaisDaConta = Permissoes.GetFiliaisDaConta(cdContaCorrente, _db);
+                //        //queryAjustes = queryAjustes.Where(e => filiaisDaConta.Contains(e.nrCNPJ)).AsQueryable<tbRecebimentoAjuste>();
+                //        //queryRecebimentoParcela = queryRecebimentoParcela.Where(e => filiaisDaConta.Contains(e.Recebimento.cnpj)).AsQueryable<RecebimentoParcela>();
+                //    }
+                //    if (cdAdquirente.Equals(""))
+                //    {
+                //        adquirentesDaConta = Permissoes.GetAdquirentesDaConta(cdContaCorrente, _db);
+                //        queryAjustes = queryAjustes.Where(e => adquirentesDaConta.Contains(e.tbBandeira.cdAdquirente)).AsQueryable<tbRecebimentoAjuste>();
+                //        //queryRecebimentoParcela = queryRecebimentoParcela.Where(e => adquirentesDaConta.Contains(e.Recebimento.tbBandeira.cdAdquirente)).AsQueryable<RecebimentoParcela>();
+                //    }
+                //}
 
 
                 // VALOR TOTAL ASSOCIADO A CADA LADO DA CONCILIAÇÃO
@@ -841,38 +838,38 @@ namespace api.Negocios.Card
                     dataBaseQuery.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
 
                 // Filtro de empresas e/ou adquirentes específicas?
-                if (filiaisDaConta != null && filiaisDaConta.Count > 0)
-                {
-                    string[] where = dataBaseQuery.where;
-                    dataBaseQuery.where = new string[where.Length + 1];
-                    int k = 0;
-                    for (; k < where.Length; k++)
-                        dataBaseQuery.where[k] = where[k];
-                    string script = GatewayRecebimento.SIGLA_QUERY + ".cnpj in (";
-                    for (int j = 0; j < filiaisDaConta.Count; j++)
-                    {
-                        script += "'" + filiaisDaConta[j] + "'";
-                        if (j < filiaisDaConta.Count - 1)
-                            script += ", ";
-                    }
-                    dataBaseQuery.where[k] = script + ")";
-                }
-                if (adquirentesDaConta != null && adquirentesDaConta.Count > 0)
-                {
-                    string[] where = dataBaseQuery.where;
-                    dataBaseQuery.where = new string[where.Length + 1];
-                    int k = 0;
-                    for (; k < where.Length; k++)
-                        dataBaseQuery.where[k] = where[k];
-                    string script = GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente in (";
-                    for (int j = 0; j < adquirentesDaConta.Count; j++)
-                    {
-                        script += adquirentesDaConta[j];
-                        if (j < adquirentesDaConta.Count - 1)
-                            script += ", ";
-                    }
-                    dataBaseQuery.where[k] = script + ")";
-                }
+                //if (filiaisDaConta != null && filiaisDaConta.Count > 0)
+                //{
+                //    string[] where = dataBaseQuery.where;
+                //    dataBaseQuery.where = new string[where.Length + 1];
+                //    int k = 0;
+                //    for (; k < where.Length; k++)
+                //        dataBaseQuery.where[k] = where[k];
+                //    string script = GatewayRecebimento.SIGLA_QUERY + ".cnpj in (";
+                //    for (int j = 0; j < filiaisDaConta.Count; j++)
+                //    {
+                //        script += "'" + filiaisDaConta[j] + "'";
+                //        if (j < filiaisDaConta.Count - 1)
+                //            script += ", ";
+                //    }
+                //    dataBaseQuery.where[k] = script + ")";
+                //}
+                //if (adquirentesDaConta != null && adquirentesDaConta.Count > 0)
+                //{
+                //    string[] where = dataBaseQuery.where;
+                //    dataBaseQuery.where = new string[where.Length + 1];
+                //    int k = 0;
+                //    for (; k < where.Length; k++)
+                //        dataBaseQuery.where[k] = where[k];
+                //    string script = GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente in (";
+                //    for (int j = 0; j < adquirentesDaConta.Count; j++)
+                //    {
+                //        script += adquirentesDaConta[j];
+                //        if (j < adquirentesDaConta.Count - 1)
+                //            script += ", ";
+                //    }
+                //    dataBaseQuery.where[k] = script + ")";
+                //}
 
                 dataBaseQuery.select = new string[] { GatewayRecebimento.SIGLA_QUERY + ".id",
                                                           GatewayRecebimentoParcela.SIGLA_QUERY + ".numParcela",

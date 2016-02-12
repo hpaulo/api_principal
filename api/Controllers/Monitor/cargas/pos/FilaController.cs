@@ -60,7 +60,7 @@ namespace api.Controllers.Monitor.cargas.pos
 		                                        WHERE
 			                                        pos.LogExecution.statusExecution = 7
 		                                        AND pos.LogExecution.dtaExecucaoProxima <= (
-			                                        CONVERT (VARCHAR(25), GETDATE(), 112) + ' 23:59:59'
+			                                        CONVERT (VARCHAR(25), GETDATE(), 112) + ' 23:59:00'
 		                                        )
 	                                        ) AS [Extent1]
                                         WHERE

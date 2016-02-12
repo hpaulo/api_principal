@@ -62,7 +62,7 @@ namespace api.Controllers.Monitor.cargas.pos
                                     INNER JOIN pos.Operadora ON pos.LoginOperadora.idOperadora = pos.Operadora.id
                                     WHERE
                                     pos.LogExecution.statusExecution = 7
-	                                    AND  pos.LogExecution.dtaExecucaoProxima  <= (CONVERT(VARCHAR(25), GETDATE(), 112) + ' 23:59:59')
+	                                    AND  pos.LogExecution.dtaExecucaoProxima  <= (CONVERT(VARCHAR(25), GETDATE(), 112) + ' 23:59:00')
                                     ) fila
                                     ,
                                     (SELECT

@@ -70,7 +70,8 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDGRUPO:
                         Int32 cdGrupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdGrupo == cdGrupo).AsQueryable<tbContaCorrente>();
+                        //entity = entity.Where(e => e.cdGrupo == cdGrupo).AsQueryable<tbContaCorrente>();
+                        entity = entity.Where(e => e.empresa.id_grupo == cdGrupo).AsQueryable<tbContaCorrente>();
                         break;
                     case CAMPOS.NRCNPJ:
                         string nrCnpj = Convert.ToString(item.Value);

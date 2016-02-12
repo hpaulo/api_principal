@@ -18,7 +18,7 @@ namespace api.Models.Mapping
                 .IsRequired();
 
             this.Property(t => t.vlAntecipacaoLiquida)
-                .HasPrecision(9, 2)
+                .HasPrecision(9, 3)
                 .IsRequired();
 
             this.Property(t => t.dtVencimento)
