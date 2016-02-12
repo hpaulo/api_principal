@@ -544,9 +544,9 @@ namespace api.Negocios.Pos
                             string dtInicio = DataBaseQueries.GetDate(dtaIni);
                             string dtFim = DataBaseQueries.GetDate(dtaFim);
                             where.Add("(" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NOT NULL AND " +
-                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo >= '" + dtInicio + "' AND " + SIGLA_QUERY + ".dtaRecebimentoEfetivo <= '" + dtFim + "')" +
+                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:59')" +
                                       " OR (" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NULL AND " + SIGLA_QUERY + ".flAntecipado = 0 AND " +
-                                                SIGLA_QUERY + ".dtaRecebimento >= '" + dtInicio + "' AND " + SIGLA_QUERY + ".dtaRecebimento <= '" + dtFim + "')");
+                                                SIGLA_QUERY + ".dtaRecebimento BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:59')");
                         }
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
                         {
@@ -564,9 +564,9 @@ namespace api.Negocios.Pos
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             string dt = DataBaseQueries.GetDate(dta);
                             where.Add("(" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NOT NULL AND " +
-                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo <= '" + dt + "')" +
+                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo <= '" + dt + " 23:59:59')" +
                                       " OR (" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NULL AND " + SIGLA_QUERY + ".flAntecipado = 0 AND " +
-                                                SIGLA_QUERY + ".dtaRecebimento <= '" + dt + "')");
+                                                SIGLA_QUERY + ".dtaRecebimento <= '" + dt + " 23:59:59')");
                         }
                         else if (item.Value.Length == 4)
                         {
@@ -596,9 +596,9 @@ namespace api.Negocios.Pos
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             string dt = DataBaseQueries.GetDate(dta);
                             where.Add("(" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NOT NULL AND " +
-                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo = '" + dt + "')" +
+                                            SIGLA_QUERY + ".dtaRecebimentoEfetivo BETWEEN '" + dt + "' AND '" + dt + " 23:59:59')" +
                                       " OR (" + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NULL AND " + SIGLA_QUERY + ".flAntecipado = 0 AND " +
-                                                SIGLA_QUERY + ".dtaRecebimento = '" + dt + "')");
+                                                SIGLA_QUERY + ".dtaRecebimento BETWEEN '" + dt + "' AND '" + dt + " 23:59:59')");
                         }
                         break;
                     case CAMPOS.FLANTECIPADO:
@@ -690,7 +690,8 @@ namespace api.Negocios.Pos
                             string dtInicio = DataBaseQueries.GetDate(dtaIni);
                             string dtFim = DataBaseQueries.GetDate(dtaFim);
 
-                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda >= '" + dtInicio + "' AND " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda <= '" + dtFim + "'");
+                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:59'");
+                            //where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda >= '" + dtInicio + "' AND " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda <= '" + dtFim + "'");
                         }
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
                         {
@@ -706,7 +707,7 @@ namespace api.Negocios.Pos
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
                             string data = DataBaseQueries.GetDate(dta);
-                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda <= '" + data + "'");
+                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda <= '" + data + " 23:59:59'");
                         }
                         else if (item.Value.Length == 4)
                         {
