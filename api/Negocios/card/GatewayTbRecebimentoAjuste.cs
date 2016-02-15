@@ -272,6 +272,18 @@ namespace api.Negocios.Card
                             string dt = DataBaseQueries.GetDate(dta);
                             where.Add(SIGLA_QUERY + ".dtAjuste <= '" + dt + " 23:59:00'");
                         }
+                        //else if (item.Value.Length == 4)
+                        //{
+                        //    string busca = item.Value + "0101";
+                        //    DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                        //    where.Add("DATEPART(YEAR, " + SIGLA_QUERY + ".dtAjuste) = " + data.Year);
+                        //}
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            where.Add("DATEPART(YEAR, " + SIGLA_QUERY + ".dtAjuste) = " + data.Year + " AND DATEPART(MONTH, " + SIGLA_QUERY + ".dtAjuste) = " + data.Month);
+                        }
                         else // IGUAL
                         {
                             string busca = item.Value;

@@ -728,15 +728,15 @@ namespace api.Negocios.Pos
                         {
                             string busca = item.Value + "0101";
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            where.Add("DATAPART(YEAR, " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda) = " + dta.Year);
+                            where.Add("DATEPART(YEAR, " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda) = " + dta.Year);
                         }
                         else if (item.Value.Length == 6)
                         {
                             string busca = item.Value + "01";
                             DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
-                            where.Add("DATAPART(YEAR, " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda) = " + dta.Year + " AND " +
-                                      "DATAPART(MONTH, " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda) = " + dta.Month);
+                            where.Add("DATEPART(YEAR, " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda) = " + dta.Year + " AND " +
+                                      "DATEPART(MONTH, " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda) = " + dta.Month);
                         }
                         else // IGUAL
                         {

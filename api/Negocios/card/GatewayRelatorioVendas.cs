@@ -2,9 +2,13 @@
 using api.Models;
 using api.Models.Object;
 using api.Negocios.Pos;
+using api.Negocios.Util;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
 using System.Data.Entity.Validation;
+using System.Data.SqlClient;
 using System.Globalization;
 using System.Linq;
 using System.Text;
@@ -105,19 +109,76 @@ namespace api.Negocios.Card
 
 
                 // OBTÉM A QUERY
-                IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(_db, 0, (int)GatewayRecebimentoParcela.CAMPOS.DTAVENDA, 0, 0, 0, queryStringRecebimentoParcela);
+                //IQueryable<RecebimentoParcela> queryRecebimentoParcela = GatewayRecebimentoParcela.getQuery(_db, 0, (int)GatewayRecebimentoParcela.CAMPOS.DTAVENDA, 0, 0, 0, queryStringRecebimentoParcela);
 
-                List<RelatorioVendas> vendas = queryRecebimentoParcela.Select(r => new RelatorioVendas
+                // CONEXÃO
+                SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString);
+
+                try
                 {
-                    dataVenda = r.Recebimento.dtaVenda,
-                    dataRecebimento = r.dtaRecebimentoEfetivo != null ? r.dtaRecebimentoEfetivo.Value : r.dtaRecebimento,
-                    recebeu = (r.dtaRecebimentoEfetivo != null && r.dtaRecebimentoEfetivo.Value < dataNow) || (r.dtaRecebimentoEfetivo == null && r.dtaRecebimento < dataNow),
-                    valorBruto = r.valorParcelaBruta,
-                    valorLiquido = r.valorParcelaLiquida != null ? r.valorParcelaLiquida.Value : new decimal(0.0),
-                    valorDescontado = r.valorDescontado,
-                    bandeira = r.Recebimento.cdBandeira != null ? r.Recebimento.tbBandeira.dsBandeira : r.Recebimento.BandeiraPos.desBandeira,
-                    adquirente = r.Recebimento.cdBandeira != null ? r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente : r.Recebimento.BandeiraPos.Operadora.nmOperadora
-                }).OrderBy(r => r.dataVenda).ToList<RelatorioVendas>();
+                    connection.Open();
+                }
+                catch
+                {
+                    throw new Exception("Não foi possível estabelecer conexão com a base de dados");
+                }
+
+                #region OBTÉM A QUERY
+                SimpleDataBaseQuery dataBaseQuery = GatewayRecebimentoParcela.getQuery((int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, 0, queryStringRecebimentoParcela);
+
+                // RECEBIMENTO PARCELA
+                if (!dataBaseQuery.join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
+                    dataBaseQuery.join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".id = " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idRecebimento");
+                if (!dataBaseQuery.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                    dataBaseQuery.join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
+                if (!dataBaseQuery.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                    dataBaseQuery.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
+                //if (!dataBaseQuery.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                //    dataBaseQuery.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+
+                // RECEBIMENTO PARCELA
+                dataBaseQuery.select = new string[] { GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimento",
+                                                      GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo",
+                                                      GatewayRecebimento.SIGLA_QUERY + ".dtaVenda AS dataVenda",
+                                                      GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente AS adquirente",
+                                                      GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira AS bandeira",
+                                                      "valorBruto = " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta",
+                                                      "valorDescontado = " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorDescontado",
+                                                      "valorLiquido = ISNULL(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaLiquida, 0)"
+                                                    };
+
+                dataBaseQuery.readUncommited = true;
+                #endregion
+
+                List<IDataRecord> resultado = DataBaseQueries.SqlQuery(dataBaseQuery.Script(), connection);
+
+                List<RelatorioVendas> vendas = new List<RelatorioVendas>();
+                if (resultado != null && resultado.Count > 0)
+                {
+                    vendas = resultado.Select(r => new RelatorioVendas
+                    {
+                        dataVenda = (DateTime)r["dataVenda"],
+                        dataRecebimento = r["dtaRecebimentoEfetivo"].Equals(DBNull.Value) ? (DateTime)r["dtaRecebimento"] : (DateTime)r["dtaRecebimentoEfetivo"],
+                        recebeu = r["dtaRecebimentoEfetivo"].Equals(DBNull.Value) ? (DateTime)r["dtaRecebimento"] < dataNow : (DateTime)r["dtaRecebimentoEfetivo"] < dataNow,
+                        valorBruto = Convert.ToDecimal(r["valorBruto"]),
+                        valorLiquido = Convert.ToDecimal(r["valorLiquido"]),
+                        valorDescontado = Convert.ToDecimal(r["valorDescontado"]),
+                        bandeira = Convert.ToString(r["bandeira"]),
+                        adquirente = Convert.ToString(r["adquirente"]),
+                    }).OrderBy(r => r.dataVenda).ToList<RelatorioVendas>();
+                }
+
+                //List<RelatorioVendas> vendas = queryRecebimentoParcela.Select(r => new RelatorioVendas
+                //{
+                //    dataVenda = r.Recebimento.dtaVenda,
+                //    dataRecebimento = r.dtaRecebimentoEfetivo != null ? r.dtaRecebimentoEfetivo.Value : r.dtaRecebimento,
+                //    recebeu = (r.dtaRecebimentoEfetivo != null && r.dtaRecebimentoEfetivo.Value < dataNow) || (r.dtaRecebimentoEfetivo == null && r.dtaRecebimento < dataNow),
+                //    valorBruto = r.valorParcelaBruta,
+                //    valorLiquido = r.valorParcelaLiquida != null ? r.valorParcelaLiquida.Value : new decimal(0.0),
+                //    valorDescontado = r.valorDescontado,
+                //    bandeira = r.Recebimento.cdBandeira != null ? r.Recebimento.tbBandeira.dsBandeira : r.Recebimento.BandeiraPos.desBandeira,
+                //    adquirente = r.Recebimento.cdBandeira != null ? r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente : r.Recebimento.BandeiraPos.Operadora.nmOperadora
+                //}).OrderBy(r => r.dataVenda).ToList<RelatorioVendas>();
 
 
                 CollectionRelatorioVendas = vendas.GroupBy(r => new { r.dataVenda.Day, r.dataVenda.Month, r.dataVenda.Year })
@@ -156,39 +217,6 @@ namespace api.Negocios.Card
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = CollectionRelatorioVendas.Count;
 
-                // Ajustes
-                //List<RelatorioVendas> ajustes = new List<RelatorioVendas>();
-                //if (vendas.Count > 0)
-                //{
-                //    // Orderna as vendas por data de recebimento para obter o intervalo de data de recebimento da consulta de vendas
-                //    List<DateTime> recebimentos = vendas.Select(r => r.dataRecebimento).OrderBy(r => r).ToList<DateTime>();
-                //    DateTime dtInicioRecebimento = recebimentos.First();
-                //    DateTime dtFinalRecebimento = recebimentos.Last();
-
-                //    string filtroDtAjuste = dtInicioRecebimento.Year +
-                //                            (dtInicioRecebimento.Month < 10 ? "0" : "") + dtInicioRecebimento.Month +
-                //                            (dtInicioRecebimento.Day < 10 ? "0" : "") + dtInicioRecebimento.Day + "|" +
-                //                            dtFinalRecebimento.Year +
-                //                            (dtFinalRecebimento.Month < 10 ? "0" : "") + dtFinalRecebimento.Month +
-                //                            (dtFinalRecebimento.Day < 10 ? "0" : "") + dtFinalRecebimento.Day;
-
-                //    queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, filtroDtAjuste);
-
-                //    // Obtém ajustes
-                //    IQueryable<tbRecebimentoAjuste> queryAjustes = GatewayTbRecebimentoAjuste.getQuery(0, (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, 0, 0, queryStringAjustes);
-                //    ajustes = queryAjustes.Select(a => new RelatorioVendas
-                //    {
-                //        dataVenda = a.dtAjuste,
-                //        dataRecebimento = a.dtAjuste,
-                //        recebeu = a.dtAjuste < dataNow,
-                //        valorBruto = a.vlAjuste > new decimal(0.0) ? a.vlAjuste : new decimal(0.0),
-                //        valorLiquido = a.vlAjuste,
-                //        valorDescontado = a.vlAjuste < new decimal(0.0) ? new decimal(-1.0) * a.vlAjuste : new decimal(0.0),
-                //        bandeira = a.tbBandeira.dsBandeira,
-                //        adquirente = a.tbBandeira.tbAdquirente.nmAdquirente
-                //    }).OrderBy(r => r.dataRecebimento).ToList<RelatorioVendas>();
-                //}
-
                 // TOTAL
                 retorno.Totais = new Dictionary<string, object>();
                 retorno.Totais.Add("valorBruto", CollectionRelatorioVendas.Select(r => r.valorBruto).Cast<decimal>().Sum());
@@ -196,10 +224,7 @@ namespace api.Negocios.Card
                 retorno.Totais.Add("valorLiquido", CollectionRelatorioVendas.Select(r => r.valorLiquido).Cast<decimal>().Sum());
                 retorno.Totais.Add("valorRecebido", CollectionRelatorioVendas.Select(r => r.valorRecebido).Cast<decimal>().Sum());
                 retorno.Totais.Add("valorAReceber", CollectionRelatorioVendas.Select(r => r.valorAReceber).Cast<decimal>().Sum());
-                //retorno.Totais.Add("valorAjustes", ajustes.Select(r => r.valorLiquido).Cast<decimal>().Sum());
-                //retorno.Totais.Add("valorAjustesRecebido", ajustes.Where(a => a.recebeu == true).Select(r => r.valorLiquido).Cast<decimal>().Sum());
-                //retorno.Totais.Add("valorAjustesAReceber", ajustes.Where(a => a.recebeu == false).Select(r => r.valorLiquido).Cast<decimal>().Sum());
-
+         
                 // PAGINAÇÃO
                 int skipRows = (pageNumber - 1) * pageSize;
                 if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)

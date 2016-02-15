@@ -18,6 +18,7 @@ namespace api.Negocios.Util
         public string[] orderby { get; set; }
         public int take { get; set; }
         public bool readUncommited { get; set; }
+        public bool readDistinct { get; set; }
 
         public SimpleDataBaseQuery(SimpleDataBaseQuery simpleDataBaseQuery)
         {
@@ -29,6 +30,7 @@ namespace api.Negocios.Util
             this.orderby = simpleDataBaseQuery.orderby;
             this.take = simpleDataBaseQuery.take;
             this.readUncommited = simpleDataBaseQuery.readUncommited;
+            this.readDistinct = simpleDataBaseQuery.readDistinct;
         }
 
         public SimpleDataBaseQuery()
@@ -36,7 +38,7 @@ namespace api.Negocios.Util
             this.from = String.Empty;
         }
 
-        public SimpleDataBaseQuery(string[] select, string from, Dictionary<string, string> join, string[] where, string[] groupby, string[] orderby, int take = 0, bool readUncommited = false, Dictionary<string, string> left_join = null)
+        public SimpleDataBaseQuery(string[] select, string from, Dictionary<string, string> join, string[] where, string[] groupby, string[] orderby, int take = 0, bool readUncommited = false, bool readDistinct = false, Dictionary<string, string> left_join = null)
         {
             this.select = select;
             this.join = join != null ? join : new Dictionary<string, string>(); ;
@@ -46,6 +48,7 @@ namespace api.Negocios.Util
             this.orderby = orderby;
             this.take = take;
             this.readUncommited = readUncommited;
+            this.readDistinct = readDistinct;
         }
 
         public void AddWhereClause(string clause)
@@ -62,6 +65,8 @@ namespace api.Negocios.Util
         public string Script()
         {
             string script = "SELECT ";
+            if (readDistinct)
+                script += " DISTINCT ";
             if (take > 0)
                 script += "TOP(" + take + ") ";
             if (select != null)

@@ -7,6 +7,15 @@ namespace api.Models.Object
 {
     public class ConciliacaoRelatorios
     {
+        public class TotalPorBandeira
+        {
+            public string adquirente { get; set; }
+            public string bandeira { get; set; }
+            public string tipocartao { get; set; }
+            public int total { get; set; }
+            public decimal valor { get; set; }
+        }
+
         public string tipo { get; set; }  // Diferenciar registros de cada Gateway
         public string adquirente { get; set; }
         public string bandeira { get; set; }
@@ -30,4 +39,6 @@ namespace api.Models.Object
         //public decimal extratoBancario { get; set; }
         //public decimal diferença { get; set; }
     }
+
+    
 }

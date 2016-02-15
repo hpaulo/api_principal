@@ -193,7 +193,7 @@ namespace api.Negocios.Card
 
                 // ANTECIPACAO BANCÁRIA
                 if (!dataBaseQueryAB.join.ContainsKey("INNER JOIN card.tbAntecipacaoBancaria " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY))
-                    dataBaseQueryAB.join.Add("INNER JOIN pos.tbAntecipacaoBancaria " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY, " ON " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY + ".idAntecipacaoBancaria = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancaria");
+                    dataBaseQueryAB.join.Add("INNER JOIN card.tbAntecipacaoBancaria " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY, " ON " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY + ".idAntecipacaoBancaria = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancaria");
                 //if (!dataBaseQueryAB.join.ContainsKey("LEFT JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
                 //    dataBaseQueryAB.join.Add("LEFT JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".cdBandeira");
                 if (!dataBaseQueryAB.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
@@ -281,7 +281,6 @@ namespace api.Negocios.Card
                 List<RecebiveisFuturos> recebiveisFuturos = new List<RecebiveisFuturos>();
                 if (resultado != null && resultado.Count > 0)
                 {
-                    // Obtém ids extratos
                     recebiveisFuturos = resultado.Select(t => new RecebiveisFuturos
                     {
                         adquirente = Convert.ToString(t["nmAdquirente"]),
