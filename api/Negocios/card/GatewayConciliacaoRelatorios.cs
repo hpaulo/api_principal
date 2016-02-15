@@ -501,7 +501,7 @@ namespace api.Negocios.Card
                                                                valorLiquidoTotal = t.Sum(x => x.valorLiquido) - t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
                                                                extratoBancario = new decimal(0.0),
                                                                diferenca = t.Sum(x => x.valorLiquido) - t.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
-                                                               status = t.Where(x => x.idExtrato == null).Count() > 0 ? "Não conciliado" : "Conciliado",
+                                                               status = t.Where(x => x.idExtrato == /*null*/0).Count() > 0 ? "Não conciliado" : "Conciliado",
 
                                                                adquirentes = t.GroupBy(c => c.adquirente)
                                                                                .OrderBy(c => c.Key)
@@ -518,7 +518,7 @@ namespace api.Negocios.Card
                                                                                    valorLiquidoTotal = c.Sum(x => x.valorLiquido) - c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
                                                                                    extratoBancario = new decimal(0.0),
                                                                                    diferenca = c.Sum(x => x.valorLiquido) - c.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
-                                                                                   status = c.Where(x => x.idExtrato == null).Count() > 0 ? "Não conciliado" : "Conciliado",
+                                                                                   status = c.Where(x => x.idExtrato == /*null*/0).Count() > 0 ? "Não conciliado" : "Conciliado",
 
                                                                                    bandeiras = c.GroupBy(b => new { b.bandeira, b.tipocartao })
                                                                                                 .OrderBy(b => b.Key.bandeira)
@@ -536,7 +536,7 @@ namespace api.Negocios.Card
                                                                                                     valorLiquidoTotal = b.Sum(x => x.valorLiquido) - b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
                                                                                                     extratoBancario = new decimal(0.0),
                                                                                                     diferenca = b.Sum(x => x.valorLiquido) - b.Where(x => x.tipo.Equals("R")).Sum(x => x.valorDescontadoAntecipacao),
-                                                                                                    status = b.Where(x => x.idExtrato == null).Count() > 0 ? "Não conciliado" : "Conciliado",
+                                                                                                    status = b.Where(x => x.idExtrato == /*null*/0).Count() > 0 ? "Não conciliado" : "Conciliado",
 
                                                                                                 }).ToList<dynamic>()
                                                                                }).ToList<dynamic>(),
