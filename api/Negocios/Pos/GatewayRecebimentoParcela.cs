@@ -1466,7 +1466,7 @@ namespace api.Negocios.Pos
                             {
                                 retorno.TotalDeRegistros = Convert.ToInt32(resultado[0]["totalRegistros"]);
                                 retorno.Totais.Add("valorDescontado", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorDescontado"] : 0.0));
-                                retorno.Totais.Add("vlDescontadoAntecipacao", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorDescontado"] : 0.0));
+                                retorno.Totais.Add("vlDescontadoAntecipacao", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["vlDescontadoAntecipacao"] : 0.0));
                                 retorno.Totais.Add("valorParcelaBruta", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorParcelaBruta"] : 0.0));
                                 retorno.Totais.Add("valorParcelaLiquida", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorParcelaLiquida"] : 0.0));
                                 retorno.Totais.Add("taxaCashFlow", retorno.TotalDeRegistros > 0 ? Convert.ToDecimal(resultado[0]["taxaCashFlow"]) / ((decimal)retorno.TotalDeRegistros) : new decimal(0.0));
