@@ -8,6 +8,7 @@ using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
 using System.Data.Entity;
+using System.Data;
 
 namespace api.Negocios.Pos
 {
@@ -204,6 +205,7 @@ namespace api.Negocios.Pos
                 _db = new painel_taxservices_dbContext();
             else
                 _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
             try
             {
                 // Filtro de grupo empresa e filial
@@ -373,7 +375,7 @@ namespace api.Negocios.Pos
                     CollectionLoginOperadora = subQuery.ToList<dynamic>();
                 }
 
-
+                transaction.Commit();
 
                 retorno.Registros = CollectionLoginOperadora;
 
@@ -381,6 +383,7 @@ namespace api.Negocios.Pos
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -408,7 +411,7 @@ namespace api.Negocios.Pos
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            //DbContextTransaction transaction = _db.Database.BeginTransaction();
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 // Avalia adquirente
@@ -417,40 +420,62 @@ namespace api.Negocios.Pos
                 if (op == null) throw new Exception("Adquirente inválida");
 
                 // Busca possível registro da adquirente para a filial
-                LoginOperadora loginOperadora = _db.LoginOperadoras
-                                                        .Where(l => l.cnpj.Equals(param.cnpj))
-                                                        .Where(l => l.Operadora.nmOperadora.Equals(param.Operadora.nmOperadora))
-                                                        .FirstOrDefault();
+                //LoginOperadora loginOperadora = _db.LoginOperadoras
+                //                                        .Where(l => l.cnpj.Equals(param.cnpj))
+                //                                        .Where(l => l.Operadora.nmOperadora.Equals(param.Operadora.nmOperadora))
+                //                                        .FirstOrDefault();
+                LoginOperadora loginOperadora = _db.Database.SqlQuery<LoginOperadora>("SELECT L.*" + 
+                                                                                      " FROM pos.LoginOperadora L (NOLOCK)" +
+                                                                                      " JOIN pos.Operadora O ON O.id = L.idOperadora" +
+                                                                                      " WHERE L.cnpj = '" + param.cnpj + "'" +
+                                                                                      " AND O.nmOperadora = '" + param.Operadora.nmOperadora + "'")
+                                                            .FirstOrDefault();
 
                 if (loginOperadora == null)
                 {
                     // Cria um novo registro de loginoperadora para a filial
 
                     // Procura pela operadora
-                    Operadora operadora = _db.Operadoras
-                                                /*.Where(e => _db.LoginOperadoras
-                                                                    .Where(l => l.cnpj.Equals(param.cnpj))
-                                                                    .Select(l => l.idOperadora)
-                                                                    .ToList().Contains(e.id)
-                                                      )*/
-                                                .Where(e => e.idGrupoEmpresa == param.idGrupo)
-                                                .Where(e => e.nmOperadora.Equals(param.Operadora.nmOperadora))
-                                                .FirstOrDefault();
+                    //Operadora operadora = _db.Operadoras
+                    //                            /*.Where(e => _db.LoginOperadoras
+                    //                                                .Where(l => l.cnpj.Equals(param.cnpj))
+                    //                                                .Select(l => l.idOperadora)
+                    //                                                .ToList().Contains(e.id)
+                    //                                  )*/
+                    //                            .Where(e => e.idGrupoEmpresa == param.idGrupo)
+                    //                            .Where(e => e.nmOperadora.Equals(param.Operadora.nmOperadora))
+                    //                            .FirstOrDefault();
+                    Operadora operadora = _db.Database.SqlQuery<Operadora>("SELECT O.*" +
+                                                                           " FROM pos.Operadora O (NOLOCK)" +
+                                                                           " WHERE O.idGrupoEmpresa = " + param.idGrupo +
+                                                                           " AND O.nmOperadora = '" + param.Operadora.nmOperadora + "'")
+                                                            .FirstOrDefault();
 
                     if (operadora == null)
                     {
                         // Cria um novo registro de operadora para a filial
-                        Operadora newOperadora = new Operadora();
-                        newOperadora.nmOperadora = param.Operadora.nmOperadora;
-                        newOperadora.idGrupoEmpresa = param.idGrupo;
-                        _db.Operadoras.Add(newOperadora);
+                        //Operadora newOperadora = new Operadora();
+                        //newOperadora.nmOperadora = param.Operadora.nmOperadora;
+                        //newOperadora.idGrupoEmpresa = param.idGrupo;
+                        //_db.Operadoras.Add(newOperadora);
+                        _db.Database.ExecuteSqlCommand("INSERT INTO pos.Operadora (nmOperadora, idGrupoEmpresa)" +
+                                                       " VALUES('" + param.Operadora.nmOperadora + "', " + param.idGrupo + ")");
                         _db.SaveChanges();
+
+                        // Obtém operadora
+                        operadora = _db.Database.SqlQuery<Operadora>("SELECT O.*" +
+                                                                     " FROM pos.Operadora O (NOLOCK)" +
+                                                                     " WHERE O.idGrupoEmpresa = " + param.idGrupo +
+                                                                     " AND O.nmOperadora = '" + param.Operadora.nmOperadora + "'")
+                                                            .FirstOrDefault();
+
                         // Obtém o id da nova operadora
-                        param.idOperadora = newOperadora.id;
+                        //param.idOperadora = newOperadora.id;
                     }
-                    else
-                        // Já existe operadora com nmOperadora para a filial
-                        param.idOperadora = operadora.id;
+                    //else
+
+                    // Já existe operadora com nmOperadora para a filial
+                    param.idOperadora = operadora.id;
 
                     // Salva na base
 
@@ -460,29 +485,48 @@ namespace api.Negocios.Pos
                     param.qtTentativas = 0;
                     try
                     {
-                        _db.LoginOperadoras.Add(param);
+                        //_db.LoginOperadoras.Add(param);
+                        _db.Database.ExecuteSqlCommand("INSERT INTO pos.LoginOperadora (login, senha, status, cnpj, idOperadora" +
+                                                       ", idGrupo, estabelecimento, nrCNPJCentralizadora, cdEstabelecimentoConsulta)" +
+                                                       " VALUES('" + param.login + "', '" + param.senha + "', 1, '" + param.cnpj + "'" +
+                                                       ", " + param.idOperadora + ", " + param.idGrupo +
+                                                       ", " + (param.estabelecimento != null ? "'" + param.estabelecimento + "'" : "NULL") +
+                                                       ", " + (param.cdEstabelecimentoConsulta != null ? "'" + param.cdEstabelecimentoConsulta + "'" : "NULL") +
+                                                       ", " + (param.nrCNPJCentralizadora != null ? "'" + param.nrCNPJCentralizadora + "'" : "NULL") + ")");
                         _db.SaveChanges();
+
+                        // Obtém o loginOperadora
+                        loginOperadora = _db.Database.SqlQuery<LoginOperadora>("SELECT L.*" +
+                                                                               " FROM pos.LoginOperadora L (NOLOCK)" +
+                                                                               " JOIN pos.Operadora O ON O.id = L.idOperadora" +
+                                                                               " WHERE L.cnpj = '" + param.cnpj + "'" +
+                                                                               " AND O.nmOperadora = '" + param.Operadora.nmOperadora + "'")
+                                                            .FirstOrDefault();
                     }
                     catch(Exception e)
                     {
                         // Remove a operadora criada
-                        GatewayOperadora.Delete(token, param.idOperadora);
+                        //GatewayOperadora.Delete(token, param.idOperadora);
                         // Reporta a falha
-                        throw new Exception("500");
+                        throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
                     }
                 }
-                else
+                //else
+                //{
+                // Já existe uma operadora registrada (nmOperadora) para aquela filial
+                param.idOperadora = loginOperadora.idOperadora;
+                param.id = loginOperadora.id;
+                // Atualiza o status para true
+                if (!loginOperadora.status)
                 {
-                    // Já existe uma operadora registrada (nmOperadora) para aquela filial
-                    param.idOperadora = loginOperadora.idOperadora;
-                    param.id = loginOperadora.id;
-                    // Atualiza o status para true
-                    if (!loginOperadora.status)
-                    {
-                        loginOperadora.status = true;
-                        _db.SaveChanges();
-                    }
+                    _db.Database.ExecuteSqlCommand("UPDATE L" +
+                                                   " SET L.status = 1" +
+                                                   " FROM pos.LoginOperadora L" +
+                                                   " WHERE L.id = " + loginOperadora.id);
+                    //loginOperadora.status = true;
+                    _db.SaveChanges();
                 }
+                //}
 
                 // Adiciona log execution
                 try
@@ -492,7 +536,7 @@ namespace api.Negocios.Pos
                 catch (Exception e)
                 {
                     // Remove LoginOperadora e Operadora possivelmente criados
-                    Delete(token, param.id);
+                    //Delete(token, param.id);
                     // Reporta a falha
                     if (e is DbEntityValidationException)
                     {
@@ -502,12 +546,14 @@ namespace api.Negocios.Pos
                     throw new Exception("Houve uma falha ao armazenar logexecution! " + e.Message);
                 }
 
+                transaction.Commit();
+
                 return param.id;
             }
             catch (Exception e)
             {
                 // Rollback
-                //transaction.Rollback();
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -540,7 +586,11 @@ namespace api.Negocios.Pos
             DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
-                LoginOperadora loginOperadora = _db.LoginOperadoras.Where(e => e.id == id).FirstOrDefault();
+                //LoginOperadora loginOperadora = _db.LoginOperadoras.Where(e => e.id == id).FirstOrDefault();
+                LoginOperadora loginOperadora = _db.Database.SqlQuery<LoginOperadora>("SELECT L.*" +
+                                                                               " FROM pos.LoginOperadora L (NOLOCK)" +
+                                                                               " WHERE L.id = " + id)
+                                                            .FirstOrDefault();
                 if (loginOperadora == null) throw new Exception("Login Operadora inexistente");
 
                 // Remove logexecutions
@@ -552,7 +602,8 @@ namespace api.Negocios.Pos
                 _db.SaveChanges();
 
                 // Por fim, remove login operadora
-                _db.LoginOperadoras.Remove(loginOperadora);
+                //_db.LoginOperadoras.Remove(loginOperadora);
+                _db.Database.ExecuteSqlCommand("DELETE FROM pos.LoginOperadora WHERE pos.LoginOperadora.id = " + id);
                 _db.SaveChanges();
 
                 // Commit
@@ -591,41 +642,70 @@ namespace api.Negocios.Pos
             else _db = _dbContext;
             try
             {
-                LoginOperadora value = _db.LoginOperadoras
-                        .Where(e => e.id == param.id)
-                        .First<LoginOperadora>();
+                //LoginOperadora value = _db.LoginOperadoras
+                //        .Where(e => e.id == param.id)
+                //        .First<LoginOperadora>();
+                LoginOperadora value = _db.Database.SqlQuery<LoginOperadora>("SELECT L.*" +
+                                                                               " FROM pos.LoginOperadora L (NOLOCK)" +
+                                                                               " WHERE L.id = " + param.id)
+                                                            .FirstOrDefault();
 
+                if (value == null) throw new Exception("Login Operadora inexistente");
+
+                List<string> updates = new List<string>();
 
                 if (param.login != null && param.login != value.login)
-                    value.login = param.login;
+                    updates.Add(" L.login = '" + param.login + "'");
+                    //value.login = param.login;
                 if (param.senha != null && param.senha != value.senha)
                 {
-                    value.senha = param.senha;
-                    value.status = true;
-                    value.dtBloqueio = null;
-                    value.qtTentativas = 0;
-                    value.data_alteracao = DateTime.Now;
+                    updates.Add(" L.senha = '" + param.senha + "'");
+                    updates.Add(" L.status = 1");
+                    updates.Add(" L.dtBloqueio = NULL");
+                    updates.Add(" L.qtTentativas = 0");
+                    updates.Add(" L.data_alteracao = getdate()");
+                    //value.senha = param.senha;
+                    //value.status = true;
+                    //value.dtBloqueio = null;
+                    //value.qtTentativas = 0;
+                    //value.data_alteracao = DateTime.Now;
                 }
                 if (param.estabelecimento != null && param.estabelecimento != value.estabelecimento)
-                    value.estabelecimento = param.estabelecimento;
+                    updates.Add(" L.estabelecimento = '" + param.estabelecimento + "'");
+                    //value.estabelecimento = param.estabelecimento;
                 if (param.cdEstabelecimentoConsulta != null && param.cdEstabelecimentoConsulta != value.cdEstabelecimentoConsulta)
                 {
                     if (param.nrCNPJCentralizadora != null && param.nrCNPJCentralizadora != value.nrCNPJCentralizadora)
                     {
                         if (param.cdEstabelecimentoConsulta.Equals(""))
-                            value.cdEstabelecimentoConsulta = null;
+                            updates.Add(" L.cdEstabelecimentoConsulta = NULL");
+                            //value.cdEstabelecimentoConsulta = null;
                         else
-                            value.cdEstabelecimentoConsulta = param.cdEstabelecimentoConsulta;
+                            updates.Add(" L.cdEstabelecimentoConsulta = '" + param.cdEstabelecimentoConsulta + "'");
+                            //value.cdEstabelecimentoConsulta = param.cdEstabelecimentoConsulta;
                     }
                 }
                 if (param.nrCNPJCentralizadora != null && param.nrCNPJCentralizadora != value.nrCNPJCentralizadora)
                 {
                     if (param.nrCNPJCentralizadora.Equals(""))
-                        value.nrCNPJCentralizadora = null;
+                        updates.Add(" L.nrCNPJCentralizadora = NULL");
+                        ///value.nrCNPJCentralizadora = null;
                     else
-                        value.nrCNPJCentralizadora = param.nrCNPJCentralizadora;
+                        updates.Add(" L.nrCNPJCentralizadora = '" + param.nrCNPJCentralizadora + "'");
+                        //value.nrCNPJCentralizadora = param.nrCNPJCentralizadora;
                 }
-                _db.SaveChanges();
+                if (updates.Count > 0)
+                {
+                    string script = "UPDATE L" +
+                                                   " SET " + string.Join(", ", updates) +
+                                                   " FROM pos.LoginOperadora L" +
+                                                   " WHERE L.id = " + value.id;
+                    _db.Database.ExecuteSqlCommand("UPDATE L" +
+                                                   " SET " + string.Join(", ", updates) +
+                                                   " FROM pos.LoginOperadora L" +
+                                                   " WHERE L.id = " + value.id);
+                    _db.SaveChanges();
+                }
 
                 try
                 {
