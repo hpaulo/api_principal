@@ -319,7 +319,7 @@ namespace api.Negocios.Card
                         dtTitulo = tit.dtTitulo,
                         dtVenda = tit.dtVenda,
                         nrCNPJ = tit.nrCNPJ,//tit.empresa.nu_cnpj,
-                        nrNSU = tit.nrNSU,// != null ? tit.nrNSU : "",
+                        nrNSU = tit.nrNSU != null && !tit.nrNSU.ToString().Trim().Equals("") ? tit.nrNSU : "T" + tit.cdERP,
                         nrParcela = Convert.ToByte(tit.nrParcela),
                         qtParcelas = Convert.ToByte(tit.qtParcelas),
                         vlParcela = Convert.ToDecimal(tit.vlParcela),

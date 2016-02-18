@@ -14,7 +14,7 @@ namespace api.Models.Object
         public decimal valorDescontado;
         public decimal valorLiquido;
         public decimal valorAntecipacaoBancaria;
-        //public string bandeira;
+        public string bandeira;
         public string adquirente;
         //public string competencia;
 
@@ -26,7 +26,7 @@ namespace api.Models.Object
             valorDescontado = new decimal(0.0);
             valorLiquido = new decimal(0.0);
             valorAntecipacaoBancaria = new decimal(0.0);
-            //bandeira = String.Empty;
+            bandeira = String.Empty;
             adquirente = String.Empty;
             //competencia = String.Empty;
         }

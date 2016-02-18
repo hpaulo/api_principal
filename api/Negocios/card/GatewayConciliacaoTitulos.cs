@@ -496,7 +496,7 @@ namespace api.Negocios.Card
                                 {
                                     //string filialConsulta = recebParcela.Filial;
 
-                                    DateTime dataIni = recebParcela.Data.Subtract(new TimeSpan(RANGE_DIAS_ANTERIOR, 0, 0, 0));
+                                    DateTime dataIni = recebParcela.Data.AddDays(RANGE_DIAS_ANTERIOR * -1);
                                     DateTime dataFim = recebParcela.Data.AddDays(RANGE_DIAS_POSTERIOR);
                                     string nsu = "" + Convert.ToInt32(recebParcela.Nsu);
                                     // Para cada recebimento Parcela, procurar
@@ -656,7 +656,7 @@ namespace api.Negocios.Card
                         nrCNPJ = queryString["" + (int)CAMPOS.NU_CNPJ];
 
                     DateTime data = Convert.ToDateTime(recebimento.Recebimento.dtaVenda.ToShortDateString());
-                    DateTime dataIni = data.Subtract(new TimeSpan(RANGE_DIAS_ANTERIOR, 0, 0, 0));
+                    DateTime dataIni = data.AddDays(RANGE_DIAS_ANTERIOR * -1);
                     DateTime dataFim = data.AddDays(RANGE_DIAS_POSTERIOR);
 
                     // Consulta títulos com a mesma data da venda
