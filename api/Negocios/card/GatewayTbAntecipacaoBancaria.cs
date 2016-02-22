@@ -372,6 +372,9 @@ namespace api.Negocios.Card
                         dtAntecipacaoBancaria = e.dtAntecipacaoBancaria,
                         vlOperacao = e.vlOperacao,
                         vlLiquido = e.vlLiquido,
+                        txJuros = e.txJuros,
+                        txIOF = e.txIOF,
+                        txIOFAdicional = e.txIOFAdicional,
                         cdAdquirente = e.cdAdquirente,
                         cdContaCorrente = e.cdContaCorrente,
                     }).ToList<dynamic>();
@@ -384,6 +387,9 @@ namespace api.Negocios.Card
                         dtAntecipacaoBancaria = e.dtAntecipacaoBancaria,
                         vlOperacao = e.vlOperacao ?? new decimal(0.0),
                         vlLiquido = e.vlLiquido ?? new decimal(0.0),
+                        txJuros = e.txJuros,
+                        txIOF = e.txIOF,
+                        txIOFAdicional = e.txIOFAdicional,
                         cdAdquirente = e.cdAdquirente,
                         cdContaCorrente = e.cdContaCorrente,
                     }).ToList<dynamic>();
@@ -402,11 +408,17 @@ namespace api.Negocios.Card
                         },
                         vlOperacao = e.vlOperacao ?? new decimal(0.0),
                         vlLiquido = e.vlLiquido ?? new decimal(0.0),
+                        txJuros = e.txJuros,
+                        txIOF = e.txIOF,
+                        txIOFAdicional = e.txIOFAdicional,
                         antecipacoes = e.tbAntecipacaoBancariaDetalhes.Select(t => new {
                             idAntecipacaoBancariaDetalhe = t.idAntecipacaoBancariaDetalhe,
                             dtVencimento = t.dtVencimento,
                             vlAntecipacao = t.vlAntecipacao,
                             vlAntecipacaoLiquida = t.vlAntecipacaoLiquida,
+                            vlIOF = t.vlIOF,
+                            vlIOFAdicional = t.vlIOFAdicional,
+                            vlJuros = t.vlJuros,
                             tbBandeira = t.cdBandeira == null ? null : new { cdBandeira = t.cdBandeira,
 													                         dsBandeira = t.tbBandeira.dsBandeira 
 													                       },
@@ -463,6 +475,9 @@ namespace api.Negocios.Card
                 tbAntecipacaoBancaria.cdAdquirente = param.cdAdquirente;
                 tbAntecipacaoBancaria.cdContaCorrente = param.cdContaCorrente;
                 tbAntecipacaoBancaria.dtAntecipacaoBancaria = param.dtAntecipacaoBancaria;
+                tbAntecipacaoBancaria.txIOF = param.txIOF;
+                tbAntecipacaoBancaria.txIOFAdicional = param.txIOFAdicional;
+                tbAntecipacaoBancaria.txJuros = param.txJuros;
                 //tbAntecipacaoBancaria.vlOperacao = param.antecipacoes.Select(t => t.vlAntecipacao).Sum();
                 //tbAntecipacaoBancaria.vlLiquido = param.antecipacoes.Select(t => t.vlAntecipacaoLiquida).Sum();
                 _db.tbAntecipacaoBancarias.Add(tbAntecipacaoBancaria);
@@ -475,8 +490,12 @@ namespace api.Negocios.Card
                     tbAntecipacaoBancariaDetalhe.cdBandeira = antecipacao.cdBandeira;
                     tbAntecipacaoBancariaDetalhe.dtVencimento = antecipacao.dtVencimento;
                     tbAntecipacaoBancariaDetalhe.vlAntecipacao = antecipacao.vlAntecipacao;
-                    tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = decimal.Round(antecipacao.vlAntecipacao * (new decimal(1.0) - taxa), 3);
-
+                    //tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = decimal.Round(antecipacao.vlAntecipacao * (new decimal(1.0) - taxa), 3);
+                    tbAntecipacaoBancariaDetalhe.vlIOF = antecipacao.vlIOF;
+                    tbAntecipacaoBancariaDetalhe.vlIOFAdicional = antecipacao.vlIOFAdicional;
+                    tbAntecipacaoBancariaDetalhe.vlJuros = antecipacao.vlJuros;
+                    tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = antecipacao.vlAntecipacao - antecipacao.vlJuros - antecipacao.vlIOF - antecipacao.vlIOFAdicional;
+                        
                     _db.tbAntecipacaoBancariaDetalhes.Add(tbAntecipacaoBancariaDetalhe);
                     _db.SaveChanges();
                 }
@@ -568,12 +587,15 @@ namespace api.Negocios.Card
                 if (value == null)
                     throw new Exception("Antecipação bancária inexistente!");
 
-                decimal taxa = (param.vlOperacao - param.vlLiquido) / param.vlOperacao;
+                //decimal taxa = (param.vlOperacao - param.vlLiquido) / param.vlOperacao;
 
                 if (param.dtAntecipacaoBancaria != value.dtAntecipacaoBancaria)
                     value.dtAntecipacaoBancaria = param.dtAntecipacaoBancaria;
                 if (param.cdAdquirente != 0 && param.cdAdquirente != value.cdAdquirente)
                     value.cdAdquirente = param.cdAdquirente;
+                value.txIOF = param.txIOF;
+                value.txIOFAdicional = param.txIOFAdicional;
+                value.txJuros = param.txJuros;
                 _db.SaveChanges();
 
                 // Salva antecipações
@@ -589,7 +611,11 @@ namespace api.Negocios.Card
                         tbAntecipacaoBancariaDetalhe.cdBandeira = antecipacao.cdBandeira;
                         tbAntecipacaoBancariaDetalhe.dtVencimento = antecipacao.dtVencimento;
                         tbAntecipacaoBancariaDetalhe.vlAntecipacao = antecipacao.vlAntecipacao;
-                        tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = decimal.Round(antecipacao.vlAntecipacao * (new decimal(1.0) - taxa), 3);
+                        //tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = decimal.Round(antecipacao.vlAntecipacao * (new decimal(1.0) - taxa), 3);
+                        tbAntecipacaoBancariaDetalhe.vlIOF = antecipacao.vlIOF;
+                        tbAntecipacaoBancariaDetalhe.vlIOFAdicional = antecipacao.vlIOFAdicional;
+                        tbAntecipacaoBancariaDetalhe.vlJuros = antecipacao.vlJuros;
+                        tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = antecipacao.vlAntecipacao - antecipacao.vlJuros - antecipacao.vlIOF - antecipacao.vlIOFAdicional;
                         // Adiciona
                         _db.tbAntecipacaoBancariaDetalhes.Add(tbAntecipacaoBancariaDetalhe);
                     }
@@ -608,7 +634,11 @@ namespace api.Negocios.Card
                             tbAntecipacaoBancariaDetalhe.vlAntecipacao = antecipacao.vlAntecipacao;
                         //if (tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida != antecipacao.vlAntecipacaoLiquida)
                             //tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = antecipacao.vlAntecipacaoLiquida;
-                        tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = decimal.Round(antecipacao.vlAntecipacao * (new decimal(1.0) - taxa), 3);
+                        //tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = decimal.Round(antecipacao.vlAntecipacao * (new decimal(1.0) - taxa), 3);
+                        tbAntecipacaoBancariaDetalhe.vlIOF = antecipacao.vlIOF;
+                        tbAntecipacaoBancariaDetalhe.vlIOFAdicional = antecipacao.vlIOFAdicional;
+                        tbAntecipacaoBancariaDetalhe.vlJuros = antecipacao.vlJuros;
+                        tbAntecipacaoBancariaDetalhe.vlAntecipacaoLiquida = antecipacao.vlAntecipacao - antecipacao.vlJuros - antecipacao.vlIOF - antecipacao.vlIOFAdicional;
                     }
                     _db.SaveChanges();
                 }

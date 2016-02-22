@@ -105,7 +105,13 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.NRNSUHOST:
                         string nrNSUHost = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nrNSUHost.Equals(nrNSUHost)).AsQueryable<tbRecebimentoTEF>();
+                        if (nrNSUHost.Contains("%")) // usa LIKE => ENDS WITH
+                        {
+                            string busca = nrNSUHost.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.nrNSUHost.EndsWith(busca)).AsQueryable<tbRecebimentoTEF>();
+                        }
+                        else
+                            entity = entity.Where(e => e.nrNSUHost.Equals(nrNSUHost)).AsQueryable<tbRecebimentoTEF>();
                         break;
                     case CAMPOS.NRNSUTEF:
                         string nrNSUTEF = Convert.ToString(item.Value);

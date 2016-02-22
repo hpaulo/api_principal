@@ -13,6 +13,9 @@ namespace api.Models
         public decimal vlAntecipacao { get; set; }
         public decimal vlAntecipacaoLiquida { get; set; }
         public int? cdBandeira { get; set; }
+        public decimal vlIOF { get; set; }
+        public decimal vlIOFAdicional { get; set; }
+        public decimal vlJuros { get; set; }
         public virtual tbAntecipacaoBancaria tbAntecipacaoBancaria { get; set; }
         public virtual tbBandeira tbBandeira { get; set; }
     }

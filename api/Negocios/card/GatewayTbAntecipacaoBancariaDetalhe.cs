@@ -413,6 +413,9 @@ namespace api.Negocios.Card
                         dtVencimento = e.dtVencimento,
                         vlAntecipacao = e.vlAntecipacao,
                         vlAntecipacaoLiquida = e.vlAntecipacaoLiquida,
+                        vlIOF = e.vlIOF,
+                        vlIOFAdicional = e.vlIOFAdicional,
+                        vlJuros = e.vlJuros,
                         cdBandeira = e.cdBandeira,
                     }).ToList<dynamic>();
                 }
@@ -427,6 +430,9 @@ namespace api.Negocios.Card
                         vlAntecipacao = e.vlAntecipacao,
                         vlAntecipacaoLiquida = e.vlAntecipacaoLiquida,
                         cdBandeira = e.cdBandeira,
+                        vlIOF = e.vlIOF,
+                        vlIOFAdicional = e.vlIOFAdicional,
+                        vlJuros = e.vlJuros,
                     }).ToList<dynamic>();
                 }
 

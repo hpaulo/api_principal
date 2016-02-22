@@ -610,6 +610,11 @@ namespace api.Negocios.Card
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = query.Count();
 
+                if (colecao == 2)
+                {
+                    retorno.Totais = new Dictionary<string, object>();
+                    retorno.Totais.Add("valor", retorno.TotalDeRegistros > 0 ? query.Sum(t => t.vlMovimento) : new decimal(0.0));
+                }
 
                 // PAGINAÇÃO
                 int skipRows = (pageNumber - 1) * pageSize;

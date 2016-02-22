@@ -18,6 +18,9 @@ namespace api.Models
         public decimal? vlLiquido { get; set; }
         public int cdAdquirente { get; set; }
         public int cdContaCorrente { get; set; }
+        public decimal txJuros { get; set; }
+        public decimal txIOF { get; set; }
+        public decimal txIOFAdicional { get; set; }
         public virtual tbAdquirente tbAdquirente { get; set; }
         public virtual tbContaCorrente tbContaCorrente { get; set; }
         public ICollection<tbAntecipacaoBancariaDetalhe> tbAntecipacaoBancariaDetalhes { get; set; }

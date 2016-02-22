@@ -24,6 +24,18 @@ namespace api.Models.Mapping
             this.Property(t => t.dtVencimento)
                 .IsRequired();
 
+            this.Property(t => t.vlIOF)
+                .HasPrecision(9, 2)
+                .IsRequired();
+
+            this.Property(t => t.vlIOFAdicional)
+                .HasPrecision(9, 2)
+                .IsRequired();
+
+            this.Property(t => t.vlJuros)
+                .HasPrecision(9, 2)
+                .IsRequired();
+
 
             // Table & Column Mappings
             this.ToTable("tbAntecipacaoBancariaDetalhe", "card");
@@ -33,6 +45,9 @@ namespace api.Models.Mapping
             this.Property(t => t.dtVencimento).HasColumnName("dtVencimento");
             this.Property(t => t.vlAntecipacao).HasColumnName("vlAntecipacao");
             this.Property(t => t.vlAntecipacaoLiquida).HasColumnName("vlAntecipacaoLiquida");
+            this.Property(t => t.vlJuros).HasColumnName("vlJuros");
+            this.Property(t => t.vlIOF).HasColumnName("vlIOF");
+            this.Property(t => t.vlIOFAdicional).HasColumnName("vlIOFAdicional");
 
             // Relationships
             this.HasRequired(t => t.tbAntecipacaoBancaria)
