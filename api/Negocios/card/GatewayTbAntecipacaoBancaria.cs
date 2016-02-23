@@ -540,6 +540,11 @@ namespace api.Negocios.Card
                 tbAntecipacaoBancaria tbAntecipacaoBancaria = _db.tbAntecipacaoBancarias.Where(e => e.idAntecipacaoBancaria.Equals(idAntecipacaoBancaria)).FirstOrDefault();
                 if(tbAntecipacaoBancaria == null)
                     throw new Exception("Antecipação bancária inexistente!");
+
+                // Remove todos os vencimentos associados
+                _db.tbAntecipacaoBancariaDetalhes.RemoveRange(_db.tbAntecipacaoBancariaDetalhes.Where(t => t.idAntecipacaoBancaria == idAntecipacaoBancaria));
+                _db.SaveChanges();
+
                 _db.tbAntecipacaoBancarias.Remove(tbAntecipacaoBancaria);
                 _db.SaveChanges();
                 transaction.Commit();

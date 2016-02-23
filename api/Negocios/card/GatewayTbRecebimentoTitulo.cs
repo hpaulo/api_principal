@@ -9,6 +9,9 @@ using api.Models.Object;
 using System.Globalization;
 using System.Data.Entity.Validation;
 using System.Data.Entity;
+using api.Negocios.Util;
+using api.Negocios.Cliente;
+using api.Negocios.Pos;
 
 namespace api.Negocios.Card
 {
@@ -232,6 +235,201 @@ namespace api.Negocios.Card
             #endregion
 
             return entity;
+
+
+        }
+
+
+        /// <summary>
+        /// Get TbRecebimentoTitulo/TbRecebimentoTitulo
+        /// </summary>
+        /// <param name="colecao"></param>
+        /// <param name="campo"></param>
+        /// <param name="orderby"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="queryString"></param>
+        /// <returns></returns>
+        public static SimpleDataBaseQuery getQuery(int campo, int orderby, Dictionary<string, string> queryString)
+        {
+            Dictionary<string, string> join = new Dictionary<string, string>();
+            List<string> where = new List<string>();
+            List<string> order = new List<string>();
+
+            #region WHERE - ADICIONA OS FILTROS A QUERY
+            // ADICIONA OS FILTROS A QUERY
+            foreach (KeyValuePair<string, string> item in queryString)
+            {
+                int key = Convert.ToInt16(item.Key);
+                CAMPOS filtroEnum = (CAMPOS)key;
+                switch (filtroEnum)
+                {
+                    case CAMPOS.IDRECEBIMENTOTITULO:
+                        Int32 idRecebimentoTitulo = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".idRecebimentoTitulo = " + idRecebimentoTitulo);
+                        break;
+                    case CAMPOS.NRCNPJ:
+                        string nrCNPJ = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".nrCNPJ = '" + nrCNPJ + "'");
+                        break;
+                    case CAMPOS.NRNSU:
+                        string nrNSU = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".nrNSU = '" + nrNSU + "'");
+                        break;
+                    case CAMPOS.DTVENDA:
+                        DateTime dtVenda = Convert.ToDateTime(item.Value);
+                        where.Add(SIGLA_QUERY + ".dtVenda = " + dtVenda);
+                        break;
+                    case CAMPOS.CDADQUIRENTE:
+                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente);
+                        break;
+                    case CAMPOS.DSBANDEIRA:
+                        string dsBandeira = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".dsBandeira = '" + dsBandeira + "'");
+                        break;
+                    case CAMPOS.VLVENDA:
+                        decimal vlVenda = Convert.ToDecimal(item.Value);
+                        where.Add(SIGLA_QUERY + ".vlVenda = " + vlVenda.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                        break;
+                    case CAMPOS.QTPARCELAS:
+                        byte qtParcelas = Convert.ToByte(item.Value);
+                        where.Add(SIGLA_QUERY + ".qtParcelas = " + qtParcelas);
+                        break;
+                    case CAMPOS.DTTITULO:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dtInicio = DataBaseQueries.GetDate(dtaIni);
+                            string dtFim = DataBaseQueries.GetDate(dtaFim);
+                            where.Add(SIGLA_QUERY + ".dtTitulo BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(data);
+                            where.Add(SIGLA_QUERY + ".dtTitulo BETWEEN '" + dt + "' AND '" + dt + " 23:59:00'");
+                        }
+                        break;
+                    case CAMPOS.VLPARCELA:
+                        decimal vlParcela = Convert.ToDecimal(item.Value);
+                        where.Add(SIGLA_QUERY + ".vlParcela = " + vlParcela.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                        break;
+                    case CAMPOS.NRPARCELA:
+                        byte nrParcela = Convert.ToByte(item.Value);
+                        where.Add(SIGLA_QUERY + ".nrParcela = " + nrParcela);
+                        break;
+                    case CAMPOS.CDERP:
+                        string cdERP = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".cdERP = '" + cdERP + "'");
+                        break;
+                    case CAMPOS.DTBAIXAERP:
+                        if (item.Value.Equals(""))
+                            where.Add(SIGLA_QUERY + ".dtBaixaERP IS NULL");
+                        else if (item.Value.Equals("0"))
+                            where.Add(SIGLA_QUERY + ".dtBaixaERP IS NOT NULL");
+                        else if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dtInicio = DataBaseQueries.GetDate(dtaIni);
+                            string dtFim = DataBaseQueries.GetDate(dtaFim);
+                            where.Add(SIGLA_QUERY + ".dtBaixaERP IS NOT NULL AND " + SIGLA_QUERY + ".dtBaixaERP BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(dta);
+                            where.Add(SIGLA_QUERY + ".dtBaixaERP IS NOT NULL AND " + SIGLA_QUERY + ".dtBaixaERP BETWEEN '" + dt + "' AND '" + dt + " 23:59:00'");
+                        }
+                        break;
+
+                    // RELACIONAMENTOS
+                    case CAMPOS.ID_GRUPO:
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        // JOIN
+                        if (!join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                            join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + SIGLA_QUERY + ".nrCNPJ = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+                        where.Add(GatewayEmpresa.SIGLA_QUERY + ".id_grupo = " + id_grupo);
+                        break;
+                    case CAMPOS.ID_EXTRATO:
+                        Int32 idExtrato = Convert.ToInt32(item.Value);
+                        // JOIN
+                        if (!join.ContainsKey("INNER JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY))
+                            join.Add("INNER JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY, " ON " + SIGLA_QUERY + ".idRecebimentoTitulo = " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idRecebimentoTitulo");
+                        where.Add(GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato = " + idExtrato);
+                        break;
+                }
+            }
+            #endregion
+
+            #region ORDER BY - ADICIONA A ORDENAÇÃO A QUERY
+            // ADICIONA A ORDENAÇÃO A QUERY
+            CAMPOS filtro = (CAMPOS)campo;
+            switch (filtro)
+            {
+                case CAMPOS.IDRECEBIMENTOTITULO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".idRecebimentoTitulo ASC");
+                    else order.Add(SIGLA_QUERY + ".idRecebimentoTitulo DESC");
+                    break;
+                case CAMPOS.NRCNPJ:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".nrCNPJ ASC");
+                    else order.Add(SIGLA_QUERY + ".nrCNPJ DESC");
+                    break;
+                case CAMPOS.NRNSU:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".nrNSU ASC");
+                    else order.Add(SIGLA_QUERY + ".nrNSU DESC");
+                    break;
+                case CAMPOS.DTVENDA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dtVenda ASC");
+                    else order.Add(SIGLA_QUERY + ".dtVenda DESC");
+                    break;
+                case CAMPOS.CDADQUIRENTE:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdAdquirente ASC");
+                    else order.Add(SIGLA_QUERY + ".cdAdquirente DESC");
+                    break;
+                case CAMPOS.DSBANDEIRA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dsBandeira ASC");
+                    else order.Add(SIGLA_QUERY + ".dsBandeira DESC");
+                    break;
+                case CAMPOS.VLVENDA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".vlVenda ASC");
+                    else order.Add(SIGLA_QUERY + ".vlVenda DESC");
+                    break;
+                case CAMPOS.QTPARCELAS:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".qtParcelas ASC");
+                    else order.Add(SIGLA_QUERY + ".qtParcelas DESC");
+                    break;
+                case CAMPOS.DTTITULO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dtTitulo ASC");
+                    else order.Add(SIGLA_QUERY + ".dtTitulo DESC");
+                    break;
+                case CAMPOS.VLPARCELA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".vlParcela ASC");
+                    else order.Add(SIGLA_QUERY + ".vlParcela DESC");
+                    break;
+                case CAMPOS.NRPARCELA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".nrParcela ASC");
+                    else order.Add(SIGLA_QUERY + ".nrParcela DESC");
+                    break;
+                case CAMPOS.CDERP:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdERP ASC");
+                    else order.Add(SIGLA_QUERY + ".cdERP DESC");
+                    break;
+                case CAMPOS.DTBAIXAERP:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dtBaixaERP ASC");
+                    else order.Add(SIGLA_QUERY + ".dtBaixaERP DESC");
+                    break;
+            }
+            #endregion
+
+            return new SimpleDataBaseQuery(null, "card.tbRecebimentoTitulo " + SIGLA_QUERY,
+                                           join, where.ToArray(), null, order.ToArray());
 
 
         }
