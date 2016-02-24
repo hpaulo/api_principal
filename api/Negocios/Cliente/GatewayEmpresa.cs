@@ -266,6 +266,7 @@ namespace api.Negocios.Cliente
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted);
             try
             {
                 // Se for uma consulta por um cnpj específico na coleção 0, não força filtro por empresa, filial e rolelevel
@@ -477,12 +478,15 @@ namespace api.Negocios.Cliente
                     }).ToList<dynamic>();
                 }
 
+                transaction.Commit();
+
                 retorno.Registros = CollectionEmpresa;
 
                 return retorno;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -513,7 +517,7 @@ namespace api.Negocios.Cliente
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
+            //DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 param.dt_cadastro = DateTime.Now;
@@ -528,12 +532,12 @@ namespace api.Negocios.Cliente
 
                 _db.empresas.Add(param);
                 _db.SaveChanges();
-                transaction.Commit();
+                //transaction.Commit();
                 return param.nu_cnpj;
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -563,21 +567,21 @@ namespace api.Negocios.Cliente
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
+            //DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 if (_db.LogAcesso1.Where(l => l.webpages_Users.nu_cnpjEmpresa == nu_cnpj).ToList().Count == 0)
                 {
                     _db.empresas.Remove(_db.empresas.Where(e => e.nu_cnpj.Equals(nu_cnpj)).First());
                     _db.SaveChanges();
-                    transaction.Commit();
+                    //transaction.Commit();
                 }
                 else
                     throw new Exception("Empresa não pode ser deletada!");
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -603,21 +607,26 @@ namespace api.Negocios.Cliente
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, empresa param, painel_taxservices_dbContext _dbContext = null)
+        public static void Update(string token, EmpresaAtualizar param, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
+            //DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 empresa filial = _db.empresas
                         .Where(e => e.nu_cnpj.Equals(param.nu_cnpj))
                         .First<empresa>();
 
-                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
-
+                if (param.novo_cnpj != null && param.novo_cnpj != filial.nu_cnpj)
+                {
+                    filial.nu_cnpj = param.novo_cnpj;
+                    filial.nu_BaseCnpj = param.novo_cnpj.Substring(0, 8);
+                    filial.nu_SequenciaCnpj = param.novo_cnpj.Substring(8, 4);
+                    filial.nu_DigitoCnpj = param.novo_cnpj.Substring(12, 2);
+                }
 
                 if (param.ds_fantasia != null && param.ds_fantasia != filial.ds_fantasia)
                     filial.ds_fantasia = param.ds_fantasia;
@@ -650,11 +659,11 @@ namespace api.Negocios.Cliente
                 if (param.nu_inscEstadual != null && param.nu_inscEstadual != filial.nu_inscEstadual)
                     filial.nu_inscEstadual = param.nu_inscEstadual;
                 _db.SaveChanges();
-                transaction.Commit();
+                //transaction.Commit();
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);

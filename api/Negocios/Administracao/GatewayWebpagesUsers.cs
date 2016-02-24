@@ -8,19 +8,20 @@ using api.Bibliotecas;
 using api.Models.Object;
 using WebMatrix.WebData;
 using System.Data.Entity.Validation;
+using System.Data.Entity;
 
 namespace api.Negocios.Administracao
 {
     public class GatewayWebpagesUsers
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayWebpagesUsers()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+           // _db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -56,7 +57,7 @@ namespace api.Negocios.Administracao
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<webpages_Users> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<webpages_Users> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.webpages_Users.AsQueryable<webpages_Users>();
@@ -212,8 +213,13 @@ namespace api.Negocios.Administracao
         /// Retorna Webpages_Users/Webpages_Users
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
+            DbContextTransaction transaction = _db.Database.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted);
             try
             {
                 //DECLARAÇÕES
@@ -241,7 +247,7 @@ namespace api.Negocios.Administracao
                 Int32 IdGrupo = 0;
                 if (FiltroForcado)
                 {
-                    IdGrupo = Permissoes.GetIdGrupo(token);
+                    IdGrupo = Permissoes.GetIdGrupo(token, _db);
                     if (IdGrupo != 0)
                     {
                         if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
@@ -249,7 +255,7 @@ namespace api.Negocios.Administracao
                         else
                             queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
                     }
-                    string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                    string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                     if (!CnpjEmpresa.Equals(""))
                     {
                         if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJEMPRESA, out outValue))
@@ -261,7 +267,7 @@ namespace api.Negocios.Administracao
 
                 if (colecao == 3)
                 {
-                    int IdUsers = Permissoes.GetIdUser(token);
+                    int IdUsers = Permissoes.GetIdUser(token, _db);
                     if (IdUsers != 0)
                     {
                         if (queryString.TryGetValue("" + (int)CAMPOS.ID_USERS, out outValue))
@@ -272,7 +278,7 @@ namespace api.Negocios.Administracao
                 }
 
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
 
                 if (colecao != 3) // [WEB] A coleção 3 permite que o usuário de qualquer perfil obtenha os seus próprios dados
@@ -281,13 +287,13 @@ namespace api.Negocios.Administracao
                     if (FiltroForcado)
                     {
                         // Restringe consulta pelo perfil do usuário logado
-                        Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
+                        Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token, _db);
                         //String RoleName = Permissoes.GetRoleName(token).ToUpper();
-                        bool isAtosVendedor = Permissoes.isAtosRoleVendedor(token);
+                        bool isAtosVendedor = Permissoes.isAtosRoleVendedor(token, _db);
                         if (IdGrupo == 0 && isAtosVendedor)//RoleName.Equals("COMERCIAL"))
                         {
                             // Perfil Comercial tem uma carteira de clientes específica
-                            List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                            List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token, _db);
                             query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin
                                                      && e.id_grupo != null && listaIdsGruposEmpresas.Contains(e.id_grupo ?? -1)).AsQueryable<webpages_Users>();
                         }
@@ -300,10 +306,8 @@ namespace api.Negocios.Administracao
                     }
                 }
 
-                var queryTotal = query;
-
                 // TOTAL DE REGISTROS
-                retorno.TotalDeRegistros = queryTotal.Count();
+                retorno.TotalDeRegistros = query.Count();
 
 
                 // PAGINAÇÃO
@@ -417,18 +421,30 @@ namespace api.Negocios.Administracao
                     CollectionWebpages_Users.Add(o);
                 }*/
 
+                transaction.Commit();
+
                 retorno.Registros = CollectionWebpages_Users;
 
                 return retorno;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao listar usuário" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -439,34 +455,30 @@ namespace api.Negocios.Administracao
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, Models.Object.Usuario param)
+        public static Int32 Add(string token, Models.Object.Usuario param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 // Adiciona os dados da pessoa
-                param.Pessoa.id_pesssoa = GatewayPessoa.Add(token, param.Pessoa);
+                param.Pessoa.id_pesssoa = GatewayPessoa.Add(token, param.Pessoa, _db);
                 //_db.pessoas.Add(param.Pessoa);
                 //_db.SaveChanges();
 
                 // Cria a conta com o login informado e a senha padrão "atos123"
-                try
-                {
-                    //WebSecurity.CreateAccount(param.Webpagesusers.ds_login, "atos123", false);
-                    WebSecurity.CreateUserAndAccount(param.Webpagesusers.ds_login, "atos123", 
-                                                     propertyValues : new
-                                                     {
-                                                        ds_email = param.Webpagesusers.ds_email,
-                                                        fl_ativo = true
-                                                     },
-                                                     requireConfirmationToken: false);
-                }
-                catch(Exception e)
-                {
-                    // Remove a pessoa criada
-                    GatewayPessoa.Delete(token, param.Pessoa.id_pesssoa);
-                    // Reporta a falha
-                    throw new Exception("Falha ao criar conta. " + e.Message);
-                }
+                //WebSecurity.CreateAccount(param.Webpagesusers.ds_login, "atos123", false);
+                WebSecurity.CreateUserAndAccount(param.Webpagesusers.ds_login, "atos123", 
+                                                    propertyValues : new
+                                                    {
+                                                    ds_email = param.Webpagesusers.ds_email,
+                                                    fl_ativo = true
+                                                    },
+                                                    requireConfirmationToken: false);
+
                 param.Webpagesusers.id_users = WebSecurity.GetUserId(param.Webpagesusers.ds_login);
 
                 // Cria o usuário
@@ -477,18 +489,11 @@ namespace api.Negocios.Administracao
                 usr.nu_cnpjEmpresa = param.Webpagesusers.nu_cnpjEmpresa;
                 usr.id_pessoa = param.Pessoa.id_pesssoa;
                 //usr.fl_ativo = true;
-                try
-                {
-                    _db.SaveChanges();
-                }
-                catch
-                {
-                    // Remova a pessoa e a conta criada
-                    GatewayPessoa.Delete(token, param.Pessoa.id_pesssoa);
-                    GatewayWebpagesMembership.Delete(token, param.Webpagesusers.id_users);
-                    // Reporta a falha
-                    throw new Exception("500");
-                }
+
+                _db.SaveChanges();
+
+                transaction.Commit();
+
 
                 foreach (var item in param.Webpagesusersinroles)
                 {
@@ -496,14 +501,12 @@ namespace api.Negocios.Administracao
                     {
                         item.UserId = param.Webpagesusers.id_users;
                         _db.webpages_UsersInRoles.Add(item);
+
                         try
                         {
                             _db.SaveChanges();
                         }
-                        catch
-                        {
-                            // não é porque não associou alguma role que deve retornar erro por completo
-                        }
+                        catch { }
                     }
                 }
 
@@ -534,12 +537,22 @@ namespace api.Negocios.Administracao
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao salvar usuário" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -555,14 +568,19 @@ namespace api.Negocios.Administracao
         //    _db.SaveChanges();
         //}
 
-        public static void Delete(string token, Int32 id_users)
+        public static void Delete(string token, Int32 id_users, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
+            DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 if (_db.LogAcesso1.Where(e => e.idUsers == id_users).ToList().Count == 0)
                 {
-                    GatewayWebpagesUsersInRoles.Delete(token, id_users, false);
-                    GatewayWebpagesMembership.Delete(token, id_users);
+                    GatewayWebpagesUsersInRoles.Delete(token, id_users, false, _db);
+                    GatewayWebpagesMembership.Delete(token, id_users, _db);
                     // Obtem o usuário com o id_users
                     webpages_Users value = _db.webpages_Users
                                               .Where(e => e.id_users.Equals(id_users))
@@ -572,22 +590,31 @@ namespace api.Negocios.Administracao
 
                     _db.webpages_Users.RemoveRange(_db.webpages_Users.Where(e => e.id_users == id_users));
                     _db.SaveChanges();
+
                     if (id_pessoa > 0)
-                    {
-                        GatewayPessoa.Delete(token, id_pessoa);
-                    }
+                        GatewayPessoa.Delete(token, id_pessoa, _db);
                 }
                 else
                     throw new Exception("Usuário não pode ser deletado!");
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao apagar usuário" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -598,8 +625,12 @@ namespace api.Negocios.Administracao
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, Models.Object.Usuario param)
+        public static void Update(string token, Models.Object.Usuario param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+
             try
             {
                 if (param.Id_grupo != 0)
@@ -772,6 +803,15 @@ namespace api.Negocios.Administracao
                     throw new Exception(erro.Equals("") ? "Falha ao alterar usuário" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

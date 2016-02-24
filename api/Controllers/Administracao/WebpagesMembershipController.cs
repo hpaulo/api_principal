@@ -18,67 +18,75 @@ namespace api.Controllers.Administracao
         // GET /webpages_Membership/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
-            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
-            try
+            // Abre nova conexão
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
-                Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
-                HttpResponseMessage retorno = new HttpResponseMessage();
-
-                log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get");
-
-                if (Permissoes.Autenticado(token))
+                tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+                try
                 {
-                    Retorno dados = GatewayWebpagesMembership.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString);
-                    log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+                    Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
+                    HttpResponseMessage retorno = new HttpResponseMessage();
+
+                    log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get", _db);
+
+                    if (Permissoes.Autenticado(token, _db))
+                    {
+                        Retorno dados = GatewayWebpagesMembership.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString, _db);
+                        log.codResposta = (int)HttpStatusCode.OK;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+                    }
+                    else
+                    {
+                        log.codResposta = (int)HttpStatusCode.Unauthorized;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
+                    log.msgErro = e.Message;
                     Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
-            }
-            catch (Exception e)
-            {
-                log.codResposta = (int)HttpStatusCode.InternalServerError;
-                log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log);
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
 
         // POST /webpages_Membership/token/
         public HttpResponseMessage Post(string token, [FromBody]webpages_Membership param)
         {
-            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
-            try
+            // Abre nova conexão
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
-                HttpResponseMessage retorno = new HttpResponseMessage();
-
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post");
-
-                if (Permissoes.Autenticado(token))
+                tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+                try
                 {
-                    Int32 dados = GatewayWebpagesMembership.Add(token, param);
-                    log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
+                    HttpResponseMessage retorno = new HttpResponseMessage();
+
+                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Post", _db);
+
+                    if (Permissoes.Autenticado(token, _db))
+                    {
+                        Int32 dados = GatewayWebpagesMembership.Add(token, param, _db);
+                        log.codResposta = (int)HttpStatusCode.OK;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse<Int32>(HttpStatusCode.OK, dados);
+                    }
+                    else
+                    {
+                        log.codResposta = (int)HttpStatusCode.Unauthorized;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
+                    log.msgErro = e.Message;
                     Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
-            }
-            catch (Exception e)
-            {
-                log.codResposta = (int)HttpStatusCode.InternalServerError;
-                log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log);
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
 
 
@@ -87,33 +95,37 @@ namespace api.Controllers.Administracao
         // PUT /webpages_Membership/token/
         public HttpResponseMessage Put(string token, [FromBody]Models.Object.AlterarSenha param)
         {
-            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
-            try
+            // Abre nova conexão
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
-                HttpResponseMessage retorno = new HttpResponseMessage();
-
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put");
-
-                if (Permissoes.Autenticado(token))
+                tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+                try
                 {
-                    GatewayWebpagesMembership.Update(token, param);
-                    log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse(HttpStatusCode.OK);
+                    HttpResponseMessage retorno = new HttpResponseMessage();
+
+                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put", _db);
+
+                    if (Permissoes.Autenticado(token, _db))
+                    {
+                        GatewayWebpagesMembership.Update(token, param, _db);
+                        log.codResposta = (int)HttpStatusCode.OK;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.OK);
+                    }
+                    else
+                    {
+                        log.codResposta = (int)HttpStatusCode.Unauthorized;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
+                    log.msgErro = e.Message;
                     Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
-            }
-            catch (Exception e)
-            {
-                log.codResposta = (int)HttpStatusCode.InternalServerError;
-                log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log);
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
 
@@ -121,33 +133,37 @@ namespace api.Controllers.Administracao
         // DELETE /webpages_Membership/token/UserId
         public HttpResponseMessage Delete(string token, Int32 UserId)
         {
-            tbLogAcessoUsuario log = new tbLogAcessoUsuario();
-            try
+            // Abre nova conexão
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
-                HttpResponseMessage retorno = new HttpResponseMessage();
-
-                log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("UserId : " + UserId), "Delete");
-
-                if (Permissoes.Autenticado(token))
+                tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+                try
                 {
-                    GatewayWebpagesMembership.Delete(token, UserId);
-                    log.codResposta = (int)HttpStatusCode.OK;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse(HttpStatusCode.OK);
+                    HttpResponseMessage retorno = new HttpResponseMessage();
+
+                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("UserId : " + UserId), "Delete", _db);
+
+                    if (Permissoes.Autenticado(token, _db))
+                    {
+                        GatewayWebpagesMembership.Delete(token, UserId, _db);
+                        log.codResposta = (int)HttpStatusCode.OK;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.OK);
+                    }
+                    else
+                    {
+                        log.codResposta = (int)HttpStatusCode.Unauthorized;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    }
                 }
-                else
+                catch (Exception e)
                 {
-                    log.codResposta = (int)HttpStatusCode.Unauthorized;
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
+                    log.msgErro = e.Message;
                     Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
-            }
-            catch (Exception e)
-            {
-                log.codResposta = (int)HttpStatusCode.InternalServerError;
-                log.msgErro = e.Message;
-                Bibliotecas.LogAcaoUsuario.Save(log);
-                throw new HttpResponseException(HttpStatusCode.InternalServerError);
             }
         }
     }

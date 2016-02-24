@@ -165,6 +165,7 @@ namespace api.Negocios.Cliente
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted);
             try
             {
                 // Se for uma consulta por um nome de grupo específico na coleção 0, não força filtro por empresa
@@ -341,12 +342,15 @@ namespace api.Negocios.Cliente
 
                 }
 
+                transaction.Commit();
+
                 retorno.Registros = CollectionGrupo_empresa;
 
                 return retorno;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -377,7 +381,7 @@ namespace api.Negocios.Cliente
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
+            //DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 param.id_grupo = -1;
@@ -385,18 +389,18 @@ namespace api.Negocios.Cliente
                 param.token = "null";
                 param.fl_ativo = true;
                 // Verificar se usuário logado é de perfil comercial
-                if (Permissoes.isAtosRoleVendedor(token))//Permissoes.isAtosRole(token) && Permissoes.GetRoleName(token).ToUpper().Equals("COMERCIAL"))
+                if (Permissoes.isAtosRoleVendedor(token, _db))//Permissoes.isAtosRole(token) && Permissoes.GetRoleName(token).ToUpper().Equals("COMERCIAL"))
                     // Perfil Comercial tem uma carteira de clientes específica
                     param.id_vendedor = Permissoes.GetIdUser(token, _db);
 
                 _db.grupo_empresa.Add(param);
                 _db.SaveChanges();
-                transaction.Commit();
+                //transaction.Commit();
                 return param.id_grupo;
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -426,21 +430,21 @@ namespace api.Negocios.Cliente
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
+            //DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 if (_db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == id_grupo).ToList().Count == 0)
                 {
                     _db.grupo_empresa.Remove(_db.grupo_empresa.Where(e => e.id_grupo.Equals(id_grupo)).First());
                     _db.SaveChanges();
-                    transaction.Commit();
+                    //transaction.Commit();
                 }
                 else
                     throw new Exception("Grupo empresa não pode ser deletado!");
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -471,7 +475,7 @@ namespace api.Negocios.Cliente
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
+            //DbContextTransaction transaction = _db.Database.BeginTransaction(); // tudo ou nada
             try
             {
                 grupo_empresa value = _db.grupo_empresa
@@ -502,11 +506,11 @@ namespace api.Negocios.Cliente
                 //if (param.cdPrioridade != value.cdPrioridade) // não faz alterações pela API!
                 //    value.cdPrioridade = param.cdPrioridade;
                 _db.SaveChanges();
-                transaction.Commit();
+                //transaction.Commit();
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
