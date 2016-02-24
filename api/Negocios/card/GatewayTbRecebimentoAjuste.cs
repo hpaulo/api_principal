@@ -64,7 +64,7 @@ namespace api.Negocios.Card
 
             // EXTRA
             SEM_AJUSTES_ANTECIPACAO = 400,
-            AJUSTES_VENDA = 401,
+            //AJUSTES_VENDA = 401,
 
             CDCONTACORRENTE = 500
         };
@@ -166,11 +166,11 @@ namespace api.Negocios.Card
                             // Por enquanto, só trata da Cielo
                             entity = entity.Where(e => e.tbBandeira.cdAdquirente != 2 || !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)).AsQueryable<tbRecebimentoAjuste>();
                         break;
-                    case CAMPOS.AJUSTES_VENDA:
-                        if (Convert.ToBoolean(item.Value))
-                            // Por enquanto, só trata do Banese
-                            entity = entity.Where(e => e.tbBandeira.cdAdquirente == 7 && AJUSTES_VENDA_BANESE.Contains(e.dsMotivo)).AsQueryable<tbRecebimentoAjuste>();
-                        break;
+                    //case CAMPOS.AJUSTES_VENDA:
+                    //    if (Convert.ToBoolean(item.Value))
+                    //        // Por enquanto, só trata do Banese
+                    //        entity = entity.Where(e => e.tbBandeira.cdAdquirente == 7 && AJUSTES_VENDA_BANESE.Contains(e.dsMotivo)).AsQueryable<tbRecebimentoAjuste>();
+                    //    break;
                     case CAMPOS.CDCONTACORRENTE:
                         Int32 cdContaCorrente = Convert.ToInt32(item.Value);
                         if (cdContaCorrente > 0)
@@ -367,21 +367,21 @@ namespace api.Negocios.Card
                             }
                         }
                         break;
-                    case CAMPOS.AJUSTES_VENDA:
-                        if (Convert.ToBoolean(item.Value))
-                        {
-                            string ajustes = string.Join("', '", AJUSTES_VENDA_BANESE);
-                            if (!ajustes.Equals(""))
-                            {
-                                // Por enquanto, só trata do Banese
-                                ajustes = "'" + ajustes + "'";
-                                // Adiciona os joins
-                                if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
-                                    join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + SIGLA_QUERY + ".cdBandeira");
-                                where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = 7 AND " + SIGLA_QUERY + ".dsMotivo IN (" + ajustes + ")");
-                            }
-                        }
-                        break;
+                    //case CAMPOS.AJUSTES_VENDA:
+                    //    if (Convert.ToBoolean(item.Value))
+                    //    {
+                    //        string ajustes = string.Join("', '", AJUSTES_VENDA_BANESE);
+                    //        if (!ajustes.Equals(""))
+                    //        {
+                    //            // Por enquanto, só trata do Banese
+                    //            ajustes = "'" + ajustes + "'";
+                    //            // Adiciona os joins
+                    //            if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                    //                join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + SIGLA_QUERY + ".cdBandeira");
+                    //            where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = 7 AND " + SIGLA_QUERY + ".dsMotivo IN (" + ajustes + ")");
+                    //        }
+                    //    }
+                    //    break;
                     case CAMPOS.CDCONTACORRENTE:
                         Int32 cdContaCorrente = Convert.ToInt32(item.Value);
                         if (cdContaCorrente > 0)
