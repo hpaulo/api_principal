@@ -374,8 +374,8 @@ namespace api.Negocios.Pos
                         if (cdContaCorrente > 0)
                         {
                             // Obtém as filiais da conta
-                            List<string> filiaisDaConta = Permissoes.GetFiliaisDaConta(cdContaCorrente, _db);
-                            List<int> adquirentesDaConta = Permissoes.GetAdquirentesDaConta(cdContaCorrente, _db);
+                            string[] filiaisDaConta = Permissoes.GetFiliaisDaConta(cdContaCorrente, _db);
+                            int[] adquirentesDaConta = Permissoes.GetAdquirentesDaConta(cdContaCorrente, _db);
                             entity = entity.Where(e => filiaisDaConta.Contains(e.Recebimento.cnpj))
                                            .Where(e => adquirentesDaConta.Contains(e.Recebimento.tbBandeira.cdAdquirente))
                                            .AsQueryable();
@@ -811,8 +811,8 @@ namespace api.Negocios.Pos
                         if (cdContaCorrente > 0)
                         {
                             // Obtém as filiais da conta
-                            string filiaisDaConta = "'" + string.Join("', '", Permissoes.GetFiliaisDaConta(cdContaCorrente)) + "'";
-                            string adquirentesDaConta = string.Join(", ", Permissoes.GetAdquirentesDaConta(cdContaCorrente));
+                            string filiaisDaConta = "'" + string.Join("', '", Permissoes.GetFiliaisDaConta(cdContaCorrente, (painel_taxservices_dbContext) null)) + "'";
+                            string adquirentesDaConta = string.Join(", ", Permissoes.GetAdquirentesDaConta(cdContaCorrente, (painel_taxservices_dbContext) null));
                             // Adiciona os joins
                             if (!join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
                                 join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".id = " + SIGLA_QUERY + ".idRecebimento");

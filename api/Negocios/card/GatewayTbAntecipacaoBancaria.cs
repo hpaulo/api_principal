@@ -12,6 +12,8 @@ using System.Data;
 using System.Globalization;
 using api.Negocios.Util;
 using api.Negocios.Cliente;
+using System.Data.SqlClient;
+using System.Configuration;
 
 namespace api.Negocios.Card
 {
@@ -396,10 +398,11 @@ namespace api.Negocios.Card
                 }
                 else if (colecao == 2)
                 {
-                    CollectionTbAntecipacaoBancaria = query.Select(e => new
+                    List<dynamic> antecipacoes = query.Select(e => new
                     {
                         idAntecipacaoBancaria = e.idAntecipacaoBancaria,
                         cdContaCorrente = e.cdContaCorrente,
+                        cdBanco = e.tbContaCorrente.cdBanco,
                         dtAntecipacaoBancaria = e.dtAntecipacaoBancaria,
                         tbAdquirente = new
                         {
@@ -422,9 +425,128 @@ namespace api.Negocios.Card
                             tbBandeira = t.cdBandeira == null ? null : new { cdBandeira = t.cdBandeira,
 													                         dsBandeira = t.tbBandeira.dsBandeira 
 													                       },
+                            vlDisponivelCS = new decimal(0.0),
+                            vlAntecipadoCS = new decimal(0.0),
                         }).OrderBy(t => t.dtVencimento).ThenBy(t => t.vlAntecipacao).ToList<dynamic>()
                         
                     }).ToList<dynamic>();
+
+                    SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString);
+
+                    try
+                    {
+                        connection.Open();
+                    }
+                    catch
+                    {
+                        throw new Exception("Não foi possível estabelecer conexão com a base de dados");
+                    }
+
+                    foreach (var antecipacao in antecipacoes)
+                    {
+                        List<dynamic> vencimentos = new List<dynamic>();
+                        string cdBanco = antecipacao.cdBanco;
+                        if (cdBanco.EndsWith("047"))
+                        {
+                            DateTime dtOperacao = antecipacao.dtAntecipacaoBancaria;
+                            int cdContaCorrente = antecipacao.cdContaCorrente;
+                            string filiaisDaConta = "'" + string.Join("', '", Permissoes.GetFiliaisDaConta(cdContaCorrente, connection)) + "'";
+                            
+                            // CONTA DO BANESE => BUSCA VALORES DE PARCELAS PARA CADA VENCIMENTO
+                            foreach (var vencimento in antecipacao.antecipacoes as List<dynamic>)
+                            {
+                                int idAntecipacaoBancariaDetalhe = vencimento.idAntecipacaoBancariaDetalhe;
+                                DateTime dtVencimento = vencimento.dtVencimento;
+                                int cdBandeira = vencimento.tbBandeira != null ? vencimento.tbBandeira.cdBandeira : 0;
+                                decimal valorDisponivel = new decimal(0.0);
+                                decimal valorAntecipado = new decimal(0.0);
+
+                                string script = "SELECT SUM(P.valorParcelaBruta - P.valorDescontado) as valorDisponivel" +
+                                                ", SUM(CASE WHEN P.idAntecipacaoBancariaDetalhe IS NOT NULL THEN P.valorParcelaLiquida ELSE 0 END) as valorAntecipado" +
+                                                //"R.numParcelaTotal, R.dtaVenda, R.codResumoVenda" +
+                                                //", R.nsu, R.id, P.numParcela, P.valorParcelaBruta" +
+                                                //", P.valorDescontado, P.vlDescontadoAntecipacao" +
+                                                //", P.valorParcelaLiquida, P.flAntecipado" +
+                                                //", P.dtaRecebimentoEfetivo, P.dtaRecebimento" + 
+                                                //", P.idExtrato, P.idRecebimentoTitulo" +
+                                                " FROM pos.RecebimentoParcela P (NOLOCK)" +
+                                                " JOIN pos.Recebimento R ON R.id = P.idRecebimento" +
+                                                " JOIN card.tbBandeira B ON B.cdBandeira = R.cdBandeira" +
+                                                // Procura estornos de vendas associados
+                                                " LEFT JOIN ( SELECT A.nrCNPJ, A.dtAjuste, A.dsMotivo" +
+                                                "             FROM card.tbRecebimentoAjuste A (NOLOCK)" +
+                                                "           ) T ON T.nrCNPJ = R.cnpj" +
+                                                "                  AND T.dtAjuste = P.dtaRecebimento" +
+                                                "                  AND T.dsMotivo LIKE 'ESTORNO (OPERAÇÃO ASSOCIADA: ' + R.codResumoVenda + '%'" +
+                                                " WHERE B.cdAdquirente = 7" + // Adquirente BANESE
+                                                " AND T.dsMotivo IS NULL" + // SEM ESTORNO ASSOCIADO
+                                                // Somente com data de venda inferior ao da operação
+                                                " AND R.dtaVenda < '" + DataBaseQueries.GetDate(dtOperacao) + "'" +
+                                                // Parcela com recebimento previsto para a data do vencimento
+                                                " AND P.dtaRecebimento BETWEEN '" + DataBaseQueries.GetDate(dtVencimento) + "' AND '" + DataBaseQueries.GetDate(dtVencimento) + " 23:59:00'" +
+                                                // Parcela não antecipada ou antecipada da antecipação bancária corrente
+                                                " AND (P.idAntecipacaoBancariaDetalhe IS NULL OR P.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe + ")" +
+                                                // Parcelas das filiais com vigência para a conta corrente
+                                                " AND R.cnpj in (" + filiaisDaConta + ")" +
+                                                // Bandeira determinada do detalhe da antecipação. Se não determinada, somente as bandeiras à crédito
+                                                " AND " + (cdBandeira > 0 ? "R.cdBandeira = " + cdBandeira : "B.dsTipo like 'CRÉDITO%'");
+                                List<IDataRecord> recebivel = DataBaseQueries.SqlQuery(script, connection);
+
+                                if (recebivel != null && recebivel.Count > 0 && recebivel[0] != null)
+                                {
+                                    valorDisponivel = Convert.ToDecimal(recebivel[0]["valorDisponivel"].Equals(DBNull.Value) ? 0.0 : recebivel[0]["valorDisponivel"]);
+                                    valorAntecipado = Convert.ToDecimal(recebivel[0]["valorAntecipado"].Equals(DBNull.Value) ? 0.0 : recebivel[0]["valorAntecipado"]);
+                                }
+
+                                // Procura ajustes associados
+                                script = "SELECT SUM(A.vlAjuste) as valorAntecipado" +
+                                         " FROM card.tbRecebimentoAjuste A (NOLOCK)" +
+                                         " WHERE A.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe;
+                                List<IDataRecord> ajuste = DataBaseQueries.SqlQuery(script, connection);
+                                if (ajuste != null && ajuste.Count > 0 && ajuste[0] != null)
+                                    valorAntecipado += Convert.ToDecimal(ajuste[0]["valorAntecipado"].Equals(DBNull.Value) ? 0.0 : ajuste[0]["valorAntecipado"]);
+
+                                vencimentos.Add(new
+                                {
+                                    idAntecipacaoBancariaDetalhe = idAntecipacaoBancariaDetalhe,
+                                    dtVencimento = dtVencimento,
+                                    vlAntecipacao = vencimento.vlAntecipacao,
+                                    vlAntecipacaoLiquida = vencimento.vlAntecipacaoLiquida,
+                                    vlIOF = vencimento.vlIOF,
+                                    vlIOFAdicional = vencimento.vlIOFAdicional,
+                                    vlJuros = vencimento.vlJuros,
+                                    tbBandeira = vencimento.tbBandeira,
+                                    vlDisponivelCS = valorDisponivel,
+                                    vlAntecipadoCS = valorAntecipado,
+                                });
+                            }
+                            
+                        }
+                        else
+                        {
+                            vencimentos = antecipacao.antecipacoes as List<dynamic>;
+                        }
+
+                        CollectionTbAntecipacaoBancaria.Add(new {
+                            idAntecipacaoBancaria = antecipacao.idAntecipacaoBancaria,
+                            cdContaCorrente = antecipacao.cdContaCorrente,
+                            cdBanco = antecipacao.cdBanco,
+                            dtAntecipacaoBancaria = antecipacao.dtAntecipacaoBancaria,
+                            tbAdquirente = antecipacao.tbAdquirente,
+                            vlOperacao = antecipacao.vlOperacao,
+                            vlLiquido = antecipacao.vlLiquido,
+                            txJuros = antecipacao.txJuros,
+                            txIOF = antecipacao.txIOF,
+                            txIOFAdicional = antecipacao.txIOFAdicional,
+                            antecipacoes = vencimentos
+                        });
+                    }
+
+                    try
+                    {
+                        connection.Close();
+                    }
+                    catch { }
                 }
 
                 transaction.Commit();

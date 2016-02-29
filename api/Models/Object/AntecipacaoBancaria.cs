@@ -31,4 +31,11 @@ namespace api.Models.Object
         public decimal vlIOFAdicional { get; set; }
         //public decimal vlAntecipacaoLiquida { get; set; }
     }
+
+
+    public class AntecipacaoBancariaAnteciparParcelas
+    {
+        public List<int> idsAntecipacaoBancariaDetalhe { get; set; }
+        public bool desfazerAntecipacoes { get; set; }
+    }
 }

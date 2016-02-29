@@ -1,7 +1,10 @@
 ﻿using api.Models;
 using api.Models.Object;
+using api.Negocios.Util;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
 
@@ -1135,7 +1138,7 @@ namespace api.Bibliotecas
         }
 
 
-        public static List<string> GetFiliaisDaConta(Int32 cdContaCorrente, painel_taxservices_dbContext _dbContext = null)
+        public static string[] GetFiliaisDaConta(Int32 cdContaCorrente, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
@@ -1148,11 +1151,11 @@ namespace api.Bibliotecas
                                             .Where(e => e.tbLoginAdquirenteEmpresa.empresa.fl_ativo == 1)
                                             .GroupBy(e => e.tbLoginAdquirenteEmpresa.empresa.nu_cnpj)
                                             .Select(e => e.Key)
-                                            .ToList<string>();
+                                            .ToArray<string>();
             }
             catch
             {
-                return new List<string>();
+                return new string[0];
             }
             finally
             {
@@ -1165,7 +1168,7 @@ namespace api.Bibliotecas
         }
 
 
-        public static List<int> GetAdquirentesDaConta(Int32 cdContaCorrente, painel_taxservices_dbContext _dbContext = null)
+        public static int[] GetAdquirentesDaConta(Int32 cdContaCorrente, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
@@ -1177,11 +1180,11 @@ namespace api.Bibliotecas
                             .Where(e => e.cdContaCorrente == cdContaCorrente)
                             .Where(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.stAdquirente == 1)
                             .GroupBy(e => e.tbLoginAdquirenteEmpresa.tbAdquirente.cdAdquirente)
-                            .Select(e => e.Key).ToList<int>();
+                            .Select(e => e.Key).ToArray<int>();
             }
             catch
             {
-                return new List<int>();
+                return new int[0];
             }
             finally
             {
@@ -1190,6 +1193,54 @@ namespace api.Bibliotecas
                     _db.Database.Connection.Close();
                     _db.Dispose();
                 }
+            }
+        }
+
+
+
+        public static string[] GetFiliaisDaConta(Int32 cdContaCorrente, SqlConnection connection = null)
+        {
+
+            try
+            {
+                string script = "SELECT E.nu_cnpj" +
+                                " FROM card.tbContaCorrente_tbLoginAdquirenteEmpresa V (NOLOCK)" +
+                                " JOIN card.tbLoginAdquirenteEmpresa L ON L.cdLoginAdquirenteEmpresa = V.cdLoginAdquirenteEmpresa" +
+                                " JOIN cliente.empresa E ON E.nu_cnpj = L.nrCNPJ" +
+                                " WHERE V.cdContaCorrente = " + cdContaCorrente +
+                                " AND E.fl_ativo = 1" +
+                                " GROUP BY E.nu_cnpj";
+                List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
+                if (resultado == null || resultado.Count == 0)
+                    return new string[0];
+                return resultado.Select(t => Convert.ToString(t["nu_cnpj"])).ToArray();
+            }
+            catch
+            {
+                return new string[0];
+            }
+        }
+
+
+        public static int[] GetAdquirentesDaConta(Int32 cdContaCorrente, SqlConnection connection = null)
+        {
+            try
+            {
+                string script = "SELECT A.cdAdquirente" +
+                                " FROM card.tbContaCorrente_tbLoginAdquirenteEmpresa V (NOLOCK)" +
+                                " JOIN card.tbLoginAdquirenteEmpresa L ON L.cdLoginAdquirenteEmpresa = V.cdLoginAdquirenteEmpresa" +
+                                " JOIN card.tbAdquirente A ON A.cdAdquirente = L.cdAdquirente" +
+                                " WHERE V.cdContaCorrente = " + cdContaCorrente +
+                                " AND A.stAdquirente = 1" +
+                                " GROUP BY A.cdAdquirente";
+                List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
+                if (resultado == null || resultado.Count == 0)
+                    return new int[0];
+                return resultado.Select(t => Convert.ToInt32(t["cdAdquirente"])).ToArray();
+            }
+            catch
+            {
+                return new int[0];
             }
         }
     }

@@ -161,6 +161,9 @@ namespace api.Negocios.Card
                         queryStringTbAntecipacaoBancariaDetalhe.Add("" + (int)GatewayTbAntecipacaoBancariaDetalhe.CAMPOS.CDADQUIRENTE, cdAdquirente.ToString());
                     }
                 }
+                
+                // Sem parcelas e/ou ajustes antecipados por causa do vencimento da antecipação bancária
+                queryStringTbAntecipacaoBancariaDetalhe.Add("" + (int)GatewayTbAntecipacaoBancariaDetalhe.CAMPOS.SEM_PARCELAS_AJUSTES_ASSOCIADO, "1");
 
 
                 // CONEXÃO
@@ -202,7 +205,11 @@ namespace api.Negocios.Card
                 // ANTECIPACAO BANCÁRIA
                 if (!dataBaseQueryAB.join.ContainsKey("INNER JOIN card.tbAntecipacaoBancaria " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY))
                     dataBaseQueryAB.join.Add("INNER JOIN card.tbAntecipacaoBancaria " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY, " ON " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY + ".idAntecipacaoBancaria = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancaria");
-                
+                if (!dataBaseQueryAB.join.ContainsKey("LEFT JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY))
+                    dataBaseQueryAB.join.Add("LEFT JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY, " ON " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe");
+                if (!dataBaseQueryAB.join.ContainsKey("LEFT JOIN card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY))
+                    dataBaseQueryAB.join.Add("LEFT JOIN card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY, " ON " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe");
+
                 dataBaseQueryRP.readUncommited = true;
                 dataBaseQueryAJ.readUncommited = true;
                 dataBaseQueryAB.readUncommited = true;

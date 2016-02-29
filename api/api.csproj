@@ -300,6 +300,7 @@
     <Compile Include="Controllers\Card\RecebiveisFuturosController.cs" />
     <Compile Include="Controllers\Card\RelatorioVendasController.cs" />
     <Compile Include="Controllers\Card\TbAntecipacaoBancariaController.cs" />
+    <Compile Include="Controllers\Card\TbAntecipacaoBancariaDetalheController.cs" />
     <Compile Include="Controllers\Card\TbBandeiraController.cs" />
     <Compile Include="Controllers\Card\TbLogCargaController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoBancariaController.cs" />

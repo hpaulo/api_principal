@@ -16,8 +16,10 @@ namespace api.Models
         public decimal vlDescontadoAntecipacao { get; set; }
         public Nullable<int> idRecebimentoTitulo { get; set; }
         public bool flAntecipado { get; set; }
+        public Nullable<int> idAntecipacaoBancariaDetalhe { get; set; }
         public virtual Recebimento Recebimento { get; set; }
         public virtual tbExtrato tbExtrato { get; set; }
-        public virtual tbRecebimentoTitulo tbRecebimentoTitulo { get; set; } 
+        public virtual tbRecebimentoTitulo tbRecebimentoTitulo { get; set; }
+        public virtual tbAntecipacaoBancariaDetalhe tbAntecipacaoBancariaDetalhe { get; set; }
     }
 }

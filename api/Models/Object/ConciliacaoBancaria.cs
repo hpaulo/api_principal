@@ -45,6 +45,8 @@ namespace api.Models.Object
             set { filial = value; }
         }
 
+        //public string CNPJ { get; set; }
+
         private string adquirente;
         public string Adquirente
         {

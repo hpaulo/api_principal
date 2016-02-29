@@ -163,8 +163,12 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.SEM_AJUSTES_ANTECIPACAO:
                         if (Convert.ToBoolean(item.Value))
-                            // Por enquanto, só trata da Cielo
-                            entity = entity.Where(e => e.tbBandeira.cdAdquirente != 2 || !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)).AsQueryable<tbRecebimentoAjuste>();
+                            // Por enquanto, só trata da Cielo e Banese
+                            //entity = entity.Where(e => (e.tbBandeira.cdAdquirente != 7 && e.tbBandeira.cdAdquirente != 2) || 
+                            //                           (e.tbBandeira.cdAdquirente == 2 && !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)) ||
+                            //                           (e.tbBandeira.cdAdquirente == 7 && !AJUSTES_ANTECIPACAO_BANESE.Contains(e.dsMotivo))
+                            //                     ).AsQueryable<tbRecebimentoAjuste>();
+                            entity = entity.Where(e =>  e.tbBandeira.cdAdquirente != 2 || !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)).AsQueryable<tbRecebimentoAjuste>();
                         break;
                     //case CAMPOS.AJUSTES_VENDA:
                     //    if (Convert.ToBoolean(item.Value))
@@ -176,8 +180,8 @@ namespace api.Negocios.Card
                         if (cdContaCorrente > 0)
                         {
                             // Obtém as filiais da conta
-                            List<string> filiaisDaConta = Permissoes.GetFiliaisDaConta(cdContaCorrente, _db);
-                            List<int> adquirentesDaConta = Permissoes.GetAdquirentesDaConta(cdContaCorrente, _db);
+                            string[] filiaisDaConta = Permissoes.GetFiliaisDaConta(cdContaCorrente, _db);
+                            int[] adquirentesDaConta = Permissoes.GetAdquirentesDaConta(cdContaCorrente, _db);
                             entity = entity.Where(e => filiaisDaConta.Contains(e.nrCNPJ))
                                            .Where(e => adquirentesDaConta.Contains(e.tbBandeira.cdAdquirente))
                                            .AsQueryable<tbRecebimentoAjuste>();
@@ -355,16 +359,17 @@ namespace api.Negocios.Card
                     case CAMPOS.SEM_AJUSTES_ANTECIPACAO:
                         if (Convert.ToBoolean(item.Value))
                         {
-                            string ajustes = string.Join("', '", AJUSTES_ANTECIPACAO_CIELO);
-                            if (!ajustes.Equals(""))
-                            {
-                                // Por enquanto, só trata da Cielo
-                                ajustes = "'" + ajustes + "'";
-                                // Adiciona os joins
-                                if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
-                                    join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + SIGLA_QUERY + ".cdBandeira");
-                                where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente != 2 OR " + SIGLA_QUERY + ".dsMotivo NOT IN (" + ajustes + ")");
-                            }
+                            // Por enquanto, só trata da Cielo e do Banese
+                            string ajustesCielo = "'" + string.Join("', '", AJUSTES_ANTECIPACAO_CIELO) + "'";
+                            string ajustesBanese = "'" + string.Join("', '", AJUSTES_ANTECIPACAO_BANESE) + "'"; 
+                            // Adiciona os joins
+                            if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                                join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + SIGLA_QUERY + ".cdBandeira");
+                            //where.Add("(" + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente NOT IN (2, 7))" +
+                            //          " OR (" + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = 2 AND " + SIGLA_QUERY + ".dsMotivo NOT IN (" + ajustesCielo + "))" +
+                            //          " OR (" + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = 7 AND " + SIGLA_QUERY + ".dsMotivo NOT IN (" + ajustesBanese + "))");
+                            where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente != 2" + " OR " + SIGLA_QUERY + ".dsMotivo NOT IN (" + ajustesCielo + ")");
+                            
                         }
                         break;
                     //case CAMPOS.AJUSTES_VENDA:
@@ -387,8 +392,8 @@ namespace api.Negocios.Card
                         if (cdContaCorrente > 0)
                         {
                             // Obtém as filiais da conta
-                            string filiaisDaConta = "'" + string.Join("', '", Permissoes.GetFiliaisDaConta(cdContaCorrente)) + "'";
-                            string adquirentesDaConta = string.Join(", ", Permissoes.GetAdquirentesDaConta(cdContaCorrente));
+                            string filiaisDaConta = "'" + string.Join("', '", Permissoes.GetFiliaisDaConta(cdContaCorrente, (painel_taxservices_dbContext) null)) + "'";
+                            string adquirentesDaConta = string.Join(", ", Permissoes.GetAdquirentesDaConta(cdContaCorrente, (painel_taxservices_dbContext) null));
                             // Adiciona os joins
                             if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
                                 join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + SIGLA_QUERY + ".cdBandeira");
