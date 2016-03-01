@@ -23,11 +23,11 @@ namespace api.Models.Mapping
                 .IsRequired();
 
             this.Property(t => t.valorParcelaLiquida)
-                .HasPrecision(9, 3)
+                .HasPrecision(9, 4)
                 .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
 
             this.Property(t => t.vlDescontadoAntecipacao)
-                .HasPrecision(9, 3)
+                .HasPrecision(9, 4)
                 .IsRequired();
 
             this.Property(t => t.flAntecipado)

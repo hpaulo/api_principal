@@ -427,6 +427,7 @@ namespace api.Negocios.Card
 													                       },
                             vlDisponivelCS = new decimal(0.0),
                             vlAntecipadoCS = new decimal(0.0),
+                            saldoCS = new decimal(0.0)
                         }).OrderBy(t => t.dtVencimento).ThenBy(t => t.vlAntecipacao).ToList<dynamic>()
                         
                     }).ToList<dynamic>();
@@ -484,8 +485,8 @@ namespace api.Negocios.Card
                                                 " AND R.dtaVenda < '" + DataBaseQueries.GetDate(dtOperacao) + "'" +
                                                 // Parcela com recebimento previsto para a data do vencimento
                                                 " AND P.dtaRecebimento BETWEEN '" + DataBaseQueries.GetDate(dtVencimento) + "' AND '" + DataBaseQueries.GetDate(dtVencimento) + " 23:59:00'" +
-                                                // Parcela não antecipada ou antecipada da antecipação bancária corrente
-                                                " AND (P.idAntecipacaoBancariaDetalhe IS NULL OR P.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe + ")" +
+                                                // Parcela não antecipada (e não conciliada) ou antecipada da antecipação bancária corrente
+                                                " AND ((P.idAntecipacaoBancariaDetalhe IS NULL AND P.idExtrato IS NULL) OR P.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe + ")" +
                                                 // Parcelas das filiais com vigência para a conta corrente
                                                 " AND R.cnpj in (" + filiaisDaConta + ")" +
                                                 // Bandeira determinada do detalhe da antecipação. Se não determinada, somente as bandeiras à crédito
@@ -503,8 +504,12 @@ namespace api.Negocios.Card
                                          " FROM card.tbRecebimentoAjuste A (NOLOCK)" +
                                          " WHERE A.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe;
                                 List<IDataRecord> ajuste = DataBaseQueries.SqlQuery(script, connection);
+                                decimal saldoCS = new decimal(0.0);
                                 if (ajuste != null && ajuste.Count > 0 && ajuste[0] != null)
-                                    valorAntecipado += Convert.ToDecimal(ajuste[0]["valorAntecipado"].Equals(DBNull.Value) ? 0.0 : ajuste[0]["valorAntecipado"]);
+                                {
+                                    saldoCS = Convert.ToDecimal(ajuste[0]["valorAntecipado"].Equals(DBNull.Value) ? 0.0 : ajuste[0]["valorAntecipado"]);
+                                    valorAntecipado += saldoCS;
+                                }
 
                                 vencimentos.Add(new
                                 {
@@ -518,6 +523,7 @@ namespace api.Negocios.Card
                                     tbBandeira = vencimento.tbBandeira,
                                     vlDisponivelCS = valorDisponivel,
                                     vlAntecipadoCS = valorAntecipado,
+                                    saldoCS = Math.Abs(saldoCS)
                                 });
                             }
                             

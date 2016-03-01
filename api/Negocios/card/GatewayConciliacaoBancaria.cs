@@ -178,7 +178,14 @@ namespace api.Negocios.Card
                     // Filial                                                  
                    (item1.Filial != null && item2.Filial != null && !item1.Filial.Equals("") && !item2.Filial.Equals("") && !item1.Filial.Equals(item2.Filial)) ||
                     // Bandeira
-                   (item1.Bandeira != null && item2.Bandeira != null && !item1.Bandeira.Equals("") && !item2.Bandeira.Equals("") && !item1.Bandeira.Equals(item2.Bandeira)) ||
+                   (item1.Bandeira != null && item2.Bandeira != null && !item1.Bandeira.Equals("") && !item2.Bandeira.Equals("") &&
+                   // VISA e CABAL podem ser pré-conciliados
+                    (!item1.Bandeira.Equals(item2.Bandeira) &&
+                     ((!item1.Bandeira.EndsWith("CABAL") && !item1.Bandeira.EndsWith("VISA")) ||
+                      (!item2.Bandeira.EndsWith("CABAL") && !item2.Bandeira.EndsWith("VISA"))
+                     ) 
+                    )
+                   ) ||
                     // Tipo cartão
                    (item1.TipoCartao != null && item2.TipoCartao != null && !item1.TipoCartao.Equals("") && !item2.TipoCartao.Equals("") && !item1.TipoCartao.Equals(item2.TipoCartao)) ||
                     // Valor

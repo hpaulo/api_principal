@@ -666,8 +666,9 @@ namespace api.Negocios.Card
 
                     //List<dynamic> listaTeste = new List<dynamic>();
 
-                    foreach (int idAntecipacaoBancariaDetalhe in param.idsAntecipacaoBancariaDetalhe)
+                    for (int i = 0; i < param.idsAntecipacaoBancariaDetalhe.Count; i++)
                     {
+                        int idAntecipacaoBancariaDetalhe = param.idsAntecipacaoBancariaDetalhe[i];
                         // Obtém o vencimento
                         string script = "SELECT C.cdContaCorrente, C.cdBanco, A.dtAntecipacaoBancaria, D.dtVencimento, D.cdBandeira, D.vlAntecipacao, D.vlAntecipacaoLiquida" +
                                         " FROM card.tbAntecipacaoBancariaDetalhe D (NOLOCK)" +
@@ -694,6 +695,8 @@ namespace api.Negocios.Card
                         decimal vlAntecipacao = Convert.ToDecimal(antecipacao["vlAntecipacao"].Equals(DBNull.Value) ? 0.0 : antecipacao["vlAntecipacao"]);
                         decimal vlAntecipacaoLiquida = Convert.ToDecimal(antecipacao["vlAntecipacaoLiquida"].Equals(DBNull.Value) ? 0.0 : antecipacao["vlAntecipacaoLiquida"]);
 
+                        //decimal taxaAntecipacao = decimal.Truncate(((vlAntecipacao - vlAntecipacaoLiquida) * new decimal(10000.0)) / vlAntecipacao) / new decimal(10000.0);
+                        //decimal taxaAntecipacao = decimal.Round((vlAntecipacao - vlAntecipacaoLiquida) / vlAntecipacao, 6);
                         decimal taxaAntecipacao = (vlAntecipacao - vlAntecipacaoLiquida) / vlAntecipacao;
 
                         string[] cnpjsConta = Permissoes.GetFiliaisDaConta(cdContaCorrente, connection).ToArray();
@@ -726,18 +729,18 @@ namespace api.Negocios.Card
                                  //" AND R.dtaVenda >= '2016-02-19'" + // TEMP
                                  // Parcela com recebimento previsto para a data do vencimento
                                  " AND P.dtaRecebimento BETWEEN '" + DataBaseQueries.GetDate(dtVencimento) + "' AND '" + DataBaseQueries.GetDate(dtVencimento) + " 23:59:00'" +
-                                 // Parcela não antecipada ou antecipada da antecipação bancária corrente
-                                 " AND (P.idAntecipacaoBancariaDetalhe IS NULL OR P.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe + ")" +
+                                 // Parcela não antecipada (e não conciliada) ou antecipada da antecipação bancária corrente
+                                 " AND ((P.idAntecipacaoBancariaDetalhe IS NULL AND P.idExtrato IS NULL) OR P.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe + ")" +
                                  // Parcelas das filiais com vigência para a conta corrente
                                  " AND R.cnpj in (" + filiaisDaConta + ")" +
                                  // Bandeira determinada do detalhe da antecipação. Se não determinada, somente as bandeiras à crédito
                                  " AND " + (cdBandeira > 0 ? "R.cdBandeira = " + cdBandeira : "B.dsTipo like 'CRÉDITO%'") +
                                  " ORDER BY CASE WHEN P.idAntecipacaoBancariaDetalhe IS NOT NULL THEN 0 ELSE 1 END" + // PRIORIZA OS QUE JÁ ESTÃO ASSOCIADOS A ANTECIPAÇÃO
-                                         ", R.dtaVenda DESC, R.nsu"; // PRIORIZA OS DE VENDA MAIS RECENTE EM RELAÇÃO A DATA DA ANTECIPAÇÃO
+                                         ", R.dtaVenda DESC, R.codResumoVenda, R.nsu"; // PRIORIZA OS DE VENDA MAIS RECENTE EM RELAÇÃO A DATA DA ANTECIPAÇÃO
 
 
                         resultado = DataBaseQueries.SqlQuery(script, connection);
-                        if (resultado == null || resultado.Count == 0)
+                        if (resultado == null)// || resultado.Count == 0)
                             continue;
 
                         decimal valorUtilizado = new decimal(0.0);
@@ -756,7 +759,7 @@ namespace api.Negocios.Card
                             int cdBandeiraParcela = Convert.ToInt32(parcela["cdBandeira"]);
 
                             // Obtém desconto de antecipação
-                            decimal vlDescontadoAntecipacao = decimal.Round(valorDisponivel * taxaAntecipacao, 2);//3);
+                            decimal vlDescontadoAntecipacao = decimal.Round(valorDisponivel * taxaAntecipacao, 4);
 
                             decimal valorNecessario;
                             decimal ajuste = new decimal(0.0);
@@ -825,7 +828,7 @@ namespace api.Negocios.Card
                                     _db.Database.ExecuteSqlCommand("UPDATE A" +
                                                                    " SET A.dsMotivo = '" + dsMotivo + "'" +
                                                                    ", A.cdBandeira = " + cdBandeiraParcela +
-                                                                   ", A.nrCNPJ = " + cnpj +
+                                                                   ", A.nrCNPJ = '" + cnpj + "'" +
                                                                    ", A.dtAjuste = '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
                                                                    ", A.vlAjuste = " + ajuste.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                                    ", A.flAntecipacao = 1" +
@@ -928,7 +931,7 @@ namespace api.Negocios.Card
                                 _db.Database.ExecuteSqlCommand("UPDATE A" +
                                                                " SET A.dsMotivo = '" + dsMotivo + "'" +
                                                                ", A.cdBandeira = " + cdBandeiraAjuste +
-                                                               ", A.nrCNPJ = " + cnpj +
+                                                               ", A.nrCNPJ = '" + cnpj + "'" +
                                                                ", A.dtAjuste = '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
                                                                ", A.vlAjuste = " + ajuste.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                                ", A.flAntecipacao = 1" +

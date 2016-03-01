@@ -1459,21 +1459,28 @@ namespace api.Negocios.Pos
                                                           "SUM(" + SIGLA_QUERY + ".vlDescontadoAntecipacao) as vlDescontadoAntecipacao",
                                                           "SUM(" + SIGLA_QUERY + ".valorParcelaBruta) as valorParcelaBruta",
                                                           "SUM(" + SIGLA_QUERY + ".valorParcelaLiquida) as valorParcelaLiquida",
-                                                          "SUM((" + SIGLA_QUERY + ".valorDescontado * 100.0) / "+ SIGLA_QUERY + ".valorParcelaBruta) as taxaCashFlow",
+                                                          "SUM((" + SIGLA_QUERY + ".valorDescontado * 100.0) / CASE WHEN "+ SIGLA_QUERY + ".valorParcelaBruta != 0 THEN "+ SIGLA_QUERY + ".valorParcelaBruta ELSE 1 END) as taxaCashFlow",
                                                           "COUNT(*) as totalRegistros" };
 
                             //retorno.Totais.Add("valorBruto", retorno.TotalDeRegistros > 0 ? Convert.ToDecimal(query.GroupBy(r => r.Recebimento).Sum(r => r.Key.valorVendaBruta))/*, 2)*/ : 0); 
 
                             resultado = DataBaseQueries.SqlQuery(dataBaseQuery.Script(), connection);
 
+                            retorno.TotalDeRegistros = 0;
+                            retorno.Totais.Add("valorDescontado", new decimal(0.0));
+                            retorno.Totais.Add("vlDescontadoAntecipacao", new decimal(0.0));
+                            retorno.Totais.Add("valorParcelaBruta", new decimal(0.0));
+                            retorno.Totais.Add("valorParcelaLiquida", new decimal(0.0));
+                            retorno.Totais.Add("taxaCashFlow", new decimal(0.0));
+
                             if (resultado != null && resultado.Count > 0)
                             {
                                 retorno.TotalDeRegistros = Convert.ToInt32(resultado[0]["totalRegistros"]);
-                                retorno.Totais.Add("valorDescontado", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorDescontado"] : 0.0));
-                                retorno.Totais.Add("vlDescontadoAntecipacao", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["vlDescontadoAntecipacao"] : 0.0));
-                                retorno.Totais.Add("valorParcelaBruta", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorParcelaBruta"] : 0.0));
-                                retorno.Totais.Add("valorParcelaLiquida", Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorParcelaLiquida"] : 0.0));
-                                retorno.Totais.Add("taxaCashFlow", retorno.TotalDeRegistros > 0 ? Convert.ToDecimal(resultado[0]["taxaCashFlow"]) / ((decimal)retorno.TotalDeRegistros) : new decimal(0.0));
+                                retorno.Totais["valorDescontado"] = Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorDescontado"] : 0.0);
+                                retorno.Totais["vlDescontadoAntecipacao"] = Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["vlDescontadoAntecipacao"] : 0.0);
+                                retorno.Totais["valorParcelaBruta"] = Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorParcelaBruta"] : 0.0);
+                                retorno.Totais["valorParcelaLiquida"] = Convert.ToDecimal(retorno.TotalDeRegistros > 0 ? resultado[0]["valorParcelaLiquida"] : 0.0);
+                                retorno.Totais["taxaCashFlow"] = retorno.TotalDeRegistros > 0 ? Convert.ToDecimal(resultado[0]["taxaCashFlow"]) / ((decimal)retorno.TotalDeRegistros) : new decimal(0.0);
                             }
                             #endregion
 
@@ -1552,8 +1559,10 @@ namespace api.Negocios.Pos
                             }
 
                             // Obtém os ajustes se teve filtro de data de recebimento
-                            if (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
-                                queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue))
+                            if (!queryString.TryGetValue("" + (int)CAMPOS.NSU, out outValue) &&
+                                !queryString.TryGetValue("" + (int)CAMPOS.CODRESUMOVENDA, out outValue) &&
+                                (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
+                                 queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue)))
                             {
                                 List<dynamic> ajustes = GatewayTbRecebimentoAjuste.getQuery(_db, 1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
                                                     .Select(e => new
@@ -1583,6 +1592,7 @@ namespace api.Negocios.Pos
                                     retorno.Totais["valorParcelaBruta"] = (decimal)retorno.Totais["valorParcelaBruta"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorParcela).Cast<decimal>().Sum()) : new decimal(0.0));
                                     retorno.Totais["valorParcelaLiquida"] = (decimal)retorno.Totais["valorParcelaLiquida"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorLiquida).Cast<decimal>().Sum()) : new decimal(0.0));
                                     retorno.Totais["valorDescontado"] = (decimal)retorno.Totais["valorDescontado"] + (ajustes.Count > 0 ? Convert.ToDecimal(ajustes.Select(r => r.valorDescontado).Cast<decimal>().Sum()) : new decimal(0.0));
+
 
                                     // Armazena os ajustes
                                     foreach (var ajuste in ajustes) CollectionRecebimentoParcela.Add(ajuste);
@@ -1680,8 +1690,10 @@ namespace api.Negocios.Pos
 
                             // Obtém os ajustes
                             // Obtém os ajustes se teve filtro de data de recebimento
-                            if (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
-                                queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue))
+                            if (!queryString.TryGetValue("" + (int)CAMPOS.NSU, out outValue) &&
+                                !queryString.TryGetValue("" + (int)CAMPOS.CODRESUMOVENDA, out outValue) &&
+                                (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
+                                 queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue)))
                             {
                                 ajustes = GatewayTbRecebimentoAjuste.getQuery(_db, 1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
                                                         .GroupBy(x => new { x.empresa, x.tbBandeira })
@@ -1757,8 +1769,10 @@ namespace api.Negocios.Pos
                             }
 
                             // Obtém os ajustes se teve filtro de data de recebimento
-                            if (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
-                                queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue))
+                            if (!queryString.TryGetValue("" + (int)CAMPOS.NSU, out outValue) &&
+                                !queryString.TryGetValue("" + (int)CAMPOS.CODRESUMOVENDA, out outValue) &&
+                                (queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTO, out outValue) ||
+                                 queryString.TryGetValue("" + (int)CAMPOS.DTARECEBIMENTOEFETIVO, out outValue)))
                             {
                                 ajustes = GatewayTbRecebimentoAjuste.getQuery(_db, 1, getCampoAjustes(campo), orderBy, pageSize, pageNumber, getQueryStringAjustes(queryString))
                                                         .GroupBy(x => new { x.empresa, x.tbBandeira })
