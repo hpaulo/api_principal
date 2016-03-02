@@ -1192,7 +1192,7 @@ namespace api.Negocios.Card
 
                             // Movimentação
                             SimpleDataBaseQuery queryEXConciliado = new SimpleDataBaseQuery(dataBaseQueryEX);
-                            queryEXConciliado.where = new string[] { GatewayTbExtrato.SIGLA_QUERY + ".idExtrato = " + idExtrato};
+                            queryEXConciliado.where = new string[] { GatewayTbExtrato.SIGLA_QUERY + ".idExtrato = " + idExtrato };
 
                             resultado = DataBaseQueries.SqlQuery(queryEXConciliado.Script(), connection);
 

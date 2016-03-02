@@ -81,7 +81,7 @@ namespace api.Negocios.Util
             if(join != null)
             {
                 script += " ";
-                foreach (string j in join.Select(x => x.Key + " " + x.Value).ToArray())
+                foreach (string j in join.Select(x => x.Key + " " + (readUncommited ? "(NOLOCK) " : "") + x.Value).ToArray())
 	                script += j + " ";
             }
             if (where != null && where.Length > 0)
@@ -154,6 +154,7 @@ namespace api.Negocios.Util
             }
 
             SqlCommand command = new SqlCommand(script, connection);
+            command.CommandTimeout = 60; // 1 minuto
 
             List<IDataRecord> queryResult = new List<IDataRecord>();
 

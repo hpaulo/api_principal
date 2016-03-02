@@ -163,7 +163,7 @@ namespace api.Negocios.Card
                 }
                 
                 // Sem parcelas e/ou ajustes antecipados por causa do vencimento da antecipação bancária
-                queryStringTbAntecipacaoBancariaDetalhe.Add("" + (int)GatewayTbAntecipacaoBancariaDetalhe.CAMPOS.SEM_PARCELAS_AJUSTES_ASSOCIADO, "1");
+                queryStringTbAntecipacaoBancariaDetalhe.Add("" + (int)GatewayTbAntecipacaoBancariaDetalhe.CAMPOS.SEM_PARCELAS_AJUSTES_ASSOCIADO, true.ToString());
 
 
                 // CONEXÃO
