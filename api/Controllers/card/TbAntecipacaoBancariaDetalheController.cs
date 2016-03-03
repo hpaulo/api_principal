@@ -102,7 +102,7 @@ namespace api.Controllers.Card
                     log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put", _db);
 
                     HttpResponseMessage retorno = new HttpResponseMessage();
-                    if (Permissoes.Autenticado(token, _db) && Permissoes.isAtosRole(token, _db))
+                    if (Permissoes.Autenticado(token, _db))// && Permissoes.isAtosRole(token, _db))
                     {
                         GatewayTbAntecipacaoBancariaDetalhe.AntecipaParcelas(token, param, _db);
                         log.codResposta = (int)HttpStatusCode.OK;
