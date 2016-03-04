@@ -20,15 +20,15 @@ namespace api.Negocios.Tax
 {
     public class GatewayTbManifesto
     {
-        static Semaphore semaforo = new Semaphore(1,1);
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static Semaphore semaforo = new Semaphore(1,1);
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTbManifesto()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace api.Negocios.Tax
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<tbManifesto> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<tbManifesto> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.tbManifestos.AsQueryable<tbManifesto>();
@@ -523,8 +523,12 @@ namespace api.Negocios.Tax
         /// Retorna TbManifesto/TbManifesto
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted);
             try
             {
                 // FILTRO
@@ -551,12 +555,12 @@ namespace api.Negocios.Tax
                 Retorno retorno = new Retorno();
 
                 // Atualiza o contexto
-                semaforo.WaitOne();
-                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
-                semaforo.Release(1);
+                //semaforo.WaitOne();
+                //((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+                //semaforo.Release(1);
 
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
                 // Vendedor ATOS sem estar associado com um grupo empresa?
                 if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))
@@ -1544,6 +1548,8 @@ namespace api.Negocios.Tax
 
                 }
 
+                transaction.Commit();
+
                 //retorno.TotalDeRegistros = CollectionTbManifesto.Count;
                 retorno.Registros = CollectionTbManifesto;
 
@@ -1551,12 +1557,22 @@ namespace api.Negocios.Tax
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao listar TbManifesto" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -1567,12 +1583,16 @@ namespace api.Negocios.Tax
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbManifesto param)
+        public static Int32 Add(string token, tbManifesto param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
+            //DbContextTransaction transaction = _db.Database.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted);
             try
             {    // Atualiza o contexto
-                semaforo.WaitOne();
-                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+                //semaforo.WaitOne();
+                //((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
 
                 _db.tbManifestos.Add(param);
                 _db.SaveChanges();
@@ -1589,7 +1609,13 @@ namespace api.Negocios.Tax
             }
             finally
             {
-                semaforo.Release(1);
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+                //semaforo.Release(1);
             }
         }
 
@@ -1599,13 +1625,16 @@ namespace api.Negocios.Tax
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 idManifesto)
+        public static void Delete(string token, Int32 idManifesto, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 // Atualiza o contexto
-                semaforo.WaitOne();
-                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+                //semaforo.WaitOne();
+                //((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
 
                 tbManifesto manifesto = _db.tbManifestos.Where(e => e.idManifesto == idManifesto).FirstOrDefault();
 
@@ -1625,7 +1654,13 @@ namespace api.Negocios.Tax
             }
             finally
             {
-                semaforo.Release(1);
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+                //semaforo.Release(1);
             }
         }
 
@@ -1636,13 +1671,16 @@ namespace api.Negocios.Tax
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbManifesto param)
+        public static void Update(string token, tbManifesto param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null) _db = new painel_taxservices_dbContext();
+            else _db = _dbContext;
             try
             {
                 // Atualiza o contexto
-                semaforo.WaitOne();
-                ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
+                //semaforo.WaitOne();
+                //((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
 
                 tbManifesto value = _db.tbManifestos
                         .Where(e => e.idManifesto == param.idManifesto)
@@ -1713,7 +1751,13 @@ namespace api.Negocios.Tax
             }
             finally
             {
-                semaforo.Release(1);
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+                //semaforo.Release(1);
             }
         }
     }
