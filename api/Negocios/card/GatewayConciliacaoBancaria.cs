@@ -1700,7 +1700,7 @@ namespace api.Negocios.Card
 
                             // Obtém parcelas antecipadas por filial
                             List<ConciliacaoBancaria> parcelasAntecipadas = recebimentosParcela.Where(t => t.Antecipado != null && t.Antecipado.Value)
-                                                                                               .GroupBy(t => new { t.Adquirente, t.Data, t.Filial })
+                                                                                               .GroupBy(t => new { t.Adquirente, t.Data/*, t.Filial*/ })
                                                                                                .Select(t => new ConciliacaoBancaria
                                                                                                {
                                                                                                    Tipo = TIPO_RECEBIMENTO, // recebimento
@@ -1714,7 +1714,8 @@ namespace api.Negocios.Card
                                                                                                    Lote = t.GroupBy(r => r.Lote).Count() == 1 ? t.Select(r => r.Lote).FirstOrDefault() : 0,
                                                                                                    TipoCartao = t.GroupBy(r => r.TipoCartao).Count() == 1 ? t.Select(r => r.TipoCartao).FirstOrDefault() : "",
                                                                                                    Antecipado = true,
-                                                                                                   Filial = t.Key.Filial
+                                                                                                   //Filial = t.Key.Filial
+                                                                                                   Filial = t.GroupBy(r => r.Filial).Count() == 1 ? t.Select(r => r.Filial).FirstOrDefault() : "",
                                                                                                })
                                                                                                 .ToList<ConciliacaoBancaria>();
 
@@ -1740,7 +1741,7 @@ namespace api.Negocios.Card
                                     {
                                         // Movimentações da mesma adquirente, data e filial
                                         List<ConciliacaoBancaria> movimentacoes = extratoBancarioAntecipacao.Where(t => t.Adquirente.Equals("") || t.Adquirente.Equals(recebimento.Adquirente))
-                                                                                                .Where(t => t.Filial.Equals("") || t.Filial.Equals(recebimento.Filial))
+                                                                                                .Where(t => t.Filial.Equals("") || recebimento.Filial.Equals("") || t.Filial.Equals(recebimento.Filial))
                                                                                                 .Where(t => t.Data.Year == recebimento.Data.Year)
                                                                                                 .Where(t => t.Data.Month == recebimento.Data.Month)
                                                                                                 .Where(t => t.Data.Day == recebimento.Data.Day)
