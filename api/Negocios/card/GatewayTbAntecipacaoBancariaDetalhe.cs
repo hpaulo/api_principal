@@ -647,6 +647,7 @@ namespace api.Negocios.Card
                             _db.Database.ExecuteSqlCommand("UPDATE P" +
                                                            " SET P.flAntecipado = 0" +
                                                            ", P.vlDescontadoAntecipacao = 0" +
+                                                           ", P.dtaRecebimentoEfetivo = NULL" +
                                                            ", P.idAntecipacaoBancariaDetalhe = NULL" +
                                                            " FROM pos.RecebimentoParcela P" +
                                                            " WHERE P.idAntecipacaoBancariaDetalhe IN (" + string.Join(", ", param.idsAntecipacaoBancariaDetalhe) + ")"
