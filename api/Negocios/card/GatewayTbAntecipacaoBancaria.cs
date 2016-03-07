@@ -490,8 +490,8 @@ namespace api.Negocios.Card
                                                 ", SUM(P.valorParcelaBruta - P.valorDescontado) as valorDisponivel" +
                                                 ", SUM(CASE WHEN P.idAntecipacaoBancariaDetalhe IS NOT NULL THEN P.valorParcelaLiquida ELSE 0 END) as valorAntecipado" +
                                                 " FROM pos.RecebimentoParcela P (NOLOCK)" +
-                                                " JOIN pos.Recebimento R ON R.id = P.idRecebimento" +
-                                                " JOIN card.tbBandeira B ON B.cdBandeira = R.cdBandeira" +
+                                                " JOIN pos.Recebimento R (NOLOCK) ON R.id = P.idRecebimento" +
+                                                " JOIN card.tbBandeira B (NOLOCK) ON B.cdBandeira = R.cdBandeira" +
                                                 // Procura estornos de vendas associados
                                                 " LEFT JOIN ( SELECT A.nrCNPJ, A.dtAjuste, A.dsMotivo" +
                                                 "             FROM card.tbRecebimentoAjuste A (NOLOCK)" +
@@ -548,7 +548,11 @@ namespace api.Negocios.Card
                                 decimal saldoCS = new decimal(0.0);
                                 if (ajuste != null && ajuste.Count > 0 && ajuste[0] != null)
                                 {
-                                    saldoCS = Convert.ToDecimal(ajuste[0]["valorAntecipado"].Equals(DBNull.Value) ? 0.0 : ajuste[0]["valorAntecipado"]);
+                                    foreach (IDataRecord a in ajuste)
+                                    {
+                                        saldoCS += Convert.ToDecimal(a["valorAntecipado"].Equals(DBNull.Value) ? 0.0 : a["valorAntecipado"]);
+                                    }
+                                    //saldoCS = Convert.ToDecimal(ajuste[0]["valorAntecipado"].Equals(DBNull.Value) ? 0.0 : ajuste[0]["valorAntecipado"]);
                                     valorAntecipado += saldoCS;
                                 }
 
