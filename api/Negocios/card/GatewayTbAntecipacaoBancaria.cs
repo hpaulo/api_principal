@@ -462,14 +462,33 @@ namespace api.Negocios.Card
                                 decimal valorDisponivel = new decimal(0.0);
                                 decimal valorAntecipado = new decimal(0.0);
 
-                                string script = "SELECT SUM(P.valorParcelaBruta - P.valorDescontado) as valorDisponivel" +
+                                decimal outValue = new decimal(0.0);
+
+                                //if (dtVencimento.Equals(Convert.ToDateTime("02/06/2016")))
+                                //    outValue += new decimal(0.0);
+
+                                // Obtém valores usados para antecipação por filial na data do vencimento
+                                string script = "SELECT A.nrCNPJ, vlAjuste = A.vlAjuste" +
+                                                " FROM card.tbRecebimentoAjuste A (NOLOCK)" +
+                                                " WHERE A.nrCNPJ IN (" + filiaisDaConta + ")" +
+                                                " AND A.dtAjuste = '" + DataBaseQueries.GetDate(dtVencimento) + "'" +
+                                                " AND A.dsMotivo = 'PAGAMENTO ANTECIPAÇÃO'";
+                                List<IDataRecord> recebivel = DataBaseQueries.SqlQuery(script, connection);
+                                Dictionary<string, decimal> valoresAntecipados = new Dictionary<string, decimal>();
+                                if (recebivel != null && recebivel.Count > 0 && recebivel[0] != null)
+                                {
+                                    foreach (IDataRecord r in recebivel)
+                                    {
+                                        string nrCNPJ = Convert.ToString(r["nrCNPJ"]);
+                                        decimal vlAjuste = Convert.ToDecimal(r["vlAjuste"]);
+                                        if(!valoresAntecipados.TryGetValue(nrCNPJ, out outValue))
+                                            valoresAntecipados.Add(nrCNPJ, Math.Abs(vlAjuste));
+                                    }
+                                }
+
+                                script = "SELECT R.cnpj" +
+                                                ", SUM(P.valorParcelaBruta - P.valorDescontado) as valorDisponivel" +
                                                 ", SUM(CASE WHEN P.idAntecipacaoBancariaDetalhe IS NOT NULL THEN P.valorParcelaLiquida ELSE 0 END) as valorAntecipado" +
-                                                //"R.numParcelaTotal, R.dtaVenda, R.codResumoVenda" +
-                                                //", R.nsu, R.id, P.numParcela, P.valorParcelaBruta" +
-                                                //", P.valorDescontado, P.vlDescontadoAntecipacao" +
-                                                //", P.valorParcelaLiquida, P.flAntecipado" +
-                                                //", P.dtaRecebimentoEfetivo, P.dtaRecebimento" + 
-                                                //", P.idExtrato, P.idRecebimentoTitulo" +
                                                 " FROM pos.RecebimentoParcela P (NOLOCK)" +
                                                 " JOIN pos.Recebimento R ON R.id = P.idRecebimento" +
                                                 " JOIN card.tbBandeira B ON B.cdBandeira = R.cdBandeira" +
@@ -479,6 +498,7 @@ namespace api.Negocios.Card
                                                 "           ) T ON T.nrCNPJ = R.cnpj" +
                                                 "                  AND T.dtAjuste = P.dtaRecebimento" +
                                                 "                  AND T.dsMotivo LIKE 'ESTORNO (OPERAÇÃO ASSOCIADA: ' + R.codResumoVenda + '%'" +
+                                                //"                       OR T.dsMotivo = 'PAGAMENTO ANTECIPAÇÃO')" +
                                                 " WHERE B.cdAdquirente = 7" + // Adquirente BANESE
                                                 " AND T.dsMotivo IS NULL" + // SEM ESTORNO ASSOCIADO
                                                 // Somente com data de venda inferior ao da operação
@@ -488,15 +508,36 @@ namespace api.Negocios.Card
                                                 // Parcela não antecipada (e não conciliada) ou antecipada da antecipação bancária corrente
                                                 " AND ((P.idAntecipacaoBancariaDetalhe IS NULL AND P.idExtrato IS NULL) OR P.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe + ")" +
                                                 // Parcelas das filiais com vigência para a conta corrente
-                                                " AND R.cnpj in (" + filiaisDaConta + ")" +
+                                                " AND R.cnpj IN (" + filiaisDaConta + ")" +
                                                 // Bandeira determinada do detalhe da antecipação. Se não determinada, somente as bandeiras à crédito
-                                                " AND " + (cdBandeira > 0 ? "R.cdBandeira = " + cdBandeira : "B.dsTipo like 'CRÉDITO%'");
-                                List<IDataRecord> recebivel = DataBaseQueries.SqlQuery(script, connection);
+                                                " AND " + (cdBandeira > 0 ? "R.cdBandeira = " + cdBandeira : "B.dsTipo like 'CRÉDITO%'") +
+                                                // AGRUPA POR FILIAL
+                                                " GROUP BY R.cnpj";
+                                recebivel = DataBaseQueries.SqlQuery(script, connection);
 
                                 if (recebivel != null && recebivel.Count > 0 && recebivel[0] != null)
                                 {
-                                    valorDisponivel = Convert.ToDecimal(recebivel[0]["valorDisponivel"].Equals(DBNull.Value) ? 0.0 : recebivel[0]["valorDisponivel"]);
-                                    valorAntecipado = Convert.ToDecimal(recebivel[0]["valorAntecipado"].Equals(DBNull.Value) ? 0.0 : recebivel[0]["valorAntecipado"]);
+                                    foreach (IDataRecord r in recebivel)
+                                    {
+                                        // Incrementa valor antecipado
+                                        valorAntecipado += Convert.ToDecimal(r["valorAntecipado"].Equals(DBNull.Value) ? 0.0 : r["valorAntecipado"]);
+
+                                        // Avalia valor disponível
+                                        string cnpj = Convert.ToString(r["cnpj"]);
+                                        decimal vlDisponivel = Convert.ToDecimal(r["valorDisponivel"].Equals(DBNull.Value) ? 0.0 : r["valorDisponivel"]);
+
+                                        if (valoresAntecipados.TryGetValue(cnpj, out outValue))
+                                        {
+                                            decimal vlAntecipadoFilial = valoresAntecipados[cnpj];
+                                            if (vlDisponivel <= vlAntecipadoFilial)
+                                                valorDisponivel += vlDisponivel;
+                                            else
+                                                valorDisponivel += vlAntecipadoFilial;
+                                        }
+                                
+                                    }
+                                    //valorDisponivel = Convert.ToDecimal(recebivel[0]["valorDisponivel"].Equals(DBNull.Value) ? 0.0 : recebivel[0]["valorDisponivel"]);
+                                    //valorAntecipado = Convert.ToDecimal(recebivel[0]["valorAntecipado"].Equals(DBNull.Value) ? 0.0 : recebivel[0]["valorAntecipado"]);
                                 }
 
                                 // Procura ajustes associados
@@ -523,7 +564,7 @@ namespace api.Negocios.Card
                                     tbBandeira = vencimento.tbBandeira,
                                     vlDisponivelCS = valorDisponivel,
                                     vlAntecipadoCS = valorAntecipado,
-                                    saldoCS = Math.Abs(saldoCS)
+                                    saldoCS = saldoCS,//Math.Abs(saldoCS)
                                 });
                             }
                             

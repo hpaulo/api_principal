@@ -640,7 +640,8 @@ namespace api.Negocios.Card
                             // Remove ajustes
                             _db.Database.ExecuteSqlCommand("DELETE A" +
                                                            " FROM card.tbRecebimentoAjuste A" +
-                                                           " WHERE A.idAntecipacaoBancariaDetalhe IN (" + string.Join(", ", param.idsAntecipacaoBancariaDetalhe) + ")"
+                                                           " WHERE A.idAntecipacaoBancariaDetalhe IN (" + string.Join(", ", param.idsAntecipacaoBancariaDetalhe) + ")" +
+                                                           " AND A.idExtrato IS NULL"
                                                           );
                             _db.SaveChanges();
 
@@ -650,7 +651,8 @@ namespace api.Negocios.Card
                                                            ", P.dtaRecebimentoEfetivo = NULL" +
                                                            ", P.idAntecipacaoBancariaDetalhe = NULL" +
                                                            " FROM pos.RecebimentoParcela P" +
-                                                           " WHERE P.idAntecipacaoBancariaDetalhe IN (" + string.Join(", ", param.idsAntecipacaoBancariaDetalhe) + ")"
+                                                           " WHERE P.idAntecipacaoBancariaDetalhe IN (" + string.Join(", ", param.idsAntecipacaoBancariaDetalhe) + ")" +
+                                                           " AND P.idExtrato IS NULL"
                                                           );
                             _db.SaveChanges();
                             transaction.Commit();
@@ -722,6 +724,33 @@ namespace api.Negocios.Card
                         //                parcelas = new List<dynamic>(),
                         //            };
 
+
+                        // Obtém valores usados para antecipação por filial na data do vencimento
+                        script = "SELECT A.nrCNPJ, vlAjuste = A.vlAjuste" +
+                                 " FROM card.tbRecebimentoAjuste A (NOLOCK)" +
+                                 " WHERE A.nrCNPJ IN (" + filiaisDaConta + ")" +
+                                 " AND A.dtAjuste = '" + DataBaseQueries.GetDate(dtVencimento) + "'" +
+                                 " AND A.dsMotivo = 'PAGAMENTO ANTECIPAÇÃO'";
+                        List<IDataRecord> recebivel = DataBaseQueries.SqlQuery(script, connection);
+                        decimal outValue = new decimal(0.0);
+                        Dictionary<string, decimal> valoresAntecipados = new Dictionary<string, decimal>();
+                        Dictionary<string, decimal> valoresUtilizadosFilial = new Dictionary<string, decimal>();
+                        Dictionary<string, decimal> valoresUtilizadosLiquidoFilial = new Dictionary<string, decimal>();
+                        if (recebivel != null && recebivel.Count > 0 && recebivel[0] != null)
+                        {
+                            foreach (IDataRecord r in recebivel)
+                            {
+                                string nrCNPJ = Convert.ToString(r["nrCNPJ"]);
+                                decimal vlAjuste = Convert.ToDecimal(r["vlAjuste"]);
+                                if (!valoresAntecipados.TryGetValue(nrCNPJ, out outValue))
+                                {
+                                    valoresAntecipados.Add(nrCNPJ, Math.Abs(vlAjuste));
+                                    valoresUtilizadosFilial.Add(nrCNPJ, new decimal(0.0));
+                                    valoresUtilizadosLiquidoFilial.Add(nrCNPJ, new decimal(0.0));
+                                }
+                            }
+                        }
+
                         // Busca parcelas
                         script = "SELECT P.idRecebimento, P.numParcela, P.valorParcelaBruta, P.valorDescontado, R.nsu, R.cnpj, R.cdBandeira" +
                                  " FROM pos.RecebimentoParcela P (NOLOCK)" +
@@ -775,23 +804,63 @@ namespace api.Negocios.Card
                                 // Obtém desconto de antecipação
                                 decimal vlDescontadoAntecipacao = decimal.Round(valorDisponivel * taxaAntecipacao, 4);
 
-                                decimal valorNecessario;
+                                //decimal valorNecessario;
                                 decimal ajuste = new decimal(0.0);
 
-                                if (valorUtilizado + valorDisponivel <= vlAntecipacao)
+                                // Teve antecipação para a filial corrente?
+                                if(!valoresAntecipados.TryGetValue(cnpj, out outValue))
+                                    continue; // não antecipa
+
+                                decimal valorAntecipadoFilial = valoresAntecipados[cnpj];
+                                decimal valorUtilizadoFilial = valoresUtilizadosFilial[cnpj];
+                                // Avalia se o valor utilizado da filial já excedeu
+                                if (valorUtilizadoFilial >= valorAntecipadoFilial)
+                                    continue; // excedeu da filial
+
+                                decimal valorUtilizadoLiquidoFilial = valoresUtilizadosLiquidoFilial[cnpj];
+
+                                if (valorUtilizadoFilial + valorDisponivel > valorAntecipadoFilial)
                                 {
-                                    // Usa parcela por completo
-                                    valorNecessario = valorDisponivel;
-                                    valorLiquidoUtilizado += valorDisponivel - vlDescontadoAntecipacao;
+
+                                    if (valoresAntecipados.Count > 1 && r < resultado.Count - 1)
+                                        continue; // esse valor não pode ser utilizado...
+
+                                    // Usa "parte" da parcela => cria um ajuste
+                                    valorUtilizadoFilial = valorAntecipadoFilial;
+                                    valorUtilizadoLiquidoFilial = new decimal(0.0); // TEMP
+                                    // Ver valor do ajuste!
+                                    //ajuste = decimal.Round(vlAntecipacaoLiquida - valorUtilizadoLiquidoFilial - (valorDisponivel - vlDescontadoAntecipacao), 2);
                                 }
                                 else
                                 {
-                                    // Usa "parte" da parcela => cria um ajuste
-                                    valorNecessario = vlAntecipacao - valorUtilizado;
-
-                                    ajuste = decimal.Round(vlAntecipacaoLiquida - valorLiquidoUtilizado - (valorDisponivel - vlDescontadoAntecipacao), 2);
+                                    // Usa parcela por completo
+                                    valorUtilizadoFilial = valorDisponivel;
+                                    valorUtilizadoLiquidoFilial = valorDisponivel - vlDescontadoAntecipacao;
                                 }
-                                valorUtilizado += valorNecessario;
+                                
+                                // Incrementa valor utilizado da filial
+                                valoresUtilizadosFilial[cnpj] += valorUtilizadoFilial;
+                                valoresUtilizadosLiquidoFilial[cnpj] += valorUtilizadoLiquidoFilial;
+
+                                // Obtém o valor total utilizado
+                                valorUtilizado = valoresUtilizadosFilial.Sum(t => t.Value);
+                                valorLiquidoUtilizado = valoresUtilizadosLiquidoFilial.Sum(t => t.Value);
+
+
+                                //if (valorUtilizado + valorDisponivel <= vlAntecipacao)
+                                //{
+                                //    // Usa parcela por completo
+                                //    valorNecessario = valorDisponivel;
+                                //    valorLiquidoUtilizado += valorDisponivel - vlDescontadoAntecipacao;
+                                //}
+                                //else
+                                //{
+                                //    // Usa "parte" da parcela => cria um ajuste
+                                //    valorNecessario = vlAntecipacao - valorUtilizado;
+
+                                //    ajuste = decimal.Round(vlAntecipacaoLiquida - valorLiquidoUtilizado - (valorDisponivel - vlDescontadoAntecipacao), 2);
+                                //}
+                                //valorUtilizado += valorNecessario;
 
                                 //teste.parcelas.Add(new
                                 //{
@@ -860,7 +929,11 @@ namespace api.Negocios.Card
                                 decimal vlAjusteUtilizadoAntecipacaoAnterior = new decimal(0.0);
                                 DateTime dtAntecipacaoBancariaAntecipacaoAnterior = dtAntecipacaoBancaria;
                                 string dsMotivo = "SALDO ANTECIPAÇÃO BANCÁRIA VENCIMENTO " + dtVencimento.ToShortDateString();
-                                string cnpj = cnpjsConta[0];
+                                string cnpj = cnpjsConta.Length == 1 ? cnpjsConta[0] : valoresUtilizadosFilial.Where(t => t.Value < valoresAntecipados.Where(v => v.Key.Equals(t.Key))
+                                                                                                                                                      .Select(v => v.Value)
+                                                                                                                                                      .FirstOrDefault())
+                                                                                                              .Select(t => t.Key)
+                                                                                                              .FirstOrDefault();
                                 int cdBandeiraAjuste = 20;
 
                                 // Procura a última antecipação para procurar a parcela que foi utilizada "em parte"
@@ -868,7 +941,7 @@ namespace api.Negocios.Card
                                 script = " SELECT TOP(1) D.idAntecipacaoBancariaDetalhe, D.vlAntecipacaoLiquida" +
                                          " FROM card.tbAntecipacaoBancariaDetalhe D (NOLOCK)" +
                                          " JOIN card.tbAntecipacaoBancaria A ON A.idAntecipacaoBancaria = D.idAntecipacaoBancaria" +
-                                    //" LEFT JOIN pos.RecebimentoParcela P ON P.idAntecipacaoBancariaDetalhe = D.idAntecipacaoBancariaDetalhe" +
+                                         //" LEFT JOIN pos.RecebimentoParcela P ON P.idAntecipacaoBancariaDetalhe = D.idAntecipacaoBancariaDetalhe" +
                                          " LEFT JOIN card.tbRecebimentoAjuste T ON T.idAntecipacaoBancariaDetalhe = D.idAntecipacaoBancariaDetalhe" +
                                          " WHERE A.dtAntecipacaoBancaria < '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
                                          " AND T.idAntecipacaoBancariaDetalhe IS NOT NULL" +
