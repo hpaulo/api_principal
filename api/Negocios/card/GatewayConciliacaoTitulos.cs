@@ -41,6 +41,7 @@ namespace api.Negocios.Card
             ID_GRUPO = 102,
             NU_CNPJ = 103,
             PRECONCILIA_GRUPO = 104,
+            NSU = 105,
 
             // RELACIONAMENTOS
             CDADQUIRENTE = 200,
@@ -227,6 +228,13 @@ namespace api.Negocios.Card
                         cdAdquirente = queryString["" + (int)CAMPOS.CDADQUIRENTE];
                         queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.CDADQUIRENTE, cdAdquirente);
                         queryStringTbRecebimentoTitulo.Add("" + (int)GatewayTbRecebimentoTitulo.CAMPOS.CDADQUIRENTE, cdAdquirente);
+                    }
+
+                    // NSU
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NSU, out outValue))
+                    {
+                        queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.NSU, queryString["" + (int)CAMPOS.NSU]);
+                        //queryStringTbRecebimentoTitulo.Add("" + (int)GatewayTbRecebimentoTitulo.CAMPOS.NRNSU, nsu);
                     }
 
                     // FILTRO DE TIPO ?
@@ -970,21 +978,56 @@ namespace api.Negocios.Card
                         tbRecebimentoTitulo tbRecebimentoTitulo = null;
                         if (conciliaTitulo.idRecebimentoTitulo > 0)
                         {
-                            tbRecebimentoTitulo = _db.tbRecebimentoTitulos.Where(e => e.idRecebimentoTitulo == conciliaTitulo.idRecebimentoTitulo).FirstOrDefault();
-                            if (tbRecebimentoTitulo == null) continue; // título inválido!
+                            tbRecebimentoTitulo = _db.Database.SqlQuery<tbRecebimentoTitulo>("SELECT T.*" +
+                                                                                             " FROM card.tbRecebimentoTitulo T (NOLOCK)" +
+                                                                                             " WHERE T.idRecebimentoTitulo = " + conciliaTitulo.idRecebimentoTitulo
+                                                                                            )
+                                                              .FirstOrDefault();
+                            //tbRecebimentoTitulo = _db.tbRecebimentoTitulos.Where(e => e.idRecebimentoTitulo == conciliaTitulo.idRecebimentoTitulo).FirstOrDefault();
+                            if (tbRecebimentoTitulo == null) 
+                                continue; // título inválido!
+
+                            // Desconcilia parcelas que estavam apontando para o título
+                            _db.Database.ExecuteSqlCommand("UPDATE P" +
+                                                           " SET P.idRecebimentoTitulo = NULL" +
+                                                           " FROM pos.RecebimentoParcela P" +
+                                                           " WHERE P.idRecebimentoTitulo = " + conciliaTitulo.idRecebimentoTitulo
+                                                          );
+                            _db.SaveChanges();
+
+                            // Concilia parcela
+                            _db.Database.ExecuteSqlCommand("UPDATE P" +
+                                                           " SET P.idRecebimentoTitulo = " + conciliaTitulo.idRecebimentoTitulo +
+                                                           " FROM pos.RecebimentoParcela P" +
+                                                           " WHERE P.idRecebimento = " + conciliaTitulo.recebimentoParcela.idRecebimento +
+                                                           " AND P.numParcela = " + conciliaTitulo.recebimentoParcela.numParcela
+                                                          );
+                            _db.SaveChanges();
                         }
 
                         // RECEBIMENTO PARCELA
-                        RecebimentoParcela value = _db.RecebimentoParcelas
-                                                                .Where(e => e.idRecebimento == conciliaTitulo.recebimentoParcela.idRecebimento)
-                                                                .Where(e => e.numParcela == conciliaTitulo.recebimentoParcela.numParcela)
-                                                                .FirstOrDefault();
-                        if (value != null)
+                        //RecebimentoParcela value = _db.RecebimentoParcelas
+                        //                                        .Where(e => e.idRecebimento == conciliaTitulo.recebimentoParcela.idRecebimento)
+                        //                                        .Where(e => e.numParcela == conciliaTitulo.recebimentoParcela.numParcela)
+                        //                                        .FirstOrDefault();
+                        //if (value != null)
+                        //{
+                        //    if (conciliaTitulo.idRecebimentoTitulo == -1) value.idRecebimentoTitulo = null;
+                        //    else value.idRecebimentoTitulo = conciliaTitulo.idRecebimentoTitulo;
+                        //    _db.SaveChanges();
+                        //}
+                        else
                         {
-                            if (conciliaTitulo.idRecebimentoTitulo == -1) value.idRecebimentoTitulo = null;
-                            else value.idRecebimentoTitulo = conciliaTitulo.idRecebimentoTitulo;
+                            // Desconcilia
+                            _db.Database.ExecuteSqlCommand("UPDATE P" +
+                                                           " SET P.idRecebimentoTitulo = NULL" +
+                                                           " FROM pos.RecebimentoParcela P" +
+                                                           " WHERE P.idRecebimento = " + conciliaTitulo.recebimentoParcela.idRecebimento +
+                                                           " AND P.numParcela = " + conciliaTitulo.recebimentoParcela.numParcela
+                                                          );
                             _db.SaveChanges();
                         }
+                        
                     }
 
                 }

@@ -852,6 +852,10 @@ namespace api.Negocios.Card
                     dataBaseQueryRP.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
                 if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
                     dataBaseQueryRP.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+                if (!dataBaseQueryRP.join.ContainsKey("LEFT JOIN card.tbAntecipacaoBancariaDetalhe " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY))
+                    dataBaseQueryRP.join.Add("LEFT JOIN card.tbAntecipacaoBancariaDetalhe " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY, " ON " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe = " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe");
+                if (!dataBaseQueryRP.join.ContainsKey("LEFT JOIN card.tbAntecipacaoBancaria " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY))
+                    dataBaseQueryRP.join.Add("LEFT JOIN card.tbAntecipacaoBancaria " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY, " ON " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY + ".idAntecipacaoBancaria = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancaria");
 
                 // AJUSTES
                 if (!dataBaseQueryAJ.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
@@ -860,6 +864,10 @@ namespace api.Negocios.Card
                     dataBaseQueryAJ.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
                 if (!dataBaseQueryAJ.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
                     dataBaseQueryAJ.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".nrCNPJ = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+                if (!dataBaseQueryAJ.join.ContainsKey("LEFT JOIN card.tbAntecipacaoBancariaDetalhe " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY))
+                    dataBaseQueryAJ.join.Add("LEFT JOIN card.tbAntecipacaoBancariaDetalhe " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY, " ON " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe = " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe");
+                if (!dataBaseQueryAJ.join.ContainsKey("LEFT JOIN card.tbAntecipacaoBancaria " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY))
+                    dataBaseQueryAJ.join.Add("LEFT JOIN card.tbAntecipacaoBancaria " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY, " ON " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY + ".idAntecipacaoBancaria = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancaria");
 
 
                 // EXTRATO
@@ -891,7 +899,8 @@ namespace api.Negocios.Card
                                                           GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta",
                                                           GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaLiquida",
                                                           GatewayRecebimento.SIGLA_QUERY + ".idResumoVenda AS lote",
-                                                          GatewayRecebimentoParcela.SIGLA_QUERY + ".flAntecipado"
+                                                          GatewayRecebimentoParcela.SIGLA_QUERY + ".flAntecipado",
+                                                          GatewayTbAntecipacaoBancaria.SIGLA_QUERY + ".vlLiquido"
                                                         };
 
                 // Sem ordem
@@ -902,18 +911,7 @@ namespace api.Negocios.Card
 
 
                 // AJUSTE
-                dataBaseQueryAJ.select = new string[] {/*AJ.idRecebimentoAjuste
-                                                        AJ.idResumoVenda
-                                                        AJ.dsMotivo
-                                                        AJ.vlAjuste
-                                                        AJ.dtAjuste,
-                                                        AJ.flAntecipacao,
-                                                        B.dsTipo,
-                                                        B.dsBandeira,
-                                                        E.ds_fantasia,
-                                                        E.filial,
-                                                        A.nmAdquirente*/
-                                                        GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idRecebimentoAjuste",
+                dataBaseQueryAJ.select = new string[] { GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idRecebimentoAjuste",
                                                         GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idResumoVenda",
                                                         GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dsMotivo",
                                                         GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste",
@@ -924,6 +922,7 @@ namespace api.Negocios.Card
                                                         GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira",
                                                         GatewayTbBandeira.SIGLA_QUERY + ".dsTipo",
                                                         GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",
+                                                        GatewayTbAntecipacaoBancaria.SIGLA_QUERY + ".vlLiquido"
                                                       };
                 dataBaseQueryAJ.readUncommited = true;
                 dataBaseQueryAJ.groupby = null;
@@ -1028,6 +1027,7 @@ namespace api.Negocios.Card
                                     Adquirente = Convert.ToString(t["nmAdquirente"]),
                                     Bandeira = Convert.ToString(t["dsBandeira"]),
                                     Lote = t["lote"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(t["lote"]),
+                                    AntecipacaoBancaria = Convert.ToDecimal(t["vlLiquido"].Equals(DBNull.Value) ? 0.0 : t["vlLiquido"]),
                                     TipoCartao = Convert.ToString(t["dsTipo"]),
                                     DataVenda = (DateTime)t["dtaVenda"],
                                     DataPrevista = (DateTime)t["dtaRecebimento"],
@@ -1052,6 +1052,7 @@ namespace api.Negocios.Card
                                                                                 ValorBruto = x.ValorBruto,
                                                                                 Bandeira = x.Bandeira.ToUpper(),
                                                                                 Lote = x.Lote,
+                                                                                AntecipacaoBancaria = x.AntecipacaoBancaria,
                                                                                 TipoCartao = x.TipoCartao.ToUpper().TrimEnd(),
                                                                                 DataVenda = x.DataVenda,
                                                                                 DataPrevista = x.DataPrevista,
@@ -1070,6 +1071,7 @@ namespace api.Negocios.Card
                                                                         Adquirente = r.Key.ToUpper(),
                                                                         Bandeira = r.GroupBy(x => x.Bandeira).Count() == 1 ? r.Select(x => x.Bandeira.ToUpper()).FirstOrDefault() : "",
                                                                         Lote = r.GroupBy(x => x.Lote).Count() == 1 ? r.Select(x => x.Lote).FirstOrDefault() ?? 0 : 0,
+                                                                        AntecipacaoBancaria = r.GroupBy(x => x.AntecipacaoBancaria).Count() == 1 ? r.Select(x => x.AntecipacaoBancaria).FirstOrDefault() ?? 0 : 0,
                                                                         TipoCartao = r.GroupBy(x => x.TipoCartao).Count() == 1 ? r.Select(x => x.TipoCartao.ToUpper().TrimEnd()).FirstOrDefault() : "",
                                                                         Antecipado = r.GroupBy(x => x.Antecipado).Count() == 1 ? r.Select(x => x.Antecipado).FirstOrDefault() : (bool?)null,
                                                                         Filial = r.GroupBy(x => x.Filial).Count() == 1 ? r.Select(x => x.Filial.ToUpper()).FirstOrDefault() : ""
@@ -1127,6 +1129,7 @@ namespace api.Negocios.Card
                                     Adquirente = Convert.ToString(t["nmAdquirente"]),
                                     Bandeira = Convert.ToString(t["dsBandeira"]),
                                     Lote = t["idResumoVenda"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(t["idResumoVenda"]),
+                                    AntecipacaoBancaria = Convert.ToDecimal(t["vlLiquido"].Equals(DBNull.Value) ? 0.0 : t["vlLiquido"]),
                                     TipoCartao = Convert.ToString(t["dsTipo"]),
                                     Data = (DateTime)t["dtAjuste"],
                                     Antecipado = Convert.ToBoolean(t["flAntecipacao"]),
@@ -1148,6 +1151,7 @@ namespace api.Negocios.Card
                                                                                 ValorBruto = new decimal(0.0),
                                                                                 Bandeira = x.Bandeira.ToUpper(),
                                                                                 Lote = x.Lote,
+                                                                                AntecipacaoBancaria = x.AntecipacaoBancaria,
                                                                                 TipoCartao = x.TipoCartao.ToUpper().TrimEnd(),
                                                                                 DataVenda = x.Data,
                                                                                 DataPrevista = x.Data,
@@ -1166,6 +1170,7 @@ namespace api.Negocios.Card
                                                                         Adquirente = r.Key.ToUpper(),
                                                                         Bandeira = r.GroupBy(x => x.Bandeira).Count() == 1 ? r.Select(x => x.Bandeira.ToUpper()).FirstOrDefault() : "",
                                                                         Lote = r.GroupBy(x => x.Lote).Count() == 1 ? r.Select(x => x.Lote).FirstOrDefault() ?? 0 : 0,
+                                                                        AntecipacaoBancaria = r.GroupBy(x => x.AntecipacaoBancaria).Count() == 1 ? r.Select(x => x.AntecipacaoBancaria).FirstOrDefault() ?? 0 : 0,
                                                                         TipoCartao = r.GroupBy(x => x.TipoCartao).Count() == 1 ? r.Select(x => x.TipoCartao.ToUpper().TrimEnd()).FirstOrDefault() : "",
                                                                         Antecipado = r.GroupBy(x => x.Antecipado).Count() == 1 ? r.Select(x => x.Antecipado).FirstOrDefault() : (bool?)null,
                                                                         Filial = r.GroupBy(x => x.Filial).Count() == 1 ? r.Select(x => x.Filial.ToUpper()).FirstOrDefault() : ""
@@ -1289,6 +1294,7 @@ namespace api.Negocios.Card
                                     Id = Convert.ToInt32(t["id"]),
                                     NumParcela =Convert.ToInt32(t["numParcela"]),
                                     Lote = t["lote"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(t["lote"]),
+                                    AntecipacaoBancaria = Convert.ToDecimal(t["vlLiquido"].Equals(DBNull.Value) ? 0.0 : t["vlLiquido"]),
                                     Documento = Convert.ToString(t["nsu"]),
                                     Valor = Convert.ToDecimal(t["valorParcelaLiquida"].Equals(DBNull.Value) ? 0.0 : t["valorParcelaLiquida"]),
                                     ValorBruto = Convert.ToDecimal(t["valorParcelaBruta"]),
@@ -1307,6 +1313,7 @@ namespace api.Negocios.Card
                             Adquirente = Convert.ToString(t["nmAdquirente"]).ToUpper(),
                             Bandeira = Convert.ToString(t["dsBandeira"]).ToUpper(),
                             Lote = t["lote"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(t["lote"]),
+                            AntecipacaoBancaria = Convert.ToDecimal(t["vlLiquido"].Equals(DBNull.Value) ? 0.0 : t["vlLiquido"]),
                             TipoCartao = Convert.ToString(t["dsTipo"]).ToUpper().TrimEnd(),
                             Antecipado = Convert.ToBoolean(t["flAntecipado"]) && !t["dtaRecebimentoEfetivo"].Equals(DBNull.Value) && !((DateTime)t["dtaRecebimentoEfetivo"]).Equals((DateTime)t["dtaRecebimento"]),
                             Filial = Convert.ToString(t["ds_fantasia"]).ToUpper() + (t["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(t["filial"]).ToUpper())
@@ -1362,6 +1369,7 @@ namespace api.Negocios.Card
                                     Id = Convert.ToInt32(t["idRecebimentoAjuste"]),
                                     NumParcela = -1,
                                     Lote = t["idResumoVenda"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(t["idResumoVenda"]),
+                                    AntecipacaoBancaria = Convert.ToDecimal(t["vlLiquido"].Equals(DBNull.Value) ? 0.0 : t["vlLiquido"]),
                                     Documento = Convert.ToString(t["dsMotivo"]),
                                     Valor = Convert.ToDecimal(t["vlAjuste"]),
                                     ValorBruto = new decimal(0.0),
@@ -1380,6 +1388,7 @@ namespace api.Negocios.Card
                             Adquirente = Convert.ToString(t["nmAdquirente"]).ToUpper(),
                             Bandeira = Convert.ToString(t["dsBandeira"]).ToUpper(),
                             Lote = t["idResumoVenda"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(t["idResumoVenda"]),
+                            AntecipacaoBancaria = Convert.ToDecimal(t["vlLiquido"].Equals(DBNull.Value) ? 0 : t["vlLiquido"]),
                             TipoCartao = Convert.ToString(t["dsTipo"]).ToUpper().TrimEnd(),
                             Antecipado = Convert.ToBoolean(t["flAntecipacao"]),
                             Filial = Convert.ToString(t["ds_fantasia"]).ToUpper() + (t["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(t["filial"]).ToUpper())
@@ -1700,7 +1709,7 @@ namespace api.Negocios.Card
 
                             // Obtém parcelas antecipadas por filial
                             List<ConciliacaoBancaria> parcelasAntecipadas = recebimentosParcela.Where(t => t.Antecipado != null && t.Antecipado.Value)
-                                                                                               .GroupBy(t => new { t.Adquirente, t.Data/*, t.Filial*/ })
+                                                                                               .GroupBy(t => new { t.Adquirente, t.Data, t.AntecipacaoBancaria })
                                                                                                .Select(t => new ConciliacaoBancaria
                                                                                                {
                                                                                                    Tipo = TIPO_RECEBIMENTO, // recebimento
@@ -1712,6 +1721,7 @@ namespace api.Negocios.Card
                                                                                                    Adquirente = t.Key.Adquirente,
                                                                                                    Bandeira = t.GroupBy(r => r.Bandeira).Count() == 1 ? t.Select(r => r.Bandeira).FirstOrDefault() : "",
                                                                                                    Lote = t.GroupBy(r => r.Lote).Count() == 1 ? t.Select(r => r.Lote).FirstOrDefault() : 0,
+                                                                                                   AntecipacaoBancaria = t.Key.AntecipacaoBancaria,
                                                                                                    TipoCartao = t.GroupBy(r => r.TipoCartao).Count() == 1 ? t.Select(r => r.TipoCartao).FirstOrDefault() : "",
                                                                                                    Antecipado = true,
                                                                                                    //Filial = t.Key.Filial
@@ -1756,12 +1766,13 @@ namespace api.Negocios.Card
                                         }
 
                                         decimal menorDiferenca = decimal.MaxValue;
+                                        decimal valorComparativo = recebimento.AntecipacaoBancaria > new decimal(0.0) ? recebimento.AntecipacaoBancaria : recebimento.ValorTotal;
                                         int indice = -1;
                                         // Procura a menor diferença
                                         for (int m = 0; m < movimentacoes.Count; m++)
                                         {
                                             ConciliacaoBancaria mov = movimentacoes[m];
-                                            decimal diferenca = Math.Abs(recebimento.ValorTotal - mov.ValorTotal);
+                                            decimal diferenca = Math.Abs(valorComparativo - mov.ValorTotal);
                                             if (diferenca < menorDiferenca)
                                             {
                                                 indice = m;
@@ -1777,7 +1788,9 @@ namespace api.Negocios.Card
                                         extratoBancario.Remove(movimentacao);
 
                                         // Avalia a diferença
-                                        if (recebimento.ValorTotal > movimentacao.ValorTotal && movimentacoes.Count > 1)
+                                        if (recebimento.AntecipacaoBancaria == new decimal(0.0) && 
+                                            recebimento.ValorTotal > movimentacao.ValorTotal && 
+                                            movimentacoes.Count > 1)
                                         {
                                             // Remove o que foi utilizado
                                             movimentacoes.RemoveAt(indice);

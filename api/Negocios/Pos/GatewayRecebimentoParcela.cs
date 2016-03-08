@@ -337,7 +337,7 @@ namespace api.Negocios.Pos
                         if (nsu.Contains("%")) // usa LIKE => STARTS WITH
                         {
                             string busca = nsu.Replace("%", "").ToString();
-                            entity = entity.Where(e => e.Recebimento.nsu.StartsWith(busca));
+                            entity = entity.Where(e => e.Recebimento.nsu.EndsWith(busca));
                         }
                         else
                             entity = entity.Where(e => e.Recebimento.nsu.Equals(nsu)).AsQueryable();

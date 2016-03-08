@@ -346,6 +346,7 @@ namespace api.Negocios.Card
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbAntecipacaoBancaria = new List<dynamic>();
                 Retorno retorno = new Retorno();
+                string outValue = null;
 
                 // GET QUERY
                 var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
@@ -398,6 +399,25 @@ namespace api.Negocios.Card
                 }
                 else if (colecao == 2)
                 {
+                    bool filtraDtVencimento = false;
+                    DateTime dtVencimentoIni = DateTime.Now;
+                    DateTime dtVencimentoFim = DateTime.Now;
+                    if (queryString.TryGetValue("" + (int)CAMPOS.DTVENCIMENTO, out outValue))
+                    {
+                        filtraDtVencimento = true;
+                        string value = queryString["" + (int)CAMPOS.DTVENCIMENTO];
+                        if (value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = value.Split('|');
+                            dtVencimentoIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            dtVencimentoFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                        }
+                        else // ANO + MES + DIA
+                        {
+                            dtVencimentoIni = dtVencimentoFim = DateTime.ParseExact(value + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                        }
+                    }
+
                     List<dynamic> antecipacoes = query.Select(e => new
                     {
                         idAntecipacaoBancaria = e.idAntecipacaoBancaria,
@@ -414,21 +434,27 @@ namespace api.Negocios.Card
                         txJuros = e.txJuros,
                         txIOF = e.txIOF,
                         txIOFAdicional = e.txIOFAdicional,
-                        antecipacoes = e.tbAntecipacaoBancariaDetalhes.Select(t => new {
-                            idAntecipacaoBancariaDetalhe = t.idAntecipacaoBancariaDetalhe,
-                            dtVencimento = t.dtVencimento,
-                            vlAntecipacao = t.vlAntecipacao,
-                            vlAntecipacaoLiquida = t.vlAntecipacaoLiquida,
-                            vlIOF = t.vlIOF,
-                            vlIOFAdicional = t.vlIOFAdicional,
-                            vlJuros = t.vlJuros,
-                            tbBandeira = t.cdBandeira == null ? null : new { cdBandeira = t.cdBandeira,
-													                         dsBandeira = t.tbBandeira.dsBandeira 
-													                       },
-                            vlDisponivelCS = new decimal(0.0),
-                            vlAntecipadoCS = new decimal(0.0),
-                            saldoCS = new decimal(0.0)
-                        }).OrderBy(t => t.dtVencimento).ThenBy(t => t.vlAntecipacao).ToList<dynamic>()
+                        vlAntecipadoCS = new decimal(0.0),
+                        antecipacoes = e.tbAntecipacaoBancariaDetalhes
+                                            .Where(t => !filtraDtVencimento || (t.dtVencimento >= dtVencimentoIni && t.dtVencimento <= dtVencimentoFim))
+                                            .Select(t => new {
+                                                idAntecipacaoBancariaDetalhe = t.idAntecipacaoBancariaDetalhe,
+                                                dtVencimento = t.dtVencimento,
+                                                vlAntecipacao = t.vlAntecipacao,
+                                                vlAntecipacaoLiquida = t.vlAntecipacaoLiquida,
+                                                vlIOF = t.vlIOF,
+                                                vlIOFAdicional = t.vlIOFAdicional,
+                                                vlJuros = t.vlJuros,
+                                                tbBandeira = t.cdBandeira == null ? null : new { cdBandeira = t.cdBandeira,
+													                                             dsBandeira = t.tbBandeira.dsBandeira 
+													                                           },
+                                                vlDisponivelCS = new decimal(0.0),
+                                                vlAntecipadoCS = new decimal(0.0),
+                                                saldoCS = new decimal(0.0)
+                                            })
+                                            .OrderBy(t => t.dtVencimento)
+                                            .ThenBy(t => t.vlAntecipacao)
+                                            .ToList<dynamic>()
                         
                     }).ToList<dynamic>();
 
@@ -446,6 +472,7 @@ namespace api.Negocios.Card
                     foreach (var antecipacao in antecipacoes)
                     {
                         List<dynamic> vencimentos = new List<dynamic>();
+                        decimal vlAntecipadoCSTotal = new decimal(0.0);
                         string cdBanco = antecipacao.cdBanco;
                         if (cdBanco.EndsWith("047"))
                         {
@@ -462,7 +489,7 @@ namespace api.Negocios.Card
                                 decimal valorDisponivel = new decimal(0.0);
                                 decimal valorAntecipado = new decimal(0.0);
 
-                                decimal outValue = new decimal(0.0);
+                                decimal outValueD = new decimal(0.0);
 
                                 //if (dtVencimento.Equals(Convert.ToDateTime("02/06/2016")))
                                 //    outValue += new decimal(0.0);
@@ -481,7 +508,7 @@ namespace api.Negocios.Card
                                     {
                                         string nrCNPJ = Convert.ToString(r["nrCNPJ"]);
                                         decimal vlAjuste = Convert.ToDecimal(r["vlAjuste"]);
-                                        if(!valoresAntecipados.TryGetValue(nrCNPJ, out outValue))
+                                        if(!valoresAntecipados.TryGetValue(nrCNPJ, out outValueD))
                                             valoresAntecipados.Add(nrCNPJ, Math.Abs(vlAjuste));
                                     }
                                 }
@@ -526,7 +553,7 @@ namespace api.Negocios.Card
                                         string cnpj = Convert.ToString(r["cnpj"]);
                                         decimal vlDisponivel = Convert.ToDecimal(r["valorDisponivel"].Equals(DBNull.Value) ? 0.0 : r["valorDisponivel"]);
 
-                                        if (valoresAntecipados.TryGetValue(cnpj, out outValue))
+                                        if (valoresAntecipados.TryGetValue(cnpj, out outValueD))
                                         {
                                             decimal vlAntecipadoFilial = valoresAntecipados[cnpj];
                                             if (vlDisponivel <= vlAntecipadoFilial)
@@ -570,6 +597,8 @@ namespace api.Negocios.Card
                                     vlAntecipadoCS = valorAntecipado,
                                     saldoCS = saldoCS,//Math.Abs(saldoCS)
                                 });
+
+                                vlAntecipadoCSTotal += valorAntecipado;
                             }
                             
                         }
@@ -589,6 +618,7 @@ namespace api.Negocios.Card
                             txJuros = antecipacao.txJuros,
                             txIOF = antecipacao.txIOF,
                             txIOFAdicional = antecipacao.txIOFAdicional,
+                            vlAntecipadoCS = vlAntecipadoCSTotal,
                             antecipacoes = vencimentos
                         });
                     }
