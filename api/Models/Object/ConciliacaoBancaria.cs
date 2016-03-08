@@ -68,6 +68,13 @@ namespace api.Models.Object
             set { lote = value; }
         }
 
+        private decimal antecipacaoBancaria;
+        public decimal AntecipacaoBancaria
+        {
+            get { return antecipacaoBancaria; }
+            set { antecipacaoBancaria = value; }
+        }
+
         private string tipoCartao;
         public string TipoCartao
         {
@@ -161,6 +168,13 @@ namespace api.Models.Object
             {
                 get { return lote; }
                 set { lote = value; }
+            }
+
+            private decimal antecipacaoBancaria;
+            public decimal AntecipacaoBancaria
+            {
+                get { return antecipacaoBancaria; }
+                set { antecipacaoBancaria = value; }
             }
 
             private string tipoCartao;
