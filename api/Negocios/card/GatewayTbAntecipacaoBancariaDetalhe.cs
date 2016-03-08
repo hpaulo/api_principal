@@ -751,7 +751,7 @@ namespace api.Negocios.Card
                             }
                         }
                         // Busca os recebíveis antecipados, do mesmo vencimento, só que para antecipações bancárias anteriores
-                        script = "SELECT R.cnpj" +
+                        /*script = "SELECT R.cnpj" +
                                 ", SUM(P.valorParcelaBruta - P.valorDescontado) as valorDisponivel" +
                                 ", SUM(P.valorParcelaLiquida) as valorAntecipado" +
                                 " FROM pos.RecebimentoParcela P (NOLOCK)" +
@@ -769,6 +769,23 @@ namespace api.Negocios.Card
                                 // Tem que ter tido alguma antecipação que fez uso do vencimento em questão
                                 " AND T.idAntecipacaoBancariaDetalhe IS NOT NULL" +
                                 " AND P.idAntecipacaoBancariaDetalhe = T.idAntecipacaoBancariaDetalhe" +
+                                // AGRUPA POR FILIAL
+                                " GROUP BY R.cnpj";*/
+                        script = "SELECT R.cnpj" +
+                                ", SUM(P.valorParcelaBruta - P.valorDescontado) as valorDisponivel" +
+                                ", SUM(P.valorParcelaLiquida) as valorAntecipado" +
+                                " FROM pos.RecebimentoParcela P (NOLOCK)" +
+                                " JOIN pos.Recebimento R (NOLOCK) ON R.id = P.idRecebimento" +
+                                // Tem que ter tido alguma antecipação que fez uso do vencimento em questão
+                                " WHERE P.idAntecipacaoBancariaDetalhe IS NOT NULL" +
+                                " AND P.idAntecipacaoBancariaDetalhe IN (" +
+                                "       SELECT D.idAntecipacaoBancariaDetalhe" +
+                                "       FROM card.tbAntecipacaoBancariaDetalhe D (NOLOCK)" +
+                                "       JOIN card.tbAntecipacaoBancaria A (NOLOCK) ON A.idAntecipacaoBancaria = D.idAntecipacaoBancaria" +
+                                "       WHERE D.dtVencimento BETWEEN '" + DataBaseQueries.GetDate(dtVencimento) + "' AND '" + DataBaseQueries.GetDate(dtVencimento) + " 23:59:00'" +
+                                "             AND A.dtAntecipacaoBancaria < '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
+                                "             AND A.cdContaCorrente = " + cdContaCorrente +
+                                " )" +
                                 // AGRUPA POR FILIAL
                                 " GROUP BY R.cnpj";
                         recebivel = DataBaseQueries.SqlQuery(script, connection);
@@ -826,7 +843,8 @@ namespace api.Negocios.Card
                         decimal valorUtilizado = new decimal(0.0);
                         decimal valorLiquidoUtilizado = new decimal(0.0);
 
-                        bool temSaldo = resultado.Count == 0 || Math.Abs(resultado.Select(r => Convert.ToDecimal(r["valorParcelaBruta"]) - Convert.ToDecimal(r["valorDescontado"])).Sum() - vlAntecipacao) > new decimal(0.01);
+                        // Pode ter saldo positivo somente se o valor disponível para antecipar for inferior ao valor utilizado 
+                        bool temSaldo = resultado.Count == 0 || resultado.Select(r => Convert.ToDecimal(r["valorParcelaBruta"]) - Convert.ToDecimal(r["valorDescontado"])).Sum() + new decimal(0.01) < vlAntecipacao;
 
                         const bool SALVAR_NA_BASE = true;
 

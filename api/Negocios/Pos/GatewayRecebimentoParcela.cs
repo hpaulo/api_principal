@@ -334,7 +334,7 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.NSU:
                         string nsu = Convert.ToString(item.Value);
-                        if (nsu.Contains("%")) // usa LIKE => STARTS WITH
+                        if (nsu.Contains("%")) // usa LIKE => ENDS WITH
                         {
                             string busca = nsu.Replace("%", "").ToString();
                             entity = entity.Where(e => e.Recebimento.nsu.EndsWith(busca));
@@ -753,7 +753,7 @@ namespace api.Negocios.Pos
                         if (!join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
                             join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".id = " + SIGLA_QUERY + ".idRecebimento");
 
-                        if (nsu.Contains("%")) // usa LIKE => STARTS WITH
+                        if (nsu.Contains("%")) // usa LIKE => ENDS WITH
                         {
                             string busca = nsu.Replace("%", "").ToString();
                             where.Add(GatewayRecebimento.SIGLA_QUERY + ".nsu like '%" + busca + "'");

@@ -724,8 +724,7 @@ namespace api.Negocios.Card
                 }
                 else if (colecao == 1)
                 {
-
-
+                    
                     #region BUSCA TÍTULOS
                     if (!queryString.TryGetValue("" + (int)CAMPOS.IDRECEBIMENTO, out outValue) ||
                         !queryString.TryGetValue("" + (int)CAMPOS.NUMPARCELA, out outValue))
