@@ -12,6 +12,7 @@ using System.Data.Entity;
 using api.Negocios.Util;
 using api.Negocios.Cliente;
 using api.Negocios.Pos;
+using System.Data;
 
 namespace api.Negocios.Card
 {
@@ -89,7 +90,13 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.NRNSU:
                         string nrNSU = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.nrNSU.Equals(nrNSU)).AsQueryable<tbRecebimentoTitulo>();
+                        if (nrNSU.Contains("%")) // usa LIKE => ENDS WITH
+                        {
+                            string busca = nrNSU.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.nrNSU.EndsWith(busca));
+                        }
+                        else
+                            entity = entity.Where(e => e.nrNSU.Equals(nrNSU)).AsQueryable();
                         break;
                     case CAMPOS.DTVENDA:
                         if (item.Value.Contains("|")) // BETWEEN
@@ -274,7 +281,13 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.NRNSU:
                         string nrNSU = Convert.ToString(item.Value);
-                        where.Add(SIGLA_QUERY + ".nrNSU = '" + nrNSU + "'");
+                        if (nrNSU.Contains("%")) // usa LIKE => ENDS WITH
+                        {
+                            string busca = nrNSU.Replace("%", "").ToString();
+                            where.Add(SIGLA_QUERY + ".nrNSU like '%" + nrNSU + "'");
+                        }
+                        else
+                            where.Add(SIGLA_QUERY + ".nrNSU = '" + nrNSU + "'");
                         break;
                     case CAMPOS.DTVENDA:
                         DateTime dtVenda = Convert.ToDateTime(item.Value);
@@ -444,6 +457,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
 
             try
             {
@@ -453,8 +467,7 @@ namespace api.Negocios.Card
 
                 // Implementar o filtro por Grupo apartir do TOKEN do Usuário
                 string outValue = null;
-                Int32 IdGrupo = 0;
-                IdGrupo = Permissoes.GetIdGrupo(token);
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo != 0)
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
@@ -462,7 +475,7 @@ namespace api.Negocios.Card
                     else
                         queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
                 }
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (!CnpjEmpresa.Equals(""))
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
@@ -594,7 +607,9 @@ namespace api.Negocios.Card
                         conciliado = e.RecebimentoParcelas.Count > 0
                     }).OrderBy(e => e.dtTitulo).ThenBy(e => e.dtVenda).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.vlParcela).ToList<dynamic>();
 
-                 }
+                }
+
+                transaction.Commit();
 
                 retorno.Registros = CollectionTbRecebimentoTitulo;
 
@@ -602,6 +617,7 @@ namespace api.Negocios.Card
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -629,17 +645,17 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 _db.tbRecebimentoTitulos.Add(param);
                 _db.SaveChanges();
-                transaction.Commit();
+                //transaction.Commit();
                 return param.idRecebimentoTitulo;
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -669,16 +685,16 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 _db.tbRecebimentoTitulos.Remove(_db.tbRecebimentoTitulos.Where(e => e.idRecebimentoTitulo.Equals(idRecebimentoTitulo)).First());
                 _db.SaveChanges();
-                transaction.Commit();
+                //transaction.Commit();
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -706,7 +722,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbRecebimentoTitulo value = _db.tbRecebimentoTitulos
@@ -727,17 +743,17 @@ namespace api.Negocios.Card
                     value.vlParcela = param.vlParcela;
                 if (param.cdERP != null && param.cdERP != value.cdERP)
                     value.cdERP = param.cdERP;
-                if (/*param.dtBaixaERP != null && param.dtBaixaERP != value.dtBaixaERP*/ 
-                    (param.dtBaixaERP == null && value.dtBaixaERP != null) || 
-                    (param.dtBaixaERP != null && value.dtBaixaERP == null) || 
+                if (/*param.dtBaixaERP != null && param.dtBaixaERP != value.dtBaixaERP*/
+                    (param.dtBaixaERP == null && value.dtBaixaERP != null) ||
+                    (param.dtBaixaERP != null && value.dtBaixaERP == null) ||
                     (param.dtBaixaERP != null && value.dtBaixaERP != null && !param.dtBaixaERP.Value.Equals(value.dtBaixaERP.Value)))
-                        value.dtBaixaERP = param.dtBaixaERP;
+                    value.dtBaixaERP = param.dtBaixaERP;
                 _db.SaveChanges();
-                transaction.Commit();
+                //transaction.Commit();
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);

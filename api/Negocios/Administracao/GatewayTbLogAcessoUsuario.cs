@@ -8,19 +8,21 @@ using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
 using System.Globalization;
+using System.Data.Entity;
+using System.Data;
 
 namespace api.Negocios.Admin
 {
     public class GatewayTbLogAcessoUsuario
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTbLogAcessoUsuario()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -62,7 +64,7 @@ namespace api.Negocios.Admin
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<tbLogAcessoUsuario> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<tbLogAcessoUsuario> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.tbLogAcessoUsuarios.AsQueryable<tbLogAcessoUsuario>();
@@ -276,151 +278,163 @@ namespace api.Negocios.Admin
         /// Retorna TbLogAcessoUsuario/TbLogAcessoUsuario
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
+
             try
             {
-            // Implementar o filtro por Grupo apartir do TOKEN do Usuário
-            string outValue = null;
-            Int32 IdGrupo = Permissoes.GetIdGrupo(token);
-            if (IdGrupo != 0)
-            {
-                if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                    queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+                string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
+                if (!CnpjEmpresa.Equals(""))
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
+                        queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                    else
+                        queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
+                }
+
+
+                //DECLARAÇÕES
+                List<dynamic> CollectionTbLogAcessoUsuario = new List<dynamic>();
+                Retorno retorno = new Retorno();
+
+                // GET QUERY
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
+
+                // Restringe consulta pelo perfil do usuário logado
+                Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token, _db);
+                bool isAtosVendedor = Permissoes.isAtosRoleVendedor(token, _db);
+                if (IdGrupo == 0 && isAtosVendedor)
+                {
+                    // Perfil Comercial tem uma carteira de clientes específica
+                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token, _db);
+                    query = query.Where(e => e.webpages_Users.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin
+                                                && e.webpages_Users.id_grupo != null && listaIdsGruposEmpresas.Contains(e.webpages_Users.id_grupo ?? -1)).AsQueryable<tbLogAcessoUsuario>();
+                }
+                else if (Permissoes.isAtosRole(token, _db) && !isAtosVendedor)
+                    // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
+                    query = query.Where(e => e.webpages_Users.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Users.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<tbLogAcessoUsuario>();
                 else
-                    queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
-            }
-            string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
-            if (!CnpjEmpresa.Equals(""))
-            {
-                if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
-                    queryString["" + (int)CAMPOS.NU_CNPJ] = CnpjEmpresa;
+                    // Só exibe os usuários de RoleLevelMin
+                    query = query.Where(e => e.webpages_Users.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<tbLogAcessoUsuario>();
+
+                // TOTAL DE REGISTROS
+                retorno.TotalDeRegistros = query.Count();
+
+
+                // PAGINAÇÃO
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
                 else
-                    queryString.Add("" + (int)CAMPOS.NU_CNPJ, CnpjEmpresa);
-            }
+                    pageNumber = 1;
 
+                retorno.PaginaAtual = pageNumber;
+                retorno.ItensPorPagina = pageSize;
 
-            //DECLARAÇÕES
-            List<dynamic> CollectionTbLogAcessoUsuario = new List<dynamic>();
-            Retorno retorno = new Retorno();
-
-            // GET QUERY
-            var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-
-            // Restringe consulta pelo perfil do usuário logado
-            Int32 RoleLevelMin = Permissoes.GetRoleLevelMin(token);
-            bool isAtosVendedor = Permissoes.isAtosRoleVendedor(token);
-            if (IdGrupo == 0 && isAtosVendedor)
-            {
-                // Perfil Comercial tem uma carteira de clientes específica
-                List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
-                query = query.Where(e => e.webpages_Users.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin
-                                            && e.webpages_Users.id_grupo != null && listaIdsGruposEmpresas.Contains(e.webpages_Users.id_grupo ?? -1)).AsQueryable<tbLogAcessoUsuario>();
-            }
-            else if (Permissoes.isAtosRole(token) && !isAtosVendedor)
-                // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
-                query = query.Where(e => e.webpages_Users.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Users.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<tbLogAcessoUsuario>();
-            else
-                // Só exibe os usuários de RoleLevelMin
-                query = query.Where(e => e.webpages_Users.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<tbLogAcessoUsuario>();
-
-            // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = query.Count();
-
-
-            // PAGINAÇÃO
-            int skipRows = (pageNumber - 1) * pageSize;
-            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                query = query.Skip(skipRows).Take(pageSize);
-            else
-                pageNumber = 1;
-
-            retorno.PaginaAtual = pageNumber;
-            retorno.ItensPorPagina = pageSize;
-
-            // COLEÇÃO DE RETORNO
-            if (colecao == 1)
-            {
-                CollectionTbLogAcessoUsuario = query.Select(e => new
+                // COLEÇÃO DE RETORNO
+                if (colecao == 1)
                 {
-
-                    idLogAcessoUsuario = e.idLogAcessoUsuario,
-                    idUser = e.idUser,
-                    dsUrl = e.dsUrl,
-                    idController = e.idController,
-                    dsParametros = e.dsParametros,
-                    dsFiltros = e.dsFiltros,
-                    dtAcesso = e.dtAcesso,
-                    dsAplicacao = e.dsAplicacao,
-                    codResposta = e.codResposta,
-                    msgErro = e.msgErro,
-                    dsJson = e.dsJson,
-                    dsUserAgent = e.dsUserAgent,
-                    dsMethod = e.dsMethod,
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 0)
-            {
-                CollectionTbLogAcessoUsuario = query.Select(e => new
-                {
-
-                    idLogAcessoUsuario = e.idLogAcessoUsuario,
-                    idUser = e.idUser,
-                    dsUrl = e.dsUrl,
-                    idController = e.idController,
-                    dsParametros = e.dsParametros,
-                    dsFiltros = e.dsFiltros,
-                    dtAcesso = e.dtAcesso,
-                    dsAplicacao = e.dsAplicacao,
-                    codResposta = e.codResposta,
-                    msgErro = e.msgErro,
-                    dsJson = e.dsJson,
-                    dsUserAgent = e.dsUserAgent,
-                    dsMethod = e.dsMethod,
-
-                }).ToList<dynamic>();
-            }
-            else if (colecao == 2) // [Portal] Acesso de usuários => POST, PUT e DELETE (desenvolvedor)
-            {
-                CollectionTbLogAcessoUsuario = query.Select(e => new
-                {
-
-                    idLogAcessoUsuario = e.idLogAcessoUsuario,
-                    webpagesusers = new { id_users = e.idUser,
-                                          ds_login = e.webpages_Users.ds_login
-                                        },
-                    dsUrl = e.dsUrl,
-                    dsParametros = e.dsParametros,
-                    dsFiltros = e.dsFiltros,
-                    dtAcesso = e.dtAcesso,
-                    dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" : 
-                                  e.dsAplicacao.ToUpper() == "P" ? "Portal" : e.dsAplicacao,
-                    codResposta = e.codResposta,
-                    msgErro = e.msgErro,
-                    dsJson = e.dsJson,
-                    dsMethod = e.dsMethod,
-                    controller = new
+                    CollectionTbLogAcessoUsuario = query.Select(e => new
                     {
-                        id_controller = e.idController,
-                        ds_controller = e.webpages_Controllers != null && e.idController > 50 ?
-                                             (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
-                                                e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
-                                              (e.webpages_Controllers.id_subController != null ?
-                                                       e.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
-                                                       e.webpages_Controllers.ds_controller :
-                                                       "Login",
 
-                    },
-                    dsUserAgent = e.dsUserAgent,
-                }).ToList<dynamic>();
+                        idLogAcessoUsuario = e.idLogAcessoUsuario,
+                        idUser = e.idUser,
+                        dsUrl = e.dsUrl,
+                        idController = e.idController,
+                        dsParametros = e.dsParametros,
+                        dsFiltros = e.dsFiltros,
+                        dtAcesso = e.dtAcesso,
+                        dsAplicacao = e.dsAplicacao,
+                        codResposta = e.codResposta,
+                        msgErro = e.msgErro,
+                        dsJson = e.dsJson,
+                        dsUserAgent = e.dsUserAgent,
+                        dsMethod = e.dsMethod,
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 0)
+                {
+                    CollectionTbLogAcessoUsuario = query.Select(e => new
+                    {
+
+                        idLogAcessoUsuario = e.idLogAcessoUsuario,
+                        idUser = e.idUser,
+                        dsUrl = e.dsUrl,
+                        idController = e.idController,
+                        dsParametros = e.dsParametros,
+                        dsFiltros = e.dsFiltros,
+                        dtAcesso = e.dtAcesso,
+                        dsAplicacao = e.dsAplicacao,
+                        codResposta = e.codResposta,
+                        msgErro = e.msgErro,
+                        dsJson = e.dsJson,
+                        dsUserAgent = e.dsUserAgent,
+                        dsMethod = e.dsMethod,
+
+                    }).ToList<dynamic>();
+                }
+                else if (colecao == 2) // [Portal] Acesso de usuários => POST, PUT e DELETE (desenvolvedor)
+                {
+                    CollectionTbLogAcessoUsuario = query.Select(e => new
+                    {
+
+                        idLogAcessoUsuario = e.idLogAcessoUsuario,
+                        webpagesusers = new
+                        {
+                            id_users = e.idUser,
+                            ds_login = e.webpages_Users.ds_login
+                        },
+                        dsUrl = e.dsUrl,
+                        dsParametros = e.dsParametros,
+                        dsFiltros = e.dsFiltros,
+                        dtAcesso = e.dtAcesso,
+                        dsAplicacao = e.dsAplicacao.ToUpper() == "M" ? "Mobile" :
+                                      e.dsAplicacao.ToUpper() == "P" ? "Portal" : e.dsAplicacao,
+                        codResposta = e.codResposta,
+                        msgErro = e.msgErro,
+                        dsJson = e.dsJson,
+                        dsMethod = e.dsMethod,
+                        controller = new
+                        {
+                            id_controller = e.idController,
+                            ds_controller = e.webpages_Controllers != null && e.idController > 50 ?
+                                                 (e.webpages_Controllers.id_subController != null && e.webpages_Controllers.webpages_Controllers2.id_subController != null ?
+                                                    e.webpages_Controllers.webpages_Controllers2.webpages_Controllers2.ds_controller + " > " : "") +
+                                                  (e.webpages_Controllers.id_subController != null ?
+                                                           e.webpages_Controllers.webpages_Controllers2.ds_controller + " > " : "") +
+                                                           e.webpages_Controllers.ds_controller :
+                                                           "Login",
+
+                        },
+                        dsUserAgent = e.dsUserAgent,
+                    }).ToList<dynamic>();
+                }
+
+                transaction.Commit();
+
+                retorno.Registros = CollectionTbLogAcessoUsuario;
+
+                return retorno;
             }
-
-            retorno.Registros = CollectionTbLogAcessoUsuario;
-
-            return retorno;
-        }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -428,20 +442,34 @@ namespace api.Negocios.Admin
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
         /// <summary>
         /// Adiciona nova TbLogAcessoUsuario
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbLogAcessoUsuario param)
+        public static Int32 Add(string token, tbLogAcessoUsuario param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
             try
             {
-            _db.tbLogAcessoUsuarios.Add(param);
-            _db.SaveChanges();
-            return param.idLogAcessoUsuario;
-        }
+                _db.tbLogAcessoUsuarios.Add(param);
+                _db.SaveChanges();
+                return param.idLogAcessoUsuario;
+            }
             catch (Exception e)
             {
                 if (e is DbEntityValidationException)
@@ -451,6 +479,15 @@ namespace api.Negocios.Admin
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -459,13 +496,18 @@ namespace api.Negocios.Admin
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 idLogAcessoUsuario)
+        public static void Delete(string token, Int32 idLogAcessoUsuario, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
             try
             {
-            _db.tbLogAcessoUsuarios.Remove(_db.tbLogAcessoUsuarios.Where(e => e.idLogAcessoUsuario == idLogAcessoUsuario).First());
-            _db.SaveChanges();
-        }
+                _db.tbLogAcessoUsuarios.Remove(_db.tbLogAcessoUsuarios.Where(e => e.idLogAcessoUsuario == idLogAcessoUsuario).First());
+                _db.SaveChanges();
+            }
             catch (Exception e)
             {
                 if (e is DbEntityValidationException)
@@ -475,48 +517,62 @@ namespace api.Negocios.Admin
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
         /// <summary>
         /// Altera tbLogAcessoUsuario
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbLogAcessoUsuario param)
+        public static void Update(string token, tbLogAcessoUsuario param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
             try
             {
-            tbLogAcessoUsuario value = _db.tbLogAcessoUsuarios
-                    .Where(e => e.idLogAcessoUsuario == param.idLogAcessoUsuario)
-                    .First<tbLogAcessoUsuario>();
+                tbLogAcessoUsuario value = _db.tbLogAcessoUsuarios
+                        .Where(e => e.idLogAcessoUsuario == param.idLogAcessoUsuario)
+                        .First<tbLogAcessoUsuario>();
 
-            // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
+                // OBSERVAÇÂO: VERIFICAR SE EXISTE ALTERAÇÃO NO PARAMETROS
 
 
-            //if (param.idLogAcessoUsuario != null && param.idLogAcessoUsuario != value.idLogAcessoUsuario)
-            //    value.idLogAcessoUsuario = param.idLogAcessoUsuario;
-            //if (param.idUser != null && param.idUser != value.idUser)
-            //    value.idUser = param.idUser;
-            if (param.dsUrl != null && param.dsUrl != value.dsUrl)
-                value.dsUrl = param.dsUrl;
-            if (param.idController != null && param.idController != value.idController)
-                value.idController = param.idController;
-            if (param.dsParametros != null && param.dsParametros != value.dsParametros)
-                value.dsParametros = param.dsParametros;
-            if (param.dsFiltros != null && param.dsFiltros != value.dsFiltros)
-                value.dsFiltros = param.dsFiltros;
-            if (param.dtAcesso != null && param.dtAcesso != value.dtAcesso)
-                value.dtAcesso = param.dtAcesso;
-            if (param.dsAplicacao != null && param.dsAplicacao != value.dsAplicacao)
-                value.dsAplicacao = param.dsAplicacao;
-            if (param.codResposta != value.codResposta)
-                value.codResposta = param.codResposta;
-            if (param.msgErro != null && param.msgErro != value.msgErro)
-                value.msgErro = param.msgErro;
-            if (param.dsJson != null && param.dsJson != value.dsJson)
-                value.dsJson = param.dsJson;
-            if (param.dsMethod != null && param.dsMethod != value.dsMethod)
-                value.dsMethod = param.dsMethod;
-            _db.SaveChanges();
+                //if (param.idLogAcessoUsuario != null && param.idLogAcessoUsuario != value.idLogAcessoUsuario)
+                //    value.idLogAcessoUsuario = param.idLogAcessoUsuario;
+                //if (param.idUser != null && param.idUser != value.idUser)
+                //    value.idUser = param.idUser;
+                if (param.dsUrl != null && param.dsUrl != value.dsUrl)
+                    value.dsUrl = param.dsUrl;
+                if (param.idController != null && param.idController != value.idController)
+                    value.idController = param.idController;
+                if (param.dsParametros != null && param.dsParametros != value.dsParametros)
+                    value.dsParametros = param.dsParametros;
+                if (param.dsFiltros != null && param.dsFiltros != value.dsFiltros)
+                    value.dsFiltros = param.dsFiltros;
+                if (param.dtAcesso != null && param.dtAcesso != value.dtAcesso)
+                    value.dtAcesso = param.dtAcesso;
+                if (param.dsAplicacao != null && param.dsAplicacao != value.dsAplicacao)
+                    value.dsAplicacao = param.dsAplicacao;
+                if (param.codResposta != value.codResposta)
+                    value.codResposta = param.codResposta;
+                if (param.msgErro != null && param.msgErro != value.msgErro)
+                    value.msgErro = param.msgErro;
+                if (param.dsJson != null && param.dsJson != value.dsJson)
+                    value.dsJson = param.dsJson;
+                if (param.dsMethod != null && param.dsMethod != value.dsMethod)
+                    value.dsMethod = param.dsMethod;
+                _db.SaveChanges();
             }
             catch (Exception e)
             {
@@ -526,6 +582,15 @@ namespace api.Negocios.Admin
                     throw new Exception(erro.Equals("") ? "Falha ao alterar Log de Acesso de Usuário " : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

@@ -14,6 +14,7 @@ using System.Data.Entity.Validation;
 using api.Controllers.Util;
 using System.Data.Entity;
 using api.Negocios.Util;
+using System.Data;
 
 namespace api.Negocios.Card
 {
@@ -580,6 +581,8 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
+
             try
             {
                 //DECLARAÇÕES
@@ -674,12 +677,15 @@ namespace api.Negocios.Card
                     }).ToList<dynamic>();
                 }
 
+                transaction.Commit();
+
                 retorno.Registros = CollectionTbExtrato;
 
                 return retorno;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -707,7 +713,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 // Valida param para não adicionar duplicidades
@@ -723,13 +729,13 @@ namespace api.Negocios.Card
                 _db.tbExtratos.Add(param);
                 _db.SaveChanges();
                 // Commit
-                transaction.Commit();
+                //transaction.Commit();
                 return param.idExtrato;
             }
             catch (Exception e)
             {
                 // Rollback
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -759,7 +765,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbExtrato extrato = _db.tbExtratos.Where(e => e.idExtrato == idExtrato).FirstOrDefault();
@@ -779,12 +785,12 @@ namespace api.Negocios.Card
                 _db.tbExtratos.Remove(extrato);
                 _db.SaveChanges();
                 // Commit
-                transaction.Commit();
+                //transaction.Commit();
             }
             catch (Exception e)
             {
                 // Rollback
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);

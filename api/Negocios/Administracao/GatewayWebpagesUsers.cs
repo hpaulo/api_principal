@@ -297,7 +297,7 @@ namespace api.Negocios.Administracao
                             query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin
                                                      && e.id_grupo != null && listaIdsGruposEmpresas.Contains(e.id_grupo ?? -1)).AsQueryable<webpages_Users>();
                         }
-                        else if (Permissoes.isAtosRole(token) && !isAtosVendedor)//RoleName.Equals("COMERCIAL"))
+                        else if (Permissoes.isAtosRole(token, _db) && !isAtosVendedor)//RoleName.Equals("COMERCIAL"))
                             // ATOS de nível mais alto: Lista os usuários que não tem role associada ou aqueles de RoleLevel permitido para o usuário logado consultar
                             query = query.Where(e => e.webpages_Membership.webpages_UsersInRoles.ToList<dynamic>().Count == 0 || e.webpages_Membership.webpages_UsersInRoles.FirstOrDefault().webpages_Roles.RoleLevel >= RoleLevelMin).AsQueryable<webpages_Users>();
                         else

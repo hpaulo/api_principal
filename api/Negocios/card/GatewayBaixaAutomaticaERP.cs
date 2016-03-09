@@ -211,7 +211,7 @@ namespace api.Negocios.Card
                                 error += Environment.NewLine + "   NSU: " + P_nsu;
                                 error += Environment.NewLine + "   Parcela " + (P_nrParcela == 0 ? 1 : P_nrParcela) + (P_qtParcelas > 0 ? " de " + P_qtParcelas : "");
                                 error += Environment.NewLine + "   Dt Prevista Recebimento: " + P_dtRecebimentoPrevisto;
-                                if(P_dtRecebimentoEfetivo != null && !P_dtRecebimentoEfetivo.Value.Equals(P_dtRecebimentoEfetivo))
+                                if (P_dtRecebimentoEfetivo != null && !P_dtRecebimentoEfetivo.Value.Equals(P_dtRecebimentoPrevisto))
                                     error += Environment.NewLine + " Dt Efetiva Recebimento: " + P_dtRecebimentoEfetivo.Value.ToShortDateString() + (P_flAntecipado ? " (ANTECIPAÇÃO)" : "");
                                 error += Environment.NewLine + "   Valor Bruto: " + P_vlParcela.ToString("C");
 
