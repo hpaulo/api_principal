@@ -7,19 +7,21 @@ using System.Linq.Expressions;
 using api.Bibliotecas;
 using api.Models.Object;
 using System.Data.Entity.Validation;
+using System.Data.Entity;
+using System.Data;
 
 namespace api.Negocios.Card
 {
     public class GatewayTbLoginAdquirenteEmpresa
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTbLoginAdquirenteEmpresa()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         public static string SIGLA_QUERY = "LG";
@@ -60,7 +62,7 @@ namespace api.Negocios.Card
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<tbLoginAdquirenteEmpresa> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<tbLoginAdquirenteEmpresa> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.tbLoginAdquirenteEmpresas.AsQueryable<tbLoginAdquirenteEmpresa>();
@@ -219,8 +221,15 @@ namespace api.Negocios.Card
         /// Retorna TbAdquirente/TbAdquirente
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
+
             try
             {
                 //DECLARAÇÕES
@@ -228,7 +237,7 @@ namespace api.Negocios.Card
                 Retorno retorno = new Retorno();
 
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = query.Count();
@@ -318,12 +327,15 @@ namespace api.Negocios.Card
                     }).ToList<dynamic>();
                 }
 
+                transaction.Commit();
+
                 retorno.Registros = CollectionTbLoginAdquirenteEmpresas;
 
                 return retorno;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -331,14 +343,29 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
         /// <summary>
         /// Adiciona nova TbLoginAdquirenteEmpresa
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Int32 Add(string token, tbLoginAdquirenteEmpresa param)
+        public static Int32 Add(string token, tbLoginAdquirenteEmpresa param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+
             try
             {
                 _db.tbLoginAdquirenteEmpresas.Add(param);
@@ -354,6 +381,15 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
 
 
@@ -362,8 +398,14 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 cdLoginAdquirenteEmpresa)
+        public static void Delete(string token, Int32 cdLoginAdquirenteEmpresa, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+
             try
             {
                 tbLoginAdquirenteEmpresa value = _db.tbLoginAdquirenteEmpresas
@@ -383,14 +425,29 @@ namespace api.Negocios.Card
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
         }
         /// <summary>
         /// Altera TbLoginAdquirenteEmpresa
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbLoginAdquirenteEmpresa param)
+        public static void Update(string token, tbLoginAdquirenteEmpresa param, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+
             try
             {
                 tbLoginAdquirenteEmpresa value = _db.tbLoginAdquirenteEmpresas
@@ -426,6 +483,15 @@ namespace api.Negocios.Card
                     throw new Exception(erro.Equals("") ? "Falha ao alterar login aquirente empresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

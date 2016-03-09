@@ -1,4 +1,5 @@
 ﻿using api.Bibliotecas;
+using api.Models;
 using api.Models.Object;
 using System;
 using System.Collections.Generic;
@@ -464,10 +465,9 @@ namespace api.Negocios.Util
 
             // GET QUERY
             var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
-            var queryTotal = query;
 
             // TOTAL DE REGISTROS
-            retorno.TotalDeRegistros = queryTotal.Count();
+            retorno.TotalDeRegistros = query.Count();
 
 
             // PAGINAÇÃO

@@ -210,7 +210,7 @@ namespace api.Negocios.Pos
             {
                 // Filtro de grupo empresa e filial
                 string outValue = null;
-                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (colecao != 3 || 
                     !queryString.TryGetValue("" + (int)CAMPOS.ESTABELECIMENTO, out outValue) || // se for a coleção 3, tem que ter filtro de estabelecimento
                     !Permissoes.isAtosRole(token)) // Como coleção 3 é para consultar estabelecimento, quem for de perfil atos
@@ -222,7 +222,7 @@ namespace api.Negocios.Pos
                         else
                             queryString.Add("" + (int)CAMPOS.IDGRUPO, IdGrupo.ToString());
                     }
-                    string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                    string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                     if (!CnpjEmpresa.Equals(""))
                     {
                         if (queryString.TryGetValue("" + (int)CAMPOS.CNPJ, out outValue))
@@ -241,10 +241,10 @@ namespace api.Negocios.Pos
                 var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
                 // Perfil vendedor ?
-                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))
+                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token, _db))
                 {
                     // Perfil Comercial tem uma carteira de clientes específica
-                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token, _db);
                     query = query.Where(e => listaIdsGruposEmpresas.Contains(e.empresa.id_grupo)).AsQueryable<LoginOperadora>();
                 }
 
@@ -675,15 +675,12 @@ namespace api.Negocios.Pos
                     //value.estabelecimento = param.estabelecimento;
                 if (param.cdEstabelecimentoConsulta != null && param.cdEstabelecimentoConsulta != value.cdEstabelecimentoConsulta)
                 {
-                    if (param.nrCNPJCentralizadora != null && param.nrCNPJCentralizadora != value.nrCNPJCentralizadora)
-                    {
-                        if (param.cdEstabelecimentoConsulta.Equals(""))
-                            updates.Add(" L.cdEstabelecimentoConsulta = NULL");
-                            //value.cdEstabelecimentoConsulta = null;
-                        else
-                            updates.Add(" L.cdEstabelecimentoConsulta = '" + param.cdEstabelecimentoConsulta + "'");
-                            //value.cdEstabelecimentoConsulta = param.cdEstabelecimentoConsulta;
-                    }
+                    if (param.cdEstabelecimentoConsulta.Equals(""))
+                        updates.Add(" L.cdEstabelecimentoConsulta = NULL");
+                        //value.cdEstabelecimentoConsulta = null;
+                    else
+                        updates.Add(" L.cdEstabelecimentoConsulta = '" + param.cdEstabelecimentoConsulta + "'");
+                        //value.cdEstabelecimentoConsulta = param.cdEstabelecimentoConsulta;
                 }
                 if (param.nrCNPJCentralizadora != null && param.nrCNPJCentralizadora != value.nrCNPJCentralizadora)
                 {

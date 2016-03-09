@@ -11,6 +11,7 @@ using System.Data.Entity.Validation;
 using System.Data.Entity;
 using api.Negocios.Util;
 using api.Negocios.Cliente;
+using System.Data;
 
 namespace api.Negocios.Card
 {
@@ -466,6 +467,8 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
+
             try 
             { 
                 //DECLARAÇÕES
@@ -539,12 +542,15 @@ namespace api.Negocios.Card
                     }).ToList<dynamic>();
                 }
 
+                transaction.Commit();
+
                 retorno.Registros = CollectionTbRecebimentoAjuste;
 
                 return retorno;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -573,19 +579,19 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 _db.tbRecebimentoAjustes.Add(param);
                 _db.SaveChanges();
                 // Commit
-                transaction.Commit();
+                //transaction.Commit();
                 return param.idRecebimentoAjuste;
             }
             catch (Exception e)
             {
                 // Rollback
-                transaction.Rollback();
+               // transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -606,7 +612,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+           // DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbRecebimentoAjuste tbRecebimentoAjuste = _db.tbRecebimentoAjustes.Where(e => e.idRecebimentoAjuste == idRecebimentoAjuste).FirstOrDefault();
@@ -614,12 +620,12 @@ namespace api.Negocios.Card
                 _db.tbRecebimentoAjustes.Remove(tbRecebimentoAjuste);
                 _db.SaveChanges();
                 // Commit
-                transaction.Commit();
+                //transaction.Commit();
             }
             catch (Exception e)
             {
                 // Rollback
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -640,7 +646,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbRecebimentoAjuste value = _db.tbRecebimentoAjustes
@@ -662,12 +668,12 @@ namespace api.Negocios.Card
                     value.idExtrato = param.idExtrato;
                 _db.SaveChanges();
                 // Commit
-                transaction.Commit();
+                //transaction.Commit();
             }
             catch (Exception e)
             {
                 // Rollback
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
