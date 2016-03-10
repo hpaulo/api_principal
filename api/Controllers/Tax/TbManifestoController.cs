@@ -156,5 +156,44 @@ namespace api.Controllers.Tax
                 }
             }
         }
+
+
+        // PATCH /tbManifesto/token/
+        public HttpResponseMessage Patch(string token)
+        {
+            // Abre nova conexão
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
+            {
+                tbLogAcessoUsuario log = new tbLogAcessoUsuario();
+                try
+                {
+                    log = Bibliotecas.LogAcaoUsuario.New(token, null, "Patch", _db);
+
+                    HttpResponseMessage retorno = new HttpResponseMessage();
+                    if (Permissoes.Autenticado(token, _db))
+                    {
+                        Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
+                        Mensagem mensagem = GatewayTbManifesto.Patch(token, queryString, _db);
+                        log.codResposta = mensagem.cdMensagem;
+                        if (mensagem.cdMensagem != 200) log.msgErro = mensagem.dsMensagem;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse<Mensagem>(HttpStatusCode.OK, mensagem);
+                    }
+                    else
+                    {
+                        log.codResposta = (int)HttpStatusCode.Unauthorized;
+                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
+                        return Request.CreateResponse(HttpStatusCode.Unauthorized);
+                    }
+                }
+                catch (Exception e)
+                {
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
+                    log.msgErro = e.Message;
+                    Bibliotecas.LogAcaoUsuario.Save(log);
+                    throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                }
+            }
+        }
     }
 }

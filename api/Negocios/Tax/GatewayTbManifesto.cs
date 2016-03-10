@@ -15,6 +15,9 @@ using System.Globalization;
 using NFe.ConvertTxt;
 using NFe.Components;
 using System.Threading;
+using System.IO;
+using System.Xml;
+using System.Text;
 
 namespace api.Negocios.Tax
 {
@@ -1760,5 +1763,75 @@ namespace api.Negocios.Tax
                 //semaforo.Release(1);
             }
         }
+
+
+        /// <summary>
+        /// Altera certificado e senha
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        public static Mensagem Patch(string token, Dictionary<string, string> queryString, painel_taxservices_dbContext _dbContext = null)
+        {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+
+            try
+            {
+                // TEM QUE TER ENVIADO VIA QUERYSTRING cdGrupo
+                string outValue = null;
+                if (!queryString.TryGetValue("" + (int)GatewayTbManifesto.CAMPOS.CDGRUPO, out outValue))
+                    throw new Exception("O código do grupo é obrigatório!");
+
+                int cdGrupo = int.Parse(queryString["" + (int)GatewayTbManifesto.CAMPOS.CDGRUPO]);
+                
+
+                // TEM QUE TER ENVIADO O ARQUIVO
+                HttpRequest httpRequest = HttpContext.Current.Request;
+                if (httpRequest.Files.Count == 0) throw new Exception("Não foi identificado o XML da Nota Fsical");
+
+                // Obtém o arquivo
+                HttpPostedFile postedFile = httpRequest.Files[0];
+                // Valida a extensão
+                string extensao = postedFile.FileName.Substring(postedFile.FileName.LastIndexOf("."));
+                if (!extensao.ToLower().Equals(".xml")) throw new Exception("Formato do arquivo deve ser XML!");
+
+                string xml = StreamToString(postedFile.InputStream);
+
+                Mensagem mensagem = new Mensagem();
+
+                return mensagem;
+            }
+            catch (Exception e)
+            {
+                if (e is DbEntityValidationException)
+                {
+                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                    throw new Exception(erro.Equals("") ? "Falha ao alterar TbEmpresa" : erro);
+                }
+                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
+            }
+        }
+
+        public static string StreamToString(Stream stream)
+        {
+            stream.Position = 0;
+            using (StreamReader reader = new StreamReader(stream, Encoding.UTF8))
+            {
+                return reader.ReadToEnd();
+            }
+        }
+
     }
 }
