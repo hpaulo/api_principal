@@ -10,6 +10,7 @@ using System.Globalization;
 using System.Data.Entity.Validation;
 using api.Negocios.Util;
 using System.Data.Entity;
+using System.Data;
 
 namespace api.Negocios.Card
 {
@@ -209,6 +210,8 @@ namespace api.Negocios.Card
                 _db = new painel_taxservices_dbContext();
             else
                 _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
+
             try
             {
                 //DECLARAÇÕES
@@ -218,7 +221,7 @@ namespace api.Negocios.Card
                 // Implementar o filtro por Grupo apartir do TOKEN do Usuário
                 string outValue = null;
                 Int32 IdGrupo = 0;
-                IdGrupo = Permissoes.GetIdGrupo(token);
+                IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo != 0)
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
@@ -226,7 +229,7 @@ namespace api.Negocios.Card
                     else
                         queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
                 }
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (!CnpjEmpresa.Equals(""))
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
@@ -406,12 +409,15 @@ namespace api.Negocios.Card
                     }
                 }
 
+                transaction.Commit();
+
                 retorno.Registros = CollectionTbContaCorrente_tbLoginAdquirenteEmpresa;
 
                 return retorno;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);

@@ -10,6 +10,7 @@ using api.Negocios.Util;
 using System.Data.Entity.Validation;
 using System.Data.Entity;
 using System.Data.Entity.Infrastructure;
+using System.Data;
 
 namespace api.Negocios.Card
 {
@@ -220,15 +221,17 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
 
-            try { 
+            try 
+            { 
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbBancoParametro = new List<dynamic>();
                 Retorno retorno = new Retorno();
 
                 // FILTRO DE FILIAL
                 string outValue = null;
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (!CnpjEmpresa.Equals(""))
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
@@ -239,7 +242,7 @@ namespace api.Negocios.Card
                 else
                 {
                     // NÃO ESTÁ ASSOCIADO A UM FILIAL => VERIFICA SE ESTÁ ASSOCIADO A UM GRUPO
-                    Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                    Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                     if (IdGrupo != 0)
                     {
                         if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
@@ -359,12 +362,15 @@ namespace api.Negocios.Card
                     }
                 }
 
+                transaction.Commit();
+
                 retorno.Registros = CollectionTbBancoParametro;
 
                 return retorno;
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);

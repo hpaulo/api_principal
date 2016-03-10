@@ -640,16 +640,19 @@ namespace api.Negocios.Card
                             // Remove ajustes
                             _db.Database.ExecuteSqlCommand("DELETE A" +
                                                            " FROM card.tbRecebimentoAjuste A" +
-                                                           " WHERE A.idAntecipacaoBancariaDetalhe IN (" + string.Join(", ", param.idsAntecipacaoBancariaDetalhe) + ")"
+                                                           " WHERE A.idAntecipacaoBancariaDetalhe IN (" + string.Join(", ", param.idsAntecipacaoBancariaDetalhe) + ")" +
+                                                           " AND A.idExtrato IS NULL"
                                                           );
                             _db.SaveChanges();
 
                             _db.Database.ExecuteSqlCommand("UPDATE P" +
                                                            " SET P.flAntecipado = 0" +
                                                            ", P.vlDescontadoAntecipacao = 0" +
+                                                           ", P.dtaRecebimentoEfetivo = NULL" +
                                                            ", P.idAntecipacaoBancariaDetalhe = NULL" +
                                                            " FROM pos.RecebimentoParcela P" +
-                                                           " WHERE P.idAntecipacaoBancariaDetalhe IN (" + string.Join(", ", param.idsAntecipacaoBancariaDetalhe) + ")"
+                                                           " WHERE P.idAntecipacaoBancariaDetalhe IN (" + string.Join(", ", param.idsAntecipacaoBancariaDetalhe) + ")" +
+                                                           " AND P.idExtrato IS NULL"
                                                           );
                             _db.SaveChanges();
                             transaction.Commit();
@@ -682,8 +685,8 @@ namespace api.Negocios.Card
                         // Obtém o vencimento
                         string script = "SELECT C.cdContaCorrente, C.cdBanco, A.dtAntecipacaoBancaria, D.dtVencimento, D.cdBandeira, D.vlAntecipacao, D.vlAntecipacaoLiquida" +
                                         " FROM card.tbAntecipacaoBancariaDetalhe D (NOLOCK)" +
-                                        " JOIN card.tbAntecipacaoBancaria A ON A.idAntecipacaoBancaria = D.idAntecipacaoBancaria" +
-                                        " JOIN card.tbContaCorrente C ON A.cdContaCorrente = C.cdContaCorrente" +
+                                        " JOIN card.tbAntecipacaoBancaria A (NOLOCK) ON A.idAntecipacaoBancaria = D.idAntecipacaoBancaria" +
+                                        " JOIN card.tbContaCorrente C (NOLOCK) ON A.cdContaCorrente = C.cdContaCorrente" +
                                         " WHERE D.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe;
 
                         List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
@@ -721,11 +724,93 @@ namespace api.Negocios.Card
                         //                parcelas = new List<dynamic>(),
                         //            };
 
+
+                        // Obtém valores usados para antecipação por filial na data do vencimento
+                        script = "SELECT A.nrCNPJ, vlAjuste = A.vlAjuste" +
+                                 " FROM card.tbRecebimentoAjuste A (NOLOCK)" +
+                                 " WHERE A.nrCNPJ IN (" + filiaisDaConta + ")" +
+                                 " AND A.dtAjuste = '" + DataBaseQueries.GetDate(dtVencimento) + "'" +
+                                 " AND A.dsMotivo = 'PAGAMENTO ANTECIPAÇÃO'";
+                        List<IDataRecord> recebivel = DataBaseQueries.SqlQuery(script, connection);
+                        decimal outValue = new decimal(0.0);
+                        Dictionary<string, decimal> valoresAntecipados = new Dictionary<string, decimal>();
+                        Dictionary<string, decimal> valoresUtilizadosFilial = new Dictionary<string, decimal>();
+                        Dictionary<string, decimal> valoresUtilizadosLiquidoFilial = new Dictionary<string, decimal>();
+                        if (recebivel != null && recebivel.Count > 0 && recebivel[0] != null)
+                        {
+                            foreach (IDataRecord r in recebivel)
+                            {
+                                string nrCNPJ = Convert.ToString(r["nrCNPJ"]);
+                                decimal vlAjuste = Convert.ToDecimal(r["vlAjuste"]);
+                                if (!valoresAntecipados.TryGetValue(nrCNPJ, out outValue))
+                                {
+                                    valoresAntecipados.Add(nrCNPJ, Math.Abs(vlAjuste));
+                                    valoresUtilizadosFilial.Add(nrCNPJ, new decimal(0.0));
+                                    valoresUtilizadosLiquidoFilial.Add(nrCNPJ, new decimal(0.0));
+                                }
+                            }
+                        }
+                        // Busca os recebíveis antecipados, do mesmo vencimento, só que para antecipações bancárias anteriores
+                        /*script = "SELECT R.cnpj" +
+                                ", SUM(P.valorParcelaBruta - P.valorDescontado) as valorDisponivel" +
+                                ", SUM(P.valorParcelaLiquida) as valorAntecipado" +
+                                " FROM pos.RecebimentoParcela P (NOLOCK)" +
+                                " JOIN pos.Recebimento R (NOLOCK) ON R.id = P.idRecebimento" +
+                                " JOIN card.tbBandeira B (NOLOCK) ON B.cdBandeira = R.cdBandeira" +
+                                " LEFT JOIN (SELECT D.idAntecipacaoBancariaDetalhe, D.dtVencimento, A.dtAntecipacaoBancaria, A.cdContaCorrente" +
+					            "       FROM card.tbAntecipacaoBancariaDetalhe D (NOLOCK)" +
+					            "       JOIN card.tbAntecipacaoBancaria A (NOLOCK) ON A.idAntecipacaoBancaria = D.idAntecipacaoBancaria" +
+				                "      ) T ON T.dtVencimento BETWEEN '" + DataBaseQueries.GetDate(dtVencimento) + "' AND '" + DataBaseQueries.GetDate(dtVencimento) + " 23:59:00'" +
+                                "             AND T.dtAntecipacaoBancaria < '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" + 
+                                "             AND T.cdContaCorrente = " + cdContaCorrente +
+                                " WHERE B.cdAdquirente = 7" + // Adquirente BANESE
+                                // Parcelas das filiais com vigência para a conta corrente
+                               // " AND R.cnpj IN (" + filiaisDaConta + ")" +
+                                // Tem que ter tido alguma antecipação que fez uso do vencimento em questão
+                                " AND T.idAntecipacaoBancariaDetalhe IS NOT NULL" +
+                                " AND P.idAntecipacaoBancariaDetalhe = T.idAntecipacaoBancariaDetalhe" +
+                                // AGRUPA POR FILIAL
+                                " GROUP BY R.cnpj";*/
+                        script = "SELECT R.cnpj" +
+                                ", SUM(P.valorParcelaBruta - P.valorDescontado) as valorDisponivel" +
+                                ", SUM(P.valorParcelaLiquida) as valorAntecipado" +
+                                " FROM pos.RecebimentoParcela P (NOLOCK)" +
+                                " JOIN pos.Recebimento R (NOLOCK) ON R.id = P.idRecebimento" +
+                                // Tem que ter tido alguma antecipação que fez uso do vencimento em questão
+                                " WHERE P.idAntecipacaoBancariaDetalhe IS NOT NULL" +
+                                " AND P.idAntecipacaoBancariaDetalhe IN (" +
+                                "       SELECT D.idAntecipacaoBancariaDetalhe" +
+                                "       FROM card.tbAntecipacaoBancariaDetalhe D (NOLOCK)" +
+                                "       JOIN card.tbAntecipacaoBancaria A (NOLOCK) ON A.idAntecipacaoBancaria = D.idAntecipacaoBancaria" +
+                                "       WHERE D.dtVencimento BETWEEN '" + DataBaseQueries.GetDate(dtVencimento) + "' AND '" + DataBaseQueries.GetDate(dtVencimento) + " 23:59:00'" +
+                                "             AND A.dtAntecipacaoBancaria < '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
+                                "             AND A.cdContaCorrente = " + cdContaCorrente +
+                                " )" +
+                                // AGRUPA POR FILIAL
+                                " GROUP BY R.cnpj";
+                        recebivel = DataBaseQueries.SqlQuery(script, connection);
+                        if (recebivel != null && recebivel.Count > 0 && recebivel[0] != null)
+                        {
+                            foreach (IDataRecord r in recebivel)
+                            {
+                                string cnpj = Convert.ToString(r["cnpj"]);
+                                decimal valorDisponivel = Convert.ToDecimal(r["valorDisponivel"]);
+                                if (valoresAntecipados.TryGetValue(cnpj, out outValue))
+                                {
+                                    if (valoresAntecipados[cnpj] >= valorDisponivel)
+                                        valoresAntecipados[cnpj] -= valorDisponivel;
+                                    else
+                                        valoresAntecipados[cnpj] = new decimal(0.0);
+                                }
+                            }
+                        }
+
+
                         // Busca parcelas
                         script = "SELECT P.idRecebimento, P.numParcela, P.valorParcelaBruta, P.valorDescontado, R.nsu, R.cnpj, R.cdBandeira" +
                                  " FROM pos.RecebimentoParcela P (NOLOCK)" +
-                                 " JOIN pos.Recebimento R ON R.id = P.idRecebimento" +
-                                 " JOIN card.tbBandeira B ON B.cdBandeira = R.cdBandeira" +
+                                 " JOIN pos.Recebimento R (NOLOCK) ON R.id = P.idRecebimento" +
+                                 " JOIN card.tbBandeira B (NOLOCK) ON B.cdBandeira = R.cdBandeira" +
                                  // Procura estornos de vendas associados
                                  " LEFT JOIN ( SELECT A.nrCNPJ, A.dtAjuste, A.dsMotivo" +
                                  "             FROM card.tbRecebimentoAjuste A (NOLOCK)" +
@@ -746,15 +831,22 @@ namespace api.Negocios.Card
                                  // Bandeira determinada do detalhe da antecipação. Se não determinada, somente as bandeiras à crédito
                                  " AND " + (cdBandeira > 0 ? "R.cdBandeira = " + cdBandeira : "B.dsTipo like 'CRÉDITO%'") +
                                  " ORDER BY CASE WHEN P.idAntecipacaoBancariaDetalhe IS NOT NULL THEN 0 ELSE 1 END" + // PRIORIZA OS QUE JÁ ESTÃO ASSOCIADOS A ANTECIPAÇÃO
-                                         ", R.dtaVenda DESC, R.codResumoVenda, R.nsu"; // PRIORIZA OS DE VENDA MAIS RECENTE EM RELAÇÃO A DATA DA ANTECIPAÇÃO
+                                         ", R.dtaVenda DESC" + // PRIORIZA OS DE VENDA MAIS RECENTE EM RELAÇÃO A DATA DA ANTECIPAÇÃO
+                                         ", R.cnpj" +
+                                         ", R.codResumoVenda, R.nsu";
 
 
                         resultado = DataBaseQueries.SqlQuery(script, connection);
-                        if (resultado == null)// || resultado.Count == 0)
+                        if (resultado == null)
                             continue;
 
                         decimal valorUtilizado = new decimal(0.0);
                         decimal valorLiquidoUtilizado = new decimal(0.0);
+
+                        // Pode ter saldo positivo somente se o valor disponível para antecipar for inferior ao valor utilizado 
+                        bool temSaldo = resultado.Count == 0 || resultado.Select(r => Convert.ToDecimal(r["valorParcelaBruta"]) - Convert.ToDecimal(r["valorDescontado"])).Sum() + new decimal(0.01) < vlAntecipacao;
+
+                        const bool SALVAR_NA_BASE = true;
 
                         DbContextTransaction transaction = _db.Database.BeginTransaction();
                         try
@@ -777,20 +869,71 @@ namespace api.Negocios.Card
                                 decimal valorNecessario;
                                 decimal ajuste = new decimal(0.0);
 
+                                // Teve antecipação para a filial corrente?
+                                if(!valoresAntecipados.TryGetValue(cnpj, out outValue))
+                                    continue; // não antecipa
+
+                                decimal valorAntecipadoFilial = valoresAntecipados[cnpj];
+                                decimal valorUtilizadoFilial = valoresUtilizadosFilial[cnpj];
+                                // Avalia se o valor utilizado da filial já excedeu
+                                if (valorUtilizadoFilial >= valorAntecipadoFilial)
+                                    continue; // excedeu da filial
+
+                                decimal valorUtilizadoLiquidoFilial = valorDisponivel - vlDescontadoAntecipacao;
+
+                                // Avalia o montante total
                                 if (valorUtilizado + valorDisponivel <= vlAntecipacao)
                                 {
                                     // Usa parcela por completo
                                     valorNecessario = valorDisponivel;
-                                    valorLiquidoUtilizado += valorDisponivel - vlDescontadoAntecipacao;
+                                    //valorLiquidoUtilizado += valorDisponivel - vlDescontadoAntecipacao;
                                 }
                                 else
                                 {
                                     // Usa "parte" da parcela => cria um ajuste
                                     valorNecessario = vlAntecipacao - valorUtilizado;
 
-                                    ajuste = decimal.Round(vlAntecipacaoLiquida - valorLiquidoUtilizado - (valorDisponivel - vlDescontadoAntecipacao), 2);
+                                    ajuste = decimal.Round(vlAntecipacaoLiquida - valorLiquidoUtilizado - valorUtilizadoLiquidoFilial, 2);
+
                                 }
-                                valorUtilizado += valorNecessario;
+
+                                //// Avalia valor sobre o total utilizado pela filial na antecipação do vencimento
+                                //if (valorUtilizadoFilial + valorNecessario > valorAntecipadoFilial)
+                                //{
+                                //    //if (valoresAntecipados.Count > 1 && r < resultado.Count - 1)
+                                //    //    continue; // esse valor não pode ser utilizado...
+
+                                //    //throw new Exception("Não foi possível realizar a antecipação das parcelas de vencimento em " +
+                                //    //                    dtVencimento.ToShortDateString() + ", operação realizada em " +
+                                //    //                    dtAntecipacaoBancaria.ToShortDateString() + " da filial " + cnpj
+                                //    //                   );
+
+                                //    //valorUtilizadoFilial = valorAntecipadoFilial - valorUtilizadoFilial;
+
+                                //    //valorUtilizadoLiquidoFilial = decimal.Round(valorUtilizadoFilial * (new decimal(1.0) - taxaAntecipacao), 4);
+
+                                //    //ajuste = decimal.Round((valorAntecipadoFilial - valorUtilizadoFilial) - valorDisponivel, 2);
+
+                                //    //// Usa "parte" da parcela => cria um ajuste
+                                //    //valorUtilizadoFilial = Math.Min(valorNecessario, valorAntecipadoFilial);
+                                //    ////valorUtilizadoLiquidoFilial = new decimal(0.0); // TEMP
+                                //    //// Ver valor do ajuste!
+                                //    //ajuste = decimal.Round(vlAntecipacaoLiquida - valorLiquidoUtilizado - (valorDisponivel - vlDescontadoAntecipacao), 2);
+                                //}
+                                //else
+                                //{
+                                //    // Usa parcela por completo
+                                //    //valorUtilizadoFilial = valorNecessario;//valorDisponivel;
+                                //    //valorUtilizadoLiquidoFilial = valorDisponivel - vlDescontadoAntecipacao;
+                                //}
+                                
+                                // Incrementa valor utilizado da filial
+                                valoresUtilizadosFilial[cnpj] += valorNecessario;//valorUtilizadoFilial;
+                                valoresUtilizadosLiquidoFilial[cnpj] += valorUtilizadoLiquidoFilial;
+
+                                // Obtém o valor total utilizado
+                                valorUtilizado = valoresUtilizadosFilial.Sum(t => t.Value);
+                                valorLiquidoUtilizado = valoresUtilizadosLiquidoFilial.Sum(t => t.Value);
 
                                 //teste.parcelas.Add(new
                                 //{
@@ -802,75 +945,92 @@ namespace api.Negocios.Card
                                 //    ajuste = ajuste,
                                 //});
 
-                                _db.Database.ExecuteSqlCommand("UPDATE P" +
-                                                               " SET P.flAntecipado = 1" +
-                                                               ", P.dtaRecebimentoEfetivo = '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
-                                                               ", P.vlDescontadoAntecipacao = " + vlDescontadoAntecipacao.ToString(CultureInfo.GetCultureInfo("en-GB")) +
-                                                               ", P.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe +
-                                                               " FROM pos.RecebimentoParcela P" +
-                                                               " WHERE P.numParcela = " + numParcela +
-                                                               " AND P.idRecebimento = " + idRecebimento
-                                                               );
-                                _db.SaveChanges();
-
-
-                                if (ajuste != new decimal(0.0))
+                                if (SALVAR_NA_BASE)
                                 {
-                                    // Cria ajuste, caso não exista
-                                    string dsMotivo = "SALDO ANTECIPAÇÃO BANCÁRIA NSU " + nsu + " PARCELA " + numParcela + " VENCIMENTO " + dtVencimento.ToShortDateString();
-                                    script = "SELECT A.*" +
-                                             " FROM card.tbRecebimentoAjuste A (NOLOCK)" +
-                                             " WHERE A.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe;
-                                    resultado = DataBaseQueries.SqlQuery(script, connection);
-                                    if (resultado == null || resultado.Count == 0)
-                                    {
-                                        // Cria
-                                        _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoAjuste" +
-                                                                       " (dsMotivo, cdBandeira, nrCNPJ, dtAjuste, vlAjuste, flAntecipacao, idAntecipacaoBancariaDetalhe)" +
-                                                                       " VALUES ('" + dsMotivo + "'" +
-                                                                       ", " + cdBandeiraParcela +
-                                                                       ", '" + cnpj + "', '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
-                                                                       ", " + ajuste.ToString(CultureInfo.GetCultureInfo("en-GB")) +
-                                                                       ", 1" +
-                                                                       ", " + idAntecipacaoBancariaDetalhe + ")");
-                                    }
-                                    else
-                                    {
-                                        // Atualiza valor
-                                        int idRecebimentoAjuste = Convert.ToInt32(resultado[0]["idRecebimentoAjuste"]);
-                                        _db.Database.ExecuteSqlCommand("UPDATE A" +
-                                                                       " SET A.dsMotivo = '" + dsMotivo + "'" +
-                                                                       ", A.cdBandeira = " + cdBandeiraParcela +
-                                                                       ", A.nrCNPJ = '" + cnpj + "'" +
-                                                                       ", A.dtAjuste = '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
-                                                                       ", A.vlAjuste = " + ajuste.ToString(CultureInfo.GetCultureInfo("en-GB")) +
-                                                                       ", A.flAntecipacao = 1" +
-                                                                       " FROM card.tbRecebimentoAjuste A" +
-                                                                       " WHERE A.idRecebimentoAjuste = " + idRecebimentoAjuste);
-                                    }
+                                    _db.Database.ExecuteSqlCommand("UPDATE P" +
+                                                                   " SET P.flAntecipado = 1" +
+                                                                   ", P.dtaRecebimentoEfetivo = '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
+                                                                   ", P.vlDescontadoAntecipacao = " + vlDescontadoAntecipacao.ToString(CultureInfo.GetCultureInfo("en-GB")) +
+                                                                   ", P.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe +
+                                                                   " FROM pos.RecebimentoParcela P" +
+                                                                   " WHERE P.numParcela = " + numParcela +
+                                                                   " AND P.idRecebimento = " + idRecebimento
+                                                                   );
                                     _db.SaveChanges();
+
+
+                                    if (ajuste != new decimal(0.0))
+                                    {
+                                        // Cria ajuste, caso não exista
+                                        string dsMotivo = "SALDO ANTECIPAÇÃO BANCÁRIA NSU " + nsu + " PARCELA " + numParcela + " VENCIMENTO " + dtVencimento.ToShortDateString() + " FILIAL " + cnpj;
+                                        script = "SELECT A.*" +
+                                                 " FROM card.tbRecebimentoAjuste A (NOLOCK)" +
+                                                 " WHERE A.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe +
+                                                 " AND A.nrCNPJ = " + cnpj + 
+                                                 " AND A.vlAjuste < 0.0"; // valor negativo
+                                        resultado = DataBaseQueries.SqlQuery(script, connection);
+                                        if (resultado == null || resultado.Count == 0)
+                                        {
+                                            // Cria
+                                            _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoAjuste" +
+                                                                           " (dsMotivo, cdBandeira, nrCNPJ, dtAjuste, vlAjuste, flAntecipacao, idAntecipacaoBancariaDetalhe)" +
+                                                                           " VALUES ('" + dsMotivo + "'" +
+                                                                           ", " + cdBandeiraParcela +
+                                                                           ", '" + cnpj + "', '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
+                                                                           ", " + ajuste.ToString(CultureInfo.GetCultureInfo("en-GB")) +
+                                                                           ", 1" +
+                                                                           ", " + idAntecipacaoBancariaDetalhe + ")");
+                                        }
+                                        else
+                                        {
+                                            // Atualiza valor
+                                            int idRecebimentoAjuste = Convert.ToInt32(resultado[0]["idRecebimentoAjuste"]);
+                                            _db.Database.ExecuteSqlCommand("UPDATE A" +
+                                                                           " SET A.dsMotivo = '" + dsMotivo + "'" +
+                                                                           ", A.cdBandeira = " + cdBandeiraParcela +
+                                                                           //", A.nrCNPJ = '" + cnpj + "'" +
+                                                                           ", A.dtAjuste = '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
+                                                                           ", A.vlAjuste = " + ajuste.ToString(CultureInfo.GetCultureInfo("en-GB")) +
+                                                                           ", A.flAntecipacao = 1" +
+                                                                           " FROM card.tbRecebimentoAjuste A" +
+                                                                           " WHERE A.idRecebimentoAjuste = " + idRecebimentoAjuste);
+                                        }
+                                        _db.SaveChanges();
+                                    }
                                 }
 
                             }
 
                             if (valorUtilizado < vlAntecipacao)
                             {
+                                if (!temSaldo)
+                                    throw new Exception("Ocorreu uma falha ao realizar a antecipação das parcelas vencidas em " + 
+                                                        dtVencimento.ToShortDateString() + " para " + dtAntecipacaoBancaria.ToShortDateString() +
+                                                        ". Não era para ter saldo!");
+
                                 // Cria ajuste de crédito
-                                decimal vlAjusteUtilizadoAntecipacaoAnterior = new decimal(0.0);
-                                DateTime dtAntecipacaoBancariaAntecipacaoAnterior = dtAntecipacaoBancaria;
+                                decimal ajuste = decimal.Round(vlAntecipacaoLiquida - valorLiquidoUtilizado, 2);
                                 string dsMotivo = "SALDO ANTECIPAÇÃO BANCÁRIA VENCIMENTO " + dtVencimento.ToShortDateString();
-                                string cnpj = cnpjsConta[0];
+                                string cnpj = cnpjsConta.Length == 1 ? cnpjsConta[0] : valoresUtilizadosFilial.Where(t => t.Value > new decimal(0.0))
+                                                                                                              .Where(t => t.Value < valoresAntecipados.Where(v => v.Key.Equals(t.Key)).Select(v => v.Value).FirstOrDefault())
+                                                                                                              .Where(t => valoresAntecipados.Where(v => v.Key.Equals(t.Key)).Select(v => v.Value).FirstOrDefault() - t.Value >= ajuste)
+                                                                                                              .Select(t => t.Key)
+                                                                                                              //.OrderBy(t => Math.Abs(valoresAntecipados.Where(v => v.Key.Equals(t.Key)).Select(v => v.Value).FirstOrDefault() - t.Value - ajuste))
+                                                                                                              .FirstOrDefault();
                                 int cdBandeiraAjuste = 20;
 
-                                // Procura a última antecipação para procurar a parcela que foi utilizada "em parte"
+                                // Procura a última antecipação para procurar a filial cuja parcela que foi utilizada "em parte"
                                 // Para isso, um ajuste à débito teve que ser criado
+                                decimal vlAjusteUtilizadoAntecipacaoAnterior = new decimal(0.0);
+                                DateTime dtAntecipacaoBancariaAntecipacaoAnterior = dtAntecipacaoBancaria;
                                 script = " SELECT TOP(1) D.idAntecipacaoBancariaDetalhe, D.vlAntecipacaoLiquida" +
                                          " FROM card.tbAntecipacaoBancariaDetalhe D (NOLOCK)" +
                                          " JOIN card.tbAntecipacaoBancaria A ON A.idAntecipacaoBancaria = D.idAntecipacaoBancaria" +
-                                    //" LEFT JOIN pos.RecebimentoParcela P ON P.idAntecipacaoBancariaDetalhe = D.idAntecipacaoBancariaDetalhe" +
+                                        //" LEFT JOIN pos.RecebimentoParcela P ON P.idAntecipacaoBancariaDetalhe = D.idAntecipacaoBancariaDetalhe" +
                                          " LEFT JOIN card.tbRecebimentoAjuste T ON T.idAntecipacaoBancariaDetalhe = D.idAntecipacaoBancariaDetalhe" +
                                          " WHERE A.dtAntecipacaoBancaria < '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
                                          " AND T.idAntecipacaoBancariaDetalhe IS NOT NULL" +
+                                         " AND T.vlAjuste < 0.0" + // ajuste à débito
                                          " AND A.cdContaCorrente = " + cdContaCorrente +
                                          " AND A.cdAdquirente = 7" +
                                          " AND D.dtVencimento BETWEEN '" + DataBaseQueries.GetDate(dtVencimento) + "' AND '" + DataBaseQueries.GetDate(dtVencimento) + " 23:59:00'" +
@@ -901,14 +1061,13 @@ namespace api.Negocios.Card
                                 }
                                 // else não há antecipações anteriores....
 
-                                decimal ajuste = decimal.Round(vlAntecipacaoLiquida - valorLiquidoUtilizado, 2);
-
-                                if (vlAjusteUtilizadoAntecipacaoAnterior != new decimal(0.0) && Math.Abs(vlAjusteUtilizadoAntecipacaoAnterior) + new decimal(0.01) < ajuste)
-                                {
-                                    throw new Exception("Ajuste à crédito de " + ajuste.ToString("C") + " não pode ser criado, pois a parcela que não foi utilizada por completo na antecipação bancária do dia " +
-                                                        dtAntecipacaoBancariaAntecipacaoAnterior.ToShortDateString() + ", vencimento em " + dtVencimento.ToShortDateString() + ", tinha valor disponível de " +
-                                                        (Math.Abs(vlAjusteUtilizadoAntecipacaoAnterior) + new decimal(0.01)).ToString("C"));
-                                }
+                                
+                                //if (vlAjusteUtilizadoAntecipacaoAnterior != new decimal(0.0) && Math.Abs(vlAjusteUtilizadoAntecipacaoAnterior) + new decimal(0.01) < ajuste)
+                                //{
+                                //    throw new Exception("Ajuste à crédito de " + ajuste.ToString("C") + " não pode ser criado, pois a parcela que não foi utilizada por completo na antecipação bancária do dia " +
+                                //                        dtAntecipacaoBancariaAntecipacaoAnterior.ToShortDateString() + ", vencimento em " + dtVencimento.ToShortDateString() + ", tinha valor disponível de " +
+                                //                        (Math.Abs(vlAjusteUtilizadoAntecipacaoAnterior) + new decimal(0.01)).ToString("C"));
+                                //}
 
                                 //teste.parcelas.Add(new
                                 //{
@@ -920,38 +1079,42 @@ namespace api.Negocios.Card
                                 //    ajuste = ajuste,
                                 //});
 
-                                // Cria ajuste, caso não exista
-                                script = "SELECT A.*" +
-                                         " FROM card.tbRecebimentoAjuste A (NOLOCK)" +
-                                         " WHERE A.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe;
-                                resultado = DataBaseQueries.SqlQuery(script, connection);
-                                if (resultado == null || resultado.Count == 0)
+                                if (SALVAR_NA_BASE)
                                 {
-                                    // Cria
-                                    _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoAjuste" +
-                                                                   " (dsMotivo, cdBandeira, nrCNPJ, dtAjuste, vlAjuste, flAntecipacao, idAntecipacaoBancariaDetalhe)" +
-                                                                   " VALUES ('" + dsMotivo + "'" +
-                                                                   ", " + cdBandeiraAjuste +
-                                                                   ", '" + cnpj + "', '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
-                                                                   ", " + ajuste.ToString(CultureInfo.GetCultureInfo("en-GB")) +
-                                                                   ", 1" +
-                                                                   ", " + idAntecipacaoBancariaDetalhe + ")");
+                                    // Cria ajuste, caso não exista
+                                    script = "SELECT A.*" +
+                                             " FROM card.tbRecebimentoAjuste A (NOLOCK)" +
+                                             " WHERE A.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe +
+                                             " AND A.vlAjuste > 0.0"; // valor positivo
+                                    resultado = DataBaseQueries.SqlQuery(script, connection);
+                                    if (resultado == null || resultado.Count == 0)
+                                    {
+                                        // Cria
+                                        _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoAjuste" +
+                                                                       " (dsMotivo, cdBandeira, nrCNPJ, dtAjuste, vlAjuste, flAntecipacao, idAntecipacaoBancariaDetalhe)" +
+                                                                       " VALUES ('" + dsMotivo + "'" +
+                                                                       ", " + cdBandeiraAjuste +
+                                                                       ", '" + cnpj + "', '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
+                                                                       ", " + ajuste.ToString(CultureInfo.GetCultureInfo("en-GB")) +
+                                                                       ", 1" +
+                                                                       ", " + idAntecipacaoBancariaDetalhe + ")");
+                                    }
+                                    else
+                                    {
+                                        // Atualiza valor
+                                        int idRecebimentoAjuste = Convert.ToInt32(resultado[0]["idRecebimentoAjuste"]);
+                                        _db.Database.ExecuteSqlCommand("UPDATE A" +
+                                                                       " SET A.dsMotivo = '" + dsMotivo + "'" +
+                                                                       ", A.cdBandeira = " + cdBandeiraAjuste +
+                                                                       ", A.nrCNPJ = '" + cnpj + "'" +
+                                                                       ", A.dtAjuste = '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
+                                                                       ", A.vlAjuste = " + ajuste.ToString(CultureInfo.GetCultureInfo("en-GB")) +
+                                                                       ", A.flAntecipacao = 1" +
+                                                                       " FROM card.tbRecebimentoAjuste A" +
+                                                                       " WHERE A.idRecebimentoAjuste = " + idRecebimentoAjuste);
+                                    }
+                                    _db.SaveChanges();
                                 }
-                                else
-                                {
-                                    // Atualiza valor
-                                    int idRecebimentoAjuste = Convert.ToInt32(resultado[0]["idRecebimentoAjuste"]);
-                                    _db.Database.ExecuteSqlCommand("UPDATE A" +
-                                                                   " SET A.dsMotivo = '" + dsMotivo + "'" +
-                                                                   ", A.cdBandeira = " + cdBandeiraAjuste +
-                                                                   ", A.nrCNPJ = '" + cnpj + "'" +
-                                                                   ", A.dtAjuste = '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
-                                                                   ", A.vlAjuste = " + ajuste.ToString(CultureInfo.GetCultureInfo("en-GB")) +
-                                                                   ", A.flAntecipacao = 1" +
-                                                                   " FROM card.tbRecebimentoAjuste A" +
-                                                                   " WHERE A.idRecebimentoAjuste = " + idRecebimentoAjuste);
-                                }
-                                _db.SaveChanges();
 
                             }
 

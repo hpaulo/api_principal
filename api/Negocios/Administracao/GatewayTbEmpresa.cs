@@ -9,19 +9,21 @@ using api.Models.Object;
 using System.Data.Entity.Validation;
 using System.Globalization;
 using System.IO;
+using System.Data.Entity;
+using System.Data;
 
 namespace api.Negocios.Admin
 {
     public class GatewayTbEmpresa
     {
-        static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        //static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTbEmpresa()
         {
-            _db.Configuration.ProxyCreationEnabled = false;
+            //_db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -51,7 +53,7 @@ namespace api.Negocios.Admin
         /// <param name="pageNumber"></param>
         /// <param name="queryString"></param>
         /// <returns></returns>
-        private static IQueryable<tbEmpresa> getQuery(int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
+        private static IQueryable<tbEmpresa> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL 
             var entity = _db.tbEmpresas.AsQueryable<tbEmpresa>();
@@ -162,13 +164,20 @@ namespace api.Negocios.Admin
         /// Retorna TbEmpresa/TbEmpresa
         /// </summary>
         /// <returns></returns>
-        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null)
+        public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+            DbContextTransaction transaction = _db.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
+
             try
             {
                 // FILTRO
                 string outValue = null;
-                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo != 0)
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.CDEMPRESAGRUPO, out outValue))
@@ -176,7 +185,7 @@ namespace api.Negocios.Admin
                     else
                         queryString.Add("" + (int)CAMPOS.CDEMPRESAGRUPO, IdGrupo.ToString());
                 }
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (!CnpjEmpresa.Equals(""))
                 {
                     string CnpjBaseEmpresa = CnpjEmpresa.Substring(0, 8);
@@ -192,13 +201,13 @@ namespace api.Negocios.Admin
                 retorno.Totais = new Dictionary<string, object>();
 
                 // GET QUERY
-                var query = getQuery(colecao, campo, orderBy, pageSize, pageNumber, queryString);
+                var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
                 // Vendedor ATOS sem estar associado com um grupo empresa?
-                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))
+                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token, _db))
                 {
                     // Perfil Comercial tem uma carteira de clientes específica
-                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token, _db);
                     query = query.Where(e => listaIdsGruposEmpresas.Contains(e.cdEmpresaGrupo)).AsQueryable<tbEmpresa>();
                 }
 
@@ -277,6 +286,8 @@ namespace api.Negocios.Admin
                 }
 
 
+                transaction.Commit();
+
                 retorno.TotalDeRegistros = CollectionTbEmpresa.Count;
                 retorno.Registros = CollectionTbEmpresa;
 
@@ -284,12 +295,22 @@ namespace api.Negocios.Admin
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     throw new Exception(erro.Equals("") ? "Falha ao listar TbEmpresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 
@@ -414,8 +435,14 @@ namespace api.Negocios.Admin
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static Mensagem Patch(string token, Dictionary<string, string> queryString)
+        public static Mensagem Patch(string token, Dictionary<string, string> queryString, painel_taxservices_dbContext _dbContext = null)
         {
+            painel_taxservices_dbContext _db;
+            if (_dbContext == null)
+                _db = new painel_taxservices_dbContext();
+            else
+                _db = _dbContext;
+            
             try
             {
                 // TEM QUE TER ENVIADO VIA QUERYSTRING nrCNPJBase e dsCertificadoDigitalSenha
@@ -475,6 +502,15 @@ namespace api.Negocios.Admin
                     throw new Exception(erro.Equals("") ? "Falha ao alterar TbEmpresa" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+            }
+            finally
+            {
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
 

@@ -27,7 +27,7 @@ namespace api.Controllers.Card
 
                     Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                     HttpResponseMessage retorno = new HttpResponseMessage();
-                    if (Permissoes.Autenticado(token))
+                    if (Permissoes.Autenticado(token, _db))
                     {
                         Retorno dados = GatewayTbBandeira.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString, _db);
                         log.codResposta = (int)HttpStatusCode.OK;

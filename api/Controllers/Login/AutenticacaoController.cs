@@ -424,7 +424,8 @@ namespace api.Controllers.Login
             catch (Exception e)
             {
                 if (e.Message.Equals("401")) throw new HttpResponseException(HttpStatusCode.Unauthorized);
-                else throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.InternalServerError, e.Message));
+                //return Request.CreateResponse(HttpStatusCode.InternalServerError, e.Message);
             }
         }
 
