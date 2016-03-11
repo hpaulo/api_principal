@@ -123,7 +123,8 @@ namespace api.Negocios.Tax
                         {
                             string busca = nmEmitente.Replace("%", "").ToString();
                             entity = entity.Where(e => e.nmEmitente.Contains(busca));
-                        }else
+                        }
+                        else
                             entity = entity.Where(e => e.nmEmitente.Equals(nmEmitente)).AsQueryable<tbManifesto>();
                         break;
                     case CAMPOS.NREMITENTEIE:
@@ -574,10 +575,10 @@ namespace api.Negocios.Tax
                 }
 
                 // Só interessa os registros que tem XML
-                if(colecao != 0)
-                query = query.Where(e => e.xmlNFe != null).AsQueryable<tbManifesto>();
+                if (colecao != 0)
+                    query = query.Where(e => e.xmlNFe != null).AsQueryable<tbManifesto>();
 
- 
+
                 if (colecao != 4 && colecao != 5)
                 {
                     // TOTAL DE REGISTROS
@@ -600,9 +601,9 @@ namespace api.Negocios.Tax
                         .GroupBy(e => new { e.nrCNPJ })
                         .Select(e => new
                     {
-                            nrCNPJ = e.Key.nrCNPJ,
-                            ultNSU = e.Max(m => m.nrNSU),
-                        }).ToList<dynamic>();
+                        nrCNPJ = e.Key.nrCNPJ,
+                        ultNSU = e.Max(m => m.nrNSU),
+                    }).ToList<dynamic>();
 
                 }
                 else if (colecao == 0) //  [PORTAL] Utilizado para Consulta de NFe GatewayUtilNfe
@@ -651,7 +652,7 @@ namespace api.Negocios.Tax
                             nrChave = e.j.m.nrChave,
                             nrCNPJ = e.j.m.nrCNPJ,
                             dsCertificadoDigital = e.e.dsCertificadoDigital,
-                            dsCertificadoDigitalSenha =e.e.dsCertificadoDigitalSenha,
+                            dsCertificadoDigitalSenha = e.e.dsCertificadoDigitalSenha,
                         }).ToList<dynamic>();
                 }
                 else if (colecao == 3) // [iTAX] Consulta as notas disponíveis para download
@@ -931,7 +932,8 @@ namespace api.Negocios.Tax
                                     inscricaoMunicipal = xmlNFe.dest.IM,
                                     inscricaoEstadual = xmlNFe.dest.IE,
                                     #region INDICADOR IE
-                                    indicadorIE = new {
+                                    indicadorIE = new
+                                    {
                                         codigo = (int)xmlNFe.dest.indIEDest,
                                         descricao = xmlNFe.dest.indIEDest.Equals(TpcnindIEDest.inContribuinte) ? "Contribuinte ICMS (informar a IE do destinatário)" :
                                                     xmlNFe.dest.indIEDest.Equals(TpcnindIEDest.inIsento) ? "Contribuinte isento de Inscrição no cadastro de Contribuintes do ICMS" :
@@ -946,7 +948,8 @@ namespace api.Negocios.Tax
                                 entrega = new
                                 {
                                     #region MUNICÍPIO
-                                    municipio = new {
+                                    municipio = new
+                                    {
                                         codigo = xmlNFe.entrega.cMun,
                                         nome = xmlNFe.entrega.xMun,
                                     },
@@ -1225,16 +1228,16 @@ namespace api.Negocios.Tax
                                     },
                                     #endregion
                                     #region GRUPO VOLUMES
-                                        grupoVolumes = xmlNFe.Transp.Vol.Select(x => new
-                                        {
-                                            qtd = x.qVol,
-                                            especie = x.esp,
-                                            marca = x.marca,
-                                            numeracao = x.nVol,
-                                            pesoLiquido = x.pesoL,
-                                            pesoBruto = x.pesoB,
-                                            lacres = x.Lacres.Select(l => l.nLacre).ToList<string>()
-                                        }).ToList<dynamic>()
+                                    grupoVolumes = xmlNFe.Transp.Vol.Select(x => new
+                                    {
+                                        qtd = x.qVol,
+                                        especie = x.esp,
+                                        marca = x.marca,
+                                        numeracao = x.nVol,
+                                        pesoLiquido = x.pesoL,
+                                        pesoBruto = x.pesoB,
+                                        lacres = x.Lacres.Select(l => l.nLacre).ToList<string>()
+                                    }).ToList<dynamic>()
                                     #endregion
                                 },
                                 #endregion
@@ -1432,14 +1435,15 @@ namespace api.Negocios.Tax
                             nrEmitenteCNPJCPF = e.Key.nrEmitenteCNPJCPF,
                             nmEmitente = e.Key.nmEmitente,
                             UF = "",
-                            notas = e.Select(x => new {
+                            notas = e.Select(x => new
+                            {
                                 idManifesto = x.idManifesto,
                                 dtEmissao = x.dtEmissao,
                                 dtEntrega = x.dtEntrega,
                                 vlNFe = x.vlNFe,
                                 nrChave = x.nrChave,
                                 dsSituacaoManifesto = x.dsSituacaoManifesto,
-                                dsSituacaoErp = x.dtImportacao != null? "Importada": "Não Importado",
+                                dsSituacaoErp = x.dtImportacao != null ? "Importada" : "Não Importado",
                                 xmlNFe = x.xmlNFe,
                                 nrCNPJ = x.nrCNPJ,
 
@@ -1786,7 +1790,7 @@ namespace api.Negocios.Tax
                     throw new Exception("O código do grupo é obrigatório!");
 
                 int cdGrupo = int.Parse(queryString["" + (int)GatewayTbManifesto.CAMPOS.CDGRUPO]);
-                
+
 
                 // TEM QUE TER ENVIADO O ARQUIVO
                 HttpRequest httpRequest = HttpContext.Current.Request;
@@ -1799,9 +1803,43 @@ namespace api.Negocios.Tax
                 if (!extensao.ToLower().Equals(".xml")) throw new Exception("Formato do arquivo deve ser XML!");
 
                 string xml = StreamToString(postedFile.InputStream);
-
+                NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(xml);
                 Mensagem mensagem = new Mensagem();
+                tbManifesto value = _db.tbManifestos.Where(e => e.nrChave == xmlNFe.protNFe.chNFe).First<tbManifesto>();
+                if (value != null)
+                {
+                    mensagem.cdMensagem = 201;
+                    mensagem.dsMensagem = "Não é possível inserir a mesma Nota Fiscal duas vezes.";
+                    return mensagem;
+                }
+                var grupoEmpresa = _db.Database.SqlQuery<dynamic>(@"select nrCNPJ from admin.tbEmpresaGrupo g inner join admin.tbEmpresaFilial e
+                                                                    on(g.cdEmpresaGrupo = e.cdEmpresaGrupo)
+                                                                    where g.cdEmpresaGrupo ="+cdGrupo+ " and e.nrCNPJ = '"+xmlNFe.dest.CNPJ+"'").FirstOrDefault<dynamic>();
+                if (grupoEmpresa == null)
+                {
+                    mensagem.cdMensagem = 202;
+                    mensagem.dsMensagem = "Essa Nota Fiscal não corresponde ao grupo informado.";
+                    return mensagem;
+                }
 
+                tbManifesto manifesto = new tbManifesto();
+                manifesto.cdGrupo = cdGrupo;
+                manifesto.dtEmissao = DateTime.Parse(xmlNFe.ide.dhEmi.Substring(0, 19)).Date;
+                manifesto.dtRecebimento = xmlNFe.protNFe.dhRecbto;
+                manifesto.nmEmitente = xmlNFe.emit.xNome.Replace("amp;", ""); ;
+                manifesto.nrChave = xmlNFe.protNFe.chNFe;
+                manifesto.nrCNPJ = xmlNFe.dest.CNPJ;
+                manifesto.nrEmitenteCNPJCPF = xmlNFe.emit.CNPJ;
+                manifesto.nrEmitenteIE = xmlNFe.emit.IE;
+                manifesto.nrNSU = "000000000000000";
+                manifesto.vlNFe = decimal.Parse(xmlNFe.Total.ICMSTot.vNF.ToString()); ;
+                manifesto.xmlNFe = xml;
+
+                _db.tbManifestos.Add(manifesto);
+                _db.SaveChanges();
+                
+                mensagem.cdMensagem = 200;
+                mensagem.dsMensagem = manifesto.nrChave;
                 return mensagem;
             }
             catch (Exception e)
