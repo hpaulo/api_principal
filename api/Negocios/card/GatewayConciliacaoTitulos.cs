@@ -1080,8 +1080,13 @@ namespace api.Negocios.Card
                     string[] dts = param.data.Split('|');
                     DateTime dtIni = DateTime.ParseExact(dts[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                     DateTime dtFim = DateTime.ParseExact(dts[1] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                    for (DateTime dt = dtIni; dt <= dtFim; dt.AddDays(1))
-                        datas.Add(dt.Year + (dt.Month < 10 ? "0" : "") + dt.Month + (dt.Day < 10 ? "0" : "") + dt.Day);
+                    if (dtIni < dtFim)
+                    {
+                        for (DateTime dt = dtIni; dt <= dtFim; dt = dt.AddDays(1))
+                            datas.Add(dt.Year + (dt.Month < 10 ? "0" : "") + dt.Month + (dt.Day < 10 ? "0" : "") + dt.Day);
+                    }
+                    else
+                        datas.Add(dtIni.Year + (dtIni.Month < 10 ? "0" : "") + dtIni.Month + (dtIni.Day < 10 ? "0" : "") + dtIni.Day);
                 }
                 else
                     datas.Add(param.data);

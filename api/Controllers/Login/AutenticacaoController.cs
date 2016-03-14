@@ -308,44 +308,40 @@ namespace api.Controllers.Login
         public Autenticado Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
         {
             // Abre nova conexão
-            painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
-            try
+            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
- 
-                if (!Permissoes.Autenticado(token, _db)) throw new HttpResponseException(HttpStatusCode.Unauthorized);
+                try
+                {
 
-                //_db.Configuration.ProxyCreationEnabled = false;
+                    if (!Permissoes.Autenticado(token, _db)) throw new HttpResponseException(HttpStatusCode.Unauthorized);
 
-                var verify = (from v in _db.LoginAutenticacaos
-                                where v.token.Equals(token)
-                                select v
-                                ).Single();
+                    //_db.Configuration.ProxyCreationEnabled = false;
 
-                if (verify == null) throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                    var verify = (from v in _db.LoginAutenticacaos
+                                  where v.token.Equals(token)
+                                  select v
+                                    ).Single();
 
-                #region Log de Acesso ao Sistema
-                api.Models.Object.Log log = new api.Models.Object.Log();
-                log.IdUser = verify.idUsers;
-                log.IdController = 45;
-                log.IdMethod = 51;
-                log.DtAcesso = DateTime.Now;
+                    if (verify == null) throw new HttpResponseException(HttpStatusCode.InternalServerError);
 
-                LogAcesso.New(log);
-                #endregion
+                    #region Log de Acesso ao Sistema
+                    api.Models.Object.Log log = new api.Models.Object.Log();
+                    log.IdUser = verify.idUsers;
+                    log.IdController = 45;
+                    log.IdMethod = 51;
+                    log.DtAcesso = DateTime.Now;
 
-                return AcessoUsuarioLogado(token, verify.idUsers, _db);
+                    LogAcesso.New(log);
+                    #endregion
 
-            }
-            catch (Exception e)
-            {
-                if (e.Message.Equals("401")) throw new HttpResponseException(HttpStatusCode.Unauthorized);
-                else throw new HttpResponseException(HttpStatusCode.InternalServerError);
-            }
-            finally
-            {
-                // Fecha conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                    return AcessoUsuarioLogado(token, verify.idUsers, _db);
+
+                }
+                catch (Exception e)
+                {
+                    if (e.Message.Equals("401")) throw new HttpResponseException(HttpStatusCode.Unauthorized);
+                    else throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                }
             }
         }
 
@@ -359,61 +355,57 @@ namespace api.Controllers.Login
                 if (ModelState.IsValid && WebSecurity.Login(data.usuario, data.senha, persistCookie: false))
                 {
                     // Abre nova conexão
-                    painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
-
-                    int userId = WebSecurity.GetUserId(data.usuario);
-
-                    try
+                    using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
                     {
-                        //_db.Configuration.ProxyCreationEnabled = false;
 
+                        int userId = WebSecurity.GetUserId(data.usuario);
 
-                        #region Log de Acesso ao Sistema
-                        api.Models.Object.Log log = new api.Models.Object.Log();
-                        log.IdUser = userId;
-                        log.IdController = 45;
-                        log.IdMethod = 50;
-                        log.DtAcesso = DateTime.Now;
-
-                        LogAcesso.New(log);
-                        #endregion
-
-                        string token = "";
-
-
-
-                        var verify = (from v in _db.LoginAutenticacaos
-                                      where v.idUsers.Equals(userId)
-                                      orderby v.idUsers
-                                      select v
-                                     ).FirstOrDefault();
-
-                        if (verify == null)
+                        try
                         {
-                            token = Token.GetUniqueKey(data.usuario);
-                            LoginAutenticacao la = new LoginAutenticacao();
-                            la.idUsers = userId;
-                            la.token = token;
-                            la.dtValidade = DateTime.Now;
-                            _db.LoginAutenticacaos.Add(la);
-                            _db.SaveChanges();
+                            //_db.Configuration.ProxyCreationEnabled = false;
+
+
+                            #region Log de Acesso ao Sistema
+                            api.Models.Object.Log log = new api.Models.Object.Log();
+                            log.IdUser = userId;
+                            log.IdController = 45;
+                            log.IdMethod = 50;
+                            log.DtAcesso = DateTime.Now;
+
+                            LogAcesso.New(log);
+                            #endregion
+
+                            string token = "";
+
+
+
+                            var verify = (from v in _db.LoginAutenticacaos
+                                          where v.idUsers.Equals(userId)
+                                          orderby v.idUsers
+                                          select v
+                                         ).FirstOrDefault();
+
+                            if (verify == null)
+                            {
+                                token = Token.GetUniqueKey(data.usuario);
+                                LoginAutenticacao la = new LoginAutenticacao();
+                                la.idUsers = userId;
+                                la.token = token;
+                                la.dtValidade = DateTime.Now;
+                                _db.LoginAutenticacaos.Add(la);
+                                _db.SaveChanges();
+                            }
+                            else
+                                token = verify.token;
+
+
+                            return AcessoUsuarioLogado(token, userId, _db);
+
                         }
-                        else
-                            token = verify.token;
-
-
-                        return AcessoUsuarioLogado(token, userId, _db);
-
-                    }
-                    catch(Exception e)
-                    {
-                        throw new HttpResponseException(HttpStatusCode.InternalServerError);
-                    }
-                    finally
-                    {
-                        // Fecha conexão
-                        _db.Database.Connection.Close();
-                        _db.Dispose();
+                        catch (Exception e)
+                        {
+                            throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                        }
                     }
 
                 }
