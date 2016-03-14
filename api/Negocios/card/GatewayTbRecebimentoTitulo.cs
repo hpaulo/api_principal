@@ -290,8 +290,22 @@ namespace api.Negocios.Card
                             where.Add(SIGLA_QUERY + ".nrNSU = '" + nrNSU + "'");
                         break;
                     case CAMPOS.DTVENDA:
-                        DateTime dtVenda = Convert.ToDateTime(item.Value);
-                        where.Add(SIGLA_QUERY + ".dtVenda = " + dtVenda);
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dtInicio = DataBaseQueries.GetDate(dtaIni);
+                            string dtFim = DataBaseQueries.GetDate(dtaFim);
+                            where.Add(SIGLA_QUERY + ".dtVenda BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(data);
+                            where.Add(SIGLA_QUERY + ".dtVenda BETWEEN '" + dt + "' AND '" + dt + " 23:59:00'");
+                        }
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
@@ -553,7 +567,7 @@ namespace api.Negocios.Card
                         dtBaixaERP = e.dtBaixaERP,
                     }).ToList<dynamic>();
                 }
-                else if (colecao == 2) // PORTAL: Consulta Títulos ERP
+                else if (colecao == 2) // PORTAL: Consulta Títulos ERP (Conciliação Bancária)
                 {
                     CollectionTbRecebimentoTitulo = query.Select(e => new
                     {

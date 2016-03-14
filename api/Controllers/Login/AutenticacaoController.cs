@@ -418,13 +418,13 @@ namespace api.Controllers.Login
 
                 }
                 else
-                    throw new HttpResponseException(HttpStatusCode.InternalServerError);
+                    throw new Exception("Usuário e/ou senha inválidos!" + (ModelState.IsValid ? "" : " (invalid model)"));
 
             }
             catch (Exception e)
             {
                 if (e.Message.Equals("401")) throw new HttpResponseException(HttpStatusCode.Unauthorized);
-                throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.InternalServerError, e.Message));
+                throw new HttpResponseException(Request.CreateResponse(HttpStatusCode.InternalServerError, e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message));
                 //return Request.CreateResponse(HttpStatusCode.InternalServerError, e.Message);
             }
         }
