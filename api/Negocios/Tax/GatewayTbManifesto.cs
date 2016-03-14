@@ -1805,12 +1805,20 @@ namespace api.Negocios.Tax
                 string xml = StreamToString(postedFile.InputStream);
                 NFe.ConvertTxt.NFe xmlNFe = Bibliotecas.nfeRead.Loader(xml);
                 Mensagem mensagem = new Mensagem();
-                tbManifesto value = _db.tbManifestos.Where(e => e.nrChave == xmlNFe.protNFe.chNFe).First<tbManifesto>();
+                tbManifesto value = _db.tbManifestos.Where(e => e.nrChave == xmlNFe.protNFe.chNFe).FirstOrDefault<tbManifesto>();
+                bool atualiza = false;
                 if (value != null)
                 {
-                    mensagem.cdMensagem = 201;
-                    mensagem.dsMensagem = "Não é possível inserir a mesma Nota Fiscal duas vezes.";
-                    return mensagem;
+                    if (value.xmlNFe != null)
+                    {
+                        mensagem.cdMensagem = 201;
+                        mensagem.dsMensagem = "Não é possível inserir a mesma Nota Fiscal duas vezes.";
+                        return mensagem;
+                    }
+                    else
+                    {
+                        atualiza = true;
+                    }
                 }
                 var grupoEmpresa = _db.Database.SqlQuery<dynamic>(@"select nrCNPJ from admin.tbEmpresaGrupo g inner join admin.tbEmpresaFilial e
                                                                     on(g.cdEmpresaGrupo = e.cdEmpresaGrupo)
@@ -1834,10 +1842,25 @@ namespace api.Negocios.Tax
                 manifesto.nrNSU = "000000000000000";
                 manifesto.vlNFe = decimal.Parse(xmlNFe.Total.ICMSTot.vNF.ToString()); ;
                 manifesto.xmlNFe = xml;
+                manifesto.cdSituacaoManifesto = 999;
+                manifesto.dsSituacaoManifesto = "Importada manualmente";
 
-                _db.tbManifestos.Add(manifesto);
-                _db.SaveChanges();
-                
+                if (atualiza)
+                {
+                    if (value.nrCNPJ != manifesto.nrCNPJ)
+                        manifesto.nrNSU = "000000000000000";
+                    else
+                        manifesto.nrNSU = null;
+
+                    manifesto.idManifesto = value.idManifesto;
+                    Update("", manifesto, null);
+                }
+                else
+                {
+                    _db.tbManifestos.Add(manifesto);
+                    _db.SaveChanges();
+                }
+
                 mensagem.cdMensagem = 200;
                 mensagem.dsMensagem = manifesto.nrChave;
                 return mensagem;
