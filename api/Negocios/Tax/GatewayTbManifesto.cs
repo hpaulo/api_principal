@@ -537,7 +537,7 @@ namespace api.Negocios.Tax
             {
                 // FILTRO
                 string outValue = null;
-                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo != 0)
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.CDGRUPO, out outValue))
@@ -545,7 +545,7 @@ namespace api.Negocios.Tax
                     else
                         queryString.Add("" + (int)CAMPOS.CDGRUPO, IdGrupo.ToString());
                 }
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (!CnpjEmpresa.Equals(""))
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
@@ -567,10 +567,10 @@ namespace api.Negocios.Tax
                 var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
                 // Vendedor ATOS sem estar associado com um grupo empresa?
-                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token))
+                if (IdGrupo == 0 && Permissoes.isAtosRoleVendedor(token, _db))
                 {
                     // Perfil Comercial tem uma carteira de clientes específica
-                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token);
+                    List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token, _db);
                     query = query.Where(e => listaIdsGruposEmpresas.Contains(e.cdGrupo)).AsQueryable<tbManifesto>();
                 }
 

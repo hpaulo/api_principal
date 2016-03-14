@@ -358,14 +358,14 @@ namespace api.Negocios.Cliente
 
 
                 // PAGINAÇÃO
-                if (colecao != 3)
-                {
-                    int skipRows = (pageNumber - 1) * pageSize;
-                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                        query = query.Skip(skipRows).Take(pageSize);
-                    else
-                        pageNumber = 1;
-                }
+                //if (colecao != 3)
+                //{
+                int skipRows = (pageNumber - 1) * pageSize;
+                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                    query = query.Skip(skipRows).Take(pageSize);
+                else
+                    pageNumber = 1;
+                //}
 
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
