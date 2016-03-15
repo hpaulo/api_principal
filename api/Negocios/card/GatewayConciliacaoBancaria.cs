@@ -1529,21 +1529,21 @@ namespace api.Negocios.Card
                         List<ConciliacaoBancaria> recebimentosParcelaAgrupados = new List<ConciliacaoBancaria>();
 
                         
-                        bool separarParcelasAntecipadas = false;
-                        if(!cdAdquirente.Trim().Equals(""))
-                        {
-                            separarParcelasAntecipadas = cdAdquirente.Equals("2") || cdAdquirente.Equals("7");
-                        }
-                        else
-                        {
-                            // Não selecionou Adquirente... avalia se selecionou conta
-                            if(!contaCorrente.Trim().Equals(""))
-                            {
-                                int[] adquirentesDaConta = Permissoes.GetAdquirentesDaConta(Convert.ToInt32(contaCorrente), _db);
-                                if (adquirentesDaConta.Length == 1)
-                                    separarParcelasAntecipadas = adquirentesDaConta[0] == 2 || adquirentesDaConta[0] == 7;
-                            }
-                        }
+                        bool separarParcelasAntecipadas = true;
+                        //if(!cdAdquirente.Trim().Equals(""))
+                        //{
+                        //    separarParcelasAntecipadas = cdAdquirente.Equals("2") || cdAdquirente.Equals("7");
+                        //}
+                        //else
+                        //{
+                        //    // Não selecionou Adquirente... avalia se selecionou conta
+                        //    if(!contaCorrente.Trim().Equals(""))
+                        //    {
+                        //        int[] adquirentesDaConta = Permissoes.GetAdquirentesDaConta(Convert.ToInt32(contaCorrente), _db);
+                        //        if (adquirentesDaConta.Length == 1)
+                        //            separarParcelasAntecipadas = adquirentesDaConta[0] == 2 || adquirentesDaConta[0] == 7;
+                        //    }
+                        //}
 
                         if (!separarParcelasAntecipadas)
                         {
