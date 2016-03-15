@@ -62,6 +62,32 @@ namespace api.Negocios.Util
             this.where[k] = clause;
         }
 
+        public string ScriptForWhereClause()
+        {
+            string script = String.Empty;
+            if (where != null && where.Length > 0)
+            {
+                foreach (string w in where)
+                    script += "(" + w + ") AND ";
+                // Remove o último AND
+                script = script.Remove(script.Length - 4);
+            }
+            return script;
+        }
+
+        public string ScriptForOrderBy()
+        {
+            string script = String.Empty;
+            if (orderby != null && orderby.Length > 0)
+            {
+                foreach (string o in orderby)
+                    script += o + ", ";
+                // Remove a última vírgula
+                script = script.Remove(script.Length - 2);
+            }
+            return script;
+        }
+
         public string Script()
         {
             string script = "SELECT ";
@@ -86,11 +112,11 @@ namespace api.Negocios.Util
             }
             if (where != null && where.Length > 0)
             {
-                script += " WHERE ";
-                foreach (string w in where)
-                    script += "(" + w + ") AND ";
-                // Remove o último AND
-                script = script.Remove(script.Length - 4);
+                script += " WHERE " + ScriptForWhereClause();
+                //foreach (string w in where)
+                //    script += "(" + w + ") AND ";
+                //// Remove o último AND
+                //script = script.Remove(script.Length - 4);
             }
             if (groupby != null && groupby.Length > 0)
             {
@@ -102,11 +128,11 @@ namespace api.Negocios.Util
             }
             if (orderby != null && orderby.Length > 0)
             {
-                script += " ORDER BY ";
-                foreach (string o in orderby)
-                    script += o + ", ";
-                // Remove a última vírgula
-                script = script.Remove(script.Length - 2);
+                script += " ORDER BY " + ScriptForOrderBy(); ;
+                //foreach (string o in orderby)
+                //    script += o + ", ";
+                //// Remove a última vírgula
+                //script = script.Remove(script.Length - 2);
             }
             return script; 
         }

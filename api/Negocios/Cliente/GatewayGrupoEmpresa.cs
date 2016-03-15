@@ -358,14 +358,14 @@ namespace api.Negocios.Cliente
 
 
                 // PAGINAÇÃO
-                //if (colecao != 3)
-                //{
-                int skipRows = (pageNumber - 1) * pageSize;
-                if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                    query = query.Skip(skipRows).Take(pageSize);
-                else
-                    pageNumber = 1;
-                //}
+                if (colecao != 3)
+                {
+                    int skipRows = (pageNumber - 1) * pageSize;
+                    if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                        query = query.Skip(skipRows).Take(pageSize);
+                    else
+                        pageNumber = 1;
+                }
 
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
@@ -433,30 +433,30 @@ namespace api.Negocios.Cliente
                 }
                 else if (colecao == 3)
                 {
-                    CollectionGrupo_empresa = query.Select(e => new
-                    {
-                        id_grupo = e.id_grupo,
-                        ds_nome = e.ds_nome,
-                        dt_cadastro = e.dt_cadastro,
-                        token = e.token,
-                        fl_ativo = e.fl_ativo,
-                        fl_cardservices = e.fl_cardservices,
-                        fl_taxservices = e.fl_taxservices,
-                        fl_proinfo = e.fl_proinfo,
-                        vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
-                        ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Take(1)
-                                                     .Select(l => new
-                                                     {
-                                                         login_ultimoAcesso = l.webpages_Users.ds_login,
-                                                         dt_ultimoAcesso = l.dtAcesso,
-                                                     }).FirstOrDefault(),
-                        cdPrioridade = e.cdPrioridade,
-                        dsAPI = e.dsAPI,
-                    }
+                    //CollectionGrupo_empresa = query.Select(e => new
+                    //{
+                    //    id_grupo = e.id_grupo,
+                    //    ds_nome = e.ds_nome,
+                    //    dt_cadastro = e.dt_cadastro,
+                    //    token = e.token,
+                    //    fl_ativo = e.fl_ativo,
+                    //    fl_cardservices = e.fl_cardservices,
+                    //    fl_taxservices = e.fl_taxservices,
+                    //    fl_proinfo = e.fl_proinfo,
+                    //    vendedor = e.id_vendedor != null ? new { e.Vendedor.id_users, e.Vendedor.ds_login, e.Vendedor.pessoa.nm_pessoa } : null,
+                    //    ultimoAcesso = _db.LogAcesso1.Where(l => l.webpages_Users.id_grupo == e.id_grupo).OrderByDescending(l => l.dtAcesso).Take(1)
+                    //                                 .Select(l => new
+                    //                                 {
+                    //                                     login_ultimoAcesso = l.webpages_Users.ds_login,
+                    //                                     dt_ultimoAcesso = l.dtAcesso,
+                    //                                 }).FirstOrDefault(),
+                    //    cdPrioridade = e.cdPrioridade,
+                    //    dsAPI = e.dsAPI,
+                    //}
 
-                    ).ToList<dynamic>();
+                    //).ToList<dynamic>();
 
-                    /*SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString);
+                    SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString);
 
                     try
                     {
@@ -469,38 +469,57 @@ namespace api.Negocios.Cliente
 
                     SimpleDataBaseQuery databaseQuery = getQuery(campo, orderBy, queryString);
 
-                    // Add join
-                    databaseQuery.join.Add("OUTER APPLY", " (SELECT TOP(1) U.id_grupo, U.ds_login, L.dtAcesso" +
-                                                          "  FROM log.LogAcesso L (NOLOCK)" +
-                                                          "  JOIN dbo.webpages_Users U (NOLOCK) ON L.idUsers = U.id_users" +
-                                                          "  WHERE U.id_grupo = " + SIGLA_QUERY + ".id_grupo" +
-                                                          "  ORDER BY L.dtAcesso DESC" +
-                                                          " ) T ");
-                    databaseQuery.join.Add("LEFT JOIN dbo.webpages_Users U", " ON " + SIGLA_QUERY + ".id_vendedor = U.id_users");
-                    databaseQuery.join.Add("LEFT JOIN dbo.pessoa P", " ON U.id_pessoa = P.id_pesssoa");
-
-                    // select
-                    databaseQuery.select = new string[] { SIGLA_QUERY + ".id_grupo",
-                                                          SIGLA_QUERY + ".ds_nome",
-                                                          SIGLA_QUERY + ".dt_cadastro",
-                                                          SIGLA_QUERY + ".token",
-                                                          SIGLA_QUERY + ".fl_cardservices",
-                                                          SIGLA_QUERY + ".fl_taxservices",
-                                                          SIGLA_QUERY + ".fl_proinfo",
-                                                          SIGLA_QUERY + ".cdPrioridade",
-                                                          SIGLA_QUERY + ".dsAPI",
-                                                          "U.id_users",
-                                                          "U.ds_login",
-                                                          "P.nm_pessoa",
-                                                          "login_ultimoAcesso = T.ds_login",
-                                                          "dt_ultimoAcesso = T.dtAcesso",
-                                                          "podeExcluir = CASE WHEN T.dtAcesso is NULL THEN 1 else 0 END",
-                                                        };
-
-                    // Uncommited
-                    databaseQuery.readUncommited = true;
-
-                    string script = databaseQuery.Script();
+                    string scriptWhere = databaseQuery.ScriptForWhereClause();
+                    string scriptOrderBy = databaseQuery.ScriptForOrderBy();
+                    string script = "SELECT T.*" +
+                                    " FROM (" +
+                                    " SELECT DISTINCT " + SIGLA_QUERY + ".id_grupo" +
+                                    ", " + SIGLA_QUERY + ".ds_nome" +
+                                    ", " + SIGLA_QUERY + ".dt_cadastro" +
+                                    ", " + SIGLA_QUERY + ".token" +
+                                    ", " + SIGLA_QUERY + ".fl_cardservices" +
+                                    ", " + SIGLA_QUERY + ".fl_taxservices" +
+                                    ", " + SIGLA_QUERY + ".fl_proinfo" +
+                                    ", " + SIGLA_QUERY + ".fl_ativo" +
+                                    ", " + SIGLA_QUERY + ".cdPrioridade" +
+                                    ", " + SIGLA_QUERY + ".dsAPI" +
+                                    ", V.id_users" +
+                                    ", V.ds_login" +
+                                    ", P.nm_pessoa" +
+                                    ", login_ultimoAcesso = U.ds_login" +
+                                    ", dt_ultimoAcesso = L.dtAcesso" +
+                                    " FROM log.logAcesso L (NOLOCK)" +
+                                    " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" + 
+                                    " RIGHT JOIN cliente.grupo_empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".id_grupo = U.id_grupo" +
+                                    " LEFT JOIN dbo.webpages_Users V (NOLOCK) ON V.id_users = " + SIGLA_QUERY + ".id_vendedor" +
+                                    " LEFT JOIN dbo.pessoa P (NOLOCK) ON V.id_pessoa = P.id_pesssoa" +
+                                    " WHERE	L.dtAcesso IS NULL"
+                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere) +
+                                    " UNION ALL " +
+                                    " SELECT DISTINCT " + SIGLA_QUERY + ".id_grupo" +
+                                    ", " + SIGLA_QUERY + ".ds_nome" +
+                                    ", " + SIGLA_QUERY + ".dt_cadastro" +
+                                    ", " + SIGLA_QUERY + ".token" +
+                                    ", " + SIGLA_QUERY + ".fl_cardservices" +
+                                    ", " + SIGLA_QUERY + ".fl_taxservices" +
+                                    ", " + SIGLA_QUERY + ".fl_proinfo" +
+                                    ", " + SIGLA_QUERY + ".fl_ativo" +
+                                    ", " + SIGLA_QUERY + ".cdPrioridade" +
+                                    ", " + SIGLA_QUERY + ".dsAPI" +
+                                    ", V.id_users" +
+                                    ", V.ds_login" +
+                                    ", P.nm_pessoa" +
+                                    ", login_ultimoAcesso = U.ds_login" +
+                                    ", dt_ultimoAcesso = L.dtAcesso" +
+                                    " FROM log.logAcesso L (NOLOCK)" +
+                                    " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" +
+                                    " RIGHT JOIN cliente.grupo_empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".id_grupo = U.id_grupo" +
+                                    " LEFT JOIN dbo.webpages_Users V (NOLOCK) ON V.id_users = " + SIGLA_QUERY + ".id_vendedor" +
+                                    " LEFT JOIN dbo.pessoa P (NOLOCK) ON V.id_pessoa = P.id_pesssoa" +
+                                    " WHERE	U.id_grupo = " + SIGLA_QUERY + ".id_grupo AND L.dtAcesso in (SELECT MAX(L.dtAcesso) FROM log.logAcesso L (NOLOCK) JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers WHERE U.id_grupo = " + SIGLA_QUERY + ".id_grupo)"
+                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere) +
+                                    ") T" +
+                                    " ORDER BY T.ds_nome";
 
                     List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
 
@@ -520,9 +539,10 @@ namespace api.Negocios.Cliente
                                                                                                    ds_login = Convert.ToString(t["ds_login"]), 
                                                                                                    nm_pessoa = Convert.ToString(t["nm_pessoa"]) 
                                                                                                  },
-                            login_ultimoAcesso = t["login_ultimoAcesso"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["login_ultimoAcesso"]),
-                            dt_ultimoAcesso = t["dt_ultimoAcesso"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)t["dt_ultimoAcesso"],
-                            podeExcluir = t["dt_ultimoAcesso"].Equals(DBNull.Value),
+                            ultimoAcesso = t["dt_ultimoAcesso"].Equals(DBNull.Value) ? (object) null : 
+                                           new { login_ultimoAcesso = Convert.ToString(t["login_ultimoAcesso"]),
+                                                 dt_ultimoAcesso = (DateTime)t["dt_ultimoAcesso"]
+                                               },
                             cdPrioridade = Convert.ToByte(t["cdPrioridade"]),
                             dsAPI = t["dsAPI"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["dsAPI"]),
                         }).ToList<dynamic>();
@@ -539,7 +559,7 @@ namespace api.Negocios.Cliente
                         connection.Close();
                     }
                     catch { }
-                    */
+                    
 
                 }
 
