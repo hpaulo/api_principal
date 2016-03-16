@@ -340,7 +340,7 @@ namespace api.Negocios.Cliente
                 // GET QUERY
                 var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
-
+                string whereVendedor = String.Empty;
                 if (!FiltroNome)
                 {
                     // Restringe consulta pelo perfil do usuário logado
@@ -350,6 +350,7 @@ namespace api.Negocios.Cliente
                         // Perfil Comercial tem uma carteira de clientes específica
                         List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token, _db);
                         query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<grupo_empresa>();
+                        whereVendedor = SIGLA_QUERY + ".id_grupo IN (" + string.Join(", ", listaIdsGruposEmpresas) + ")";
                     }
                 }
 
@@ -494,7 +495,8 @@ namespace api.Negocios.Cliente
                                     " LEFT JOIN dbo.webpages_Users V (NOLOCK) ON V.id_users = " + SIGLA_QUERY + ".id_vendedor" +
                                     " LEFT JOIN dbo.pessoa P (NOLOCK) ON V.id_pessoa = P.id_pesssoa" +
                                     " WHERE	L.dtAcesso IS NULL"
-                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere) +
+                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
+                                    + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) +
                                     " UNION ALL " +
                                     " SELECT DISTINCT " + SIGLA_QUERY + ".id_grupo" +
                                     ", " + SIGLA_QUERY + ".ds_nome" +
@@ -517,7 +519,8 @@ namespace api.Negocios.Cliente
                                     " LEFT JOIN dbo.webpages_Users V (NOLOCK) ON V.id_users = " + SIGLA_QUERY + ".id_vendedor" +
                                     " LEFT JOIN dbo.pessoa P (NOLOCK) ON V.id_pessoa = P.id_pesssoa" +
                                     " WHERE	U.id_grupo = " + SIGLA_QUERY + ".id_grupo AND L.dtAcesso in (SELECT MAX(L.dtAcesso) FROM log.logAcesso L (NOLOCK) JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers WHERE U.id_grupo = " + SIGLA_QUERY + ".id_grupo)"
-                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere) +
+                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
+                                    + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) +
                                     ") T" +
                                     " ORDER BY T.ds_nome";
 
