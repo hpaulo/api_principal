@@ -512,6 +512,8 @@ namespace api.Negocios.Cliente
                 // GET QUERY
                 var query = getQuery(_db, colecao, campo, orderBy, pageSize, pageNumber, queryString);
 
+                string whereVendedor = String.Empty;
+
                 // Se não for uma consulta de CNPJ na coleção 0, restringe consulta pelo perfil Comercial que não estiver "amarrado" a um grupo
                 if (!FiltroCNPJ)
                 {
@@ -522,6 +524,7 @@ namespace api.Negocios.Cliente
                         // Perfil Comercial tem uma carteira de clientes específica
                         List<Int32> listaIdsGruposEmpresas = Permissoes.GetIdsGruposEmpresasVendedor(token, _db);
                         query = query.Where(e => listaIdsGruposEmpresas.Contains(e.id_grupo)).AsQueryable<empresa>();
+                        whereVendedor = SIGLA_QUERY + ".id_grupo IN (" + string.Join(", ", listaIdsGruposEmpresas) + ")";
                     }
                 }
 
@@ -710,7 +713,8 @@ namespace api.Negocios.Cliente
                                     " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" +
                                     " RIGHT JOIN cliente.empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".nu_cnpj = U.nu_cnpjEmpresa" +
                                     " WHERE	L.dtAcesso IS NULL"
-                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere) +
+                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
+                                    + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) +
                                     " UNION ALL " +
                                     " SELECT DISTINCT " + SIGLA_QUERY + ".nu_cnpj" +
                                     ", " + SIGLA_QUERY + ".ds_fantasia" +
@@ -733,7 +737,8 @@ namespace api.Negocios.Cliente
                                     " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" +
                                     " RIGHT JOIN cliente.empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".nu_cnpj = U.nu_cnpjEmpresa" +
                                     " WHERE	U.nu_cnpjEmpresa = " + SIGLA_QUERY + ".nu_cnpj AND L.dtAcesso in (SELECT MAX(L.dtAcesso) FROM log.logAcesso L (NOLOCK) JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers WHERE U.nu_cnpjEmpresa = " + SIGLA_QUERY + ".nu_cnpj)"
-                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere) +
+                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
+                                    + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) + 
                                     ") T" +
                                     " LEFT JOIN card.tbLoginAdquirenteEmpresa L (NOLOCK) ON L.nrCNPJ = T.nu_cnpj" +
                                     " ORDER BY T.ds_fantasia";
