@@ -13,6 +13,7 @@ using api.Negocios.Util;
 using System.Globalization;
 using System.Data.Entity;
 using System.Data;
+using api.Negocios.Cliente;
 
 namespace api.Negocios.Card
 {
@@ -51,6 +52,9 @@ namespace api.Negocios.Card
             VLPAGOSDEBITO = 113,
             VLPAGOSANTECIPACAO = 114,
 
+            // PERSONALIZADO
+            ID_GRUPO = 216,
+
         };
 
         /// <summary>
@@ -84,8 +88,25 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.idLogCarga.Equals(idLogCarga)).AsQueryable<tbLogCarga>();
                         break;
                     case CAMPOS.DTCOMPETENCIA:
-                        DateTime dtCompetencia = Convert.ToDateTime(item.Value);
-                        entity = entity.Where(e => e.dtCompetencia.Equals(dtCompetencia)).AsQueryable<tbLogCarga>();
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtCompetencia > dtaIni && e.dtCompetencia < dtaFim).AsQueryable<tbLogCarga>();
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtCompetencia.Year == dtaIni.Year && e.dtCompetencia.Month == dtaIni.Month);
+                        }
+                        else
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtCompetencia.Year == dtaIni.Year && e.dtCompetencia.Month == dtaIni.Month && e.dtCompetencia.Day == dtaIni.Day).AsQueryable<tbLogCarga>();
+                        }
                         break;
                     case CAMPOS.NRCNPJ:
                         string nrCNPJ = Convert.ToString(item.Value);
@@ -138,6 +159,12 @@ namespace api.Negocios.Card
                     case CAMPOS.VLPAGOSANTECIPACAO:
                         decimal vlPagosAntecipacao = Convert.ToDecimal(item.Value);
                         entity = entity.Where(e => e.vlPagosAntecipacao.Equals(vlPagosAntecipacao)).AsQueryable<tbLogCarga>();
+                        break;
+
+                    // PERSONALIZADO
+                    case CAMPOS.ID_GRUPO:
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.empresa.id_grupo == id_grupo).AsQueryable<tbLogCarga>();
                         break;
 
                 }
@@ -248,8 +275,28 @@ namespace api.Negocios.Card
                         where.Add(SIGLA_QUERY + ".idLogCarga = " + idLogCarga);
                         break;
                     case CAMPOS.DTCOMPETENCIA:
-                        DateTime dtCompetencia = Convert.ToDateTime(item.Value);
-                        where.Add(SIGLA_QUERY + ".dtCompetencia = '" + DataBaseQueries.GetDate(dtCompetencia) + "'");
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dtInicio = DataBaseQueries.GetDate(dtaIni);
+                            string dtFim = DataBaseQueries.GetDate(dtaFim);
+                            where.Add(SIGLA_QUERY + ".dtCompetencia BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            where.Add("DATEPART(YEAR, " + SIGLA_QUERY + ".dtCompetencia) = " + data.Year + " AND DATEPART(MONTH, " + SIGLA_QUERY + ".dtCompetencia) = " + data.Month);
+                        }
+                        else
+                        {
+                            string busca = item.Value;
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(data);
+                            where.Add(SIGLA_QUERY + ".dtCompetencia BETWEEN '" + dt + "' AND '" + dt + " 23:59:00'");
+                        }
                         break;
                     case CAMPOS.NRCNPJ:
                         string nrCNPJ = Convert.ToString(item.Value);
@@ -302,6 +349,15 @@ namespace api.Negocios.Card
                     case CAMPOS.VLPAGOSANTECIPACAO:
                         decimal vlPagosAntecipacao = Convert.ToDecimal(item.Value);
                         where.Add(SIGLA_QUERY + ".vlPagosAntecipacao = " + vlPagosAntecipacao.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                        break;
+
+                    // PERSONALIZADO
+                    case CAMPOS.ID_GRUPO:
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        // Adiciona o join
+                        if (!join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                            join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj = " + SIGLA_QUERY + ".nrCNPJ");
+                        where.Add(GatewayEmpresa.SIGLA_QUERY + ".id_grupo = " + id_grupo);
                         break;
                 }
             }
