@@ -66,20 +66,30 @@ namespace api.Negocios.Card
 
                 // DATA DA VENDA => OBRIGATÓRIO
                 DateTime dataNow = Convert.ToDateTime(DateTime.Now.ToShortDateString());
+                DateTime dataInicial, dataFinal;
                 if (queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
                 {
                     // Não permite que o período seja superior ou igual a data corrente
                     string data = queryString["" + (int)CAMPOS.DATA];
                     if (data.Contains("|"))
                     {
-                        DateTime dataInicial = DateTime.ParseExact(data.Substring(0, data.IndexOf("|")) + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                        dataInicial = DateTime.ParseExact(data.Substring(0, data.IndexOf("|")) + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                         //if (dataInicial >= dataNow)
                         //    throw new Exception("Data inicial do período de vendas deve ser inferior a data corrente (" + dataNow.ToShortDateString() + ")");
-                        DateTime dataFinal = DateTime.ParseExact(data.Substring(data.IndexOf("|") + 1) + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                        dataFinal = DateTime.ParseExact(data.Substring(data.IndexOf("|") + 1) + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                         //if (dataFinal >= dataNow)
                         //    throw new Exception("Data final do período de vendas deve ser inferior a data corrente (" + dataNow.ToShortDateString() + ")");
                         if (dataInicial > dataFinal)
                             throw new Exception("Período de vendas informado é inválido!");
+                    }
+                    else if(data.Length == 6)
+                    {    
+                        dataInicial = DateTime.ParseExact(data + "01" + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                        dataFinal = Convert.ToDateTime(DateTime.DaysInMonth(dataInicial.Year, dataInicial.Month) + "/" + dataInicial.Month + "/" + dataInicial.Year);
+                    }
+                    else
+                    {
+                        dataFinal = dataInicial = DateTime.ParseExact(data + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                     }
                     //else
                     //{
@@ -236,12 +246,11 @@ namespace api.Negocios.Card
 
                 transaction.Commit();
 
-                CollectionRelatorioVendas = vendas//.GroupBy(r => new { r.dataVenda.Day, r.dataVenda.Month, r.dataVenda.Year })
+                List<dynamic> vendasAgrupadas = vendas
                                                 .GroupBy(r => r.dataVenda)
                                                 .Select(r => new
                                                 {
-                                                    //diaVenda = (r.Key.Day < 10 ? "0" : "") + r.Key.Day + "/" + (r.Key.Month < 10 ? "0" : "") + r.Key.Month + "/" + r.Key.Year,
-                                                    diaVenda = r.Key.ToShortDateString(),
+                                                    data = r.Key,
                                                     valorSite = valoresSite.Where(t => t.dtCompetencia.Equals(r.Key))
                                                                            .Where(t => r.GroupBy(f => f.adquirente).Select(f => f.Key).Contains(t.adquirente))
                                                                            .Sum(t => t.valorSite),
@@ -291,6 +300,118 @@ namespace api.Negocios.Card
                                                         }).ToList<dynamic>(),
                                                     }).ToList<dynamic>(),
                                                 }).ToList<dynamic>();
+
+                for (DateTime dt = dataInicial; dt <= dataFinal; dt = dt.AddDays(1))
+                {
+                    var v = vendasAgrupadas.Where(t => t.data.Equals(dt)).FirstOrDefault();
+                    var s = valoresSite.Where(t => t.dtCompetencia.Equals(dt)).FirstOrDefault();
+
+                    if (v != null)
+                    {
+                        CollectionRelatorioVendas.Add(new
+                        {
+                            diaVenda = dt.ToShortDateString(),
+                            valorSite = v.valorSite,
+                            processouVenda = v.processouVenda,
+                            valorBruto = v.valorBruto,
+                            valorDescontado = v.valorDescontado,
+                            valorLiquido = v.valorLiquido,
+                            valorRecebido = v.valorRecebido,
+                            valorAReceber = v.valorRecebido,
+                            adquirentes = v.adquirentes
+                        });
+                    }
+                    else if (s != null)
+                    {
+                        CollectionRelatorioVendas.Add(new
+                        {
+                            diaVenda = dt.ToShortDateString(),
+                            valorSite = valoresSite.Where(t => t.dtCompetencia.Equals(dt))
+                                                   .Sum(t => t.valorSite),
+                            processouVenda = valoresSite.Where(t => t.dtCompetencia.Equals(dt))
+                                                        .Count() > 0 &&
+                                             valoresSite.Where(t => t.dtCompetencia.Equals(dt))
+                                                        .Where(t => !t.processouModalidade)
+                                                        .Count() == 0,
+                            valorBruto = new decimal(0.0),
+                            valorDescontado = new decimal(0.0),
+                            valorLiquido = new decimal(0.0),
+                            valorRecebido = new decimal(0.0),
+                            valorAReceber = new decimal(0.0),
+                            adquirentes = valoresSite.Where(f => f.dtCompetencia.Equals(dt))
+                                                     .GroupBy(f => f.adquirente)
+                                                     .Select(f => new
+                                                     {
+                                                         adquirente = f.Key,
+                                                         valorSite = f.Sum(t => t.valorSite),
+                                                         processouVenda = f.Count() > 0 && f.Where(t => !t.processouModalidade).Count() == 0,
+                                                         valorBruto = new decimal(0.0),
+                                                         valorDescontado = new decimal(0.0),
+                                                         valorLiquido = new decimal(0.0),
+                                                         valorRecebido = new decimal(0.0),
+                                                         valorAReceber = new decimal(0.0),
+                                                         bandeiras = new List<dynamic>()
+                                                     })
+                                                     .ToList<dynamic>()
+                        });
+                    }
+                }
+
+                //CollectionRelatorioVendas = vendas//.GroupBy(r => new { r.dataVenda.Day, r.dataVenda.Month, r.dataVenda.Year })
+                //                                .GroupBy(r => r.dataVenda)
+                //                                .Select(r => new
+                //                                {
+                //                                    //diaVenda = (r.Key.Day < 10 ? "0" : "") + r.Key.Day + "/" + (r.Key.Month < 10 ? "0" : "") + r.Key.Month + "/" + r.Key.Year,
+                //                                    diaVenda = r.Key.ToShortDateString(),
+                //                                    valorSite = valoresSite.Where(t => t.dtCompetencia.Equals(r.Key))
+                //                                                           .Where(t => r.GroupBy(f => f.adquirente).Select(f => f.Key).Contains(t.adquirente))
+                //                                                           .Sum(t => t.valorSite),
+                //                                    processouVenda = valoresSite.Where(t => t.dtCompetencia.Equals(r.Key))
+                //                                                                .Where(t => r.GroupBy(f => f.adquirente).Select(f => f.Key).Contains(t.adquirente))
+                //                                                                .Count() > 0 && 
+                //                                                     valoresSite.Where(t => t.dtCompetencia.Equals(r.Key))
+                //                                                                .Where(t => r.GroupBy(f => f.adquirente).Select(f => f.Key).Contains(t.adquirente))
+                //                                                                .Where(t => !t.processouModalidade)
+                //                                                                .Count() == 0,
+                //                                    valorBruto = r.Sum(f => f.valorBruto),
+                //                                    valorDescontado = r.Sum(f => f.valorDescontado),
+                //                                    valorLiquido = r.Sum(f => f.valorLiquido),
+                //                                    valorRecebido = r.Where(f => f.recebeu == true).Sum(f => f.valorLiquido),
+                //                                    valorAReceber = r.Where(f => f.recebeu == false).Sum(f => f.valorLiquido),
+                //                                    adquirentes = r.GroupBy(f => f.adquirente)
+                //                                    .OrderBy(f => f.Key)
+                //                                    .Select(f => new
+                //                                    {
+                //                                        adquirente = f.Key,
+                //                                        valorSite = valoresSite.Where(t => t.dtCompetencia.Equals(r.Key))
+                //                                                               .Where(t => t.adquirente.Equals(f.Key))
+                //                                                               .Sum(t => t.valorSite),
+                //                                        processouVenda = valoresSite.Where(t => t.dtCompetencia.Equals(r.Key))
+                //                                                                    .Where(t => t.adquirente.Equals(f.Key))
+                //                                                                    .Count() > 0 && 
+                //                                                         valoresSite.Where(t => t.dtCompetencia.Equals(r.Key))
+                //                                                                    .Where(t => t.adquirente.Equals(f.Key))
+                //                                                                    .Where(t => !t.processouModalidade)
+                //                                                                    .Count() == 0,
+                //                                        valorBruto = f.Sum(x => x.valorBruto),
+                //                                        valorDescontado = f.Sum(x => x.valorDescontado),
+                //                                        valorLiquido = f.Sum(x => x.valorLiquido),
+                //                                        valorRecebido = f.Where(x => x.recebeu == true).Sum(x => x.valorLiquido),
+                //                                        valorAReceber = f.Where(x => x.recebeu == false).Sum(x => x.valorLiquido),
+                //                                        bandeiras = f.GroupBy(x => x.bandeira)
+                //                                        .OrderBy(x => x.Key)
+                //                                        .Select(x => new
+                //                                        {
+                //                                            bandeira = x.Key,
+                //                                            valorSite = new decimal(0.0),
+                //                                            valorBruto = x.Sum(y => y.valorBruto),
+                //                                            valorDescontado = x.Sum(y => y.valorDescontado),
+                //                                            valorLiquido = x.Sum(y => y.valorLiquido),
+                //                                            valorRecebido = x.Where(y => y.recebeu == true).Sum(y => y.valorLiquido),
+                //                                            valorAReceber = x.Where(y => y.recebeu == false).Sum(y => y.valorLiquido),
+                //                                        }).ToList<dynamic>(),
+                //                                    }).ToList<dynamic>(),
+                //                                }).ToList<dynamic>();
 
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = CollectionRelatorioVendas.Count;
