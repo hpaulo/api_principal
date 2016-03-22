@@ -17,6 +17,7 @@ namespace api.Models
         public Nullable<int> idRecebimentoTitulo { get; set; }
         public bool flAntecipado { get; set; }
         public Nullable<int> idAntecipacaoBancariaDetalhe { get; set; }
+        public Nullable<System.DateTime> dtaRecebimentoOriginal { get; set; }
         public virtual Recebimento Recebimento { get; set; }
         public virtual tbExtrato tbExtrato { get; set; }
         public virtual tbRecebimentoTitulo tbRecebimentoTitulo { get; set; }
