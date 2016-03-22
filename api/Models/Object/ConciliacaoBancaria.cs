@@ -117,6 +117,13 @@ namespace api.Models.Object
             set { antecipado = value; }
         }
 
+        private Nullable<bool> dataRecebimentoDiferente;
+        public Nullable<bool> DataRecebimentoDiferente
+        {
+            get { return dataRecebimentoDiferente; }
+            set { dataRecebimentoDiferente = value; }
+        }
+
 
 
         public class ConciliacaoGrupo
@@ -211,6 +218,13 @@ namespace api.Models.Object
                 get { return antecipado; }
                 set { antecipado = value; }
             }
+
+            //private Nullable<DateTime> dataRecebimentoOriginal;
+            //public Nullable<DateTime> DataRecebimentoOriginal
+            //{
+            //    get { return dataRecebimentoOriginal; }
+            //    set { dataRecebimentoOriginal = value; }
+            //}
         }
 
 

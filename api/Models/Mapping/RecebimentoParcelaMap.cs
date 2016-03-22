@@ -47,6 +47,7 @@ namespace api.Models.Mapping
             this.Property(t => t.idRecebimentoTitulo).HasColumnName("idRecebimentoTitulo"); 
             this.Property(t => t.flAntecipado).HasColumnName("flAntecipado");
             this.Property(t => t.idAntecipacaoBancariaDetalhe).HasColumnName("idAntecipacaoBancariaDetalhe");
+            this.Property(t => t.dtaRecebimentoOriginal).HasColumnName("dtaRecebimentoOriginal");
 
             // Relationships
             this.HasRequired(t => t.Recebimento)
