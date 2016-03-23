@@ -669,122 +669,138 @@ namespace api.Negocios.Cliente
                         throw new Exception("Não foi possível estabelecer conexão com a base de dados");
                     }
 
-                    SimpleDataBaseQuery databaseQuery = getQuery(campo, orderBy, queryString);
-
-                    string scriptWhere = databaseQuery.ScriptForWhereClause();
-                    string scriptOrderBy = databaseQuery.ScriptForOrderBy();
-                    string script = "SELECT DISTINCT T.nu_cnpj" +
-                                    ", T.ds_fantasia" +
-                                    ", T.ds_razaoSocial" +
-                                    ", T.ds_endereco" +
-                                    ", T.ds_cidade" +
-                                    ", T.sg_uf" +
-                                    ", T.nu_cep" +
-                                    ", T.nu_telefone" +
-                                    ", T.ds_bairro" +
-                                    ", T.ds_email" +
-                                    ", T.dt_cadastro" +
-                                    ", T.fl_ativo" +
-                                    ", T.id_grupo" +
-                                    ", T.filial" +
-                                    ", T.nu_inscEstadual" +
-                                    ", T.login_ultimoAcesso" +
-                                    ", T.dt_ultimoAcesso" +
-                                    ", podeExcluir = CASE WHEN T.dt_ultimoAcesso IS NULL AND L.nrCNPJ IS NULL THEN 1 ELSE 0 END" +
-                                    " FROM (" +
-                                    " SELECT DISTINCT " + SIGLA_QUERY + ".nu_cnpj" +
-                                    ", " + SIGLA_QUERY + ".ds_fantasia" +
-                                    ", " + SIGLA_QUERY + ".ds_razaoSocial" +
-                                    ", " + SIGLA_QUERY + ".ds_endereco" +
-                                    ", " + SIGLA_QUERY + ".ds_cidade" +
-                                    ", " + SIGLA_QUERY + ".sg_uf" +
-                                    ", " + SIGLA_QUERY + ".nu_cep" +
-                                    ", " + SIGLA_QUERY + ".nu_telefone" +
-                                    ", " + SIGLA_QUERY + ".ds_bairro" +
-                                    ", " + SIGLA_QUERY + ".ds_email" +
-                                    ", " + SIGLA_QUERY + ".dt_cadastro" +
-                                    ", " + SIGLA_QUERY + ".fl_ativo" +
-                                    ", " + SIGLA_QUERY + ".id_grupo" +
-                                    ", " + SIGLA_QUERY + ".filial" +
-                                    ", " + SIGLA_QUERY + ".nu_inscEstadual" +
-                                    ", login_ultimoAcesso = U.ds_login" +
-                                    ", dt_ultimoAcesso = L.dtAcesso" +
-                                    " FROM log.logAcesso L (NOLOCK)" +
-                                    " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" +
-                                    " RIGHT JOIN cliente.empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".nu_cnpj = U.nu_cnpjEmpresa" +
-                                    " WHERE	L.dtAcesso IS NULL"
-                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
-                                    + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) +
-                                    " UNION ALL " +
-                                    " SELECT DISTINCT " + SIGLA_QUERY + ".nu_cnpj" +
-                                    ", " + SIGLA_QUERY + ".ds_fantasia" +
-                                    ", " + SIGLA_QUERY + ".ds_razaoSocial" +
-                                    ", " + SIGLA_QUERY + ".ds_endereco" +
-                                    ", " + SIGLA_QUERY + ".ds_cidade" +
-                                    ", " + SIGLA_QUERY + ".sg_uf" +
-                                    ", " + SIGLA_QUERY + ".nu_cep" +
-                                    ", " + SIGLA_QUERY + ".nu_telefone" +
-                                    ", " + SIGLA_QUERY + ".ds_bairro" +
-                                    ", " + SIGLA_QUERY + ".ds_email" +
-                                    ", " + SIGLA_QUERY + ".dt_cadastro" +
-                                    ", " + SIGLA_QUERY + ".fl_ativo" +
-                                    ", " + SIGLA_QUERY + ".id_grupo" +
-                                    ", " + SIGLA_QUERY + ".filial" +
-                                    ", " + SIGLA_QUERY + ".nu_inscEstadual" +
-                                    ", login_ultimoAcesso = U.ds_login" +
-                                    ", dt_ultimoAcesso = L.dtAcesso" +
-                                    " FROM log.logAcesso L (NOLOCK)" +
-                                    " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" +
-                                    " RIGHT JOIN cliente.empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".nu_cnpj = U.nu_cnpjEmpresa" +
-                                    " WHERE	U.nu_cnpjEmpresa = " + SIGLA_QUERY + ".nu_cnpj AND L.dtAcesso in (SELECT MAX(L.dtAcesso) FROM log.logAcesso L (NOLOCK) JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers WHERE U.nu_cnpjEmpresa = " + SIGLA_QUERY + ".nu_cnpj)"
-                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
-                                    + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) + 
-                                    ") T" +
-                                    " LEFT JOIN card.tbLoginAdquirenteEmpresa L (NOLOCK) ON L.nrCNPJ = T.nu_cnpj" +
-                                    " ORDER BY T.ds_fantasia";
-
-                    List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
-
-                    if (resultado != null && resultado.Count > 0)
-                    {
-                        CollectionEmpresa = resultado.Select(t => new
-                        {
-                            nu_cnpj = Convert.ToString(t["nu_cnpj"]),
-                            ds_fantasia = Convert.ToString(t["ds_fantasia"]),
-                            ds_razaoSocial = t["ds_razaoSocial"].Equals(DBNull.Value) ? (string) null : Convert.ToString(t["ds_razaoSocial"]),
-                            ds_endereco = t["ds_endereco"].Equals(DBNull.Value) ? (string) null : Convert.ToString(t["ds_endereco"]),
-                            ds_cidade = t["ds_cidade"].Equals(DBNull.Value) ? (string) null : Convert.ToString(t["ds_cidade"]),
-                            sg_uf = t["sg_uf"].Equals(DBNull.Value) ? (string) null : Convert.ToString(t["sg_uf"]),
-                            nu_cep = t["nu_cep"].Equals(DBNull.Value) ? (string) null : Convert.ToString(t["nu_cep"]),
-                            nu_telefone = t["nu_telefone"].Equals(DBNull.Value) ? (string) null : Convert.ToString(t["nu_telefone"]),
-                            ds_bairro = t["ds_bairro"].Equals(DBNull.Value) ? (string) null : Convert.ToString(t["ds_bairro"]),
-                            ds_email = Convert.ToString(t["ds_email"]),
-                            dt_cadastro = (DateTime)t["dt_cadastro"],
-                            fl_ativo = Convert.ToInt32(t["fl_ativo"]),
-                            filial = t["filial"].Equals(DBNull.Value) ? (string) null : Convert.ToString(t["filial"]),
-                            id_grupo = Convert.ToInt32(t["id_grupo"]),
-                            nu_inscEstadual = t["nu_inscEstadual"].Equals(DBNull.Value) ? (int?) null : Convert.ToInt32(t["nu_inscEstadual"]),
-                            ultimoAcesso = t["dt_ultimoAcesso"].Equals(DBNull.Value) ? (object)null :
-                                           new
-                                           {
-                                               login_ultimoAcesso = Convert.ToString(t["login_ultimoAcesso"]),
-                                               dt_ultimoAcesso = (DateTime)t["dt_ultimoAcesso"]
-                                           },
-                            podeExcluir = Convert.ToBoolean(t["podeExcluir"])
-                        }).ToList<dynamic>();
-
-                        int skipRows = (pageNumber - 1) * pageSize;
-                        if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                            CollectionEmpresa = CollectionEmpresa.Skip(skipRows).Take(pageSize).ToList();
-                        else
-                            pageNumber = 1;
-                    }
-
                     try
                     {
-                        connection.Close();
+
+                        SimpleDataBaseQuery databaseQuery = getQuery(campo, orderBy, queryString);
+
+                        string scriptWhere = databaseQuery.ScriptForWhereClause();
+                        string scriptOrderBy = databaseQuery.ScriptForOrderBy();
+                        string script = "SELECT DISTINCT T.nu_cnpj" +
+                                        ", T.ds_fantasia" +
+                                        ", T.ds_razaoSocial" +
+                                        ", T.ds_endereco" +
+                                        ", T.ds_cidade" +
+                                        ", T.sg_uf" +
+                                        ", T.nu_cep" +
+                                        ", T.nu_telefone" +
+                                        ", T.ds_bairro" +
+                                        ", T.ds_email" +
+                                        ", T.dt_cadastro" +
+                                        ", T.fl_ativo" +
+                                        ", T.id_grupo" +
+                                        ", T.filial" +
+                                        ", T.nu_inscEstadual" +
+                                        ", T.login_ultimoAcesso" +
+                                        ", T.dt_ultimoAcesso" +
+                                        ", podeExcluir = CASE WHEN T.dt_ultimoAcesso IS NULL AND L.nrCNPJ IS NULL THEN 1 ELSE 0 END" +
+                                        " FROM (" +
+                                        " SELECT DISTINCT " + SIGLA_QUERY + ".nu_cnpj" +
+                                        ", " + SIGLA_QUERY + ".ds_fantasia" +
+                                        ", " + SIGLA_QUERY + ".ds_razaoSocial" +
+                                        ", " + SIGLA_QUERY + ".ds_endereco" +
+                                        ", " + SIGLA_QUERY + ".ds_cidade" +
+                                        ", " + SIGLA_QUERY + ".sg_uf" +
+                                        ", " + SIGLA_QUERY + ".nu_cep" +
+                                        ", " + SIGLA_QUERY + ".nu_telefone" +
+                                        ", " + SIGLA_QUERY + ".ds_bairro" +
+                                        ", " + SIGLA_QUERY + ".ds_email" +
+                                        ", " + SIGLA_QUERY + ".dt_cadastro" +
+                                        ", " + SIGLA_QUERY + ".fl_ativo" +
+                                        ", " + SIGLA_QUERY + ".id_grupo" +
+                                        ", " + SIGLA_QUERY + ".filial" +
+                                        ", " + SIGLA_QUERY + ".nu_inscEstadual" +
+                                        ", login_ultimoAcesso = U.ds_login" +
+                                        ", dt_ultimoAcesso = L.dtAcesso" +
+                                        " FROM log.logAcesso L (NOLOCK)" +
+                                        " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" +
+                                        " RIGHT JOIN cliente.empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".nu_cnpj = U.nu_cnpjEmpresa" +
+                                        " WHERE	L.dtAcesso IS NULL"
+                                        + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
+                                        + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) +
+                                        " UNION ALL " +
+                                        " SELECT DISTINCT " + SIGLA_QUERY + ".nu_cnpj" +
+                                        ", " + SIGLA_QUERY + ".ds_fantasia" +
+                                        ", " + SIGLA_QUERY + ".ds_razaoSocial" +
+                                        ", " + SIGLA_QUERY + ".ds_endereco" +
+                                        ", " + SIGLA_QUERY + ".ds_cidade" +
+                                        ", " + SIGLA_QUERY + ".sg_uf" +
+                                        ", " + SIGLA_QUERY + ".nu_cep" +
+                                        ", " + SIGLA_QUERY + ".nu_telefone" +
+                                        ", " + SIGLA_QUERY + ".ds_bairro" +
+                                        ", " + SIGLA_QUERY + ".ds_email" +
+                                        ", " + SIGLA_QUERY + ".dt_cadastro" +
+                                        ", " + SIGLA_QUERY + ".fl_ativo" +
+                                        ", " + SIGLA_QUERY + ".id_grupo" +
+                                        ", " + SIGLA_QUERY + ".filial" +
+                                        ", " + SIGLA_QUERY + ".nu_inscEstadual" +
+                                        ", login_ultimoAcesso = U.ds_login" +
+                                        ", dt_ultimoAcesso = L.dtAcesso" +
+                                        " FROM log.logAcesso L (NOLOCK)" +
+                                        " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" +
+                                        " RIGHT JOIN cliente.empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".nu_cnpj = U.nu_cnpjEmpresa" +
+                                        " WHERE	U.nu_cnpjEmpresa = " + SIGLA_QUERY + ".nu_cnpj AND L.dtAcesso in (SELECT MAX(L.dtAcesso) FROM log.logAcesso L (NOLOCK) JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers WHERE U.nu_cnpjEmpresa = " + SIGLA_QUERY + ".nu_cnpj)"
+                                        + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
+                                        + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) +
+                                        ") T" +
+                                        " LEFT JOIN card.tbLoginAdquirenteEmpresa L (NOLOCK) ON L.nrCNPJ = T.nu_cnpj" +
+                                        " ORDER BY T.ds_fantasia";
+
+                        List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
+
+                        if (resultado != null && resultado.Count > 0)
+                        {
+                            CollectionEmpresa = resultado.Select(t => new
+                            {
+                                nu_cnpj = Convert.ToString(t["nu_cnpj"]),
+                                ds_fantasia = Convert.ToString(t["ds_fantasia"]),
+                                ds_razaoSocial = t["ds_razaoSocial"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["ds_razaoSocial"]),
+                                ds_endereco = t["ds_endereco"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["ds_endereco"]),
+                                ds_cidade = t["ds_cidade"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["ds_cidade"]),
+                                sg_uf = t["sg_uf"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["sg_uf"]),
+                                nu_cep = t["nu_cep"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["nu_cep"]),
+                                nu_telefone = t["nu_telefone"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["nu_telefone"]),
+                                ds_bairro = t["ds_bairro"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["ds_bairro"]),
+                                ds_email = Convert.ToString(t["ds_email"]),
+                                dt_cadastro = (DateTime)t["dt_cadastro"],
+                                fl_ativo = Convert.ToInt32(t["fl_ativo"]),
+                                filial = t["filial"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["filial"]),
+                                id_grupo = Convert.ToInt32(t["id_grupo"]),
+                                nu_inscEstadual = t["nu_inscEstadual"].Equals(DBNull.Value) ? (int?)null : Convert.ToInt32(t["nu_inscEstadual"]),
+                                ultimoAcesso = t["dt_ultimoAcesso"].Equals(DBNull.Value) ? (object)null :
+                                               new
+                                               {
+                                                   login_ultimoAcesso = Convert.ToString(t["login_ultimoAcesso"]),
+                                                   dt_ultimoAcesso = (DateTime)t["dt_ultimoAcesso"]
+                                               },
+                                podeExcluir = Convert.ToBoolean(t["podeExcluir"])
+                            }).ToList<dynamic>();
+
+                            int skipRows = (pageNumber - 1) * pageSize;
+                            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                                CollectionEmpresa = CollectionEmpresa.Skip(skipRows).Take(pageSize).ToList();
+                            else
+                                pageNumber = 1;
+                        }
+
                     }
-                    catch { }
+                    catch (Exception e)
+                    {
+                        if (e is DbEntityValidationException)
+                        {
+                            string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                            throw new Exception(erro.Equals("") ? "Falha ao listar recebimento parcela" : erro);
+                        }
+                        throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            connection.Close();
+                        }
+                        catch { }
+                    }
                 }
 
                 transaction.Commit();

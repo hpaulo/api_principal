@@ -14,6 +14,8 @@ namespace api.Models
         public Nullable<int> idResumoVenda { get; set; }
         public bool flAntecipacao { get; set; }
         public Nullable<int> idAntecipacaoBancariaDetalhe { get; set; }
+        public Nullable<System.DateTime> dtVenda { get; set; }
+        public decimal vlBruto { get; set; }
         public virtual tbBandeira tbBandeira { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual tbExtrato tbExtrato { get; set; }

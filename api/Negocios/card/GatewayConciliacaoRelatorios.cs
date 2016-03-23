@@ -180,46 +180,53 @@ namespace api.Negocios.Card
                     throw new Exception("Não foi possível estabelecer conexão com a base de dados");
                 }
 
-                #region OBTÉM COMPONENTES QUERIES
-                SimpleDataBaseQuery dataBaseQueryRP = GatewayRecebimentoParcela.getQuery((int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, 0, queryStringRecebimentoParcela);
-                SimpleDataBaseQuery dataBaseQueryAJ = GatewayTbRecebimentoAjuste.getQuery((int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, queryStringTbRecebimentoAjuste);
-                SimpleDataBaseQuery dataBaseQueryEX = GatewayTbExtrato.getQuery((int)GatewayTbExtrato.CAMPOS.DTEXTRATO, 0, queryStringExtrato);
+                List<ConciliacaoRelatorios> rRecebimentoParcela = new List<ConciliacaoRelatorios>();
+                List<ConciliacaoRelatorios> rRecebimentoAjuste = new List<ConciliacaoRelatorios>();
+                List<ConciliacaoRelatorios> rMovimentacoesBancarias = new List<ConciliacaoRelatorios>();
 
-                // Adiciona JOINS, caso não tenham
+                try
+                {
 
-                // RECEBIMENTO PARCELA
-                if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
-                    dataBaseQueryRP.join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".id = " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idRecebimento");
-                if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
-                    dataBaseQueryRP.join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
-                if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
-                    dataBaseQueryRP.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
-                
-                // AJUSTES
-                if (!dataBaseQueryAJ.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
-                    dataBaseQueryAJ.join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".cdBandeira");
-                if (!dataBaseQueryAJ.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
-                    dataBaseQueryAJ.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
-                
-                // EXTRATO
-                if (!dataBaseQueryEX.join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
-                    dataBaseQueryEX.join.Add("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + GatewayTbExtrato.SIGLA_QUERY + ".cdContaCorrente");
-                if (!dataBaseQueryEX.join.ContainsKey("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY))
-                    dataBaseQueryEX.join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + GatewayTbExtrato.SIGLA_QUERY + ".dsDocumento");
-                if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
-                    dataBaseQueryEX.join.Add("LEFT JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente");
-                if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
-                    dataBaseQueryEX.join.Add("LEFT JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBandeira");
-                //if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY))
-                //    dataBaseQueryEX.join.Add("LEFT JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY, " ON " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato = " + GatewayTbExtrato.SIGLA_QUERY + ".idExtrato");
-                //if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY))
-                //    dataBaseQueryEX.join.Add("LEFT JOIN card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY, " ON " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idExtrato = " + GatewayTbExtrato.SIGLA_QUERY + ".idExtrato");
+                    #region OBTÉM COMPONENTES QUERIES
+                    SimpleDataBaseQuery dataBaseQueryRP = GatewayRecebimentoParcela.getQuery((int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, 0, queryStringRecebimentoParcela);
+                    SimpleDataBaseQuery dataBaseQueryAJ = GatewayTbRecebimentoAjuste.getQuery((int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, 0, queryStringTbRecebimentoAjuste);
+                    SimpleDataBaseQuery dataBaseQueryEX = GatewayTbExtrato.getQuery((int)GatewayTbExtrato.CAMPOS.DTEXTRATO, 0, queryStringExtrato);
+
+                    // Adiciona JOINS, caso não tenham
+
+                    // RECEBIMENTO PARCELA
+                    if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
+                        dataBaseQueryRP.join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".id = " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idRecebimento");
+                    if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                        dataBaseQueryRP.join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
+                    if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                        dataBaseQueryRP.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
+
+                    // AJUSTES
+                    if (!dataBaseQueryAJ.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                        dataBaseQueryAJ.join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".cdBandeira");
+                    if (!dataBaseQueryAJ.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                        dataBaseQueryAJ.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
+
+                    // EXTRATO
+                    if (!dataBaseQueryEX.join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
+                        dataBaseQueryEX.join.Add("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + GatewayTbExtrato.SIGLA_QUERY + ".cdContaCorrente");
+                    if (!dataBaseQueryEX.join.ContainsKey("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY))
+                        dataBaseQueryEX.join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + GatewayTbExtrato.SIGLA_QUERY + ".dsDocumento");
+                    if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                        dataBaseQueryEX.join.Add("LEFT JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente");
+                    if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                        dataBaseQueryEX.join.Add("LEFT JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBandeira");
+                    //if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY))
+                    //    dataBaseQueryEX.join.Add("LEFT JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY, " ON " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato = " + GatewayTbExtrato.SIGLA_QUERY + ".idExtrato");
+                    //if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY))
+                    //    dataBaseQueryEX.join.Add("LEFT JOIN card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY, " ON " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idExtrato = " + GatewayTbExtrato.SIGLA_QUERY + ".idExtrato");
 
 
-                // Obtém o select de cada um
+                    // Obtém o select de cada um
 
-                // RECEBIMENTO PARCELA
-                dataBaseQueryRP.select = new string[] { "tipo = 'R'",
+                    // RECEBIMENTO PARCELA
+                    dataBaseQueryRP.select = new string[] { "tipo = 'R'",
                                                         GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente AS adquirente",
                                                         GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira AS bandeira",
                                                         GatewayTbBandeira.SIGLA_QUERY + ".dsTipo AS tipocartao",
@@ -232,46 +239,47 @@ namespace api.Negocios.Card
                                                        "idExtrato = CASE WHEN COUNT (CASE WHEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idExtrato IS NULL THEN 1 ELSE 0 END) > 0 THEN 0 ELSE 1 END",
                                                        "taxaCashFlow = CASE WHEN COUNT (*) = 0 THEN 0 ELSE SUM ((" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorDescontado * 100.0) / (CASE WHEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta = 0 THEN 1 ELSE " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta END)) / COUNT (*) END"
                                                       };
-                dataBaseQueryRP.orderby = null;
-                dataBaseQueryRP.groupby = new[] { "ISNULL(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo, " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimento)",
+                    dataBaseQueryRP.orderby = null;
+                    dataBaseQueryRP.groupby = new[] { "ISNULL(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo, " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimento)",
                                                   GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",
                                                   GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira",
                                                   GatewayTbBandeira.SIGLA_QUERY + ".dsTipo",
                                                 };
 
-                // AJUSTE
-                //    tipo = "A",
-                //    adquirente = t.tbBandeira.tbAdquirente.nmAdquirente,
-                //    bandeira = t.tbBandeira.dsBandeira,
-                //    tipocartao = t.tbBandeira.dsTipo,
-                //    competencia = t.dtAjuste,
-                //    valorLiquido = t.vlAjuste,
-                //    valorDescontadoAntecipacao = new decimal(0.0),
-                //    valorBruto = t.vlAjuste > new decimal(0.0) ? t.vlAjuste : new decimal(0.0),
-                //    valorDescontado = t.vlAjuste < new decimal(0.0) ? new decimal(-1.0) * t.vlAjuste : new decimal(0.0),
-                //    idExtrato = t.idExtrato,
-                //    taxaCashFlow = new decimal(0.0) 
-                dataBaseQueryAJ.select = new string[] { "tipo = 'A'",
+                    // AJUSTE
+                    //    tipo = "A",
+                    //    adquirente = t.tbBandeira.tbAdquirente.nmAdquirente,
+                    //    bandeira = t.tbBandeira.dsBandeira,
+                    //    tipocartao = t.tbBandeira.dsTipo,
+                    //    competencia = t.dtAjuste,
+                    //    valorLiquido = t.vlAjuste,
+                    //    valorDescontadoAntecipacao = new decimal(0.0),
+                    //    valorBruto = t.vlAjuste > new decimal(0.0) ? t.vlAjuste : new decimal(0.0),
+                    //    valorDescontado = t.vlAjuste < new decimal(0.0) ? new decimal(-1.0) * t.vlAjuste : new decimal(0.0),
+                    //    idExtrato = t.idExtrato,
+                    //    taxaCashFlow = new decimal(0.0) 
+                    dataBaseQueryAJ.select = new string[] { "tipo = 'A'",
                                                         GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente AS adquirente",
                                                         GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira AS bandeira",
                                                         GatewayTbBandeira.SIGLA_QUERY + ".dsTipo AS tipocartao",
                                                         GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste AS competencia",
-                                                        "valorBruto = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste > 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END)",
+                                                        //"valorBruto = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste > 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END)",
+                                                        "valorBruto = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlBruto != 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlBruto ELSE CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste > 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END END)",
                                                         "valorDescontado = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste < 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END)",
                                                         "valorDescontadoAntecipacao = 0.0",
                                                         "valorLiquido = SUM(" + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste)",
                                                         "idExtrato = CASE WHEN COUNT(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idExtrato IS NULL THEN 1 ELSE 0 END) > 0 THEN 0 ELSE 1 END",
                                                         "taxaCashFlow = 0.0"
                                                       };
-                dataBaseQueryAJ.orderby = null;
-                dataBaseQueryAJ.groupby = new[] { GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste",
+                    dataBaseQueryAJ.orderby = null;
+                    dataBaseQueryAJ.groupby = new[] { GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste",
                                                   GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",
                                                   GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira",
                                                   GatewayTbBandeira.SIGLA_QUERY + ".dsTipo",
                                                 };
 
-                // EXTRATO
-                dataBaseQueryEX.select = new string[] { "tipo = 'E'",
+                    // EXTRATO
+                    dataBaseQueryEX.select = new string[] { "tipo = 'E'",
                                                         "adquirente = ISNULL(" + GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente, 'INDEFINIDA')",
                                                         "bandeira = ISNULL(" + GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira, 'INDEFINIDA')",
                                                         "tipocartao = ISNULL(" + GatewayTbBandeira.SIGLA_QUERY + ".dsTipo, '')",
@@ -286,147 +294,155 @@ namespace api.Negocios.Card
                                                         "idExtrato = " + GatewayTbExtrato.SIGLA_QUERY + ".idExtrato",
                                                         "taxaCashFlow = 0.0"
                                                       };
-                dataBaseQueryEX.orderby = new[] { GatewayTbExtrato.SIGLA_QUERY + ".dtExtrato",
+                    dataBaseQueryEX.orderby = new[] { GatewayTbExtrato.SIGLA_QUERY + ".dtExtrato",
                                                   "ISNULL(" + GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente, 'INDEFINIDA')",
                                                   "ISNULL(" + GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira, 'INDEFINIDA')"
                                                   };
-                //dataBaseQueryEX.groupby = new[] { GatewayTbExtrato.SIGLA_QUERY + ".dtExtrato",
-                //                                  GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",
-                //                                  GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira",
-                //                                  GatewayTbBandeira.SIGLA_QUERY + ".dsTipo",
-                //                                  GatewayTbExtrato.SIGLA_QUERY + ".idExtrato",
-                //                                };
+                    //dataBaseQueryEX.groupby = new[] { GatewayTbExtrato.SIGLA_QUERY + ".dtExtrato",
+                    //                                  GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",
+                    //                                  GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira",
+                    //                                  GatewayTbBandeira.SIGLA_QUERY + ".dsTipo",
+                    //                                  GatewayTbExtrato.SIGLA_QUERY + ".idExtrato",
+                    //                                };
 
 
-                dataBaseQueryRP.readUncommited = true;
-                dataBaseQueryAJ.readUncommited = true;
-                dataBaseQueryEX.readUncommited = true;
-                dataBaseQueryEX.readDistinct = true;
+                    dataBaseQueryRP.readUncommited = true;
+                    dataBaseQueryAJ.readUncommited = true;
+                    dataBaseQueryEX.readUncommited = true;
+                    dataBaseQueryEX.readDistinct = true;
 
-                string scriptRP = dataBaseQueryRP.Script();
-                string scriptAJ = dataBaseQueryAJ.Script();
-                string scriptEX = dataBaseQueryEX.Script();
-                #endregion
+                    string scriptRP = dataBaseQueryRP.Script();
+                    string scriptAJ = dataBaseQueryAJ.Script();
+                    string scriptEX = dataBaseQueryEX.Script();
+                    #endregion
 
-                List<ConciliacaoRelatorios> rRecebimentoParcela = new List<ConciliacaoRelatorios>();
-                List<ConciliacaoRelatorios> rRecebimentoAjuste = new List<ConciliacaoRelatorios>();
-                List<ConciliacaoRelatorios> rMovimentacoesBancarias = new List<ConciliacaoRelatorios>();
-
-                List<IDataRecord> resultado = DataBaseQueries.SqlQuery(scriptRP, connection);
-                if (resultado != null && resultado.Count > 0)
-                {
-                    rRecebimentoParcela = resultado.Select(t => new ConciliacaoRelatorios
+                    List<IDataRecord> resultado = DataBaseQueries.SqlQuery(scriptRP, connection);
+                    if (resultado != null && resultado.Count > 0)
                     {
-                        adquirente = Convert.ToString(t["adquirente"]),
-                        bandeira = Convert.ToString(t["bandeira"]),
-                        tipocartao = Convert.ToString(t["tipocartao"]),
-                        competencia = (DateTime)t["competencia"],
-                        valorBruto = Convert.ToDecimal(t["valorBruto"]),
-                        valorDescontado = Convert.ToDecimal(t["valorDescontado"]),
-                        valorDescontadoAntecipacao = Convert.ToDecimal(t["valorDescontadoAntecipacao"]),
-                        valorLiquido = Convert.ToDecimal(t["valorLiquido"]),
-                        idExtrato = Convert.ToInt32(t["idExtrato"]),
-                        taxaCashFlow = Convert.ToDecimal(t["taxaCashFlow"]),
-                        tipo = Convert.ToString(t["tipo"]),
-                    }).ToList<ConciliacaoRelatorios>();
-                }
-                resultado = DataBaseQueries.SqlQuery(scriptAJ, connection);
-                if (resultado != null && resultado.Count > 0)
-                {
-                    rRecebimentoAjuste = resultado.Select(t => new ConciliacaoRelatorios
+                        rRecebimentoParcela = resultado.Select(t => new ConciliacaoRelatorios
+                        {
+                            adquirente = Convert.ToString(t["adquirente"]),
+                            bandeira = Convert.ToString(t["bandeira"]),
+                            tipocartao = Convert.ToString(t["tipocartao"]),
+                            competencia = (DateTime)t["competencia"],
+                            valorBruto = Convert.ToDecimal(t["valorBruto"]),
+                            valorDescontado = Convert.ToDecimal(t["valorDescontado"]),
+                            valorDescontadoAntecipacao = Convert.ToDecimal(t["valorDescontadoAntecipacao"]),
+                            valorLiquido = Convert.ToDecimal(t["valorLiquido"]),
+                            idExtrato = Convert.ToInt32(t["idExtrato"]),
+                            taxaCashFlow = Convert.ToDecimal(t["taxaCashFlow"]),
+                            tipo = Convert.ToString(t["tipo"]),
+                        }).ToList<ConciliacaoRelatorios>();
+                    }
+                    resultado = DataBaseQueries.SqlQuery(scriptAJ, connection);
+                    if (resultado != null && resultado.Count > 0)
                     {
-                        adquirente = Convert.ToString(t["adquirente"]),
-                        bandeira = Convert.ToString(t["bandeira"]),
-                        tipocartao = Convert.ToString(t["tipocartao"]),
-                        competencia = (DateTime)t["competencia"],
-                        valorBruto = Convert.ToDecimal(t["valorBruto"]),
-                        valorDescontado = Convert.ToDecimal(t["valorDescontado"]),
-                        valorDescontadoAntecipacao = Convert.ToDecimal(t["valorDescontadoAntecipacao"]),
-                        valorLiquido = Convert.ToDecimal(t["valorLiquido"]),
-                        idExtrato = Convert.ToInt32(t["idExtrato"]),
-                        taxaCashFlow = Convert.ToDecimal(t["taxaCashFlow"]),
-                        tipo = Convert.ToString(t["tipo"]),
-                    }).ToList<ConciliacaoRelatorios>();
-                }
-                resultado = DataBaseQueries.SqlQuery(scriptEX, connection);
-                if (resultado != null && resultado.Count > 0)
-                {
-                    rMovimentacoesBancarias = resultado.Select(r => new ConciliacaoRelatorios
+                        rRecebimentoAjuste = resultado.Select(t => new ConciliacaoRelatorios
+                        {
+                            adquirente = Convert.ToString(t["adquirente"]),
+                            bandeira = Convert.ToString(t["bandeira"]),
+                            tipocartao = Convert.ToString(t["tipocartao"]),
+                            competencia = (DateTime)t["competencia"],
+                            valorBruto = Convert.ToDecimal(t["valorBruto"]),
+                            valorDescontado = Convert.ToDecimal(t["valorDescontado"]),
+                            valorDescontadoAntecipacao = Convert.ToDecimal(t["valorDescontadoAntecipacao"]),
+                            valorLiquido = Convert.ToDecimal(t["valorLiquido"]),
+                            idExtrato = Convert.ToInt32(t["idExtrato"]),
+                            taxaCashFlow = Convert.ToDecimal(t["taxaCashFlow"]),
+                            tipo = Convert.ToString(t["tipo"]),
+                        }).ToList<ConciliacaoRelatorios>();
+                    }
+                    resultado = DataBaseQueries.SqlQuery(scriptEX, connection);
+                    if (resultado != null && resultado.Count > 0)
                     {
-                        adquirente = Convert.ToString(r["adquirente"]),
-                        bandeira = Convert.ToString(r["bandeira"]),
-                        tipocartao = Convert.ToString(r["tipocartao"]),
-                        competencia = (DateTime)r["competencia"],
-                        valorBruto = Convert.ToDecimal(r["valorBruto"]),
-                        valorDescontado = Convert.ToDecimal(r["valorDescontado"]),
-                        valorDescontadoAntecipacao = Convert.ToDecimal(r["valorDescontadoAntecipacao"]),
-                        valorLiquido = Convert.ToDecimal(r["valorLiquido"]),
-                        idExtrato = Convert.ToInt32(r["idExtrato"]),
-                        taxaCashFlow = Convert.ToDecimal(r["taxaCashFlow"]),
-                        tipo = Convert.ToString(r["tipo"]),
-                    }).ToList<ConciliacaoRelatorios>();
-                    //for (int k = 0; k < resultado.Count; k++)
-                    //{
-                    //    IDataRecord record = resultado[k];
-                    //    int idExtrato = Convert.ToInt32(record["idExtrato"]);
-                    //    int parcelasConciliadas = _db.Database.SqlQuery<int>("SELECT COUNT(*)" +
-                    //                                                         " FROM pos.RecebimentoParcela P (nolock)" +
-                    //                                                         " WHERE P.idExtrato = " + idExtrato
-                    //                                                        ).FirstOrDefault();
-                    //    int ajustesConciliados = 0;
-                    //    if (parcelasConciliadas == 0)
-                    //    {
-                    //        // Vê os ajustes
-                    //        ajustesConciliados = _db.Database.SqlQuery<int>("SELECT COUNT(*)" +
-                    //                                                         " FROM card.tbRecebimentoAjuste A (nolock)" +
-                    //                                                         " WHERE A.idExtrato = " + idExtrato
-                    //                                                        ).FirstOrDefault();
-                    //    }
-                    //    // else => não precisa buscar ajustes pois já sabe que a movimentação bancária está conciliada
-                    //    idExtrato = parcelasConciliadas + ajustesConciliados;
+                        rMovimentacoesBancarias = resultado.Select(r => new ConciliacaoRelatorios
+                        {
+                            adquirente = Convert.ToString(r["adquirente"]),
+                            bandeira = Convert.ToString(r["bandeira"]),
+                            tipocartao = Convert.ToString(r["tipocartao"]),
+                            competencia = (DateTime)r["competencia"],
+                            valorBruto = Convert.ToDecimal(r["valorBruto"]),
+                            valorDescontado = Convert.ToDecimal(r["valorDescontado"]),
+                            valorDescontadoAntecipacao = Convert.ToDecimal(r["valorDescontadoAntecipacao"]),
+                            valorLiquido = Convert.ToDecimal(r["valorLiquido"]),
+                            idExtrato = Convert.ToInt32(r["idExtrato"]),
+                            taxaCashFlow = Convert.ToDecimal(r["taxaCashFlow"]),
+                            tipo = Convert.ToString(r["tipo"]),
+                        }).ToList<ConciliacaoRelatorios>();
+                        //for (int k = 0; k < resultado.Count; k++)
+                        //{
+                        //    IDataRecord record = resultado[k];
+                        //    int idExtrato = Convert.ToInt32(record["idExtrato"]);
+                        //    int parcelasConciliadas = _db.Database.SqlQuery<int>("SELECT COUNT(*)" +
+                        //                                                         " FROM pos.RecebimentoParcela P (nolock)" +
+                        //                                                         " WHERE P.idExtrato = " + idExtrato
+                        //                                                        ).FirstOrDefault();
+                        //    int ajustesConciliados = 0;
+                        //    if (parcelasConciliadas == 0)
+                        //    {
+                        //        // Vê os ajustes
+                        //        ajustesConciliados = _db.Database.SqlQuery<int>("SELECT COUNT(*)" +
+                        //                                                         " FROM card.tbRecebimentoAjuste A (nolock)" +
+                        //                                                         " WHERE A.idExtrato = " + idExtrato
+                        //                                                        ).FirstOrDefault();
+                        //    }
+                        //    // else => não precisa buscar ajustes pois já sabe que a movimentação bancária está conciliada
+                        //    idExtrato = parcelasConciliadas + ajustesConciliados;
 
-                    //    // Procura parcelas 
-                    //    rMovimentacoesBancarias.Add(new ConciliacaoRelatorios
-                    //    {
-                    //        adquirente = Convert.ToString(record["adquirente"]),
-                    //        bandeira = Convert.ToString(record["bandeira"]),
-                    //        tipocartao = Convert.ToString(record["tipocartao"]),
-                    //        competencia = (DateTime)record["competencia"],
-                    //        valorBruto = Convert.ToDecimal(record["valorBruto"]),
-                    //        valorDescontado = Convert.ToDecimal(record["valorDescontado"]),
-                    //        valorDescontadoAntecipacao = Convert.ToDecimal(record["valorDescontadoAntecipacao"]),
-                    //        valorLiquido = Convert.ToDecimal(record["valorLiquido"]),
-                    //        idExtrato = idExtrato,
-                    //        taxaCashFlow = Convert.ToDecimal(record["taxaCashFlow"]),
-                    //        tipo = Convert.ToString(record["tipo"]),
-                    //    });
-                    //}
+                        //    // Procura parcelas 
+                        //    rMovimentacoesBancarias.Add(new ConciliacaoRelatorios
+                        //    {
+                        //        adquirente = Convert.ToString(record["adquirente"]),
+                        //        bandeira = Convert.ToString(record["bandeira"]),
+                        //        tipocartao = Convert.ToString(record["tipocartao"]),
+                        //        competencia = (DateTime)record["competencia"],
+                        //        valorBruto = Convert.ToDecimal(record["valorBruto"]),
+                        //        valorDescontado = Convert.ToDecimal(record["valorDescontado"]),
+                        //        valorDescontadoAntecipacao = Convert.ToDecimal(record["valorDescontadoAntecipacao"]),
+                        //        valorLiquido = Convert.ToDecimal(record["valorLiquido"]),
+                        //        idExtrato = idExtrato,
+                        //        taxaCashFlow = Convert.ToDecimal(record["taxaCashFlow"]),
+                        //        tipo = Convert.ToString(record["tipo"]),
+                        //    });
+                        //}
 
-                    //// Agrupa
-                    //rMovimentacoesBancarias = rMovimentacoesBancarias
-                    //                                    .GroupBy(t => new { t.competencia, t.adquirente, t.bandeira, t.tipocartao })
-                    //                                    .Select(t => new ConciliacaoRelatorios
-                    //                                    {
-                    //                                        adquirente = t.Key.adquirente,
-                    //                                        bandeira = t.Key.bandeira,
-                    //                                        tipocartao = t.Key.tipocartao,
-                    //                                        competencia = t.Key.competencia,
-                    //                                        valorBruto = t.Sum(x => x.valorBruto),
-                    //                                        valorDescontado = t.Sum(x => x.valorDescontado),
-                    //                                        valorDescontadoAntecipacao = t.Sum(x => x.valorDescontadoAntecipacao),
-                    //                                        valorLiquido = t.Sum(x => x.valorLiquido),
-                    //                                        idExtrato = t.Where(x => x.idExtrato == 0).Count() > 0 ? 0 : 1,
-                    //                                        taxaCashFlow = new decimal(0.0),
-                    //                                        tipo = "E",
-                    //                                    })
-                    //                                    .ToList<ConciliacaoRelatorios>();
+                        //// Agrupa
+                        //rMovimentacoesBancarias = rMovimentacoesBancarias
+                        //                                    .GroupBy(t => new { t.competencia, t.adquirente, t.bandeira, t.tipocartao })
+                        //                                    .Select(t => new ConciliacaoRelatorios
+                        //                                    {
+                        //                                        adquirente = t.Key.adquirente,
+                        //                                        bandeira = t.Key.bandeira,
+                        //                                        tipocartao = t.Key.tipocartao,
+                        //                                        competencia = t.Key.competencia,
+                        //                                        valorBruto = t.Sum(x => x.valorBruto),
+                        //                                        valorDescontado = t.Sum(x => x.valorDescontado),
+                        //                                        valorDescontadoAntecipacao = t.Sum(x => x.valorDescontadoAntecipacao),
+                        //                                        valorLiquido = t.Sum(x => x.valorLiquido),
+                        //                                        idExtrato = t.Where(x => x.idExtrato == 0).Count() > 0 ? 0 : 1,
+                        //                                        taxaCashFlow = new decimal(0.0),
+                        //                                        tipo = "E",
+                        //                                    })
+                        //                                    .ToList<ConciliacaoRelatorios>();
+                    }
                 }
-
-                try
+                catch (Exception e)
                 {
-                    connection.Close();
+                    if (e is DbEntityValidationException)
+                    {
+                        string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                        throw new Exception(erro.Equals("") ? "Falha ao listar recebimento parcela" : erro);
+                    }
+                    throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
                 }
-                catch { }
+                finally
+                {
+                    try
+                    {
+                        connection.Close();
+                    }
+                    catch { }
+                }
 
                 // Agrupa
                 //List<dynamic> listaFinal = rRecebimentoParcela.Concat(rRecebimentoAjuste)//.Concat(rMovimentacoesBancarias)

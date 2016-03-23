@@ -29,9 +29,6 @@ namespace api.Negocios.Card
 
         public static string SIGLA_QUERY = "AJ";
 
-        public static string[] AJUSTES_VENDA_BANESE = { "ESTORNO" };
-
-
         public static string[] AJUSTES_ANTECIPACAO_AMEX = { "DEBITO ANTECIPACAO A VISTA",
                                                             "DEBITO ANTECIPACAO PARCELADO" }; // STARTS WITH!
         public static string[] AJUSTES_ANTECIPACAO_BANESE = { "DÉBITO ANTECIPAÇÃO",
@@ -56,6 +53,9 @@ namespace api.Negocios.Card
             IDEXTRATO = 106,
             IDRESUMOVENDA = 107,
             FLANTECIPACAO = 108,
+            IDANTECIPACAOBANCARIADETALHE = 109,
+            DTVENDA = 110,
+            VLBRUTO = 111,
 
             // RELACIONAMENTOS
             ID_GRUPO = 216,
@@ -148,6 +148,34 @@ namespace api.Negocios.Card
                         Int32 idExtrato = Convert.ToInt32(item.Value);
                         entity = entity.Where(e => e.idExtrato == idExtrato).AsQueryable<tbRecebimentoAjuste>();
                         break;
+                    case CAMPOS.IDANTECIPACAOBANCARIADETALHE:
+                        Int32 idAntecipacaoBancariaDetalhe = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.idAntecipacaoBancariaDetalhe == idAntecipacaoBancariaDetalhe).AsQueryable<tbRecebimentoAjuste>();
+                        break;
+                    case CAMPOS.DTVENDA:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda != null && (e.dtVenda.Value.Year > dtaIni.Year || (e.dtVenda.Value.Year == dtaIni.Year && e.dtVenda.Value.Month > dtaIni.Month) ||
+                                                                                          (e.dtVenda.Value.Year == dtaIni.Year && e.dtVenda.Value.Month == dtaIni.Month && e.dtVenda.Value.Day >= dtaIni.Day))
+                                                    && (e.dtVenda.Value.Year < dtaFim.Year || (e.dtVenda.Value.Year == dtaFim.Year && e.dtVenda.Value.Month < dtaFim.Month) ||
+                                                                                          (e.dtVenda.Value.Year == dtaFim.Year && e.dtVenda.Value.Month == dtaFim.Month && e.dtVenda.Value.Day <= dtaFim.Day)));
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda != null && e.dtVenda.Value.Year == dtaIni.Year && e.dtVenda.Value.Month == dtaIni.Month);
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtVenda != null && e.dtVenda.Value.Year == dtaIni.Year && e.dtVenda.Value.Month == dtaIni.Month && e.dtVenda.Value.Day == dtaIni.Day);
+                        }
+                        break;
 
                     // RELACIONAMENTOS
                     case CAMPOS.ID_GRUPO:
@@ -225,6 +253,10 @@ namespace api.Negocios.Card
                 case CAMPOS.IDEXTRATO:
                     if (orderby == 0) entity = entity.OrderBy(e => e.idExtrato).AsQueryable<tbRecebimentoAjuste>();
                     else entity = entity.OrderByDescending(e => e.idExtrato).AsQueryable<tbRecebimentoAjuste>();
+                    break;
+                case CAMPOS.DTVENDA:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtVenda).AsQueryable<tbRecebimentoAjuste>();
+                    else entity = entity.OrderByDescending(e => e.dtVenda).AsQueryable<tbRecebimentoAjuste>();
                     break;
             }
             #endregion
@@ -333,6 +365,54 @@ namespace api.Negocios.Card
                     case CAMPOS.FLANTECIPACAO:
                         Boolean flAntecipacao = Convert.ToBoolean(item.Value);
                         where.Add(SIGLA_QUERY + ".flAntecipacao = " + DataBaseQueries.GetBoolean(flAntecipacao));
+                        break;
+                    case CAMPOS.IDANTECIPACAOBANCARIADETALHE:
+                        Int32 idAntecipacaoBancariaDetalhe = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe);
+                        break;
+                    case CAMPOS.DTVENDA:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dtInicio = DataBaseQueries.GetDate(dtaIni);
+                            string dtFim = DataBaseQueries.GetDate(dtaFim);
+                            where.Add(SIGLA_QUERY + ".dtVenda BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
+                        }
+                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(dta);
+                            where.Add(SIGLA_QUERY + ".dtVenda >= '" + dt + "'");
+                        }
+                        else if (item.Value.Contains("<")) // MENOR IGUAL
+                        {
+                            string busca = item.Value.Replace("<", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(dta);
+                            where.Add(SIGLA_QUERY + ".dtVenda <= '" + dt + " 23:59:00'");
+                        }
+                        //else if (item.Value.Length == 4)
+                        //{
+                        //    string busca = item.Value + "0101";
+                        //    DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                        //    where.Add("DATEPART(YEAR, " + SIGLA_QUERY + ".dtVenda) = " + data.Year);
+                        //}
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            where.Add("DATEPART(YEAR, " + SIGLA_QUERY + ".dtVenda) = " + data.Year + " AND DATEPART(MONTH, " + SIGLA_QUERY + ".dtVenda) = " + data.Month);
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(data);
+                            where.Add(SIGLA_QUERY + ".dtVenda BETWEEN '" + dt + "' AND '" + dt + " 23:59:00'");
+                        }
                         break;
 
                     // RELACIONAMENTOS
@@ -448,6 +528,14 @@ namespace api.Negocios.Card
                     if (orderby == 0) order.Add(SIGLA_QUERY + ".flAntecipacao ASC");
                     else order.Add(SIGLA_QUERY + ".flAntecipacao DESC");
                     break;
+                case CAMPOS.IDANTECIPACAOBANCARIADETALHE:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe ASC");
+                    else order.Add(SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe DESC");
+                    break;
+                case CAMPOS.DTVENDA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dtVenda ASC");
+                    else order.Add(SIGLA_QUERY + ".dtVenda DESC");
+                    break;
             }
             #endregion
 
@@ -525,6 +613,11 @@ namespace api.Negocios.Card
                         dsMotivo = e.dsMotivo,
                         vlAjuste = e.vlAjuste,
                         idExtrato = e.idExtrato,
+                        idResumoVenda = e.idResumoVenda,
+                        flAntecipacao = e.flAntecipacao,
+                        idAntecipacaoBancariaDetalhe = e.idAntecipacaoBancariaDetalhe,
+                        dtVenda = e.dtVenda,
+                        vlBruto = e.vlBruto,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -539,6 +632,11 @@ namespace api.Negocios.Card
                         dsMotivo = e.dsMotivo,
                         vlAjuste = e.vlAjuste,
                         idExtrato = e.idExtrato,
+                        idResumoVenda = e.idResumoVenda,
+                        flAntecipacao = e.flAntecipacao,
+                        idAntecipacaoBancariaDetalhe = e.idAntecipacaoBancariaDetalhe,
+                        dtVenda = e.dtVenda,
+                        vlBruto = e.vlBruto,
                     }).ToList<dynamic>();
                 }
 

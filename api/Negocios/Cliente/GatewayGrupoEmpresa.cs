@@ -468,100 +468,120 @@ namespace api.Negocios.Cliente
                         throw new Exception("Não foi possível estabelecer conexão com a base de dados");
                     }
 
-                    SimpleDataBaseQuery databaseQuery = getQuery(campo, orderBy, queryString);
-
-                    string scriptWhere = databaseQuery.ScriptForWhereClause();
-                    string scriptOrderBy = databaseQuery.ScriptForOrderBy();
-                    string script = "SELECT T.*" +
-                                    " FROM (" +
-                                    " SELECT DISTINCT " + SIGLA_QUERY + ".id_grupo" +
-                                    ", " + SIGLA_QUERY + ".ds_nome" +
-                                    ", " + SIGLA_QUERY + ".dt_cadastro" +
-                                    ", " + SIGLA_QUERY + ".token" +
-                                    ", " + SIGLA_QUERY + ".fl_cardservices" +
-                                    ", " + SIGLA_QUERY + ".fl_taxservices" +
-                                    ", " + SIGLA_QUERY + ".fl_proinfo" +
-                                    ", " + SIGLA_QUERY + ".fl_ativo" +
-                                    ", " + SIGLA_QUERY + ".cdPrioridade" +
-                                    ", " + SIGLA_QUERY + ".dsAPI" +
-                                    ", V.id_users" +
-                                    ", V.ds_login" +
-                                    ", P.nm_pessoa" +
-                                    ", login_ultimoAcesso = U.ds_login" +
-                                    ", dt_ultimoAcesso = L.dtAcesso" +
-                                    " FROM log.logAcesso L (NOLOCK)" +
-                                    " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" + 
-                                    " RIGHT JOIN cliente.grupo_empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".id_grupo = U.id_grupo" +
-                                    " LEFT JOIN dbo.webpages_Users V (NOLOCK) ON V.id_users = " + SIGLA_QUERY + ".id_vendedor" +
-                                    " LEFT JOIN dbo.pessoa P (NOLOCK) ON V.id_pessoa = P.id_pesssoa" +
-                                    " WHERE	L.dtAcesso IS NULL"
-                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
-                                    + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) +
-                                    " UNION ALL " +
-                                    " SELECT DISTINCT " + SIGLA_QUERY + ".id_grupo" +
-                                    ", " + SIGLA_QUERY + ".ds_nome" +
-                                    ", " + SIGLA_QUERY + ".dt_cadastro" +
-                                    ", " + SIGLA_QUERY + ".token" +
-                                    ", " + SIGLA_QUERY + ".fl_cardservices" +
-                                    ", " + SIGLA_QUERY + ".fl_taxservices" +
-                                    ", " + SIGLA_QUERY + ".fl_proinfo" +
-                                    ", " + SIGLA_QUERY + ".fl_ativo" +
-                                    ", " + SIGLA_QUERY + ".cdPrioridade" +
-                                    ", " + SIGLA_QUERY + ".dsAPI" +
-                                    ", V.id_users" +
-                                    ", V.ds_login" +
-                                    ", P.nm_pessoa" +
-                                    ", login_ultimoAcesso = U.ds_login" +
-                                    ", dt_ultimoAcesso = L.dtAcesso" +
-                                    " FROM log.logAcesso L (NOLOCK)" +
-                                    " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" +
-                                    " RIGHT JOIN cliente.grupo_empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".id_grupo = U.id_grupo" +
-                                    " LEFT JOIN dbo.webpages_Users V (NOLOCK) ON V.id_users = " + SIGLA_QUERY + ".id_vendedor" +
-                                    " LEFT JOIN dbo.pessoa P (NOLOCK) ON V.id_pessoa = P.id_pesssoa" +
-                                    " WHERE	U.id_grupo = " + SIGLA_QUERY + ".id_grupo AND L.dtAcesso in (SELECT MAX(L.dtAcesso) FROM log.logAcesso L (NOLOCK) JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers WHERE U.id_grupo = " + SIGLA_QUERY + ".id_grupo)"
-                                    + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
-                                    + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) +
-                                    ") T" +
-                                    " ORDER BY T.ds_nome";
-
-                    List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
-
-                    if (resultado != null && resultado.Count > 0)
-                    {
-                        CollectionGrupo_empresa = resultado.Select(t => new
-                        {
-                            id_grupo = Convert.ToInt32(t["id_grupo"]),
-                            ds_nome = Convert.ToString(t["ds_nome"]),
-                            dt_cadastro = (DateTime)t["dt_cadastro"],
-                            token = Convert.ToString(t["token"]),
-                            fl_ativo = Convert.ToBoolean(t["fl_ativo"]),
-                            fl_cardservices = Convert.ToBoolean(t["fl_cardservices"]),
-                            fl_taxservices = Convert.ToBoolean(t["fl_taxservices"]),
-                            fl_proinfo = Convert.ToBoolean(t["fl_proinfo"]),
-                            vendedor = t["id_users"].Equals(DBNull.Value) ? (object) null : new { id_users = Convert.ToInt32(t["id_users"]), 
-                                                                                                   ds_login = Convert.ToString(t["ds_login"]), 
-                                                                                                   nm_pessoa = Convert.ToString(t["nm_pessoa"]) 
-                                                                                                 },
-                            ultimoAcesso = t["dt_ultimoAcesso"].Equals(DBNull.Value) ? (object) null : 
-                                           new { login_ultimoAcesso = Convert.ToString(t["login_ultimoAcesso"]),
-                                                 dt_ultimoAcesso = (DateTime)t["dt_ultimoAcesso"]
-                                               },
-                            cdPrioridade = Convert.ToByte(t["cdPrioridade"]),
-                            dsAPI = t["dsAPI"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["dsAPI"]),
-                        }).ToList<dynamic>();
-
-                        int skipRows = (pageNumber - 1) * pageSize;
-                        if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
-                            CollectionGrupo_empresa = CollectionGrupo_empresa.Skip(skipRows).Take(pageSize).ToList();
-                        else
-                            pageNumber = 1;
-                    }
-
                     try
                     {
-                        connection.Close();
+
+                        SimpleDataBaseQuery databaseQuery = getQuery(campo, orderBy, queryString);
+
+                        string scriptWhere = databaseQuery.ScriptForWhereClause();
+                        string scriptOrderBy = databaseQuery.ScriptForOrderBy();
+                        string script = "SELECT T.*" +
+                                        " FROM (" +
+                                        " SELECT DISTINCT " + SIGLA_QUERY + ".id_grupo" +
+                                        ", " + SIGLA_QUERY + ".ds_nome" +
+                                        ", " + SIGLA_QUERY + ".dt_cadastro" +
+                                        ", " + SIGLA_QUERY + ".token" +
+                                        ", " + SIGLA_QUERY + ".fl_cardservices" +
+                                        ", " + SIGLA_QUERY + ".fl_taxservices" +
+                                        ", " + SIGLA_QUERY + ".fl_proinfo" +
+                                        ", " + SIGLA_QUERY + ".fl_ativo" +
+                                        ", " + SIGLA_QUERY + ".cdPrioridade" +
+                                        ", " + SIGLA_QUERY + ".dsAPI" +
+                                        ", V.id_users" +
+                                        ", V.ds_login" +
+                                        ", P.nm_pessoa" +
+                                        ", login_ultimoAcesso = U.ds_login" +
+                                        ", dt_ultimoAcesso = L.dtAcesso" +
+                                        " FROM log.logAcesso L (NOLOCK)" +
+                                        " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" +
+                                        " RIGHT JOIN cliente.grupo_empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".id_grupo = U.id_grupo" +
+                                        " LEFT JOIN dbo.webpages_Users V (NOLOCK) ON V.id_users = " + SIGLA_QUERY + ".id_vendedor" +
+                                        " LEFT JOIN dbo.pessoa P (NOLOCK) ON V.id_pessoa = P.id_pesssoa" +
+                                        " WHERE	L.dtAcesso IS NULL"
+                                        + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
+                                        + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) +
+                                        " UNION ALL " +
+                                        " SELECT DISTINCT " + SIGLA_QUERY + ".id_grupo" +
+                                        ", " + SIGLA_QUERY + ".ds_nome" +
+                                        ", " + SIGLA_QUERY + ".dt_cadastro" +
+                                        ", " + SIGLA_QUERY + ".token" +
+                                        ", " + SIGLA_QUERY + ".fl_cardservices" +
+                                        ", " + SIGLA_QUERY + ".fl_taxservices" +
+                                        ", " + SIGLA_QUERY + ".fl_proinfo" +
+                                        ", " + SIGLA_QUERY + ".fl_ativo" +
+                                        ", " + SIGLA_QUERY + ".cdPrioridade" +
+                                        ", " + SIGLA_QUERY + ".dsAPI" +
+                                        ", V.id_users" +
+                                        ", V.ds_login" +
+                                        ", P.nm_pessoa" +
+                                        ", login_ultimoAcesso = U.ds_login" +
+                                        ", dt_ultimoAcesso = L.dtAcesso" +
+                                        " FROM log.logAcesso L (NOLOCK)" +
+                                        " JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers" +
+                                        " RIGHT JOIN cliente.grupo_empresa " + SIGLA_QUERY + " (NOLOCK) ON " + SIGLA_QUERY + ".id_grupo = U.id_grupo" +
+                                        " LEFT JOIN dbo.webpages_Users V (NOLOCK) ON V.id_users = " + SIGLA_QUERY + ".id_vendedor" +
+                                        " LEFT JOIN dbo.pessoa P (NOLOCK) ON V.id_pessoa = P.id_pesssoa" +
+                                        " WHERE	U.id_grupo = " + SIGLA_QUERY + ".id_grupo AND L.dtAcesso in (SELECT MAX(L.dtAcesso) FROM log.logAcesso L (NOLOCK) JOIN dbo.webpages_Users U (NOLOCK) ON U.id_users = L.idUsers WHERE U.id_grupo = " + SIGLA_QUERY + ".id_grupo)"
+                                        + (scriptWhere.Trim().Equals("") ? "" : " AND " + scriptWhere)
+                                        + (whereVendedor.Trim().Equals("") ? "" : " AND " + whereVendedor) +
+                                        ") T" +
+                                        " ORDER BY T.ds_nome";
+
+                        List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
+
+                        if (resultado != null && resultado.Count > 0)
+                        {
+                            CollectionGrupo_empresa = resultado.Select(t => new
+                            {
+                                id_grupo = Convert.ToInt32(t["id_grupo"]),
+                                ds_nome = Convert.ToString(t["ds_nome"]),
+                                dt_cadastro = (DateTime)t["dt_cadastro"],
+                                token = Convert.ToString(t["token"]),
+                                fl_ativo = Convert.ToBoolean(t["fl_ativo"]),
+                                fl_cardservices = Convert.ToBoolean(t["fl_cardservices"]),
+                                fl_taxservices = Convert.ToBoolean(t["fl_taxservices"]),
+                                fl_proinfo = Convert.ToBoolean(t["fl_proinfo"]),
+                                vendedor = t["id_users"].Equals(DBNull.Value) ? (object)null : new
+                                {
+                                    id_users = Convert.ToInt32(t["id_users"]),
+                                    ds_login = Convert.ToString(t["ds_login"]),
+                                    nm_pessoa = Convert.ToString(t["nm_pessoa"])
+                                },
+                                ultimoAcesso = t["dt_ultimoAcesso"].Equals(DBNull.Value) ? (object)null :
+                                               new
+                                               {
+                                                   login_ultimoAcesso = Convert.ToString(t["login_ultimoAcesso"]),
+                                                   dt_ultimoAcesso = (DateTime)t["dt_ultimoAcesso"]
+                                               },
+                                cdPrioridade = Convert.ToByte(t["cdPrioridade"]),
+                                dsAPI = t["dsAPI"].Equals(DBNull.Value) ? (string)null : Convert.ToString(t["dsAPI"]),
+                            }).ToList<dynamic>();
+
+                            int skipRows = (pageNumber - 1) * pageSize;
+                            if (retorno.TotalDeRegistros > pageSize && pageNumber > 0 && pageSize > 0)
+                                CollectionGrupo_empresa = CollectionGrupo_empresa.Skip(skipRows).Take(pageSize).ToList();
+                            else
+                                pageNumber = 1;
+                        }
+
                     }
-                    catch { }
+                    catch (Exception e)
+                    {
+                        if (e is DbEntityValidationException)
+                        {
+                            string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                            throw new Exception(erro.Equals("") ? "Falha ao listar recebimento parcela" : erro);
+                        }
+                        throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            connection.Close();
+                        }
+                        catch { }
+                    }
                     
 
                 }

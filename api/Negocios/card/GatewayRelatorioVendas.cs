@@ -97,6 +97,7 @@ namespace api.Negocios.Card
                     //    if (dataVenda >= dataNow)
                     //        throw new Exception("Data da venda informada deve ser inferior a data corrente (" + dataNow.ToShortDateString() + ")");
                     //}
+                    queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.DTVENDA, data);
                     queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTAVENDA, data);
                     queryStringTbLogCarga.Add("" + (int)GatewayTbLogCarga.CAMPOS.DTCOMPETENCIA, data);
                 }
@@ -148,28 +149,40 @@ namespace api.Negocios.Card
                     throw new Exception("Não foi possível estabelecer conexão com a base de dados");
                 }
 
-                #region OBTÉM AS QUERIES
-                SimpleDataBaseQuery dataBaseQueryRP = GatewayRecebimentoParcela.getQuery((int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, 0, queryStringRecebimentoParcela);
-                SimpleDataBaseQuery dataBaseQueryLC = GatewayTbLogCarga.getQuery((int)GatewayTbLogCarga.CAMPOS.DTCOMPETENCIA, 0, queryStringTbLogCarga);
+                List<RelatorioVendas> vendas = new List<RelatorioVendas>();
+                List<LogCargaValorSite> valoresSite = new List<LogCargaValorSite>();
 
-                // RECEBIMENTO PARCELA
-                if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
-                    dataBaseQueryRP.join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".id = " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idRecebimento");
-                if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
-                    dataBaseQueryRP.join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
-                if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
-                    dataBaseQueryRP.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
-                //if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
-                //    dataBaseQueryRP.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+                try
+                {
+
+                    #region OBTÉM AS QUERIES
+                    SimpleDataBaseQuery dataBaseQueryRP = GatewayRecebimentoParcela.getQuery((int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, 0, queryStringRecebimentoParcela);
+                    SimpleDataBaseQuery dataBaseQueryAJ = GatewayTbRecebimentoAjuste.getQuery((int)GatewayTbRecebimentoAjuste.CAMPOS.DTVENDA, 0, queryStringAjustes);
+                    SimpleDataBaseQuery dataBaseQueryLC = GatewayTbLogCarga.getQuery((int)GatewayTbLogCarga.CAMPOS.DTCOMPETENCIA, 0, queryStringTbLogCarga);
+
+                    // RECEBIMENTO PARCELA
+                    if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
+                        dataBaseQueryRP.join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".id = " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idRecebimento");
+                    if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                        dataBaseQueryRP.join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
+                    if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                        dataBaseQueryRP.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
+                    //if (!dataBaseQueryRP.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                    //    dataBaseQueryRP.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+
+                    // AJUSTES
+                    if (!dataBaseQueryAJ.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                        dataBaseQueryAJ.join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".cdBandeira");
+                    if (!dataBaseQueryAJ.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                        dataBaseQueryAJ.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
+
+                    // TBLOGCARGA
+                    if (!dataBaseQueryLC.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                        dataBaseQueryLC.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbLogCarga.SIGLA_QUERY + ".cdAdquirente");
 
 
-                // TBLOGCARGA
-                if (!dataBaseQueryLC.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
-                    dataBaseQueryLC.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbLogCarga.SIGLA_QUERY + ".cdAdquirente");
-                
-
-                // RECEBIMENTO PARCELA
-                dataBaseQueryRP.select = new string[] { GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimento",
+                    // RECEBIMENTO PARCELA
+                    dataBaseQueryRP.select = new string[] { GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimento",
                                                       GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo",
                                                       GatewayRecebimento.SIGLA_QUERY + ".dtaVenda AS dataVenda",
                                                       "adquirente = UPPER(" + GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente)",
@@ -179,70 +192,119 @@ namespace api.Negocios.Card
                                                       "valorLiquido = ISNULL(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaLiquida, 0)"
                                                     };
 
+                    // AJUSTE
+                    dataBaseQueryAJ.select = new string[] { //GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idRecebimentoAjuste",
+                                                        //GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dsMotivo",
+                                                        GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste",
+                                                        GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste",
+                                                        GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtVenda AS dataVenda",
+                                                        GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlBruto",
+                                                        GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira AS bandeira",
+                                                        "adquirente = UPPER(" + GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente)"
+                                                      };
 
-                // TBLOGCARGA
-                dataBaseQueryLC.select = new string[] { GatewayTbLogCarga.SIGLA_QUERY + ".dtCompetencia",
+
+                    // TBLOGCARGA
+                    dataBaseQueryLC.select = new string[] { GatewayTbLogCarga.SIGLA_QUERY + ".dtCompetencia",
                                                         "adquirente = UPPER(" + GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente)",
                                                         "processouVendas = CASE WHEN SUM(CASE WHEN " + GatewayTbLogCarga.SIGLA_QUERY + ".flStatusVendasCredito = 0 OR " + GatewayTbLogCarga.SIGLA_QUERY + ".flStatusVendasDebito = 0 THEN 1 ELSE 0 END) > 0 THEN 0 ELSE 1 END",
                                                         "valorSite = SUM(" + GatewayTbLogCarga.SIGLA_QUERY + ".vlVendaCredito + " + GatewayTbLogCarga.SIGLA_QUERY + ".vlVendaDebito)"
                                                       };
 
-                dataBaseQueryLC.groupby = new string[] { GatewayTbLogCarga.SIGLA_QUERY + ".dtCompetencia", 
+                    dataBaseQueryLC.groupby = new string[] { GatewayTbLogCarga.SIGLA_QUERY + ".dtCompetencia", 
                                                          GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente"
                                                        };
 
 
-                dataBaseQueryRP.readUncommited = true;
-                dataBaseQueryLC.readUncommited = true;
-                #endregion
+                    dataBaseQueryRP.readUncommited = true;
+                    dataBaseQueryAJ.readUncommited = true;
+                    dataBaseQueryLC.readUncommited = true;
+                    #endregion
 
-                string script = dataBaseQueryRP.Script();
-                List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
+                    string script = dataBaseQueryRP.Script();
+                    List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
 
-                List<RelatorioVendas> vendas = new List<RelatorioVendas>();
-                if (resultado != null && resultado.Count > 0)
-                {
-                    vendas = resultado.Select(r => new RelatorioVendas
+                    if (resultado != null && resultado.Count > 0)
                     {
-                        dataVenda = Convert.ToDateTime(((DateTime)r["dataVenda"]).ToShortDateString()), // remove horário
-                        dataRecebimento = r["dtaRecebimentoEfetivo"].Equals(DBNull.Value) ? (DateTime)r["dtaRecebimento"] : (DateTime)r["dtaRecebimentoEfetivo"],
-                        recebeu = r["dtaRecebimentoEfetivo"].Equals(DBNull.Value) ? (DateTime)r["dtaRecebimento"] < dataNow : (DateTime)r["dtaRecebimentoEfetivo"] < dataNow,
-                        valorBruto = Convert.ToDecimal(r["valorBruto"]),
-                        valorLiquido = Convert.ToDecimal(r["valorLiquido"]),
-                        valorDescontado = Convert.ToDecimal(r["valorDescontado"]),
-                        bandeira = Convert.ToString(r["bandeira"]),
-                        adquirente = Convert.ToString(r["adquirente"]),
-                    }).OrderBy(r => r.dataVenda).ToList<RelatorioVendas>();
-                }
+                        vendas = resultado.Select(r => new RelatorioVendas
+                        {
+                            dataVenda = Convert.ToDateTime(((DateTime)r["dataVenda"]).ToShortDateString()), // remove horário
+                            dataRecebimento = r["dtaRecebimentoEfetivo"].Equals(DBNull.Value) ? (DateTime)r["dtaRecebimento"] : (DateTime)r["dtaRecebimentoEfetivo"],
+                            recebeu = r["dtaRecebimentoEfetivo"].Equals(DBNull.Value) ? (DateTime)r["dtaRecebimento"] < dataNow : (DateTime)r["dtaRecebimentoEfetivo"] < dataNow,
+                            valorBruto = Convert.ToDecimal(r["valorBruto"]),
+                            valorLiquido = Convert.ToDecimal(r["valorLiquido"]),
+                            valorDescontado = Convert.ToDecimal(r["valorDescontado"]),
+                            bandeira = Convert.ToString(r["bandeira"]),
+                            adquirente = Convert.ToString(r["adquirente"]),
+                        }).OrderBy(r => r.dataVenda).ToList<RelatorioVendas>();
+                    }
 
-                // Obtém os valores lidos do site
-                script = dataBaseQueryLC.Script();
-                resultado = DataBaseQueries.SqlQuery(script, connection);
-                List<LogCargaValorSite> valoresSite = new List<LogCargaValorSite>();
-                if (resultado != null && resultado.Count > 0)
+                    // Ajustes de vendas
+                    script = dataBaseQueryAJ.Script();
+                    resultado = DataBaseQueries.SqlQuery(script, connection);
+                    if (resultado != null && resultado.Count > 0)
+                    {
+                        foreach (IDataRecord r in resultado)
+                        {
+                            vendas.Add(new RelatorioVendas
+                            {
+                                dataVenda = Convert.ToDateTime(((DateTime)r["dataVenda"]).ToShortDateString()), // remove horário
+                                dataRecebimento = (DateTime)r["dtAjuste"],
+                                recebeu = (DateTime)r["dtAjuste"] < dataNow,
+                                valorBruto = Convert.ToDecimal(r["vlBruto"]) != new decimal(0.0) ? Convert.ToDecimal(r["vlBruto"]) : Convert.ToDecimal(r["vlAjuste"]) > new decimal(0.0) ? Convert.ToDecimal(r["vlAjuste"]) : new decimal(0.0),
+                                valorLiquido = Convert.ToDecimal(r["vlAjuste"]),
+                                valorDescontado = Convert.ToDecimal(r["vlAjuste"]) > new decimal(0.0) ? new decimal(0.0) : Math.Abs(Convert.ToDecimal(r["vlAjuste"])),
+                                bandeira = Convert.ToString(r["bandeira"]),
+                                adquirente = Convert.ToString(r["adquirente"]),
+                            });
+                        }
+                    }
+
+                    // Obtém os valores lidos do site
+                    script = dataBaseQueryLC.Script();
+                    resultado = DataBaseQueries.SqlQuery(script, connection);
+                    if (resultado != null && resultado.Count > 0)
+                    {
+                        valoresSite = resultado.Select(t => new LogCargaValorSite
+                                               {
+                                                   //nrCNPJ = Convert.ToString(t["nrCNPJ"]),
+                                                   adquirente = Convert.ToString(t["adquirente"]),
+                                                   dtCompetencia = Convert.ToDateTime(((DateTime)t["dtCompetencia"]).ToShortDateString()),
+                                                   processouModalidade = Convert.ToBoolean(t["processouVendas"]),
+                                                   valorSite = Convert.ToDecimal(t["valorSite"])
+                                               })
+                                               .ToList<LogCargaValorSite>();
+                    }
+
+                    //List<RelatorioVendas> vendas = queryRecebimentoParcela.Select(r => new RelatorioVendas
+                    //{
+                    //    dataVenda = r.Recebimento.dtaVenda,
+                    //    dataRecebimento = r.dtaRecebimentoEfetivo != null ? r.dtaRecebimentoEfetivo.Value : r.dtaRecebimento,
+                    //    recebeu = (r.dtaRecebimentoEfetivo != null && r.dtaRecebimentoEfetivo.Value < dataNow) || (r.dtaRecebimentoEfetivo == null && r.dtaRecebimento < dataNow),
+                    //    valorBruto = r.valorParcelaBruta,
+                    //    valorLiquido = r.valorParcelaLiquida != null ? r.valorParcelaLiquida.Value : new decimal(0.0),
+                    //    valorDescontado = r.valorDescontado,
+                    //    bandeira = r.Recebimento.cdBandeira != null ? r.Recebimento.tbBandeira.dsBandeira : r.Recebimento.BandeiraPos.desBandeira,
+                    //    adquirente = r.Recebimento.cdBandeira != null ? r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente : r.Recebimento.BandeiraPos.Operadora.nmOperadora
+                    //}).OrderBy(r => r.dataVenda).ToList<RelatorioVendas>();
+                }
+                catch (Exception e)
                 {
-                    valoresSite = resultado.Select(t => new LogCargaValorSite
-                                           {
-                                               //nrCNPJ = Convert.ToString(t["nrCNPJ"]),
-                                               adquirente = Convert.ToString(t["adquirente"]),
-                                               dtCompetencia = Convert.ToDateTime(((DateTime)t["dtCompetencia"]).ToShortDateString()),
-                                               processouModalidade = Convert.ToBoolean(t["processouVendas"]),
-                                               valorSite = Convert.ToDecimal(t["valorSite"])
-                                           })
-                                           .ToList<LogCargaValorSite>();
+                    if (e is DbEntityValidationException)
+                    {
+                        string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                        throw new Exception(erro.Equals("") ? "Falha ao listar recebimento parcela" : erro);
+                    }
+                    throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
                 }
-
-                //List<RelatorioVendas> vendas = queryRecebimentoParcela.Select(r => new RelatorioVendas
-                //{
-                //    dataVenda = r.Recebimento.dtaVenda,
-                //    dataRecebimento = r.dtaRecebimentoEfetivo != null ? r.dtaRecebimentoEfetivo.Value : r.dtaRecebimento,
-                //    recebeu = (r.dtaRecebimentoEfetivo != null && r.dtaRecebimentoEfetivo.Value < dataNow) || (r.dtaRecebimentoEfetivo == null && r.dtaRecebimento < dataNow),
-                //    valorBruto = r.valorParcelaBruta,
-                //    valorLiquido = r.valorParcelaLiquida != null ? r.valorParcelaLiquida.Value : new decimal(0.0),
-                //    valorDescontado = r.valorDescontado,
-                //    bandeira = r.Recebimento.cdBandeira != null ? r.Recebimento.tbBandeira.dsBandeira : r.Recebimento.BandeiraPos.desBandeira,
-                //    adquirente = r.Recebimento.cdBandeira != null ? r.Recebimento.tbBandeira.tbAdquirente.nmAdquirente : r.Recebimento.BandeiraPos.Operadora.nmOperadora
-                //}).OrderBy(r => r.dataVenda).ToList<RelatorioVendas>();
+                finally
+                {
+                    try
+                    {
+                        connection.Close();
+                    }
+                    catch { }
+                }
 
                 transaction.Commit();
 
@@ -317,7 +379,7 @@ namespace api.Negocios.Card
                             valorDescontado = v.valorDescontado,
                             valorLiquido = v.valorLiquido,
                             valorRecebido = v.valorRecebido,
-                            valorAReceber = v.valorRecebido,
+                            valorAReceber = v.valorAReceber,
                             adquirentes = v.adquirentes
                         });
                     }

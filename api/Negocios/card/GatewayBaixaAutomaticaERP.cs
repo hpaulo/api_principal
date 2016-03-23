@@ -106,128 +106,144 @@ namespace api.Negocios.Card
                         throw new Exception("Não foi possível estabelecer conexão com a base de dados");
                     }
 
-                    string error = "Há " + idsRecebimentoTitulo.Count + 
-                                   (idsRecebimentoTitulo.Count == 1 ? " título que está conciliado" : 
-                                                                      " títulos que estão conciliados") 
-                                  + " com mais de um recebível! Essa relação deve ser de um para um."
-                                  + Environment.NewLine
-                                  + (idsRecebimentoTitulo.Count == 1 ? " Segue o título e as correspondentes parcelas conciliadas com ele:" : 
-                                                                      " Seguem os títulos e as correspondentes parcelas conciliadas com cada uma deles")
-                                  + Environment.NewLine;
-                    // Reporta os títulos e as parcelas....
-                    foreach (int idRecebimentoTitulo in idsRecebimentoTitulo)
-                    {
-                        // Obtém as informações da base
-                        string script = "SELECT R.dtaVenda AS P_dtVenda" + 
-			                            ", R.nsu AS P_nsu" + 
-			                            ", R.valorVendaBruta AS P_vlVenda" +
-			                            ", P_filial = UPPER(ER.ds_fantasia + CASE WHEN ER.filial IS NULL THEN '' ELSE ' ' + ER.filial END)" + 
-			                            ", B.dsBandeira AS P_dsBandeira" +
-			                            ", AAR.nmAdquirente AS P_nmAdquirente" +
-			                            ", R.numParcelaTotal AS P_qtParcelas" + 
-			                            ", P.numParcela AS P_nrParcela" +
-			                            ", P.dtaRecebimento AS P_dtRecebimentoPrevisto" + 
-			                            ", P.dtaRecebimentoEfetivo AS P_dtRecebimentoEfetivo" + 
-			                            ", P.flAntecipado AS P_flAntecipado" +
-			                            ", P.valorParcelaBruta AS P_vlParcela" +
-			                            ", T.dtVenda AS T_dtVenda" + 
-			                            ", T.nrNSU AS T_nsu" +
-			                            ", T.vlVenda AS T_vlVenda" + 
-			                            ", T_filial = UPPER(ET.ds_fantasia + CASE WHEN ET.filial IS NULL THEN '' ELSE ' ' + ET.filial END)" +
-			                            ", T.dsBandeira AS T_dsBandeira" +
-			                            ", AAT.nmAdquirente AS T_nmAdquirente" +
-			                            ", T.qtParcelas AS T_qtParcelas" +
-			                            ", T.nrParcela AS T_nrParcela" +
-			                            ", T.dtTitulo AS T_dtRecebimentoPrevisto" +
-			                            ", T.vlParcela AS T_vlParcela" +
-                                        " FROM pos.RecebimentoParcela P (NOLOCK)" +
-                                        " JOIN pos.Recebimento R (NOLOCK) ON R.id = P.idRecebimento" +
-                                        " JOIN cliente.empresa ER (NOLOCK) ON ER.nu_cnpj = R.cnpj" +
-                                        " JOIN card.tbBandeira B (NOLOCK) ON B.cdBandeira = R.cdBandeira" +
-                                        " JOIN card.tbAdquirente AAR (NOLOCK) ON AAR.cdAdquirente = B.cdAdquirente" +
-                                        " JOIN card.tbRecebimentoTitulo T (NOLOCK) ON T.idRecebimentoTitulo = P.idRecebimentoTitulo" +
-                                        " JOIN cliente.empresa ET (NOLOCK) ON ET.nu_cnpj = T.nrCNPJ" +
-                                        " JOIN card.tbAdquirente AAT (NOLOCK) ON AAT.cdAdquirente = T.cdAdquirente" +
-                                        " WHERE P.idRecebimentoTitulo = " + idRecebimentoTitulo;
-                        List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
-
-                        error += Environment.NewLine + "==========TÍTULO=========";
-                        if(resultado == null || resultado.Count == 0)
-                            error += Environment.NewLine + " " + idRecebimentoTitulo;
-                        else
-                        {
-                            IDataRecord t = resultado[0];
-
-                            DateTime? T_dtVenda = t["T_dtVenda"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)t["T_dtVenda"];
-                            string T_nsu = Convert.ToString(t["T_nsu"]);
-                            decimal? T_vlVenda = t["T_vlVenda"].Equals(DBNull.Value) ? (decimal?)null : Convert.ToDecimal(t["T_vlVenda"]);
-                            string T_filial = Convert.ToString(t["T_filial"]);
-                            string T_bandeira = Convert.ToString(t["T_dsBandeira"].Equals(DBNull.Value) ? "" : t["T_dsBandeira"]);
-                            string T_adquirente = Convert.ToString(t["T_nmAdquirente"]);
-                            byte T_qtParcelas = Convert.ToByte(t["T_qtParcelas"].Equals(DBNull.Value) ? 0 : t["T_qtParcelas"]);
-                            byte T_nrParcela = Convert.ToByte(t["T_nrParcela"]);
-                            DateTime T_dtTitulo = (DateTime)t["T_dtRecebimentoPrevisto"];
-                            Decimal T_vlParcela = Convert.ToDecimal(t["T_vlParcela"]);
-
-                            error += Environment.NewLine + "Adquirente: " + T_adquirente;
-                            error += Environment.NewLine + "Bandeira: " + T_bandeira;
-                            error += Environment.NewLine + "Filial: " + T_filial;
-                            if (T_dtVenda != null)
-                            {
-                                error += Environment.NewLine + "Venda em " + T_dtVenda.Value.ToShortDateString();
-                                if (T_vlVenda != null)
-                                    error += Environment.NewLine + " no valor de " + T_vlVenda.Value.ToString("C");
-                            }
-                            else if (T_vlVenda != null)
-                                error += Environment.NewLine + "Valor da venda: " + T_vlVenda.Value.ToString("C");
-                            error += Environment.NewLine + "NSU: " + T_nsu;
-                            error += Environment.NewLine + "Parcela " + T_nrParcela + (T_qtParcelas > 0 ? " de " + T_qtParcelas : "");
-                            error += Environment.NewLine + "Dt Prevista Recebimento: " + T_dtTitulo;
-                            error += Environment.NewLine + "Valor Bruto: " + T_vlParcela.ToString("C");
-
-                            error += Environment.NewLine;
-                            
-                            
-                            foreach (IDataRecord r in resultado)
-                            {
-                                DateTime P_dtVenda = (DateTime)r["P_dtVenda"];
-                                string P_nsu = Convert.ToString(r["P_nsu"]);
-                                decimal P_vlVenda = Convert.ToDecimal(r["P_vlVenda"]);
-                                string P_filial = Convert.ToString(r["P_filial"]);
-                                string P_bandeira = Convert.ToString(r["P_dsBandeira"]);
-                                string P_adquirente = Convert.ToString(r["P_nmAdquirente"]);
-                                int P_qtParcelas = Convert.ToInt32(r["P_qtParcelas"].Equals(DBNull.Value) ? 0 : r["P_qtParcelas"]);
-                                int P_nrParcela = Convert.ToInt32(r["P_nrParcela"]);
-                                DateTime P_dtRecebimentoPrevisto = (DateTime)r["P_dtRecebimentoPrevisto"];
-                                DateTime? P_dtRecebimentoEfetivo = r["P_dtRecebimentoEfetivo"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)r["P_dtRecebimentoEfetivo"];
-                                bool P_flAntecipado = Convert.ToBoolean(r["P_flAntecipado"]);
-                                Decimal P_vlParcela = Convert.ToDecimal(r["P_vlParcela"]);
-
-                                error += Environment.NewLine + "=> RECEBÍVEL";
-                                error += Environment.NewLine + "   Adquirente: " + P_adquirente;
-                                error += Environment.NewLine + "   Bandeira: " + P_bandeira;
-                                error += Environment.NewLine + "   Filial: " + P_filial;
-                                error += Environment.NewLine + "   Venda em " + P_dtVenda.ToShortDateString() + " no valor de " + P_vlVenda.ToString("C");
-                                error += Environment.NewLine + "   NSU: " + P_nsu;
-                                error += Environment.NewLine + "   Parcela " + (P_nrParcela == 0 ? 1 : P_nrParcela) + (P_qtParcelas > 0 ? " de " + P_qtParcelas : "");
-                                error += Environment.NewLine + "   Dt Prevista Recebimento: " + P_dtRecebimentoPrevisto;
-                                if (P_dtRecebimentoEfetivo != null && !P_dtRecebimentoEfetivo.Value.Equals(P_dtRecebimentoPrevisto))
-                                    error += Environment.NewLine + " Dt Efetiva Recebimento: " + P_dtRecebimentoEfetivo.Value.ToShortDateString() + (P_flAntecipado ? " (ANTECIPAÇÃO)" : "");
-                                error += Environment.NewLine + "   Valor Bruto: " + P_vlParcela.ToString("C");
-
-                                error += Environment.NewLine;
-                            }
-                        }
-                                 
-                    }
-
                     try
                     {
-                        connection.Close();
-                    }
-                    catch { }
+                        string error = "Há " + idsRecebimentoTitulo.Count +
+                                       (idsRecebimentoTitulo.Count == 1 ? " título que está conciliado" :
+                                                                          " títulos que estão conciliados")
+                                      + " com mais de um recebível! Essa relação deve ser de um para um."
+                                      + Environment.NewLine
+                                      + (idsRecebimentoTitulo.Count == 1 ? " Segue o título e as correspondentes parcelas conciliadas com ele:" :
+                                                                          " Seguem os títulos e as correspondentes parcelas conciliadas com cada uma deles")
+                                      + Environment.NewLine;
+                        // Reporta os títulos e as parcelas....
+                        foreach (int idRecebimentoTitulo in idsRecebimentoTitulo)
+                        {
+                            // Obtém as informações da base
+                            string script = "SELECT R.dtaVenda AS P_dtVenda" +
+                                            ", R.nsu AS P_nsu" +
+                                            ", R.valorVendaBruta AS P_vlVenda" +
+                                            ", P_filial = UPPER(ER.ds_fantasia + CASE WHEN ER.filial IS NULL THEN '' ELSE ' ' + ER.filial END)" +
+                                            ", B.dsBandeira AS P_dsBandeira" +
+                                            ", AAR.nmAdquirente AS P_nmAdquirente" +
+                                            ", R.numParcelaTotal AS P_qtParcelas" +
+                                            ", P.numParcela AS P_nrParcela" +
+                                            ", P.dtaRecebimento AS P_dtRecebimentoPrevisto" +
+                                            ", P.dtaRecebimentoEfetivo AS P_dtRecebimentoEfetivo" +
+                                            ", P.flAntecipado AS P_flAntecipado" +
+                                            ", P.valorParcelaBruta AS P_vlParcela" +
+                                            ", T.dtVenda AS T_dtVenda" +
+                                            ", T.nrNSU AS T_nsu" +
+                                            ", T.vlVenda AS T_vlVenda" +
+                                            ", T_filial = UPPER(ET.ds_fantasia + CASE WHEN ET.filial IS NULL THEN '' ELSE ' ' + ET.filial END)" +
+                                            ", T.dsBandeira AS T_dsBandeira" +
+                                            ", AAT.nmAdquirente AS T_nmAdquirente" +
+                                            ", T.qtParcelas AS T_qtParcelas" +
+                                            ", T.nrParcela AS T_nrParcela" +
+                                            ", T.dtTitulo AS T_dtRecebimentoPrevisto" +
+                                            ", T.vlParcela AS T_vlParcela" +
+                                            " FROM pos.RecebimentoParcela P (NOLOCK)" +
+                                            " JOIN pos.Recebimento R (NOLOCK) ON R.id = P.idRecebimento" +
+                                            " JOIN cliente.empresa ER (NOLOCK) ON ER.nu_cnpj = R.cnpj" +
+                                            " JOIN card.tbBandeira B (NOLOCK) ON B.cdBandeira = R.cdBandeira" +
+                                            " JOIN card.tbAdquirente AAR (NOLOCK) ON AAR.cdAdquirente = B.cdAdquirente" +
+                                            " JOIN card.tbRecebimentoTitulo T (NOLOCK) ON T.idRecebimentoTitulo = P.idRecebimentoTitulo" +
+                                            " JOIN cliente.empresa ET (NOLOCK) ON ET.nu_cnpj = T.nrCNPJ" +
+                                            " JOIN card.tbAdquirente AAT (NOLOCK) ON AAT.cdAdquirente = T.cdAdquirente" +
+                                            " WHERE P.idRecebimentoTitulo = " + idRecebimentoTitulo;
+                            List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
 
-                    throw new Exception(error);
+                            error += Environment.NewLine + "==========TÍTULO=========";
+                            if (resultado == null || resultado.Count == 0)
+                                error += Environment.NewLine + " " + idRecebimentoTitulo;
+                            else
+                            {
+                                IDataRecord t = resultado[0];
+
+                                DateTime? T_dtVenda = t["T_dtVenda"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)t["T_dtVenda"];
+                                string T_nsu = Convert.ToString(t["T_nsu"]);
+                                decimal? T_vlVenda = t["T_vlVenda"].Equals(DBNull.Value) ? (decimal?)null : Convert.ToDecimal(t["T_vlVenda"]);
+                                string T_filial = Convert.ToString(t["T_filial"]);
+                                string T_bandeira = Convert.ToString(t["T_dsBandeira"].Equals(DBNull.Value) ? "" : t["T_dsBandeira"]);
+                                string T_adquirente = Convert.ToString(t["T_nmAdquirente"]);
+                                byte T_qtParcelas = Convert.ToByte(t["T_qtParcelas"].Equals(DBNull.Value) ? 0 : t["T_qtParcelas"]);
+                                byte T_nrParcela = Convert.ToByte(t["T_nrParcela"]);
+                                DateTime T_dtTitulo = (DateTime)t["T_dtRecebimentoPrevisto"];
+                                Decimal T_vlParcela = Convert.ToDecimal(t["T_vlParcela"]);
+
+                                error += Environment.NewLine + "Adquirente: " + T_adquirente;
+                                error += Environment.NewLine + "Bandeira: " + T_bandeira;
+                                error += Environment.NewLine + "Filial: " + T_filial;
+                                if (T_dtVenda != null)
+                                {
+                                    error += Environment.NewLine + "Venda em " + T_dtVenda.Value.ToShortDateString();
+                                    if (T_vlVenda != null)
+                                        error += Environment.NewLine + " no valor de " + T_vlVenda.Value.ToString("C");
+                                }
+                                else if (T_vlVenda != null)
+                                    error += Environment.NewLine + "Valor da venda: " + T_vlVenda.Value.ToString("C");
+                                error += Environment.NewLine + "NSU: " + T_nsu;
+                                error += Environment.NewLine + "Parcela " + T_nrParcela + (T_qtParcelas > 0 ? " de " + T_qtParcelas : "");
+                                error += Environment.NewLine + "Dt Prevista Recebimento: " + T_dtTitulo;
+                                error += Environment.NewLine + "Valor Bruto: " + T_vlParcela.ToString("C");
+
+                                error += Environment.NewLine;
+
+
+                                foreach (IDataRecord r in resultado)
+                                {
+                                    DateTime P_dtVenda = (DateTime)r["P_dtVenda"];
+                                    string P_nsu = Convert.ToString(r["P_nsu"]);
+                                    decimal P_vlVenda = Convert.ToDecimal(r["P_vlVenda"]);
+                                    string P_filial = Convert.ToString(r["P_filial"]);
+                                    string P_bandeira = Convert.ToString(r["P_dsBandeira"]);
+                                    string P_adquirente = Convert.ToString(r["P_nmAdquirente"]);
+                                    int P_qtParcelas = Convert.ToInt32(r["P_qtParcelas"].Equals(DBNull.Value) ? 0 : r["P_qtParcelas"]);
+                                    int P_nrParcela = Convert.ToInt32(r["P_nrParcela"]);
+                                    DateTime P_dtRecebimentoPrevisto = (DateTime)r["P_dtRecebimentoPrevisto"];
+                                    DateTime? P_dtRecebimentoEfetivo = r["P_dtRecebimentoEfetivo"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)r["P_dtRecebimentoEfetivo"];
+                                    bool P_flAntecipado = Convert.ToBoolean(r["P_flAntecipado"]);
+                                    Decimal P_vlParcela = Convert.ToDecimal(r["P_vlParcela"]);
+
+                                    error += Environment.NewLine + "=> RECEBÍVEL";
+                                    error += Environment.NewLine + "   Adquirente: " + P_adquirente;
+                                    error += Environment.NewLine + "   Bandeira: " + P_bandeira;
+                                    error += Environment.NewLine + "   Filial: " + P_filial;
+                                    error += Environment.NewLine + "   Venda em " + P_dtVenda.ToShortDateString() + " no valor de " + P_vlVenda.ToString("C");
+                                    error += Environment.NewLine + "   NSU: " + P_nsu;
+                                    error += Environment.NewLine + "   Parcela " + (P_nrParcela == 0 ? 1 : P_nrParcela) + (P_qtParcelas > 0 ? " de " + P_qtParcelas : "");
+                                    error += Environment.NewLine + "   Dt Prevista Recebimento: " + P_dtRecebimentoPrevisto;
+                                    if (P_dtRecebimentoEfetivo != null && !P_dtRecebimentoEfetivo.Value.Equals(P_dtRecebimentoPrevisto))
+                                        error += Environment.NewLine + " Dt Efetiva Recebimento: " + P_dtRecebimentoEfetivo.Value.ToShortDateString() + (P_flAntecipado ? " (ANTECIPAÇÃO)" : "");
+                                    error += Environment.NewLine + "   Valor Bruto: " + P_vlParcela.ToString("C");
+
+                                    error += Environment.NewLine;
+                                }
+                            }
+
+                        }
+
+                        throw new Exception(error);
+                    }
+                    catch (Exception e)
+                    {
+                        if (e is DbEntityValidationException)
+                        {
+                            string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                            throw new Exception(erro.Equals("") ? "Falha ao listar recebimento parcela" : erro);
+                        }
+                        throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+                    }
+                    finally
+                    {
+                        try
+                        {
+                            connection.Close();
+                        }
+                        catch { }
+                    }
+
+                    
                 }
                 #endregion
 
