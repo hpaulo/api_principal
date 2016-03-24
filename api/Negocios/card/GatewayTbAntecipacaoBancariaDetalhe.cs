@@ -845,9 +845,10 @@ namespace api.Negocios.Card
 
                             decimal valorUtilizado = new decimal(0.0);
                             decimal valorLiquidoUtilizado = new decimal(0.0);
+                            decimal valorTotalDisponivel = resultado.Count == 0 ? new decimal(0.0) : resultado.Select(r => Convert.ToDecimal(r["valorParcelaBruta"]) - Convert.ToDecimal(r["valorDescontado"])).Sum();
 
                             // Pode ter saldo positivo somente se o valor disponível para antecipar for inferior ao valor utilizado 
-                            bool temSaldo = resultado.Count == 0 || resultado.Select(r => Convert.ToDecimal(r["valorParcelaBruta"]) - Convert.ToDecimal(r["valorDescontado"])).Sum() + new decimal(0.01) < vlAntecipacao;
+                            bool temSaldo = resultado.Count == 0 || valorTotalDisponivel + new decimal(0.01) < vlAntecipacao;
 
                             const bool SALVAR_NA_BASE = true;
 
@@ -879,8 +880,11 @@ namespace api.Negocios.Card
                                     decimal valorAntecipadoFilial = valoresAntecipados[cnpj];
                                     decimal valorUtilizadoFilial = valoresUtilizadosFilial[cnpj];
                                     // Avalia se o valor utilizado da filial já excedeu
-                                    if (valorUtilizadoFilial >= valorAntecipadoFilial)
-                                        continue; // excedeu da filial
+                                    if (valorUtilizadoFilial >= valorAntecipadoFilial){
+                                        // Só não usa se o valor total disponível for idêntico ao valor utilizado na operação
+                                        if(Math.Abs(valorTotalDisponivel - vlAntecipacao) >= new decimal(0.01))
+                                            continue; // excedeu da filial
+                                    }
 
                                     decimal valorUtilizadoLiquidoFilial = valorDisponivel - vlDescontadoAntecipacao;
 
