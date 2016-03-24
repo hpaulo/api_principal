@@ -27,9 +27,14 @@ namespace api.Models.Mapping
                 .HasMaxLength(255);
 
             this.Property(t => t.vlAjuste)
+                .HasPrecision(9, 2)
                 .IsRequired();
 
             this.Property(t => t.flAntecipacao)
+                .IsRequired();
+
+            this.Property(t => t.vlBruto)
+                .HasPrecision(9, 2)
                 .IsRequired();
 
             // Table & Column Mappings
@@ -44,6 +49,8 @@ namespace api.Models.Mapping
             this.Property(t => t.idResumoVenda).HasColumnName("idResumoVenda");
             this.Property(t => t.flAntecipacao).HasColumnName("flAntecipacao");
             this.Property(t => t.idAntecipacaoBancariaDetalhe).HasColumnName("idAntecipacaoBancariaDetalhe");
+            this.Property(t => t.dtVenda).HasColumnName("dtVenda");
+            this.Property(t => t.vlBruto).HasColumnName("vlBruto");
 
             // Relationships
             this.HasRequired(t => t.tbBandeira)

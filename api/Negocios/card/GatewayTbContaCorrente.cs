@@ -299,7 +299,8 @@ namespace api.Negocios.Card
                 if (IdGrupo > 0)
                 {
                     param.cdGrupo = IdGrupo;
-                    if (_db.empresas.Where(t => t.nu_cnpj.Equals(param.nrCnpj)).Select(t => t.id_grupo).FirstOrDefault() != IdGrupo)
+                    int id_grupo = _db.empresas.Where(t => t.nu_cnpj.Equals(param.nrCnpj)).Select(t => t.id_grupo).FirstOrDefault();
+                    if (id_grupo != IdGrupo)
                         throw new Exception("Filial não pertence ao grupo que o usuário está associado!");
                 }
                 else
@@ -420,7 +421,9 @@ namespace api.Negocios.Card
                 if (IdGrupo > 0)
                 {
                     param.cdGrupo = IdGrupo;
-                    if (_db.empresas.Where(t => t.nu_cnpj.Equals(param.nrCnpj)).Select(t => t.id_grupo).FirstOrDefault() != IdGrupo)
+                    int id_grupo = _db.empresas.Where(t => t.nu_cnpj.Equals(param.nrCnpj)).Select(t => t.id_grupo).FirstOrDefault();
+                    if (id_grupo != IdGrupo)
+                    //if (_db.empresas.Where(t => t.nu_cnpj.Equals(param.nrCnpj)).Select(t => t.id_grupo).FirstOrDefault() != IdGrupo)
                         throw new Exception("Filial não pertence ao grupo que o usuário está associado!");
                 }
                 else
