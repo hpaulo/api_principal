@@ -15,7 +15,7 @@ using api.Negocios.Util;
 
 namespace api.Controllers.Card
 {
-    public class TitulosErpController : ApiController
+    public class VendasErpController : ApiController
     {
         // GET /TitulosErp/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
         public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
@@ -32,7 +32,7 @@ namespace api.Controllers.Card
                     HttpResponseMessage retorno = new HttpResponseMessage();
                     if (Permissoes.Autenticado(token, _db))
                     {
-                        Retorno dados = GatewayTitulosErp.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString, _db);
+                        Retorno dados = GatewayVendasErp.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString, _db);
                         log.codResposta = (int)HttpStatusCode.OK;
                         Bibliotecas.LogAcaoUsuario.Save(log, _db);
                         return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
@@ -71,7 +71,7 @@ namespace api.Controllers.Card
                     HttpResponseMessage retorno = new HttpResponseMessage();
                     if (Permissoes.Autenticado(token, _db))
                     {
-                        GatewayTitulosErp.ImportaTitulos(token, param, _db);
+                        GatewayVendasErp.ImportaVendas(token, param, _db);
                         log.codResposta = (int)HttpStatusCode.OK;
                         Bibliotecas.LogAcaoUsuario.Save(log, _db);
                         return Request.CreateResponse(HttpStatusCode.OK);
@@ -110,7 +110,7 @@ namespace api.Controllers.Card
                     HttpResponseMessage retorno = new HttpResponseMessage();
                     if (Permissoes.Autenticado(token, _db))
                     {
-                        GatewayTitulosErp.Patch(token, log, _db);
+                        //GatewayVendasErp.Patch(token, log, _db);
                         log.codResposta = (int)HttpStatusCode.OK;
                         Bibliotecas.LogAcaoUsuario.Save(log, _db);
                         return Request.CreateResponse(HttpStatusCode.OK);

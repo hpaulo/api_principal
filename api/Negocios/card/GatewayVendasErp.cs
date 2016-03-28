@@ -22,14 +22,14 @@ using System.IO;
 
 namespace api.Negocios.Card
 {
-    public class GatewayTitulosErp
+    public class GatewayVendasErp
     {
        // public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
-        public GatewayTitulosErp()
+        public GatewayVendasErp()
         {
            // _db.Configuration.ProxyCreationEnabled = false;
         }
@@ -47,13 +47,13 @@ namespace api.Negocios.Card
 
 
 
-        private static Retorno carregaTitulos(painel_taxservices_dbContext _db, string token, string dsAPI, string data)
+        private static Retorno carregaVendas(painel_taxservices_dbContext _db, string token, string dsAPI, string data)
         {
             // Coloca a data no padrão de sql
             data = data.Substring(0, 4) + "-" + data.Substring(4, 2) + "-" + data.Substring(6, 2);
 
             string url = "http://" + dsAPI + DOMINIO;
-            string complemento = "titulos/consultatitulos/" + token + "?" + ("" + (int)CAMPOS.DATA) + "=" + data;
+            string complemento = "vendas/consultavendas/" + token + "?" + ("" + (int)CAMPOS.DATA) + "=" + data;
 
 
             HttpClient client = new System.Net.Http.HttpClient();
@@ -82,7 +82,7 @@ namespace api.Negocios.Card
 
 
         /// <summary>
-        /// Retorna Títulos ERP
+        /// Retorna Vendas ERP
         /// </summary>
         /// <returns></returns>
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
@@ -92,13 +92,6 @@ namespace api.Negocios.Card
             else _db = _dbContext;
             try
             {
-                //try
-                //{
-                //    ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
-
-                //}
-                //catch { }
-
                 //DECLARAÇÕES
                 string outValue = null;
 
@@ -120,17 +113,17 @@ namespace api.Negocios.Card
                 if (grupo_empresa.dsAPI == null || grupo_empresa.dsAPI.Equals(""))
                     throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
 
-                // Obtém os títulos
-                Retorno retorno = carregaTitulos(_db, token, grupo_empresa.dsAPI, data);
+                // Obtém as vendas
+                Retorno retorno = carregaVendas(_db, token, grupo_empresa.dsAPI, data);
 
                 // Obtém os registros
-                List<dynamic> titulos = new List<dynamic>();
+                List<dynamic> vendas = new List<dynamic>();
                 foreach (dynamic registro in retorno.Registros)
                 {
                     string nrCNPJ = registro.nrCNPJ;
                     Int32 cdAdquirente = Convert.ToInt32(registro.cdAdquirente);
 
-                    titulos.Add(new
+                    vendas.Add(new
                     {
                         empresa = _db.empresas.Where(f => f.nu_cnpj.Equals(nrCNPJ)).Select(f => new
                         {
@@ -148,42 +141,37 @@ namespace api.Negocios.Card
                         dsBandeira = registro.dsBandeira,
                         vlVenda = registro.vlVenda,
                         qtParcelas = registro.qtParcelas,
-                        dtTitulo = registro.dtTitulo,
-                        vlParcela = registro.vlParcela,
-                        nrParcela = registro.nrParcela,
                         cdERP = registro.cdERP,
-                        dtBaixaERP = registro.dtBaixaERP,
+                        dtCorrecaoERP = registro.dtCorrecaoERP,
                     });
                 }
 
 
                 // PAGINAÇÃO
                 int skipRows = (pageNumber - 1) * pageSize;
-                if (titulos.Count > pageSize && pageNumber > 0 && pageSize > 0)
+                if (vendas.Count > pageSize && pageNumber > 0 && pageSize > 0)
                 {
-                    titulos = titulos.OrderBy(r => r.empresa.ds_fantasia)
+                    vendas = vendas.OrderBy(r => r.empresa.ds_fantasia)
                                      .ThenBy(r => r.dtVenda)
                                      .ThenBy(r => r.tbAdquirente.nmAdquirente)
                                      .ThenBy(r => r.dsBandeira)
-                                     .ThenBy(r => r.dtTitulo)
                                      .Skip(skipRows).Take(pageSize)
                                      .ToList<dynamic>();
                 }
                 else
                 {
                     pageNumber = 1;
-                    titulos = titulos.OrderBy(r => r.empresa.ds_fantasia)
+                    vendas = vendas.OrderBy(r => r.empresa.ds_fantasia)
                                      .ThenBy(r => r.dtVenda)
                                      .ThenBy(r => r.tbAdquirente.nmAdquirente)
                                      .ThenBy(r => r.dsBandeira)
-                                     .ThenBy(r => r.dtTitulo)
                                      .ToList<dynamic>();
                 }
 
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
 
-                retorno.Registros = titulos;
+                retorno.Registros = vendas;
 
                 return retorno;
 
@@ -193,7 +181,7 @@ namespace api.Negocios.Card
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao listar títulos ERP" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao listar vendas ERP" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
@@ -209,11 +197,11 @@ namespace api.Negocios.Card
         }
 
         /// <summary>
-        /// Importa títulos
+        /// Importa vendas
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void ImportaTitulos(string token, ImportacaoErp param, painel_taxservices_dbContext _dbContext = null)
+        public static void ImportaVendas(string token, ImportacaoErp param, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
@@ -233,7 +221,7 @@ namespace api.Negocios.Card
                     if (grupo_empresa.dsAPI == null || grupo_empresa.dsAPI.Equals(""))
                         throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
 
-                    Retorno retorno = carregaTitulos(_db, token, grupo_empresa.dsAPI, param.data);
+                    Retorno retorno = carregaVendas(_db, token, grupo_empresa.dsAPI, param.data);
 
                     Semaphore semaforo = new Semaphore(0, 1);
 
@@ -260,7 +248,7 @@ namespace api.Negocios.Card
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao importar títulos ERP" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao importar vendas ERP" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
@@ -287,20 +275,6 @@ namespace api.Negocios.Card
 
             List<dynamic> Registros = retorno.Registros as List<dynamic>;
 
-            //List<dynamic> grupo = Registros
-            //                             .GroupBy(e => new { e.nrCNPJ, e.nrNSU, e.dtTitulo, e.nrParcela })
-            //                             .Where(e => e.Count() > 1)
-            //                             .Select(e => new
-            //                             {
-            //                                 e.Key.nrCNPJ,
-            //                                 e.Key.nrNSU,
-            //                                 e.Key.nrParcela,
-            //                                 e.Key.dtTitulo,
-            //                                 count = e.Count()
-            //                             })
-            //                             .OrderByDescending(e => e.count)
-            //                             .ToList<dynamic>();
-
             for (var k = 0; k < Registros.Count; k++)
             {
                 dynamic tit = Registros[k];
@@ -320,9 +294,6 @@ namespace api.Negocios.Card
                         dtVenda = tit.dtVenda,
                         nrCNPJ = tit.nrCNPJ,//tit.empresa.nu_cnpj,
                         nrNSU = tit.nrNSU != null && !tit.nrNSU.ToString().Trim().Equals("") ? tit.nrNSU : "T" + tit.cdERP,
-                        nrParcela = Convert.ToByte(tit.nrParcela),
-                        qtParcelas = Convert.ToByte(tit.qtParcelas),
-                        vlParcela = Convert.ToDecimal(tit.vlParcela),
                         vlVenda = Convert.ToDecimal(tit.vlVenda),
                     };
 
@@ -389,10 +360,10 @@ namespace api.Negocios.Card
                         erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
                     else
                         erro = e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message;
-                    //throw new Exception("Título: " + json + ". Erro: " + erro);
+                    //throw new Exception("Venda: " + json + ". Erro: " + erro);
                     // Reporta o erro
                     retorno.Totais = new Dictionary<string, object>();
-                    retorno.Totais.Add("erro", "Título: " + json + ". Erro: " + erro);
+                    retorno.Totais.Add("erro", "Venda: " + json + ". Erro: " + erro);
                     break;
                 }
             }
@@ -402,197 +373,197 @@ namespace api.Negocios.Card
 
 
 
-        public static void Patch(string token, tbLogAcessoUsuario log, painel_taxservices_dbContext _dbContext = null)
-        {
-            painel_taxservices_dbContext _db;
-            if (_dbContext == null) _db = new painel_taxservices_dbContext();
-            else _db = _dbContext;
-            //DbContextTransaction transaction = _db.Database.BeginTransaction();
-            try
-            {
-                string pastaCSVs = HttpContext.Current.Server.MapPath("~/App_Data/Titulos_ERP/");
+        //public static void Patch(string token, tbLogAcessoUsuario log, painel_taxservices_dbContext _dbContext = null)
+        //{
+        //    painel_taxservices_dbContext _db;
+        //    if (_dbContext == null) _db = new painel_taxservices_dbContext();
+        //    else _db = _dbContext;
+        //    //DbContextTransaction transaction = _db.Database.BeginTransaction();
+        //    try
+        //    {
+        //        string pastaCSVs = HttpContext.Current.Server.MapPath("~/App_Data/Titulos_ERP/");
 
-                // Tem que estar associado a um grupo
-                Int32 idGrupo = Permissoes.GetIdGrupo(token, _db);
-                if (idGrupo == 0) throw new Exception("Grupo inválido");
+        //        // Tem que estar associado a um grupo
+        //        Int32 idGrupo = Permissoes.GetIdGrupo(token, _db);
+        //        if (idGrupo == 0) throw new Exception("Grupo inválido");
 
-                // Tem que informar por filtro a conta corrente
-                //string outValue = null;
-                //if (!queryString.TryGetValue("" + (int)CAMPOS.CDCONTACORRENTE, out outValue))
-                //    throw new Exception("Conta corrente não informada");
+        //        // Tem que informar por filtro a conta corrente
+        //        //string outValue = null;
+        //        //if (!queryString.TryGetValue("" + (int)CAMPOS.CDCONTACORRENTE, out outValue))
+        //        //    throw new Exception("Conta corrente não informada");
 
-                #region OBTÉM O DIRETÓRIO A SER SALVO O CSV
-                if (!Directory.Exists(pastaCSVs)) Directory.CreateDirectory(pastaCSVs);
-                string diretorio = pastaCSVs + idGrupo + "\\";
-                if (!Directory.Exists(diretorio)) Directory.CreateDirectory(diretorio);
-                #endregion
+        //        #region OBTÉM O DIRETÓRIO A SER SALVO O CSV
+        //        if (!Directory.Exists(pastaCSVs)) Directory.CreateDirectory(pastaCSVs);
+        //        string diretorio = pastaCSVs + idGrupo + "\\";
+        //        if (!Directory.Exists(diretorio)) Directory.CreateDirectory(diretorio);
+        //        #endregion
 
-                HttpRequest httpRequest = HttpContext.Current.Request;
-                if (httpRequest.Files.Count > 0)
-                {
-                    #region OBTÉM NOME ÚNICO PARA O ARQUIVO UPADO
-                    // Arquivo upado
-                    HttpPostedFile postedFile = httpRequest.Files[0];
-                    // Obtém a extensão
-                    string extensao = postedFile.FileName.LastIndexOf(".") > -1 ? postedFile.FileName.Substring(postedFile.FileName.LastIndexOf(".")) : ".csv";
-                    if (!extensao.ToLower().Equals(".csv"))
-                        throw new Exception("Só são aceitos arquivos do tipo CSV");
+        //        HttpRequest httpRequest = HttpContext.Current.Request;
+        //        if (httpRequest.Files.Count > 0)
+        //        {
+        //            #region OBTÉM NOME ÚNICO PARA O ARQUIVO UPADO
+        //            // Arquivo upado
+        //            HttpPostedFile postedFile = httpRequest.Files[0];
+        //            // Obtém a extensão
+        //            string extensao = postedFile.FileName.LastIndexOf(".") > -1 ? postedFile.FileName.Substring(postedFile.FileName.LastIndexOf(".")) : ".csv";
+        //            if (!extensao.ToLower().Equals(".csv"))
+        //                throw new Exception("Só são aceitos arquivos do tipo CSV");
                     
                     
-                    // Obtém o nome do arquivo upado
-                    string nomeArquivo = (postedFile.FileName.LastIndexOf(".") > -1 ? postedFile.FileName.Substring(0, postedFile.FileName.LastIndexOf(".")) : postedFile.FileName) + "_0" + extensao;
+        //            // Obtém o nome do arquivo upado
+        //            string nomeArquivo = (postedFile.FileName.LastIndexOf(".") > -1 ? postedFile.FileName.Substring(0, postedFile.FileName.LastIndexOf(".")) : postedFile.FileName) + "_0" + extensao;
 
-                    // Remove caracteres inválidos para nome de arquivo
-                    nomeArquivo = Path.GetInvalidFileNameChars().Aggregate(nomeArquivo, (current, c) => current.Replace(c.ToString(), string.Empty));
+        //            // Remove caracteres inválidos para nome de arquivo
+        //            nomeArquivo = Path.GetInvalidFileNameChars().Aggregate(nomeArquivo, (current, c) => current.Replace(c.ToString(), string.Empty));
 
-                    // Valida o nome do arquivo dentro do diretório => deve ser único
-                    int cont = 0;
-                    while (File.Exists(diretorio + nomeArquivo))
-                    {
-                        // Novo nome
-                        nomeArquivo = nomeArquivo.Substring(0, nomeArquivo.LastIndexOf("_") + 1);
-                        nomeArquivo += ++cont + extensao;
-                    }
-                    #endregion
+        //            // Valida o nome do arquivo dentro do diretório => deve ser único
+        //            int cont = 0;
+        //            while (File.Exists(diretorio + nomeArquivo))
+        //            {
+        //                // Novo nome
+        //                nomeArquivo = nomeArquivo.Substring(0, nomeArquivo.LastIndexOf("_") + 1);
+        //                nomeArquivo += ++cont + extensao;
+        //            }
+        //            #endregion
 
-                    #region SALVA ARQUIVO NO DISCO
-                    string filePath = diretorio + nomeArquivo;
-                    // Salva o arquivo
-                    try
-                    {
-                        postedFile.SaveAs(filePath);
-                    }
-                    catch (Exception e)
-                    {
-                        throw new Exception("Não foi possível salvar o arquivo '" + filePath + "'! " + e.Message);
-                    }
-                    #endregion
+        //            #region SALVA ARQUIVO NO DISCO
+        //            string filePath = diretorio + nomeArquivo;
+        //            // Salva o arquivo
+        //            try
+        //            {
+        //                postedFile.SaveAs(filePath);
+        //            }
+        //            catch (Exception e)
+        //            {
+        //                throw new Exception("Não foi possível salvar o arquivo '" + filePath + "'! " + e.Message);
+        //            }
+        //            #endregion
 
-                    // Loga o nome do arquivo
-                    if (log != null) log.dsJson = filePath;
+        //            // Loga o nome do arquivo
+        //            if (log != null) log.dsJson = filePath;
 
-                    // CNPJs pertencentes ao grupo
-                    List<string> CNPJSEmpresa = _db.empresas.Where(e => e.id_grupo == idGrupo).Select(e => e.nu_cnpj).ToList<string>();
+        //            // CNPJs pertencentes ao grupo
+        //            List<string> CNPJSEmpresa = _db.empresas.Where(e => e.id_grupo == idGrupo).Select(e => e.nu_cnpj).ToList<string>();
 
-                    Retorno retorno = new Retorno();
+        //            Retorno retorno = new Retorno();
 
-                    List<dynamic> titulosERPCSV = new List<dynamic>();
-                    // Lê arquivo e preenche lista
-                    using (CSVReader leitor = new CSVReader(filePath))
-                    {
-                        int contLinha = 1;
-                        CSVFileira fileira = new CSVFileira();
-                        while (leitor.LerLinha(fileira))
-                        {
-                            if (fileira == null || fileira.Count < 10)
-                                throw new Exception("Linha " + contLinha + " do arquivo é inválida!");
+        //            List<dynamic> vendasERPCSV = new List<dynamic>();
+        //            // Lê arquivo e preenche lista
+        //            using (CSVReader leitor = new CSVReader(filePath))
+        //            {
+        //                int contLinha = 1;
+        //                CSVFileira fileira = new CSVFileira();
+        //                while (leitor.LerLinha(fileira))
+        //                {
+        //                    if (fileira == null || fileira.Count < 10)
+        //                        throw new Exception("Linha " + contLinha + " do arquivo é inválida!");
 
-                            // CNPJ
-                            string nrCNPJ = fileira[0].Trim();
-                            if (nrCNPJ.Equals(""))
-                                throw new Exception("CNPJ não informado na linha " + contLinha + "!");
+        //                    // CNPJ
+        //                    string nrCNPJ = fileira[0].Trim();
+        //                    if (nrCNPJ.Equals(""))
+        //                        throw new Exception("CNPJ não informado na linha " + contLinha + "!");
                             
-                            // CNPJ do grupo?
-                            if (!CNPJSEmpresa.Contains(nrCNPJ))
-                                throw new Exception("CNPJ " + nrCNPJ + " não está cadastrado no grupo " + _db.grupo_empresa.Where(e => e.id_grupo == idGrupo).Select(e => e.ds_nome.ToUpper()).First());
+        //                    // CNPJ do grupo?
+        //                    if (!CNPJSEmpresa.Contains(nrCNPJ))
+        //                        throw new Exception("CNPJ " + nrCNPJ + " não está cadastrado no grupo " + _db.grupo_empresa.Where(e => e.id_grupo == idGrupo).Select(e => e.ds_nome.ToUpper()).First());
 
-                            // NSU
-                            string nrNSU = fileira[1].Trim();
-                            if (nrNSU.Equals(""))
-                            {
-                                if(fileira.Count < 11)
-                                    throw new Exception("NSU e código do ERP não informados na linha " + contLinha + "!");
+        //                    // NSU
+        //                    string nrNSU = fileira[1].Trim();
+        //                    if (nrNSU.Equals(""))
+        //                    {
+        //                        if(fileira.Count < 11)
+        //                            throw new Exception("NSU e código do ERP não informados na linha " + contLinha + "!");
 
-                                nrNSU = "T" + fileira[10]; // "T" + cdERP
-                            }
+        //                        nrNSU = "T" + fileira[10]; // "T" + cdERP
+        //                    }
 
-                            DateTime dtTitulo = DateTime.Now;
-                            try
-                            {
-                                dtTitulo = Convert.ToDateTime(formataDataDoCSV(fileira[7]));
-                            }
-                            catch
-                            {
-                                throw new Exception("Data do título não está no formato esperado (linha " + contLinha + ")!");
-                            }
-                            int nrParcela = 0;
-                            try
-                            {
-                                nrParcela = Convert.ToInt32(fileira[9]);
-                            }
-                            catch
-                            {
-                                throw new Exception("Número da parcela não está no formato esperado (linha " + contLinha + ")!");
-                            };
+        //                    DateTime dtTitulo = DateTime.Now;
+        //                    try
+        //                    {
+        //                        dtTitulo = Convert.ToDateTime(formataDataDoCSV(fileira[7]));
+        //                    }
+        //                    catch
+        //                    {
+        //                        throw new Exception("Data da venda não está no formato esperado (linha " + contLinha + ")!");
+        //                    }
+        //                    int nrParcela = 0;
+        //                    try
+        //                    {
+        //                        nrParcela = Convert.ToInt32(fileira[9]);
+        //                    }
+        //                    catch
+        //                    {
+        //                        throw new Exception("Número da parcela não está no formato esperado (linha " + contLinha + ")!");
+        //                    };
 
-                            titulosERPCSV.Add(new {
-                                nrCNPJ = nrCNPJ,
-                                nrNSU = nrNSU,
-                                dtVenda = Convert.ToDateTime(formataDataDoCSV(fileira[2])),
-                                cdAdquirente = Convert.ToInt32(fileira[3].Trim()),
-                                dsBandeira = fileira[4],
-                                vlVenda = Convert.ToDouble(fileira[5]),
-                                qtParcelas = Convert.ToInt32(fileira[6]),
-                                dtTitulo = dtTitulo,
-                                vlParcela = Convert.ToDouble(fileira[8]),
-                                nrParcela = nrParcela,
-                                cdERP = fileira.Count < 11 ? (string) null : fileira[10],
-                                dtBaixaERP = fileira.Count < 12 ? (DateTime?)null : Convert.ToDateTime(formataDataDoCSV(fileira[11]))
-                            });
+        //                    vendasERPCSV.Add(new {
+        //                        nrCNPJ = nrCNPJ,
+        //                        nrNSU = nrNSU,
+        //                        dtVenda = Convert.ToDateTime(formataDataDoCSV(fileira[2])),
+        //                        cdAdquirente = Convert.ToInt32(fileira[3].Trim()),
+        //                        dsBandeira = fileira[4],
+        //                        vlVenda = Convert.ToDouble(fileira[5]),
+        //                        qtParcelas = Convert.ToInt32(fileira[6]),
+        //                        dtTitulo = dtTitulo,
+        //                        vlParcela = Convert.ToDouble(fileira[8]),
+        //                        nrParcela = nrParcela,
+        //                        cdERP = fileira.Count < 11 ? (string) null : fileira[10],
+        //                        dtBaixaERP = fileira.Count < 12 ? (DateTime?)null : Convert.ToDateTime(formataDataDoCSV(fileira[11]))
+        //                    });
 
-                            contLinha++;        
+        //                    contLinha++;        
                             
-                        }
-                    }
+        //                }
+        //            }
 
-                    if(titulosERPCSV.Count > 0)
-                    {
-                        // Importa os títulos em background
-                        retorno.Registros = titulosERPCSV;
-                        retorno.TotalDeRegistros = titulosERPCSV.Count;
+        //            if(vendasERPCSV.Count > 0)
+        //            {
+        //                // Importa as vendas em background
+        //                retorno.Registros = vendasERPCSV;
+        //                retorno.TotalDeRegistros = vendasERPCSV.Count;
 
-                        Semaphore semaforo = new Semaphore(0, 1);
+        //                Semaphore semaforo = new Semaphore(0, 1);
 
-                        BackgroundWorker bw = new BackgroundWorker();
-                        bw.WorkerReportsProgress = false;
-                        bw.WorkerSupportsCancellation = false;
-                        bw.DoWork += bw_DoWork;
-                        List<object> args = new List<object>();
-                        args.Add(_db);
-                        args.Add(semaforo);
-                        args.Add(retorno);
-                        bw.RunWorkerAsync(args);
+        //                BackgroundWorker bw = new BackgroundWorker();
+        //                bw.WorkerReportsProgress = false;
+        //                bw.WorkerSupportsCancellation = false;
+        //                bw.DoWork += bw_DoWork;
+        //                List<object> args = new List<object>();
+        //                args.Add(_db);
+        //                args.Add(semaforo);
+        //                args.Add(retorno);
+        //                bw.RunWorkerAsync(args);
 
-                        semaforo.WaitOne();
-                    }
+        //                semaforo.WaitOne();
+        //            }
 
-                    // Teve erro?
-                    object outValue = null;
-                    if (retorno.Totais != null && retorno.Totais.TryGetValue("erro", out outValue))
-                        throw new Exception(retorno.Totais["erro"].ToString());
-                }
-            }
-            catch (Exception e)
-            {
-                // Rollback
-                //transaction.Rollback();
-                /*if (e is DbEntityValidationException)
-                {
-                    string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao enviar extrato" : erro);
-                }*/
-                throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
-            }
-            finally
-            {
-                if (_dbContext == null)
-                {
-                    // Fecha conexão
-                    _db.Database.Connection.Close();
-                    _db.Dispose();
-                }
-            }
-        }
+        //            // Teve erro?
+        //            object outValue = null;
+        //            if (retorno.Totais != null && retorno.Totais.TryGetValue("erro", out outValue))
+        //                throw new Exception(retorno.Totais["erro"].ToString());
+        //        }
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        // Rollback
+        //        //transaction.Rollback();
+        //        /*if (e is DbEntityValidationException)
+        //        {
+        //            string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+        //            throw new Exception(erro.Equals("") ? "Falha ao enviar extrato" : erro);
+        //        }*/
+        //        throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+        //    }
+        //    finally
+        //    {
+        //        if (_dbContext == null)
+        //        {
+        //            // Fecha conexão
+        //            _db.Database.Connection.Close();
+        //            _db.Dispose();
+        //        }
+        //    }
+        //}
 
 
         private static string formataDataDoCSV(string data)

@@ -299,6 +299,8 @@
     <Compile Include="Controllers\Card\BaixaAutomaticaERPController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoRelatoriosController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoTitulosController.cs" />
+    <Compile Include="Controllers\Card\ConciliacaoVendasController.cs" />
+    <Compile Include="Controllers\Card\CorreacaoVendaErpController.cs" />
     <Compile Include="Controllers\Card\RelatorioConciliacaoTitulosController.cs" />
     <Compile Include="Controllers\Card\RecebiveisFuturosController.cs" />
     <Compile Include="Controllers\Card\RelatorioVendasController.cs" />
@@ -324,6 +326,7 @@
     <Compile Include="Controllers\Card\TbSituacaoRedeTefController.cs" />
     <Compile Include="Controllers\Card\TbRedeTefController.cs" />
     <Compile Include="Controllers\Card\TitulosErpController.cs" />
+    <Compile Include="Controllers\Card\VendasErpController.cs" />
     <Compile Include="Controllers\Cartao\PDVsController.cs" />
     <Compile Include="Controllers\Cliente\EmpresaController.cs" />
     <Compile Include="Controllers\Cliente\GrupoEmpresaController.cs" />
@@ -380,8 +383,11 @@
     <Compile Include="Models\tbAntecipacaoBancaria.cs" />
     <Compile Include="Models\tbAntecipacaoBancariaDetalhe.cs" />
     <Compile Include="Models\tbResumoVenda.cs" />
+    <Compile Include="Negocios\Card\GatewayConciliacaoVendas.cs" />
+    <Compile Include="Negocios\Card\GatewayCorrecaoVendaErp.cs" />
     <Compile Include="Negocios\Card\GatewayTbAntecipacaoBancaria.cs" />
     <Compile Include="Negocios\Card\GatewayTbAntecipacaoBancariaDetalhe.cs" />
+    <Compile Include="Negocios\Card\GatewayVendasErp.cs" />
     <Compile Include="Negocios\Util\DataBaseQueries.cs" />
     <Compile Include="Negocios\Util\ExtratoPDFBNB.cs" />
     <Compile Include="Negocios\Util\ExtratoPDFSantander.cs" />

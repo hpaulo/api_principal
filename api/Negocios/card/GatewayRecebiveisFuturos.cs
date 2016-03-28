@@ -66,7 +66,7 @@ namespace api.Negocios.Card
                 Dictionary<string, string> queryStringTbAntecipacaoBancariaDetalhe = new Dictionary<string, string>();
                 // DATA
                 DateTime dataMin = Convert.ToDateTime(DateTime.Now.AddDays(1).ToShortDateString());
-                queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, ""); // dtaRecebimentoEfetivo is null
+                //queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO, ""); // dtaRecebimentoEfetivo is null
                 if (queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
                 {
                     // Não permite que o período seja inferior a data corrente + 1
@@ -97,16 +97,17 @@ namespace api.Negocios.Card
                             //data = ">" + Convert.ToDateTime(dataNow.ToShortDateString());
                             throw new Exception("Data informada deve ser igual ou superior ao dia seguinte da data corrente (" + dataMin.ToShortDateString() + ")");
                     }
-                    queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, data);
-                    queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, data);
+                    queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, data /*+ "@"*/);
+                    queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, data + "@");
+                    //queryStringRecebimentoParcela["" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTOEFETIVO] = data;
                     queryStringTbAntecipacaoBancariaDetalhe.Add("" + (int)GatewayTbAntecipacaoBancariaDetalhe.CAMPOS.DTVENCIMENTO, data);
                 }
                 else
                 {
                     // Período todo => começa a partir da data corrente + 1
                     string data = ">" + dataMin.ToShortDateString();
-                    queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, data);
-                    queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, data);
+                    queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.DTAJUSTE, data /*+ "@"*/);
+                    queryStringRecebimentoParcela.Add("" + (int)GatewayRecebimentoParcela.CAMPOS.DTARECEBIMENTO, data + "@");
                     queryStringTbAntecipacaoBancariaDetalhe.Add("" + (int)GatewayTbAntecipacaoBancariaDetalhe.CAMPOS.DTVENCIMENTO, data);
                 }
                 // GRUPO EMPRESA => OBRIGATÓRIO!
@@ -163,7 +164,7 @@ namespace api.Negocios.Card
                 }
                 
                 // Sem parcelas e/ou ajustes antecipados por causa do vencimento da antecipação bancária
-                queryStringTbAntecipacaoBancariaDetalhe.Add("" + (int)GatewayTbAntecipacaoBancariaDetalhe.CAMPOS.SEM_PARCELAS_AJUSTES_ASSOCIADO, true.ToString());
+                //queryStringTbAntecipacaoBancariaDetalhe.Add("" + (int)GatewayTbAntecipacaoBancariaDetalhe.CAMPOS.SEM_PARCELAS_AJUSTES_ASSOCIADO, true.ToString());
 
 
                 // CONEXÃO
@@ -208,10 +209,10 @@ namespace api.Negocios.Card
                     // ANTECIPACAO BANCÁRIA
                     if (!dataBaseQueryAB.join.ContainsKey("INNER JOIN card.tbAntecipacaoBancaria " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY))
                         dataBaseQueryAB.join.Add("INNER JOIN card.tbAntecipacaoBancaria " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY, " ON " + GatewayTbAntecipacaoBancaria.SIGLA_QUERY + ".idAntecipacaoBancaria = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancaria");
-                    if (!dataBaseQueryAB.join.ContainsKey("LEFT JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY))
-                        dataBaseQueryAB.join.Add("LEFT JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY, " ON " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe");
-                    if (!dataBaseQueryAB.join.ContainsKey("LEFT JOIN card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY))
-                        dataBaseQueryAB.join.Add("LEFT JOIN card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY, " ON " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe");
+                    //if (!dataBaseQueryAB.join.ContainsKey("LEFT JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY))
+                    //    dataBaseQueryAB.join.Add("LEFT JOIN pos.RecebimentoParcela " + GatewayRecebimentoParcela.SIGLA_QUERY, " ON " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe");
+                    //if (!dataBaseQueryAB.join.ContainsKey("LEFT JOIN card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY))
+                    //    dataBaseQueryAB.join.Add("LEFT JOIN card.tbRecebimentoAjuste " + GatewayTbRecebimentoAjuste.SIGLA_QUERY, " ON " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe = " + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe");
 
                     dataBaseQueryRP.readUncommited = true;
                     dataBaseQueryAJ.readUncommited = true;
@@ -234,8 +235,10 @@ namespace api.Negocios.Card
                                                         //GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira",
                                                         "vlParcela = SUM(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta)",
                                                         "vlDescontado = SUM(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorDescontado)",
-                                                        "vlParcelaLiquida = SUM(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaLiquida)",
+                                                        //"vlParcelaLiquida = SUM(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaLiquida)",
+                                                        "vlParcelaLiquida = SUM(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta - " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorDescontado)",
                                                         "vlAntecipacaoBancaria = 0"
+                                                        //"vlAntecipacaoBancaria = SUM(CASE WHEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe IS NOT NULL THEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta - " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorDescontado ELSE 0 END)"
                                                       };
                         dataBaseQueryRP.orderby = null;
                         dataBaseQueryRP.groupby = new[] { GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimento",
@@ -244,14 +247,19 @@ namespace api.Negocios.Card
 
                         // AJUSTE
                         dataBaseQueryAJ.select = new string[] { GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste AS dtRecebimento",
+                                                        //"dtRecebimento = CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe IS NOT NULL THEN CONVERT(smalldatetime, SUBSTRING(" + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dsMotivo, CHARINDEX('VENCIMENTO', " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dsMotivo) + 11, 10), 103) ELSE " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste END",
                                                          //GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira",
-                                                        "vlParcela = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste > 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END)",
-                                                        "vlDescontado = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste < 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END)",
+                                                        //"vlParcela = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste > 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END)",
+                                                        "vlParcela = SUM(CASE WHEN CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlBruto != 0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlBruto ELSE CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste > 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END END)",
+                                                        //"vlDescontado = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste < 0.0 THEN -1 * " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END)",
+                                                        "valorDescontado = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlBruto != 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlBruto - " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste < 0.0 THEN -1 * " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END END)",
                                                         "vlParcelaLiquida = SUM(" + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste)",
                                                         "vlAntecipacaoBancaria = 0"
+                                                        //"vlAntecipacaoBancaria = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe IS NOT NULL THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0 END)"
                                                       };
                         dataBaseQueryAJ.orderby = null;
                         dataBaseQueryAJ.groupby = new[] { GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste",
+                                                          //"CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe IS NOT NULL THEN CONVERT(smalldatetime, SUBSTRING(" + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dsMotivo, CHARINDEX('VENCIMENTO', " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dsMotivo) + 11, 10), 103) ELSE " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste END",
                                                      // GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira"
                                                     };
 
@@ -261,6 +269,7 @@ namespace api.Negocios.Card
                                                         "vlParcela = 0",
                                                         "vlDescontado = 0",
                                                         "vlParcelaLiquida = 0",
+                                                        //"vlAntecipacaoBancaria = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste IS NOT NULL THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE CASE WHEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".vlParcelaBruta IS NOT NULL THEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta - " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorDescontado ELSE 0 END END)",
                                                         "vlAntecipacaoBancaria = SUM(" + GatewayTbAntecipacaoBancariaDetalhe.SIGLA_QUERY + ".vlAntecipacao)",
                                                       };
                         dataBaseQueryAB.orderby = null;
@@ -337,8 +346,10 @@ namespace api.Negocios.Card
                                                         GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",
                                                         "vlParcela = SUM(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta)",
                                                         "vlDescontado = SUM(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorDescontado)",
-                                                        "vlParcelaLiquida = SUM(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaLiquida)",
+                                                        //"vlParcelaLiquida = SUM(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaLiquida)",
+                                                        "vlParcelaLiquida = SUM(" + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta - " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorDescontado)",
                                                         "vlAntecipacaoBancaria = 0"
+                                                        //"vlAntecipacaoBancaria = SUM(CASE WHEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe IS NOT NULL THEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorParcelaBruta - " + GatewayRecebimentoParcela.SIGLA_QUERY + ".valorDescontado ELSE 0 END)"
                                                       };
                         dataBaseQueryRP.orderby = null;
                         dataBaseQueryRP.groupby = new[] { GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimento",
@@ -347,14 +358,19 @@ namespace api.Negocios.Card
 
                         // AJUSTE
                         dataBaseQueryAJ.select = new string[] { GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste AS dtRecebimento",
+                                                        //"dtRecebimento = CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe IS NOT NULL THEN CONVERT(smalldatetime, SUBSTRING(" + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dsMotivo, CHARINDEX('VENCIMENTO', " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dsMotivo) + 11, 10), 103) ELSE " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste END",
                                                         GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",
-                                                        "vlParcela = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste > 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END)",
-                                                        "vlDescontado = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste < 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END)",
+                                                        //"vlParcela = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste > 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END)",
+                                                        "vlParcela = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlBruto != 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlBruto ELSE CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste > 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END END)",
+                                                        //"vlDescontado = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste < 0.0 THEN -1 * " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END)",
+                                                        "valorDescontado = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlBruto != 0.0 THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlBruto - " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste < 0.0 THEN -1 * " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0.0 END END)",
                                                         "vlParcelaLiquida = SUM(" + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste)",
                                                         "vlAntecipacaoBancaria = 0"
+                                                        //"vlAntecipacaoBancaria = SUM(CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe IS NOT NULL THEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".vlAjuste ELSE 0 END)"
                                                       };
                         dataBaseQueryAJ.orderby = null;
                         dataBaseQueryAJ.groupby = new[] { GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste",
+                                                      //"CASE WHEN " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe IS NOT NULL THEN CONVERT(smalldatetime, SUBSTRING(" + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dsMotivo, CHARINDEX('VENCIMENTO', " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dsMotivo) + 11, 10), 103) ELSE " + GatewayTbRecebimentoAjuste.SIGLA_QUERY + ".dtAjuste END",
                                                       GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente"
                                                     };
 
@@ -377,10 +393,10 @@ namespace api.Negocios.Card
                         string scriptAB = dataBaseQueryAB.Script();
 
                         string script = "SELECT T.dtRecebimento" +
-                            //", T.cdAdquirente" +
+                                        //", T.cdAdquirente" +
                                         ", T.nmAdquirente" +
-                            //", T.cdBandeira" +
-                            //", T.dsBandeira" +
+                                        //", T.cdBandeira" +
+                                        //", T.dsBandeira" +
                                         ", vlParcela = SUM(T.vlParcela)" +
                                         ", vlDescontado = SUM(T.vlDescontado)" +
                                         ", vlParcelaLiquida = SUM(T.vlParcelaLiquida)" +
@@ -403,7 +419,8 @@ namespace api.Negocios.Card
                                 valorBruto = Convert.ToDecimal(t["vlParcela"]),
                                 valorDescontado = Convert.ToDecimal(t["vlDescontado"]),
                                 valorAntecipacaoBancaria = Convert.ToDecimal(t["vlAntecipacaoBancaria"]),
-                                valorLiquido = Convert.ToDecimal(t["vlParcelaLiquida"]) - Convert.ToDecimal(t["vlAntecipacaoBancaria"]),
+                                //valorLiquido = Convert.ToDecimal(t["vlParcelaLiquida"]) - Convert.ToDecimal(t["vlAntecipacaoBancaria"]),
+                                valorLiquido = Convert.ToDecimal(t["vlParcela"]) - Convert.ToDecimal(t["vlDescontado"]) - Convert.ToDecimal(t["vlAntecipacaoBancaria"]),
                             }).ToList<RecebiveisFuturos>();
 
                             CollectionRecebiveisFuturos = recebiveisFuturos.GroupBy(r => new { r.data.Month, r.data.Year })

@@ -162,8 +162,18 @@ namespace api.Negocios.Pos
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
                         {
                             string busca = item.Value.Replace(">", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            entity = entity.Where(e => e.dtaRecebimento >= dta && e.dtaRecebimentoEfetivo == null);
+                            if (busca.Contains("@"))
+                            {
+                                // dtaRecebimentoEfetivo diferente de null se for de antecipação bancária
+                                busca = busca.Replace("@", "");
+                                DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                entity = entity.Where(e => e.dtaRecebimento >= dta && (e.dtaRecebimentoEfetivo == null || e.idAntecipacaoBancariaDetalhe != null));
+                            }
+                            else
+                            {
+                                DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                entity = entity.Where(e => e.dtaRecebimento >= dta && e.dtaRecebimentoEfetivo == null);
+                            }
                         }
                         else if (item.Value.Contains("<")) // MENOR IGUAL
                         {
@@ -506,9 +516,22 @@ namespace api.Negocios.Pos
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
                         {
                             string busca = item.Value.Replace(">", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            string dt = DataBaseQueries.GetDate(dta);
-                            where.Add(SIGLA_QUERY + ".dtaRecebimento >= '" + dt + "' AND " + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NULL");
+                            if (busca.Contains("@"))
+                            {
+                                // dtaRecebimentoEfetivo NOT NULL se for antecipação bancária
+                                busca = busca.Replace("@", "");
+                                DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                string dt = DataBaseQueries.GetDate(dta);
+                                where.Add(SIGLA_QUERY + ".dtaRecebimento >= '" + dt + "' AND (" + 
+                                          SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NULL OR " + 
+                                          SIGLA_QUERY + ".idAntecipacaoBancariaDetalhe IS NOT NULL)");
+                            }
+                            else
+                            {
+                                DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                string dt = DataBaseQueries.GetDate(dta);
+                                where.Add(SIGLA_QUERY + ".dtaRecebimento >= '" + dt + "' AND " + SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NULL");
+                            }
                         }
                         else if (item.Value.Contains("<")) // MENOR IGUAL
                         {
@@ -1583,7 +1606,8 @@ namespace api.Negocios.Pos
                                                             valorBruto = e.vlBruto,
                                                             valorParcela = e.vlBruto != new decimal(0.0) ? e.vlBruto : e.vlAjuste > new decimal(0.0) ? e.vlAjuste : new decimal(0.0),
                                                             valorLiquida = e.vlAjuste,
-                                                            valorDescontado = e.vlAjuste < new decimal(0.0) ? new decimal(-1.0) * e.vlAjuste : new decimal(0.0),
+                                                            //valorDescontado = e.vlAjuste < new decimal(0.0) ? new decimal(-1.0) * e.vlAjuste : new decimal(0.0),
+                                                            valorDescontado = e.vlBruto != new decimal(0.0) ? e.vlBruto - e.vlAjuste : e.vlAjuste < new decimal(0.0) ? new decimal(-1.0) * e.vlAjuste : new decimal(0.0),
                                                             vlDescontadoAntecipacao = new decimal(0.0),
                                                         }).ToList<dynamic>();
 
@@ -1712,7 +1736,9 @@ namespace api.Negocios.Pos
                                                                 valorParcela = (e.Where(p => p.vlBruto != new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto != new decimal(0.0)).Sum(p => p.vlBruto) : new decimal(0.0)) +
                                                                                (e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste > new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste > new decimal(0.0)).Sum(p => p.vlAjuste) : new decimal(0.0)),
                                                                 valorLiquida = e.Sum(p => p.vlAjuste),
-                                                                valorDescontado = e.Where(p => p.vlAjuste < new decimal(0.0)).Select(p => new decimal(-1.0) * p.vlAjuste).Sum(),
+                                                                //valorDescontado = e.Where(p => p.vlAjuste < new decimal(0.0)).Select(p => new decimal(-1.0) * p.vlAjuste).Sum(),
+                                                                valorDescontado = (e.Where(p => p.vlBruto != new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto != new decimal(0.0)).Sum(p => p.vlBruto - p.vlAjuste) : new decimal(0.0)) +
+                                                                                  (e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste > new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste < new decimal(0.0)).Select(p => new decimal(-1.0) * p.vlAjuste).Sum() : new decimal(0.0)),
                                                                 vlDescontadoAntecipacao = new decimal(0.0),
                                                                 totalTransacoes = e.Count()
                                                             }).ToList<dynamic>();
@@ -1803,7 +1829,8 @@ namespace api.Negocios.Pos
                                                                 valorParcela = (e.Where(p => p.vlBruto != new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto != new decimal(0.0)).Sum(p => p.vlBruto) : new decimal(0.0)) +
                                                                                (e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste > new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste > new decimal(0.0)).Sum(p => p.vlAjuste) : new decimal(0.0)),
                                                                 valorLiquida = e.Sum(p => p.vlAjuste),
-                                                                valorDescontado = e.Where(p => p.vlAjuste < new decimal(0.0)).Select(p => new decimal(-1.0) * p.vlAjuste).Sum(),
+                                                                valorDescontado = (e.Where(p => p.vlBruto != new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto != new decimal(0.0)).Sum(p => p.vlBruto - p.vlAjuste) : new decimal(0.0)) +
+                                                                                  (e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste > new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste < new decimal(0.0)).Select(p => new decimal(-1.0) * p.vlAjuste).Sum() : new decimal(0.0)),
                                                                 vlDescontadoAntecipacao = new decimal(0.0),
                                                                 totalTransacoes = e.Count()
                                                             }).ToList<dynamic>();

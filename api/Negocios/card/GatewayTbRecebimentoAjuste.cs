@@ -307,9 +307,22 @@ namespace api.Negocios.Card
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
                         {
                             string busca = item.Value.Replace(">", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            string dt = DataBaseQueries.GetDate(dta);
-                            where.Add(SIGLA_QUERY + ".dtAjuste >= '" + dt + "'");
+                            if (busca.Contains("@"))
+                            {
+                                // Inclui registros de saldo de antecipação bancária
+                                busca = busca.Replace("@", "");
+                                DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                string dt = DataBaseQueries.GetDate(dta);
+                                where.Add(SIGLA_QUERY + ".dtAjuste >= '" + dt + "' OR (" +
+                                          SIGLA_QUERY + ".dsMotivo LIKE 'SALDO ANTECIPAÇÃO BANCÁRIA%' AND " +
+                                          "CONVERT(smalldatetime, SUBSTRING(" + SIGLA_QUERY + ".dsMotivo, CHARINDEX('VENCIMENTO', " + SIGLA_QUERY + ".dsMotivo) + 11, 10), 103) >= '" + dt + "')");
+                            }
+                            else
+                            {
+                                DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                string dt = DataBaseQueries.GetDate(dta);
+                                where.Add(SIGLA_QUERY + ".dtAjuste >= '" + dt + "'");
+                            }
                         }
                         else if (item.Value.Contains("<")) // MENOR IGUAL
                         {
