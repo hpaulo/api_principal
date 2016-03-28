@@ -637,6 +637,26 @@ namespace api.Negocios.Card
                         DbContextTransaction transaction = _db.Database.BeginTransaction();
                         try
                         {
+                            // Verifica se tem ajustes conciliados
+                            int parcelasConciliadas = _db.Database.SqlQuery<int>("SELECT COUNT(*)" +
+                                                                               " FROM pos.RecebimentoParcela P (NOLOCK)" +
+                                                                               " WHERE P.idAntecipacaoBancariaDetalhe IN (" + string.Join(", ", param.idsAntecipacaoBancariaDetalhe) + ")" +
+                                                                               " AND P.idExtrato IS NOT NULL")
+                                                                .FirstOrDefault();
+                            if (parcelasConciliadas > 0)
+                                throw new Exception("Não foi possível desfazer a antecipação bancária porque há recebíveis envolvidos em conciliação bancária");
+                            
+
+                            // Verifica se tem ajustes conciliados
+                            int ajustesConciliados =_db.Database.SqlQuery<int>("SELECT COUNT(*)" +
+                                                                               " FROM card.tbRecebimentoAjuste A (NOLOCK)" +
+                                                                               " WHERE A.idAntecipacaoBancariaDetalhe IN (" + string.Join(", ", param.idsAntecipacaoBancariaDetalhe) + ")" +
+                                                                               " AND A.idExtrato IS NOT NULL")
+                                                                .FirstOrDefault();
+                            if (ajustesConciliados > 0)
+                                throw new Exception("Não foi possível desfazer a antecipação bancária porque há ajustes envolvidos em conciliação bancária");
+                            
+
                             // Remove ajustes
                             _db.Database.ExecuteSqlCommand("DELETE A" +
                                                            " FROM card.tbRecebimentoAjuste A" +
@@ -779,7 +799,7 @@ namespace api.Negocios.Card
                                     ", SUM(P.valorParcelaLiquida) as valorAntecipado" +
                                     " FROM pos.RecebimentoParcela P (NOLOCK)" +
                                     " JOIN pos.Recebimento R (NOLOCK) ON R.id = P.idRecebimento" +
-                                // Tem que ter tido alguma antecipação que fez uso do vencimento em questão
+                                    // Tem que ter tido alguma antecipação que fez uso do vencimento em questão
                                     " WHERE P.idAntecipacaoBancariaDetalhe IS NOT NULL" +
                                     " AND P.idAntecipacaoBancariaDetalhe IN (" +
                                     "       SELECT D.idAntecipacaoBancariaDetalhe" +
@@ -789,7 +809,7 @@ namespace api.Negocios.Card
                                     "             AND A.dtAntecipacaoBancaria < '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
                                     "             AND A.cdContaCorrente = " + cdContaCorrente +
                                     " )" +
-                                // AGRUPA POR FILIAL
+                                    // AGRUPA POR FILIAL
                                     " GROUP BY R.cnpj";
                             recebivel = DataBaseQueries.SqlQuery(script, connection);
                             if (recebivel != null && recebivel.Count > 0 && recebivel[0] != null)
@@ -1010,11 +1030,6 @@ namespace api.Negocios.Card
 
                                 if (valorUtilizado < vlAntecipacao)
                                 {
-                                    if (!temSaldo)
-                                        throw new Exception("Ocorreu uma falha ao realizar a antecipação das parcelas vencidas em " +
-                                                            dtVencimento.ToShortDateString() + " para " + dtAntecipacaoBancaria.ToShortDateString() +
-                                                            ". Não era para ter saldo!");
-
                                     // Cria ajuste de crédito
                                     decimal ajuste = decimal.Round(vlAntecipacaoLiquida - valorLiquidoUtilizado, 2);
                                     string dsMotivo = "SALDO ANTECIPAÇÃO BANCÁRIA VENCIMENTO " + dtVencimento.ToShortDateString();
@@ -1033,7 +1048,7 @@ namespace api.Negocios.Card
                                     script = " SELECT TOP(1) D.idAntecipacaoBancariaDetalhe, D.vlAntecipacaoLiquida" +
                                              " FROM card.tbAntecipacaoBancariaDetalhe D (NOLOCK)" +
                                              " JOIN card.tbAntecipacaoBancaria A ON A.idAntecipacaoBancaria = D.idAntecipacaoBancaria" +
-                                        //" LEFT JOIN pos.RecebimentoParcela P ON P.idAntecipacaoBancariaDetalhe = D.idAntecipacaoBancariaDetalhe" +
+                                             //" LEFT JOIN pos.RecebimentoParcela P ON P.idAntecipacaoBancariaDetalhe = D.idAntecipacaoBancariaDetalhe" +
                                              " LEFT JOIN card.tbRecebimentoAjuste T ON T.idAntecipacaoBancariaDetalhe = D.idAntecipacaoBancariaDetalhe" +
                                              " WHERE A.dtAntecipacaoBancaria < '" + DataBaseQueries.GetDate(dtAntecipacaoBancaria) + "'" +
                                              " AND T.idAntecipacaoBancariaDetalhe IS NOT NULL" +
@@ -1066,7 +1081,29 @@ namespace api.Negocios.Card
                                         cnpj = Convert.ToString(tbRecebimentoAjuste["nrCNPJ"]);
                                         cdBandeiraAjuste = Convert.ToInt32(tbRecebimentoAjuste["cdBandeira"]);
                                     }
-                                    // else não há antecipações anteriores....
+                                    else 
+                                    {
+                                        // Não há antecipações anteriores
+                                        if (valorTotalDisponivel == new decimal(0.0))
+                                        {
+                                            // Problema de carga ou data de vencimento está errada
+                                            throw new Exception("Por favor, verifique se na antecipação do dia " + dtAntecipacaoBancaria.ToShortDateString() + 
+                                                                " consta o vencimento " + dtVencimento.ToShortDateString() + "." + 
+                                                                Environment.NewLine + "Se o vencimento realmente constar na operação, " +
+                                                                " é necessário avaliar se todas as cargas necessárias foram previamente realizadas" +
+                                                                " (VENDAS, AJUSTES E TARIFAS, LANÇAMENTOS FUTUROS), tendo em vista que não há nenhum valor disponível" + 
+                                                                " no Card Services para o vencimento em questão considerando a data da operação!");
+                                        }
+
+                                        if (!temSaldo)
+                                        {
+                                            //=> não era pra ter saldo!
+                                            throw new Exception("Ocorreu uma falha ao realizar a antecipação das parcelas vencidas em " +
+                                                                dtVencimento.ToShortDateString() + " para " + dtAntecipacaoBancaria.ToShortDateString() +
+                                                                ". Não era para ter saldo!");
+                                        }
+                                    }
+                                   
 
 
                                     //if (vlAjusteUtilizadoAntecipacaoAnterior != new decimal(0.0) && Math.Abs(vlAjusteUtilizadoAntecipacaoAnterior) + new decimal(0.01) < ajuste)

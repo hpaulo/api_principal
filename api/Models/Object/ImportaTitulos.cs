@@ -5,7 +5,7 @@ using System.Web;
 
 namespace api.Models.Object
 {
-    public class ImportaTitulos
+    public class ImportacaoErp
     {
         public string data { get; set; }
         //public Int32 id_grupo { get; set; }
