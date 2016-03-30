@@ -1588,7 +1588,7 @@ namespace api.Negocios.Card
                             {
                                 // Remove as parcelas para não se envolverem em pré-conciliação
                                 recebimentosParcela.RemoveAll(t => t.DataRecebimentoDiferente != null && t.DataRecebimentoDiferente.Value &&
-                                                                   t.Antecipado == null || !t.Antecipado.Value);
+                                                                   (t.Antecipado == null || !t.Antecipado.Value));
 
                                 // Adiciona na lista de não-conciliados
                                 if (!filtroTipoPreConciliado)
