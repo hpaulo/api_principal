@@ -191,13 +191,31 @@ namespace api.Negocios.Card
                         entity = entity.Where(e => e.tbBandeira.dsTipo.TrimEnd().Equals(dsTipo)).AsQueryable<tbRecebimentoAjuste>();
                         break;
                     case CAMPOS.SEM_AJUSTES_ANTECIPACAO:
-                        if (Convert.ToBoolean(item.Value))
-                            // Por enquanto, só trata da Cielo e Banese
-                            entity = entity.Where(e => (e.tbBandeira.cdAdquirente != 7 && e.tbBandeira.cdAdquirente != 2) ||
-                                                       (e.tbBandeira.cdAdquirente == 2 && !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)) ||
-                                                       (e.tbBandeira.cdAdquirente == 7 && !AJUSTES_ANTECIPACAO_BANESE.Contains(e.dsMotivo))
-                                                 ).AsQueryable<tbRecebimentoAjuste>();
-                            //entity = entity.Where(e =>  e.tbBandeira.cdAdquirente != 2 || !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)).AsQueryable<tbRecebimentoAjuste>();
+                        bool excludeBanese = false;
+                        string v = item.Value;
+                        if (v.Contains("~7"))
+                        {
+                            // sem banese
+                            excludeBanese = true;
+                            v = v.Substring(0, v.IndexOf("~"));
+                        }
+
+                        if (Convert.ToBoolean(v))
+                        {
+                            if (excludeBanese)
+                            {
+                                // Sem Banese => Por enquanto, só trata Cielo
+                                entity = entity.Where(e => e.tbBandeira.cdAdquirente != 2 || !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)).AsQueryable<tbRecebimentoAjuste>();
+                            }
+                            else
+                            {
+                                // Por enquanto, só trata da Cielo e Banese
+                                entity = entity.Where(e => (e.tbBandeira.cdAdquirente != 7 && e.tbBandeira.cdAdquirente != 2) ||
+                                                           (e.tbBandeira.cdAdquirente == 2 && !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)) ||
+                                                           (e.tbBandeira.cdAdquirente == 7 && !AJUSTES_ANTECIPACAO_BANESE.Contains(e.dsMotivo))
+                                                     ).AsQueryable<tbRecebimentoAjuste>();
+                            }
+                        }
                         break;
                     //case CAMPOS.AJUSTES_VENDA:
                     //    if (Convert.ToBoolean(item.Value))
@@ -451,19 +469,35 @@ namespace api.Negocios.Card
                         where.Add(GatewayTbBandeira.SIGLA_QUERY + ".dsTipo like '" + dsTipo + "%'");
                         break;
                     case CAMPOS.SEM_AJUSTES_ANTECIPACAO:
-                        if (Convert.ToBoolean(item.Value))
+                        bool excludeBanese = false;
+                        string v = item.Value;
+                        if (v.Contains("~7"))
                         {
-                            // Por enquanto, só trata da Cielo e do Banese
+                            // sem banese
+                            excludeBanese = true;
+                            v = v.Substring(0, v.IndexOf("~"));
+                        }
+
+                        if (Convert.ToBoolean(v))
+                        {
                             string ajustesCielo = "'" + string.Join("', '", AJUSTES_ANTECIPACAO_CIELO) + "'";
-                            string ajustesBanese = "'" + string.Join("', '", AJUSTES_ANTECIPACAO_BANESE) + "'"; 
                             // Adiciona os joins
                             if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
                                 join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + SIGLA_QUERY + ".cdBandeira");
-                            where.Add("(" + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente NOT IN (2, 7))" +
-                                      " OR (" + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = 2 AND " + SIGLA_QUERY + ".dsMotivo NOT IN (" + ajustesCielo + "))" +
-                                      " OR (" + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = 7 AND " + SIGLA_QUERY + ".dsMotivo NOT IN (" + ajustesBanese + "))");
-                            //where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente != 2" + " OR " + SIGLA_QUERY + ".dsMotivo NOT IN (" + ajustesCielo + ")");
                             
+                            if (excludeBanese)
+                            {
+                                // Sem Banese => Por enquanto, só trata Cielo
+                                where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente != 2" + " OR " + SIGLA_QUERY + ".dsMotivo NOT IN (" + ajustesCielo + ")");
+                            }
+                            else
+                            {
+                                // Por enquanto, só trata da Cielo e Banese
+                                string ajustesBanese = "'" + string.Join("', '", AJUSTES_ANTECIPACAO_BANESE) + "'";
+                                where.Add("(" + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente NOT IN (2, 7))" +
+                                          " OR (" + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = 2 AND " + SIGLA_QUERY + ".dsMotivo NOT IN (" + ajustesCielo + "))" +
+                                          " OR (" + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = 7 AND " + SIGLA_QUERY + ".dsMotivo NOT IN (" + ajustesBanese + "))");
+                            }
                         }
                         break;
                     //case CAMPOS.AJUSTES_VENDA:
