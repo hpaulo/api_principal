@@ -997,7 +997,7 @@ namespace api.Negocios.Pos
             string outValue = null;
 
             if (semAjustesAntecipacao)
-                queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.SEM_AJUSTES_ANTECIPACAO, true.ToString());
+                queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.SEM_AJUSTES_ANTECIPACAO, true.ToString() /*+ "~7"*/); // exibe os ajustes de antecipação do BANESE
 
             if (queryStringRecebimentoParcela.TryGetValue("" + (int)CAMPOS.CDADQUIRENTE, out outValue))
                 queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.CDADQUIRENTE, queryStringRecebimentoParcela["" + (int)CAMPOS.CDADQUIRENTE]);
@@ -1738,7 +1738,7 @@ namespace api.Negocios.Pos
                                                                 valorLiquida = e.Sum(p => p.vlAjuste),
                                                                 //valorDescontado = e.Where(p => p.vlAjuste < new decimal(0.0)).Select(p => new decimal(-1.0) * p.vlAjuste).Sum(),
                                                                 valorDescontado = (e.Where(p => p.vlBruto != new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto != new decimal(0.0)).Sum(p => p.vlBruto - p.vlAjuste) : new decimal(0.0)) +
-                                                                                  (e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste > new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste < new decimal(0.0)).Select(p => new decimal(-1.0) * p.vlAjuste).Sum() : new decimal(0.0)),
+                                                                                  (e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste < new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste < new decimal(0.0)).Select(p => new decimal(-1.0) * p.vlAjuste).Sum() : new decimal(0.0)),
                                                                 vlDescontadoAntecipacao = new decimal(0.0),
                                                                 totalTransacoes = e.Count()
                                                             }).ToList<dynamic>();
@@ -1830,7 +1830,7 @@ namespace api.Negocios.Pos
                                                                                (e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste > new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste > new decimal(0.0)).Sum(p => p.vlAjuste) : new decimal(0.0)),
                                                                 valorLiquida = e.Sum(p => p.vlAjuste),
                                                                 valorDescontado = (e.Where(p => p.vlBruto != new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto != new decimal(0.0)).Sum(p => p.vlBruto - p.vlAjuste) : new decimal(0.0)) +
-                                                                                  (e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste > new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste < new decimal(0.0)).Select(p => new decimal(-1.0) * p.vlAjuste).Sum() : new decimal(0.0)),
+                                                                                  (e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste < new decimal(0.0)).Count() > 0 ? e.Where(p => p.vlBruto == new decimal(0.0) && p.vlAjuste < new decimal(0.0)).Select(p => new decimal(-1.0) * p.vlAjuste).Sum() : new decimal(0.0)),
                                                                 vlDescontadoAntecipacao = new decimal(0.0),
                                                                 totalTransacoes = e.Count()
                                                             }).ToList<dynamic>();
