@@ -41,10 +41,7 @@ namespace api.Negocios.Card
 
         private readonly static string DOMINIO = System.Configuration.ConfigurationManager.AppSettings["DOMINIO"];
 
-        /// <summary>
-        /// Requisita à API correspondente a baixa automática
-        /// </summary>
-        /// <returns></returns>        
+        // GET "titulos/baixaautomatica"      
         public static Retorno Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0, Dictionary<string, string> queryString = null, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
@@ -114,7 +111,7 @@ namespace api.Negocios.Card
                                       + " com mais de um recebível! Essa relação deve ser de um para um."
                                       + Environment.NewLine
                                       + (idsRecebimentoTitulo.Count == 1 ? " Segue o título e as correspondentes parcelas conciliadas com ele:" :
-                                                                          " Seguem os títulos e as correspondentes parcelas conciliadas com cada uma deles")
+                                                                          " Seguem os títulos e as correspondentes parcelas conciliadas com cada um deles")
                                       + Environment.NewLine;
                         // Reporta os títulos e as parcelas....
                         foreach (int idRecebimentoTitulo in idsRecebimentoTitulo)

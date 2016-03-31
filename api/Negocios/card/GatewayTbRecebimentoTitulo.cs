@@ -505,6 +505,8 @@ namespace api.Negocios.Card
                 // TOTAL DE REGISTROS
                 retorno.TotalDeRegistros = query.Count();
 
+                List<int> titulosConciliados = new List<int>();
+
                 if (colecao == 2 || colecao == 3)
                 {
                     // Obtém totais
@@ -512,7 +514,25 @@ namespace api.Negocios.Card
                     retorno.Totais.Add("valorTotal", retorno.TotalDeRegistros > 0 ? query.Select(e => e.vlParcela).Cast<decimal>().Sum() : new decimal(0.0));
                     retorno.Totais.Add("totalBaixados", retorno.TotalDeRegistros > 0 ? query.Where(e => e.dtBaixaERP != null).Count() : 0);
                     if (colecao == 3)
-                        retorno.Totais.Add("totalConciliados", retorno.TotalDeRegistros > 0 ? query.Where(e => e.RecebimentoParcelas.Count > 0).Count() : 0);
+                    {
+                        //retorno.Totais.Add("totalConciliados", retorno.TotalDeRegistros > 0 ? query.Where(e => e.RecebimentoParcelas.Count > 0).Count() : 0);
+
+                        if(retorno.TotalDeRegistros == 0)
+                            retorno.Totais.Add("totalConciliados", 0);
+                        else
+                        {
+                            titulosConciliados = _db.Database.SqlQuery<int>("SELECT DISTINCT P.idRecebimentoTitulo" +
+                                                                            " FROM pos.RecebimentoParcela P (NOLOCK)" +
+                                                                            " WHERE P.idRecebimentoTitulo IN (" + string.Join(", ", query.Select(e => e.idRecebimentoTitulo)) + ")"
+                                                                           ).ToList();
+
+                            retorno.Totais.Add("totalConciliados", titulosConciliados.Count);
+                        }
+
+                        query = query.OrderBy(e => e.dtTitulo).ThenBy(e => e.dtVenda).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.vlParcela).ThenBy(e => e.nrNSU);
+                    }
+                    else
+                        query = query.OrderBy(e => e.empresa.ds_fantasia).ThenBy(e => e.dtTitulo).ThenBy(e => e.dtVenda).ThenBy(e => e.vlParcela).ThenBy(e => e.nrNSU);
                 }
 
 
@@ -582,7 +602,7 @@ namespace api.Negocios.Card
                         DataPrevista = e.dtTitulo,
                         Valor = e.vlParcela,
                         Baixado = e.dtBaixaERP != null,
-                    }).OrderBy(e => e.Filial).ThenBy(e => e.DataPrevista).ThenBy(e => e.DataVenda).ThenBy(e => e.Valor).ToList<dynamic>();
+                    }).ToList<dynamic>();
 
                     //retorno.Totais = new Dictionary<string, object>();
                     //retorno.Totais.Add("valorTotal", retorno.TotalDeRegistros > 0 ? CollectionTbRecebimentoTitulo.Select(e => e.Valor).Cast<decimal>().Sum() : new decimal(0.0));
@@ -618,8 +638,9 @@ namespace api.Negocios.Card
                         nrParcela = e.nrParcela,
                         cdERP = e.cdERP,
                         dtBaixaERP = e.dtBaixaERP,
-                        conciliado = e.RecebimentoParcelas.Count > 0
-                    }).OrderBy(e => e.dtTitulo).ThenBy(e => e.dtVenda).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.vlParcela).ToList<dynamic>();
+                        //conciliado = e.RecebimentoParcelas.Count > 0
+                        conciliado = titulosConciliados.Contains(e.idRecebimentoTitulo)
+                    }).ToList<dynamic>();
 
                 }
 
@@ -635,7 +656,7 @@ namespace api.Negocios.Card
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao importar consultar títulos" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao consultar títulos" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
@@ -673,7 +694,7 @@ namespace api.Negocios.Card
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao importar salvar título" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao salvar título" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
@@ -712,7 +733,7 @@ namespace api.Negocios.Card
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao importar remover título" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao remover título" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
@@ -771,7 +792,7 @@ namespace api.Negocios.Card
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao importar atualizar título" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao atualizar título" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
