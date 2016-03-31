@@ -43,6 +43,7 @@ namespace api.Models
             this.LoginOperadorasCentralizador = new List<LoginOperadora>();
             this.tbRecebimentoTitulos = new List<tbRecebimentoTitulo>();
             this.tbResumoVendas = new List<tbResumoVenda>();
+            this.tbRecebimentoVendas = new List<tbRecebimentoVenda>();
         }
 
         public string nu_cnpj { get; set; }
@@ -101,5 +102,6 @@ namespace api.Models
         public virtual ICollection<LoginOperadora> LoginOperadorasCentralizador { get; set; }
         public virtual ICollection<tbRecebimentoTitulo> tbRecebimentoTitulos { get; set; }
         public virtual ICollection<tbResumoVenda> tbResumoVendas { get; set; }
+        public virtual ICollection<tbRecebimentoVenda> tbRecebimentoVendas { get; set; }
     }
 }

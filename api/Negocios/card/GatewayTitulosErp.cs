@@ -90,6 +90,8 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+
+            DbContextTransaction transaction = _db.Database.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted);
             try
             {
                 //try
@@ -105,7 +107,7 @@ namespace api.Negocios.Card
                 // DATA
                 string data = String.Empty;
                 if (!queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
-                    throw new Exception("O identificador da movimentação bancária deve ser informada para a baixa automática!");
+                    throw new Exception("A data deve ser informada!");
 
                 data = queryString["" + (int)CAMPOS.DATA];
 
@@ -113,7 +115,7 @@ namespace api.Negocios.Card
                 Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo == 0 && queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
                     IdGrupo = Convert.ToInt32(queryString["" + (int)CAMPOS.ID_GRUPO]);
-                if (IdGrupo == 0) throw new Exception("Um grupo deve ser selecionado como para a baixa automática!");
+                if (IdGrupo == 0) throw new Exception("Um grupo deve ser selecionado como para a listagem dos títulos!");
 
                 grupo_empresa grupo_empresa = _db.grupo_empresa.Where(e => e.id_grupo == IdGrupo).FirstOrDefault();
 
@@ -180,6 +182,8 @@ namespace api.Negocios.Card
                                      .ToList<dynamic>();
                 }
 
+                transaction.Commit();
+
                 retorno.PaginaAtual = pageNumber;
                 retorno.ItensPorPagina = pageSize;
 
@@ -190,6 +194,7 @@ namespace api.Negocios.Card
             }
             catch (Exception e)
             {
+                transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -208,16 +213,13 @@ namespace api.Negocios.Card
             }
         }
 
-        /// <summary>
-        /// Importa títulos
-        /// </summary>
-        /// <param name="param"></param>
-        /// <returns></returns>
+        // GET "titulos/consultatitulos"
         public static void ImportaTitulos(string token, ImportacaoErp param, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
+
             try
             {
 
@@ -226,7 +228,7 @@ namespace api.Negocios.Card
                     // GRUPO EMPRESA => OBRIGATÓRIO!
                     Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                     //if (IdGrupo == 0 && param.id_grupo != 0) IdGrupo = param.id_grupo;
-                    if (IdGrupo == 0) throw new Exception("Um grupo deve ser selecionado como para a baixa automática!");
+                    if (IdGrupo == 0) throw new Exception("Um grupo deve ser selecionado como para a importação dos títulos!");
 
                     grupo_empresa grupo_empresa = _db.grupo_empresa.Where(e => e.id_grupo == IdGrupo).FirstOrDefault();
 
@@ -326,56 +328,65 @@ namespace api.Negocios.Card
                         vlVenda = Convert.ToDecimal(tit.vlVenda),
                     };
 
-                    tbRecebimentoTitulo titulo = _db.tbRecebimentoTitulos
-                                                            // Unique
-                                                            .Where(e => e.nrCNPJ.Equals(tbRecebimentoTitulo.nrCNPJ))
-                                                            .Where(e => e.nrNSU.Equals(tbRecebimentoTitulo.nrNSU))
-                                                            .Where(e => e.dtTitulo.Equals(tbRecebimentoTitulo.dtTitulo))
-                                                            .Where(e => e.nrParcela == tbRecebimentoTitulo.nrParcela)
-                                                            .Where(e => e.cdERP == tbRecebimentoTitulo.cdERP)
-                                                            .FirstOrDefault();
+                    //tbRecebimentoTitulo titulo = _db.tbRecebimentoTitulos
+                    //                                        // Unique
+                    //                                        .Where(e => e.nrCNPJ.Equals(tbRecebimentoTitulo.nrCNPJ))
+                    //                                        .Where(e => e.nrNSU.Equals(tbRecebimentoTitulo.nrNSU))
+                    //                                        .Where(e => e.dtTitulo.Equals(tbRecebimentoTitulo.dtTitulo))
+                    //                                        .Where(e => e.nrParcela == tbRecebimentoTitulo.nrParcela)
+                    //                                        .Where(e => e.cdERP == tbRecebimentoTitulo.cdERP)
+                    //                                        .FirstOrDefault();
+                    tbRecebimentoTitulo titulo = _db.Database.SqlQuery<tbRecebimentoTitulo>("SELECT T.*" +
+                                                                                            " FROM card.tbRecebimentoTitulo T (NOLOCK)" +
+                                                                                            " WHERE T.nrCNPJ = '" + tbRecebimentoTitulo.nrCNPJ + "'" +
+                                                                                            " AND T.nrNSU = '" + tbRecebimentoTitulo.nrNSU + "'" +
+                                                                                            " AND T.dtTitulo = '" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtTitulo) + "'" +
+                                                                                            " AND T.nrParcela = " + tbRecebimentoTitulo.nrParcela +
+                                                                                            " AND T.cdERP = '" + tbRecebimentoTitulo.cdERP + "'"
+                                                                                           )
+                                                             .FirstOrDefault();
 
                     if (titulo == null)
                     {
-                        //GatewayTbRecebimentoTitulo.Add(token, tbRecebimentoTitulo, _db);
-                        _db.tbRecebimentoTitulos.Add(tbRecebimentoTitulo);
-                        //try
-                        //{
-                        //    _db.SaveChanges();
-                        //}
-                        //catch(Exception e)
-                        //{
-                        //    ((IObjectContextAdapter)_db).ObjectContext.Detach(tbRecebimentoTitulo);
-                        //    if (e is DbEntityValidationException)
-                        //        throw new Exception(MensagemErro.getMensagemErro((DbEntityValidationException)e));
-                        //    else
-                        //        throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
-                        //}
+                        //_db.tbRecebimentoTitulos.Add(tbRecebimentoTitulo);
+                        _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoTitulo" +
+                                                       " (nrCNPJ, nrNSU, dtTitulo, nrParcela, cdERP, dtVenda" + 
+                                                       ", cdAdquirente, dsBandeira, vlVenda, qtParcelas, vlParcela, dtBaixaERP)" +
+                                                       " VALUES ('" + tbRecebimentoTitulo.nrCNPJ + "'" + 
+                                                       ", '" + tbRecebimentoTitulo.nrNSU + "'" +
+                                                       ", '" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtTitulo) + "'" +
+                                                       ", " + tbRecebimentoTitulo.nrParcela +
+                                                       ", " + (tbRecebimentoTitulo.cdERP == null ? "NULL" : "'" + tbRecebimentoTitulo.cdERP + "'") +
+                                                       ", " + (tbRecebimentoTitulo.dtVenda == null ? "NULL" : "'" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtVenda.Value) + "'") +
+                                                       ", " + tbRecebimentoTitulo.cdAdquirente +
+                                                       ", " + (tbRecebimentoTitulo.dsBandeira == null ? "NULL" : "'" + tbRecebimentoTitulo.dsBandeira + "'") +
+                                                       ", " + (tbRecebimentoTitulo.vlVenda == null ? "NULL" : tbRecebimentoTitulo.vlVenda.Value.ToString(CultureInfo.GetCultureInfo("en-GB"))) +
+                                                       ", " + (tbRecebimentoTitulo.qtParcelas == null ? "NULL" : tbRecebimentoTitulo.qtParcelas.Value.ToString()) +
+                                                       ", " + tbRecebimentoTitulo.vlParcela.ToString(CultureInfo.GetCultureInfo("en-GB")) +
+                                                       ", " + (tbRecebimentoTitulo.dtBaixaERP == null ? "NULL" : "'" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtBaixaERP.Value) + "'") +
+                                                       ")");
                     }
                     else
                     {
-                        //tbRecebimentoTitulo.idRecebimentoTitulo = titulo.idRecebimentoTitulo;
-                        //GatewayTbRecebimentoTitulo.Update(token, tbRecebimentoTitulo, _db);
-                        titulo.dtVenda = tbRecebimentoTitulo.dtVenda;
-                        titulo.cdAdquirente = tbRecebimentoTitulo.cdAdquirente;
-                        titulo.dsBandeira = tbRecebimentoTitulo.dsBandeira;
-                        titulo.vlVenda = tbRecebimentoTitulo.vlVenda;
-                        titulo.qtParcelas = tbRecebimentoTitulo.qtParcelas;
-                        titulo.vlParcela = tbRecebimentoTitulo.vlParcela;
-                        //titulo.cdERP = tbRecebimentoTitulo.cdERP;
-                        titulo.dtBaixaERP = tbRecebimentoTitulo.dtBaixaERP;
-                        //try
-                        //{
-                        //    _db.SaveChanges();
-                        //}
-                        //catch(Exception e)
-                        //{
-                        //    _db.Entry(titulo).Reload();
-                        //    if (e is DbEntityValidationException)
-                        //        throw new Exception(MensagemErro.getMensagemErro((DbEntityValidationException)e));
-                        //    else
-                        //        throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
-                        //}
+                        //titulo.dtVenda = tbRecebimentoTitulo.dtVenda;
+                        //titulo.cdAdquirente = tbRecebimentoTitulo.cdAdquirente;
+                        //titulo.dsBandeira = tbRecebimentoTitulo.dsBandeira;
+                        //titulo.vlVenda = tbRecebimentoTitulo.vlVenda;
+                        //titulo.qtParcelas = tbRecebimentoTitulo.qtParcelas;
+                        //titulo.vlParcela = tbRecebimentoTitulo.vlParcela;
+                        //titulo.dtBaixaERP = tbRecebimentoTitulo.dtBaixaERP;
+
+                        _db.Database.ExecuteSqlCommand("UPDATE T" +
+                                                       " SET T.dtVenda = " + (tbRecebimentoTitulo.dtVenda == null ? "NULL" : "'" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtVenda.Value) + "'") +
+                                                       ", T.cdAdquirente = " + tbRecebimentoTitulo.cdAdquirente +
+                                                       ", T.dsBandeira = " + (tbRecebimentoTitulo.dsBandeira == null ? "NULL" : "'" + tbRecebimentoTitulo.dsBandeira + "'") +
+                                                       ", T.vlVenda = " + (tbRecebimentoTitulo.vlVenda == null ? "NULL" : tbRecebimentoTitulo.vlVenda.Value.ToString(CultureInfo.GetCultureInfo("en-GB"))) +
+                                                       ", T.qtParcelas = " + (tbRecebimentoTitulo.qtParcelas == null ? "NULL" : tbRecebimentoTitulo.qtParcelas.Value.ToString()) +
+                                                       ", T.vlParcela = " + tbRecebimentoTitulo.vlParcela.ToString(CultureInfo.GetCultureInfo("en-GB")) +
+                                                       ", T.dtBaixaERP = " + (tbRecebimentoTitulo.dtBaixaERP == null ? "NULL" : "'" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtBaixaERP.Value) + "'") +
+                                                       " FROM card.tbRecebimentoTitulo T" +
+                                                       " WHERE T.idRecebimentoTitulo = " + titulo.idRecebimentoTitulo);
+                        
                     }
                     _db.SaveChanges();
                     transaction.Commit();
