@@ -380,6 +380,8 @@
     <Compile Include="Models\Mapping\tbRecebimentoVendaMap.cs" />
     <Compile Include="Models\Mapping\tbResumoVendaMap.cs" />
     <Compile Include="Models\Object\AntecipacaoBancaria.cs" />
+    <Compile Include="Models\Object\ConciliacaoVendas.cs" />
+    <Compile Include="Models\Object\ConciliaRecebimentoVenda.cs" />
     <Compile Include="Models\Object\CorrigeVendasErp.cs" />
     <Compile Include="Models\Object\EmpresaAtualizar.cs" />
     <Compile Include="Models\Object\LogCargaValorSite.cs" />

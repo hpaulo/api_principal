@@ -1800,6 +1800,7 @@ namespace api.Negocios.Card
 
                                 if (parcelasAntecipadas.Count > 0)
                                 {
+                                    #region REMOVE DAS PRÉ-CONCILIAÇÕES "NORMAIS" ESSAS PARCELAS ANTECIPADAS, CONCILIANDO COM MOVIMENTAÇÕES DE ANTECIPAÇÃO (CASO EXISTAM)
                                     // Remove todas elas das parcelas a serem pré-conciliadas com as movimentações que não são de antecipação
                                     //recebimentosParcela = parcelasAntecipadas.Where(e => parcelasAntecipadas.Any(p => p.Grupo.Any(g => g.Id == e.Grupo[0].Id && g.NumParcela == e.Grupo[0].NumParcela)))
                                     //                                                .OrderBy(e => e.Data)
@@ -1963,6 +1964,7 @@ namespace api.Negocios.Card
 
                                     // Limpa a lista
                                     parcelasAntecipadas.Clear();
+                                    #endregion
                                 }
                             }
 
@@ -2271,7 +2273,7 @@ namespace api.Negocios.Card
                                                 else
                                                 {
 
-                                                    if (cdAdquirente.Equals("2"))
+                                                    if (cdAdquirente.Equals("2") || cdAdquirente.Equals("1"))
                                                     {
                                                         #region PASSO 5.1) CONCILIA FAZENDO AGRUPAMENTO POR DATA, ADQUIRENTE, BANDEIRA E LOTE NO RECEBIMENTO PARCELA (SEM AGRUPAR POR DATA DA VENDA)
 

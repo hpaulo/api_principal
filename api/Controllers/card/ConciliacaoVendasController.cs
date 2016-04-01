@@ -53,7 +53,7 @@ namespace api.Controllers.Card
 
 
         // PUT /ConciliacaoVendas/token/
-        public HttpResponseMessage Put(string token, [FromBody]List<ConciliaRecebimentoParcelaTitulo> param)
+        public HttpResponseMessage Put(string token, [FromBody]List<ConciliaRecebimentoVenda> param)
         {
             // Abre nova conexão
             using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())

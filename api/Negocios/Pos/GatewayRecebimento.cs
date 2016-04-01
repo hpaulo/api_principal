@@ -9,6 +9,9 @@ using api.Models.Object;
 using System.Globalization;
 using System.Data.Entity.Validation;
 using System.Data.Entity;
+using api.Negocios.Util;
+using api.Negocios.Cliente;
+using api.Negocios.Card;
 
 namespace api.Negocios.Pos
 {
@@ -47,6 +50,9 @@ namespace api.Negocios.Pos
             CODRESUMOVENDA = 113,
             NUMPARCELATOTAL = 114,
             CDBANDEIRA = 115,
+            IDRESUMOVENDA = 116,
+            NRCARTAO = 117,
+            IDRECEBIMENTOVENDA = 118,
 
             // OPERADORA (ADQUIRENTE)
             IDOPERADORA = 300,
@@ -116,20 +122,20 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.NSU:
                         string nsu = Convert.ToString(item.Value);
-                        if (nsu.Contains("%")) // usa LIKE => STARTS WITH
+                        if (nsu.Contains("%")) // usa LIKE => CONTAINS
                         {
                             string busca = nsu.Replace("%", "").ToString();
-                            entity = entity.Where(e => e.nsu.StartsWith(busca));
+                            entity = entity.Where(e => e.nsu.Contains(busca));
                         }
                         else
                             entity = entity.Where(e => e.nsu.Equals(nsu)).AsQueryable();
                         break;
                     case CAMPOS.CDAUTORIZADOR:
                         string cdAutorizador = Convert.ToString(item.Value);
-                        if (cdAutorizador.Contains("%")) // usa LIKE => STARTS WITH
+                        if (cdAutorizador.Contains("%")) // usa LIKE => CONTAINS
                         {
                             string busca = cdAutorizador.Replace("%", "").ToString();
-                            entity = entity.Where(e => e.cdAutorizador.StartsWith(busca));
+                            entity = entity.Where(e => e.cdAutorizador.Contains(busca));
                         }
                         else
                             entity = entity.Where(e => e.cdAutorizador.Equals(cdAutorizador)).AsQueryable();
@@ -237,7 +243,13 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.CODRESUMOVENDA:
                         string codResumoVenda = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.codResumoVenda.Equals(codResumoVenda)).AsQueryable();
+                        if (codResumoVenda.Contains("%")) // usa LIKE => CONSTAINS
+                        {
+                            string busca = codResumoVenda.Replace("%", "").ToString();
+                            entity = entity.Where(e => e.codResumoVenda.Contains(busca));
+                        }
+                        else
+                            entity = entity.Where(e => e.codResumoVenda.Equals(codResumoVenda)).AsQueryable();
                         break;
                     case CAMPOS.NUMPARCELATOTAL:
                         Int32 numParcelaTotal = Convert.ToInt32(item.Value);
@@ -251,6 +263,18 @@ namespace api.Negocios.Pos
                             entity = entity.Where(e => e.cdBandeira != null).AsQueryable();
                         else
                             entity = entity.Where(e => e.cdBandeira == cdBandeira).AsQueryable();
+                        break;
+                    case CAMPOS.IDRESUMOVENDA:
+                        Int32 idResumoVenda = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.idResumoVenda.Equals(idResumoVenda)).AsQueryable<Recebimento>();
+                        break;
+                    case CAMPOS.NRCARTAO:
+                        string nrCartao = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.nrCartao.Equals(nrCartao)).AsQueryable<Recebimento>();
+                        break;
+                    case CAMPOS.IDRECEBIMENTOVENDA:
+                        Int32 idRecebimentoVenda = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.idRecebimentoVenda.Equals(idRecebimentoVenda)).AsQueryable<Recebimento>();
                         break;
 
 
@@ -352,6 +376,18 @@ namespace api.Negocios.Pos
                             if (orderby == 0) entity = entity.OrderBy(e => e.cdBandeira).AsQueryable();
                             else entity = entity.OrderByDescending(e => e.cdBandeira).AsQueryable();
                             break;
+                        case CAMPOS.IDRESUMOVENDA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.idResumoVenda).AsQueryable<Recebimento>();
+                            else entity = entity.OrderByDescending(e => e.idResumoVenda).AsQueryable<Recebimento>();
+                            break;
+                        case CAMPOS.NRCARTAO:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.nrCartao).AsQueryable<Recebimento>();
+                            else entity = entity.OrderByDescending(e => e.nrCartao).AsQueryable<Recebimento>();
+                            break;
+                        case CAMPOS.IDRECEBIMENTOVENDA:
+                            if (orderby == 0) entity = entity.OrderBy(e => e.idRecebimentoVenda).AsQueryable<Recebimento>();
+                            else entity = entity.OrderByDescending(e => e.idRecebimentoVenda).AsQueryable<Recebimento>();
+                            break;
 
 
                         // PERSONALIZADO
@@ -382,6 +418,390 @@ namespace api.Negocios.Pos
             return entity;
             
         }
+
+
+
+
+        /// <summary>
+        /// Get Recebimento/Recebimento
+        /// </summary>
+        /// <param name="colecao"></param>
+        /// <param name="campo"></param>
+        /// <param name="orderby"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="queryString"></param>
+        /// <returns></returns>
+        public static SimpleDataBaseQuery getQuery(int campo, int orderby, Dictionary<string, string> queryString)
+        {
+            Dictionary<string, string> join = new Dictionary<string, string>();
+            List<string> where = new List<string>();
+            List<string> order = new List<string>();
+
+            #region WHERE - ADICIONA OS FILTROS A QUERY
+            // ADICIONA OS FILTROS A QUERY
+            foreach (KeyValuePair<string, string> item in queryString)
+            {
+                int key = Convert.ToInt16(item.Key);
+                CAMPOS filtroEnum = (CAMPOS)key;
+                switch (filtroEnum)
+                {
+                    case CAMPOS.ID:
+                        Int32 id = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".id = " + id);
+                        break;
+                    case CAMPOS.IDBANDEIRA:
+                        Int32 idBandeira = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".idBandeira = " + idBandeira);
+                        break;
+                    case CAMPOS.CNPJ:
+                        string cnpj = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".cnpj = '" + cnpj + "'");
+                        break;
+                    case CAMPOS.NSU:
+                        string nsu = Convert.ToString(item.Value);
+                        if (nsu.Contains("%")) // usa LIKE => CONTAINS
+                        {
+                            string busca = nsu.Replace("%", "").ToString();
+                            where.Add(SIGLA_QUERY + ".nsu like '%" + busca + "%'");
+                        }
+                        else
+                            where.Add(SIGLA_QUERY + ".nsu = '" + nsu + "'");
+                        break;
+                    case CAMPOS.CDAUTORIZADOR:
+                        string cdAutorizador = Convert.ToString(item.Value);
+                        if (cdAutorizador.Contains("%")) // usa LIKE => CONTAINS
+                        {
+                            string busca = cdAutorizador.Replace("%", "").ToString();
+                            where.Add(SIGLA_QUERY + ".cdAutorizador = '%" + busca + "%'");
+                        }
+                        else
+                            where.Add(SIGLA_QUERY + ".cdAutorizador = '" + cdAutorizador + "'");
+                        break;
+                    case CAMPOS.DTAVENDA:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            //entity = entity.Where(e => e.dtaVenda >= dtaIni && e.dtaVenda <= dtaFim);
+                            string dtInicio = DataBaseQueries.GetDate(dtaIni);
+                            string dtFim = DataBaseQueries.GetDate(dtaFim);
+                            where.Add(SIGLA_QUERY + ".dtaVenda BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
+                        }
+                        else if (item.Value.Contains(">")) // MAIOR IGUAL
+                        {
+                            string busca = item.Value.Replace(">", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(dta);
+                            where.Add(SIGLA_QUERY + ".dtaVenda >= '" + dt + "'");
+                        }
+                        else if (item.Value.Contains("<")) // MENOR IGUAL
+                        {
+                            string busca;
+                            if (item.Value.Length == 10)
+                            {
+                                string ano = item.Value.Substring(0, 4);
+                                string mes = item.Value.Substring(5, 2);
+                                string dia = item.Value.Substring(7, 2);
+                                busca = ano + mes + dia;
+                            }
+                            else if (item.Value.Length == 8)
+                            {
+                                string dia = item.Value.Substring(6, 1);
+                                string anoMes = item.Value.Substring(0, 6);
+                                busca = anoMes + "0" + dia;
+                            }
+                            else
+                            {
+                                busca = item.Value.Replace("<", "");
+                            }
+                            //busca = item.Value.Replace("<", "");
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(dta);
+                            where.Add(SIGLA_QUERY + ".dtaVenda <= '" + dt + "'");
+                        }
+                        else if (item.Value.Length == 4)
+                        {
+                            string busca = item.Value + "0101";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            where.Add("DATEPART(YEAR, " + SIGLA_QUERY + ".dtaVenda) = " + dtaIni.Year);
+                        }
+                        else if (item.Value.Length == 6)
+                        {
+                            string busca = item.Value + "01";
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            where.Add("DATEPART(YEAR, " + SIGLA_QUERY + ".dtaVenda) = " + dtaIni.Year + " AND DATEPART(MONTH, " + SIGLA_QUERY + ".dtaVenda) = " + dtaIni.Month);
+                        }
+                        else if (item.Value.Length == 7)
+                        {
+                            string dia = item.Value.Substring(6, 1);
+                            string anoMes = item.Value.Substring(0, 6);
+                            string busca = anoMes + "0" + dia;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(dtaIni);
+                            where.Add(SIGLA_QUERY + ".dtaVenda = '" + dt + "'");
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(dtaIni);
+                            where.Add(SIGLA_QUERY + ".dtaVenda = '" + dt + "'");
+                        }
+                        break;
+
+                    case CAMPOS.VALORVENDABRUTA:
+                        decimal valorVendaBruta = Convert.ToDecimal(item.Value);
+                        where.Add(SIGLA_QUERY + ".valorVendaBruta = " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                        break;
+                    case CAMPOS.VALORVENDALIQUIDA:
+                        decimal valorVendaLiquida = Convert.ToDecimal(item.Value);
+                        where.Add(SIGLA_QUERY + ".valorVendaLiquida = " + valorVendaLiquida.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                        break;
+                    case CAMPOS.LOTEIMPORTACAO:
+                        string loteImportacao = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".loteImportacao = '" + loteImportacao + "'");
+                        break;
+                    case CAMPOS.DTARECEBIMENTO:
+                        DateTime dtaRecebimento = Convert.ToDateTime(item.Value);
+                        where.Add(SIGLA_QUERY + ".dtaRecebimento = '" + DataBaseQueries.GetDate(dtaRecebimento) + "'");
+                        break;
+                    case CAMPOS.IDLOGICOTERMINAL:
+                        Int32 idLogicoTerminal = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".idLogicoTerminal = " + idLogicoTerminal);
+                        break;
+                    case CAMPOS.CODTITULOERP:
+                        string codTituloERP = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".codTituloERP = '" + codTituloERP + "'");
+                        break;
+                    case CAMPOS.CODVENDAERP:
+                        string codVendaERP = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".codVendaERP = '" + codVendaERP + "'");
+                        break;
+                    case CAMPOS.CODRESUMOVENDA:
+                        string codResumoVenda = Convert.ToString(item.Value);
+                        if (codResumoVenda.Contains("%")) // usa LIKE => CONTAINS
+                        {
+                            string busca = codResumoVenda.Replace("%", "").ToString();
+                            where.Add(SIGLA_QUERY + ".codResumoVenda like '%" + busca + "%'");
+                        }
+                        else
+                            where.Add(SIGLA_QUERY + ".codResumoVenda = '" + codResumoVenda + "'");
+                        break;
+                    case CAMPOS.NUMPARCELATOTAL:
+                        Int32 numParcelaTotal = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".numParcelaTotal = " + numParcelaTotal);
+                        break;
+                    case CAMPOS.CDBANDEIRA:
+                        Int32 cdBandeira = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".cdBandeira = " + cdBandeira);
+                        break;
+                    case CAMPOS.IDRESUMOVENDA:
+                        Int32 idResumoVenda = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".idResumoVenda = " + idResumoVenda);
+                        break;
+                    case CAMPOS.NRCARTAO:
+                        string nrCartao = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".nrCartao = '" + nrCartao + "'");
+                        break;
+                    case CAMPOS.IDRECEBIMENTOVENDA:
+                        Int32 idRecebimentoVenda = Convert.ToInt32(item.Value);
+                        where.Add(SIGLA_QUERY + ".idRecebimentoVenda = " + idRecebimentoVenda);
+                        break;
+
+                    // PERSONALIZADO
+
+                    case CAMPOS.IDOPERADORA:
+                        // Adiciona o join
+                        if (!join.ContainsKey("INNER JOIN pos.BandeiraPos " + GatewayBandeiraPos.SIGLA_QUERY))
+                            join.Add("INNER JOIN pos.BandeiraPos " + GatewayBandeiraPos.SIGLA_QUERY, " ON " + GatewayBandeiraPos.SIGLA_QUERY + ".id = " + SIGLA_QUERY + ".idBandeira");
+                        
+                        Int32 idOperadora = Convert.ToInt32(item.Value);
+                        where.Add(GatewayBandeiraPos.SIGLA_QUERY + ".idOperadora = " + idOperadora);
+                        break;
+                    case CAMPOS.NMOPERADORA:
+                        // Adiciona o join
+                        if (!join.ContainsKey("INNER JOIN pos.BandeiraPos " + GatewayBandeiraPos.SIGLA_QUERY))
+                            join.Add("INNER JOIN pos.BandeiraPos " + GatewayBandeiraPos.SIGLA_QUERY, " ON " + GatewayBandeiraPos.SIGLA_QUERY + ".id = " + SIGLA_QUERY + ".idBandeira");
+                        if (!join.ContainsKey("INNER JOIN pos.Operadora " + GatewayOperadora.SIGLA_QUERY))
+                            join.Add("INNER JOIN pos.Operadora " + GatewayOperadora.SIGLA_QUERY, " ON " + GatewayBandeiraPos.SIGLA_QUERY + ".idOperadora = " + GatewayOperadora.SIGLA_QUERY + ".id");
+
+                        string nmOperadora = Convert.ToString(item.Value);
+                        where.Add(GatewayOperadora.SIGLA_QUERY + ".nmOperadora = '" + nmOperadora + "'");
+                        break;
+
+                    case CAMPOS.ID_GRUPO:
+                        // Adiciona o join
+                        if (!join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                            join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+                        
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        where.Add(GatewayEmpresa.SIGLA_QUERY + ".id_grupo = " + id_grupo);
+                        break;
+                    case CAMPOS.DS_FANTASIA:
+                        // Adiciona o join
+                        if (!join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                            join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+                        
+                        string dsfantasia = Convert.ToString(item.Value);
+                        where.Add(GatewayEmpresa.SIGLA_QUERY + ".ds_fantasia = '" + dsfantasia + "'");
+                        break;
+                    case CAMPOS.CDADQUIRENTE:
+                        // Adiciona o join
+                        if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + SIGLA_QUERY + ".cdBandeira");
+                        
+                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                        where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente);
+                        break;
+                }
+            }
+            #endregion
+
+            #region ORDER BY - ADICIONA A ORDENAÇÃO A QUERY
+            // ADICIONA A ORDENAÇÃO A QUERY
+            CAMPOS filtro = (CAMPOS)campo;
+            switch (filtro)
+            {
+                case CAMPOS.ID:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".id ASC");
+                    else order.Add(SIGLA_QUERY + ".id DESC");
+                    break;
+                case CAMPOS.IDBANDEIRA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".idBandeira ASC");
+                    else order.Add(SIGLA_QUERY + ".idBandeira DESC");
+                    break;
+                case CAMPOS.CNPJ:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cnpj ASC");
+                    else order.Add(SIGLA_QUERY + ".cnpj DESC");
+                    break;
+                case CAMPOS.NSU:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".nsu ASC");
+                    else order.Add(SIGLA_QUERY + ".nsu DESC");
+                    break;
+                case CAMPOS.CDAUTORIZADOR:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdAutorizador ASC");
+                    else order.Add(SIGLA_QUERY + ".cdAutorizador DESC");
+                    break;
+                case CAMPOS.DTAVENDA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dtaVenda ASC");
+                    else order.Add(SIGLA_QUERY + ".dtaVenda DESC");
+                    break;
+                case CAMPOS.VALORVENDABRUTA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".valorVendaBruta ASC");
+                    else order.Add(SIGLA_QUERY + ".valorVendaBruta DESC");
+                    break;
+                case CAMPOS.VALORVENDALIQUIDA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".valorVendaLiquida ASC");
+                    else order.Add(SIGLA_QUERY + ".valorVendaLiquida DESC");
+                    break;
+                case CAMPOS.LOTEIMPORTACAO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".loteImportacao ASC");
+                    else order.Add(SIGLA_QUERY + ".loteImportacao DESC");
+                    break;
+                case CAMPOS.DTARECEBIMENTO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dtaRecebimento ASC");
+                    else order.Add(SIGLA_QUERY + ".dtaRecebimento DESC");
+                    break;
+                case CAMPOS.IDLOGICOTERMINAL:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".idLogicoTerminal ASC");
+                    else order.Add(SIGLA_QUERY + ".idLogicoTerminal DESC");
+                    break;
+                case CAMPOS.CODTITULOERP:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".codTituloERP ASC");
+                    else order.Add(SIGLA_QUERY + ".codTituloERP DESC");
+                    break;
+                case CAMPOS.CODVENDAERP:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".codVendaERP ASC");
+                    else order.Add(SIGLA_QUERY + ".codVendaERP DESC");
+                    break;
+                case CAMPOS.CODRESUMOVENDA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".codResumoVenda ASC");
+                    else order.Add(SIGLA_QUERY + ".codResumoVenda DESC");
+                    break;
+                case CAMPOS.NUMPARCELATOTAL:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".numParcelaTotal ASC");
+                    else order.Add(SIGLA_QUERY + ".numParcelaTotal DESC");
+                    break;
+                case CAMPOS.CDBANDEIRA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdBandeira ASC");
+                    else order.Add(SIGLA_QUERY + ".cdBandeira DESC");
+                    break;
+                case CAMPOS.IDRESUMOVENDA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".idResumoVenda ASC");
+                    else order.Add(SIGLA_QUERY + ".idResumoVenda DESC");
+                    break;
+                case CAMPOS.NRCARTAO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".nrCartao ASC");
+                    else order.Add(SIGLA_QUERY + ".nrCartao DESC");
+                    break;
+                case CAMPOS.IDRECEBIMENTOVENDA:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".idRecebimentoVenda ASC");
+                    else order.Add(SIGLA_QUERY + ".idRecebimentoVenda DESC");
+                    break;
+
+                // PERSONALIZADO
+
+                case CAMPOS.IDOPERADORA:
+                    // Adiciona o join
+                    if (!join.ContainsKey("INNER JOIN pos.BandeiraPos " + GatewayBandeiraPos.SIGLA_QUERY))
+                        join.Add("INNER JOIN pos.BandeiraPos " + GatewayBandeiraPos.SIGLA_QUERY, " ON " + GatewayBandeiraPos.SIGLA_QUERY + ".id = " + SIGLA_QUERY + ".idBandeira");
+                    
+                    if (orderby == 0) order.Add(GatewayBandeiraPos.SIGLA_QUERY + ".idOperadora ASC");
+                    else order.Add(GatewayBandeiraPos.SIGLA_QUERY + ".idOperadora DESC");
+                    break;
+                case CAMPOS.NMOPERADORA:
+                    // Adiciona o join
+                    if (!join.ContainsKey("INNER JOIN pos.BandeiraPos " + GatewayBandeiraPos.SIGLA_QUERY))
+                        join.Add("INNER JOIN pos.BandeiraPos " + GatewayBandeiraPos.SIGLA_QUERY, " ON " + GatewayBandeiraPos.SIGLA_QUERY + ".id = " + SIGLA_QUERY + ".idBandeira");
+                    if (!join.ContainsKey("INNER JOIN pos.Operadora " + GatewayOperadora.SIGLA_QUERY))
+                        join.Add("INNER JOIN pos.Operadora " + GatewayOperadora.SIGLA_QUERY, " ON " + GatewayBandeiraPos.SIGLA_QUERY + ".idOperadora = " + GatewayOperadora.SIGLA_QUERY + ".id");
+
+                    if (orderby == 0) order.Add(GatewayOperadora.SIGLA_QUERY + ".nmOperadora ASC");
+                    else order.Add(GatewayOperadora.SIGLA_QUERY + ".nmOperadora DESC");
+                    break;
+                case CAMPOS.DS_FANTASIA:
+                    // Adiciona o join
+                    if (!join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                        join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+
+                    if (orderby == 0)
+                    {
+                        order.Add(GatewayEmpresa.SIGLA_QUERY + ".ds_fantasia ASC");
+                        order.Add(GatewayEmpresa.SIGLA_QUERY + ".filial ASC");
+                    }
+                    else
+                    {
+                        order.Add(GatewayEmpresa.SIGLA_QUERY + ".ds_fantasia DESC");
+                        order.Add(GatewayEmpresa.SIGLA_QUERY + ".filial DESC");
+                    }
+                    break;
+                case CAMPOS.DESBANDEIRA:
+                    // Adiciona o join
+                    if (!join.ContainsKey("INNER JOIN pos.BandeiraPos " + GatewayBandeiraPos.SIGLA_QUERY))
+                        join.Add("INNER JOIN pos.BandeiraPos " + GatewayBandeiraPos.SIGLA_QUERY, " ON " + GatewayBandeiraPos.SIGLA_QUERY + ".id = " + SIGLA_QUERY + ".idBandeira");
+
+                    if (orderby == 0) order.Add(GatewayBandeiraPos.SIGLA_QUERY + ".desBandeira ASC");
+                    else order.Add(GatewayBandeiraPos.SIGLA_QUERY + ".desBandeira DESC");
+                    break;
+                case CAMPOS.DSTERMINALLOGICO:
+                    // Adiciona o join
+                    if (!join.ContainsKey("INNER JOIN pos.TerminalLogico " + GatewayTerminalLogico.SIGLA_QUERY))
+                        join.Add("INNER JOIN pos.TerminalLogico " + GatewayTerminalLogico.SIGLA_QUERY, " ON " + GatewayTerminalLogico.SIGLA_QUERY + ".idTerminalLogico = " + SIGLA_QUERY + ".idLogicoTerminal");
+
+                    if (orderby == 0) order.Add(GatewayTerminalLogico.SIGLA_QUERY + ".dsTerminalLogico ASC");
+                    else order.Add(GatewayTerminalLogico.SIGLA_QUERY + ".dsTerminalLogico DESC");
+                    break;
+            }
+            #endregion
+
+            return new SimpleDataBaseQuery(null, "pos.Recebimento " + SIGLA_QUERY,
+                                           join, where.ToArray(), null, order.ToArray());
+
+
+        }
+
 
 
         /// <summary>
