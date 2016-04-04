@@ -15,26 +15,26 @@ using api.Negocios.Util;
 
 namespace api.Controllers.Card
 {
-    public class CorreacaoVendaErpController : ApiController
+    public class CorrecaoVendaErpController : ApiController
     {
         // GET /BaixaAutomaticaERP/token/colecao/campo/orderBy/pageSize/pageNumber?CAMPO1=VALOR&CAMPO2=VALOR
-        public HttpResponseMessage Get(string token, int colecao = 0, int campo = 0, int orderBy = 0, int pageSize = 0, int pageNumber = 0)
+        public HttpResponseMessage Put(string token, [FromBody]CorrigeVendasErp param)
         {
+            // Abre nova conexão
             using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
             {
                 tbLogAcessoUsuario log = new tbLogAcessoUsuario();
                 try
                 {
-                    log = Bibliotecas.LogAcaoUsuario.New(token, null, "Get", _db);
+                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put", _db);
 
-                    Dictionary<string, string> queryString = Request.GetQueryNameValuePairs().ToDictionary(x => x.Key, x => x.Value);
                     HttpResponseMessage retorno = new HttpResponseMessage();
                     if (Permissoes.Autenticado(token, _db))
                     {
-                        Retorno dados = GatewayCorrecaoVendaErp.Get(token, colecao, campo, orderBy, pageSize, pageNumber, queryString, _db);
+                        GatewayCorrecaoVendaErp.CorrigeVenda(token, param, _db);
                         log.codResposta = (int)HttpStatusCode.OK;
-                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
-                        return Request.CreateResponse<Retorno>(HttpStatusCode.OK, dados);
+                        Bibliotecas.LogAcaoUsuario.Save(log);
+                        return Request.CreateResponse(HttpStatusCode.OK);
                     }
                     else
                     {
@@ -45,11 +45,10 @@ namespace api.Controllers.Card
                 }
                 catch (Exception e)
                 {
-                    HttpStatusCode httpStatus = e.Message.StartsWith("Permissão negada") || e.Message.StartsWith("401") ? HttpStatusCode.Unauthorized : HttpStatusCode.InternalServerError;
-                    log.codResposta = (int)httpStatus;
+                    log.codResposta = (int)HttpStatusCode.InternalServerError;
                     log.msgErro = e.Message;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
-                    return Request.CreateResponse(httpStatus, e.Message);
+                    Bibliotecas.LogAcaoUsuario.Save(log);//, _db);
+                    return Request.CreateResponse(HttpStatusCode.InternalServerError, e.Message);
                     //throw new HttpResponseException(HttpStatusCode.InternalServerError);
                 }
             }

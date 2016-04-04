@@ -344,20 +344,20 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.NSU:
                         string nsu = Convert.ToString(item.Value);
-                        if (nsu.Contains("%")) // usa LIKE => ENDS WITH
+                        if (nsu.Contains("%")) // usa LIKE => CONTAINS
                         {
                             string busca = nsu.Replace("%", "").ToString();
-                            entity = entity.Where(e => e.Recebimento.nsu.EndsWith(busca));
+                            entity = entity.Where(e => e.Recebimento.nsu.Contains(busca));
                         }
                         else
                             entity = entity.Where(e => e.Recebimento.nsu.Equals(nsu)).AsQueryable();
                         break;
                     case CAMPOS.CODRESUMOVENDA:
                         string codResumoVenda = Convert.ToString(item.Value);
-                        if (codResumoVenda.Contains("%")) // usa LIKE => STARTS WITH
+                        if (codResumoVenda.Contains("%")) // usa LIKE => CONSTAINS
                         {
                             string busca = codResumoVenda.Replace("%", "").ToString();
-                            entity = entity.Where(e => e.Recebimento.codResumoVenda.StartsWith(busca));
+                            entity = entity.Where(e => e.Recebimento.codResumoVenda.Contains(busca));
                         }
                         else
                             entity = entity.Where(e => e.Recebimento.codResumoVenda.Equals(codResumoVenda)).AsQueryable();
@@ -502,7 +502,6 @@ namespace api.Negocios.Pos
                         break;
 
                     /// PERSONALIZADO
-
                     case CAMPOS.DTARECEBIMENTO:
                         if (item.Value.Contains("|")) // BETWEEN
                         {
@@ -776,10 +775,10 @@ namespace api.Negocios.Pos
                         if (!join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
                             join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".id = " + SIGLA_QUERY + ".idRecebimento");
 
-                        if (nsu.Contains("%")) // usa LIKE => ENDS WITH
+                        if (nsu.Contains("%")) // usa LIKE => CONTAINS
                         {
                             string busca = nsu.Replace("%", "").ToString();
-                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".nsu like '%" + busca + "'");
+                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".nsu like '%" + busca + "%'");
                         }
                         else
                             where.Add(GatewayRecebimento.SIGLA_QUERY + ".nsu = '" + nsu + "'");
@@ -790,10 +789,10 @@ namespace api.Negocios.Pos
                         if (!join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
                             join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".id = " + SIGLA_QUERY + ".idRecebimento");
 
-                        if (codResumoVenda.Contains("%")) // usa LIKE => STARTS WITH
+                        if (codResumoVenda.Contains("%")) // usa LIKE => CONTAINS
                         {
                             string busca = codResumoVenda.Replace("%", "").ToString();
-                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".codResumoVenda like '%" + busca + "'");
+                            where.Add(GatewayRecebimento.SIGLA_QUERY + ".codResumoVenda like '%" + busca + "%'");
                         }
                         else
                             where.Add(GatewayRecebimento.SIGLA_QUERY + ".codResumoVenda = '" + codResumoVenda + "'");

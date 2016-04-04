@@ -59,7 +59,10 @@ namespace api.Negocios.Card
                     throw new Exception("O identificador da movimentação bancária deve ser informada para a baixa automática!");
 
                 idExtrato = Convert.ToInt32(queryString["" + (int)CAMPOS.IDEXTRATO]);
-                tbExtrato tbExtrato = _db.tbExtratos.Where(e => e.idExtrato == idExtrato).FirstOrDefault();
+                tbExtrato tbExtrato = _db.Database.SqlQuery<tbExtrato>("SELECT E.*" +
+                                                                       " FROM card.tbExtrato E (NOLOCK)" +
+                                                                       " WHERE G.idExtrato == " + idExtrato)
+                                                          .FirstOrDefault();
                 if(tbExtrato == null)
                     throw new Exception("Extrato inexistente!");
 
@@ -72,7 +75,10 @@ namespace api.Negocios.Card
                 if(tbExtrato.tbContaCorrente.cdGrupo != IdGrupo)
                     throw new Exception("Permissão negada! Movimentação bancária informada não se refere ao grupo associado ao usuário.");
 
-                grupo_empresa grupo_empresa = _db.grupo_empresa.Where(e => e.id_grupo == IdGrupo).FirstOrDefault();
+                grupo_empresa grupo_empresa = _db.Database.SqlQuery<grupo_empresa>("SELECT G.*" +
+                                                                                   " FROM cliente.grupo_empresa G (NOLOCK)" +
+                                                                                   " WHERE G.id_grupo = " + IdGrupo)
+                                                          .FirstOrDefault();
 
                 if (grupo_empresa.dsAPI == null || grupo_empresa.dsAPI.Equals(""))
                     throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
@@ -263,7 +269,15 @@ namespace api.Negocios.Card
                     retorno = response.Content.ReadAsAsync<Retorno>().Result;
                 else
                 {
-                    string resp = response.Content.ReadAsAsync<string>().Result;
+                    string resp = String.Empty;
+                    try
+                    {
+                        resp = response.Content.ReadAsAsync<string>().Result;
+                    }
+                    catch
+                    {
+                        throw new Exception("Serviço indisponível no momento");
+                    }
                     if (resp != null && !resp.Trim().Equals(""))
                         throw new Exception(((int)response.StatusCode) + " - " + resp);
                     throw new Exception(((int)response.StatusCode) + "");

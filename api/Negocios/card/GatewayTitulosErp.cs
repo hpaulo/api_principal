@@ -72,7 +72,15 @@ namespace api.Negocios.Card
                 return retorno;
             }
             // Falhou!
-            string resp = response.Content.ReadAsAsync<string>().Result;
+            string resp = String.Empty;
+            try
+            {
+                resp = response.Content.ReadAsAsync<string>().Result;
+            }
+            catch
+            {
+                throw new Exception("Serviço indisponível no momento");
+            }
             if (resp != null && !resp.Trim().Equals(""))
                 throw new Exception(((int)response.StatusCode) + " - " + resp);
             throw new Exception(((int)response.StatusCode) + "");
@@ -117,7 +125,10 @@ namespace api.Negocios.Card
                     IdGrupo = Convert.ToInt32(queryString["" + (int)CAMPOS.ID_GRUPO]);
                 if (IdGrupo == 0) throw new Exception("Um grupo deve ser selecionado como para a listagem dos títulos!");
 
-                grupo_empresa grupo_empresa = _db.grupo_empresa.Where(e => e.id_grupo == IdGrupo).FirstOrDefault();
+                grupo_empresa grupo_empresa = _db.Database.SqlQuery<grupo_empresa>("SELECT G.*" +
+                                                                                   " FROM cliente.grupo_empresa G (NOLOCK)" +
+                                                                                   " WHERE G.id_grupo = " + IdGrupo)
+                                                          .FirstOrDefault();
 
                 if (grupo_empresa.dsAPI == null || grupo_empresa.dsAPI.Equals(""))
                     throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
@@ -230,7 +241,10 @@ namespace api.Negocios.Card
                     //if (IdGrupo == 0 && param.id_grupo != 0) IdGrupo = param.id_grupo;
                     if (IdGrupo == 0) throw new Exception("Um grupo deve ser selecionado como para a importação dos títulos!");
 
-                    grupo_empresa grupo_empresa = _db.grupo_empresa.Where(e => e.id_grupo == IdGrupo).FirstOrDefault();
+                    grupo_empresa grupo_empresa = _db.Database.SqlQuery<grupo_empresa>("SELECT G.*" +
+                                                                                   " FROM cliente.grupo_empresa G (NOLOCK)" +
+                                                                                   " WHERE G.id_grupo = " + IdGrupo)
+                                                          .FirstOrDefault();
 
                     if (grupo_empresa.dsAPI == null || grupo_empresa.dsAPI.Equals(""))
                         throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
@@ -505,7 +519,10 @@ namespace api.Negocios.Card
                             
                             // CNPJ do grupo?
                             if (!CNPJSEmpresa.Contains(nrCNPJ))
-                                throw new Exception("CNPJ " + nrCNPJ + " não está cadastrado no grupo " + _db.grupo_empresa.Where(e => e.id_grupo == idGrupo).Select(e => e.ds_nome.ToUpper()).First());
+                                throw new Exception("CNPJ " + nrCNPJ + " não está cadastrado no grupo " + _db.Database.SqlQuery<grupo_empresa>("SELECT UPPER(G.ds_nome)" + 
+                                                                                                                                               " FROM cliente.grupo_empresa G (NOLOCK)" + 
+                                                                                                                                               " WHERE G.id_grupo = " + idGrupo)
+                                                                                                                      .FirstOrDefault());
 
                             // NSU
                             string nrNSU = fileira[1].Trim();

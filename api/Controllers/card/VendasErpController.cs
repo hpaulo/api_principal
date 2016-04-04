@@ -96,45 +96,6 @@ namespace api.Controllers.Card
         }
 
 
-        // PUT /VendasErp/token/
-        public HttpResponseMessage Put(string token, [FromBody]CorrigeVendasErp param)
-        {
-            // Abre nova conexão
-            using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
-            {
-                tbLogAcessoUsuario log = new tbLogAcessoUsuario();
-                try
-                {
-                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject(param), "Put", _db);
-
-                    HttpResponseMessage retorno = new HttpResponseMessage();
-                    if (Permissoes.Autenticado(token, _db))
-                    {
-                        GatewayVendasErp.CorrigeVendasErp(token, param, _db);
-                        log.codResposta = (int)HttpStatusCode.OK;
-                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
-                        return Request.CreateResponse(HttpStatusCode.OK);
-                    }
-                    else
-                    {
-                        log.codResposta = (int)HttpStatusCode.Unauthorized;
-                        Bibliotecas.LogAcaoUsuario.Save(log, _db);
-                        return Request.CreateResponse(HttpStatusCode.Unauthorized);
-                    }
-                }
-                catch (Exception e)
-                {
-                    HttpStatusCode httpStatus = e.Message.StartsWith("Permissão negada") || e.Message.StartsWith("401") ? HttpStatusCode.Unauthorized : HttpStatusCode.InternalServerError;
-                    log.codResposta = (int)httpStatus;
-                    log.msgErro = e.Message;
-                    Bibliotecas.LogAcaoUsuario.Save(log);
-                    //throw new HttpResponseException(HttpStatusCode.InternalServerError);
-                    return Request.CreateResponse(httpStatus, e.Message);
-                }
-            }
-        }
-
-
         // PATCH: /VendasErp/token/ => upload de um arquivo csv
         public HttpResponseMessage Patch(string token)
         {

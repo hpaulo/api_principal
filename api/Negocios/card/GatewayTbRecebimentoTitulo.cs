@@ -284,7 +284,7 @@ namespace api.Negocios.Card
                         if (nrNSU.Contains("%")) // usa LIKE => ENDS WITH
                         {
                             string busca = nrNSU.Replace("%", "").ToString();
-                            where.Add(SIGLA_QUERY + ".nrNSU like '%" + nrNSU + "'");
+                            where.Add(SIGLA_QUERY + ".nrNSU like '%" + busca + "'");
                         }
                         else
                             where.Add(SIGLA_QUERY + ".nrNSU = '" + nrNSU + "'");
