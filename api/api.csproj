@@ -300,7 +300,7 @@
     <Compile Include="Controllers\Card\ConciliacaoRelatoriosController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoTitulosController.cs" />
     <Compile Include="Controllers\Card\ConciliacaoVendasController.cs" />
-    <Compile Include="Controllers\Card\CorreacaoVendaErpController.cs" />
+    <Compile Include="Controllers\Card\CorrecaoVendaErpController.cs" />
     <Compile Include="Controllers\Card\RelatorioConciliacaoTitulosController.cs" />
     <Compile Include="Controllers\Card\RecebiveisFuturosController.cs" />
     <Compile Include="Controllers\Card\RelatorioVendasController.cs" />

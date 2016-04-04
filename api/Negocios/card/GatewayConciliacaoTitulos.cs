@@ -769,8 +769,8 @@ namespace api.Negocios.Card
                         //                                                        .FirstOrDefault();
                         List<IDataRecord> resultado = DataBaseQueries.SqlQuery("SELECT R.cnpj, B.cdAdquirente, R.valorVendaBruta, R.dtaVenda, P.valorParcelaBruta" +
                                                              " FROM pos.RecebimentoParcela P (NOLOCK)" +
-                                                             " JOIN pos.Recebimento R ON R.id = P.idRecebimento" +
-                                                             " JOIN card.tbBandeira B ON R.cdBandeira = B.cdBandeira" +
+                                                             " JOIN pos.Recebimento R (NOLOCK)  ON R.id = P.idRecebimento" +
+                                                             " JOIN card.tbBandeira B (NOLOCK)  ON R.cdBandeira = B.cdBandeira" +
                                                              " WHERE P.idRecebimento = " + idRecebimento +
                                                              " AND P.numParcela = " + numParcela, connection);
                         if (resultado == null || resultado.Count == 0)
@@ -812,9 +812,9 @@ namespace api.Negocios.Card
                                         ", diferencaValorParcela = ABS(T.vlParcela - " + valorParcelaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ")" +
                                         ", diferencaDtVenda = ABS(DATEDIFF(DAY, T.dtVenda, '" + DataBaseQueries.GetDate(dtaVenda) + "'))" +
                                         " FROM card.tbRecebimentoTitulo T (NOLOCK)" +
-                                        " JOIN cliente.empresa E ON E.nu_cnpj = T.nrCNPJ" +
-                                        " JOIN card.tbAdquirente A ON A.cdAdquirente = T.cdAdquirente" +
-                                        " LEFT JOIN pos.RecebimentoParcela P ON P.idRecebimentoTitulo = T.idRecebimentoTitulo" +
+                                        " JOIN cliente.empresa E (NOLOCK) ON E.nu_cnpj = T.nrCNPJ" +
+                                        " JOIN card.tbAdquirente A (NOLOCK) ON A.cdAdquirente = T.cdAdquirente" +
+                                        " LEFT JOIN pos.RecebimentoParcela P (NOLOCK) ON P.idRecebimentoTitulo = T.idRecebimentoTitulo" +
                                         " WHERE P.idRecebimentoTitulo IS NULL" +
                                         " AND T.dtVenda BETWEEN '" + DataBaseQueries.GetDate(dataIni) + "' AND '" + DataBaseQueries.GetDate(dataFim) + " 23:59:00'" +
                                         " AND T.nrCNPJ = '" + nrCNPJ + "'" +

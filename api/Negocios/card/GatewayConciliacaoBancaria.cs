@@ -2609,7 +2609,11 @@ namespace api.Negocios.Card
                         tbExtrato extrato = null;
                         if (grupoExtrato.idExtrato > 0)
                         {
-                            extrato = _db.tbExtratos.Where(e => e.idExtrato == grupoExtrato.idExtrato).FirstOrDefault();
+                            //extrato = _db.tbExtratos.Where(e => e.idExtrato == grupoExtrato.idExtrato).FirstOrDefault();
+                            extrato = _db.Database.SqlQuery<tbExtrato>("SELECT E.*" +
+                                                                       " FROM card.tbExtrato E (NOLOCK)" +
+                                                                       " WHERE G.idExtrato == " + grupoExtrato.idExtrato)
+                                                          .FirstOrDefault();
                             if (extrato == null) continue; // extrato inválido!
                         }
 
