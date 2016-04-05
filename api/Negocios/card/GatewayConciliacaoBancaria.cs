@@ -1085,10 +1085,10 @@ namespace api.Negocios.Card
                                                                             TipoCartao = r.GroupBy(x => x.TipoCartao).Count() == 1 ? r.Select(x => x.TipoCartao.ToUpper().TrimEnd()).FirstOrDefault() : "",
                                                                             Antecipado = r.GroupBy(x => x.Antecipado).Count() == 1 ? r.Select(x => x.Antecipado).FirstOrDefault() : (bool?)null,
                                                                             DataRecebimentoDiferente = r.Where(x => x.DataRecebimentoOriginal != null &&
-                                                                                // Data original tem que ser a igual a prevista
-                                                                                                                    x.DataRecebimentoOriginal.Value.Equals(x.DataPrevista) &&
-                                                                                // Se a data efetiva for diferente da prevista, não considera como recebimento diferente
-                                                                                                                    (x.DataEfetiva == null || x.DataPrevista.Equals(x.DataEfetiva.Value)))
+                                                                                                                    // Data original tem que ser a igual a prevista
+                                                                                                                    x.DataRecebimentoOriginal.Equals(x.DataPrevista) &&
+                                                                                                                    // Se a data efetiva for diferente da prevista, não considera como recebimento diferente
+                                                                                                                    (x.DataEfetiva == null || x.DataPrevista.Equals(x.DataEfetiva)))
                                                                                                         .Count() == r.Count(),
                                                                             Filial = r.GroupBy(x => x.Filial).Count() == 1 ? r.Select(x => x.Filial.ToUpper()).FirstOrDefault() : ""
                                                                         }).FirstOrDefault<ConciliacaoBancaria>();
@@ -2612,7 +2612,7 @@ namespace api.Negocios.Card
                             //extrato = _db.tbExtratos.Where(e => e.idExtrato == grupoExtrato.idExtrato).FirstOrDefault();
                             extrato = _db.Database.SqlQuery<tbExtrato>("SELECT E.*" +
                                                                        " FROM card.tbExtrato E (NOLOCK)" +
-                                                                       " WHERE G.idExtrato == " + grupoExtrato.idExtrato)
+                                                                       " WHERE E.idExtrato = " + grupoExtrato.idExtrato)
                                                           .FirstOrDefault();
                             if (extrato == null) continue; // extrato inválido!
                         }

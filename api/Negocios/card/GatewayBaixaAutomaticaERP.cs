@@ -59,11 +59,12 @@ namespace api.Negocios.Card
                     throw new Exception("O identificador da movimentação bancária deve ser informada para a baixa automática!");
 
                 idExtrato = Convert.ToInt32(queryString["" + (int)CAMPOS.IDEXTRATO]);
-                tbExtrato tbExtrato = _db.Database.SqlQuery<tbExtrato>("SELECT E.*" +
+                int? cdGrupo = _db.Database.SqlQuery<int>("SELECT C.cdGrupo" +
                                                                        " FROM card.tbExtrato E (NOLOCK)" +
-                                                                       " WHERE G.idExtrato == " + idExtrato)
+                                                                       " JOIN card.tbContaCorrente C (NOLOCK) ON C.cdContaCorrente = E.cdContaCorrente" +
+                                                                       " WHERE E.idExtrato = " + idExtrato)
                                                           .FirstOrDefault();
-                if(tbExtrato == null)
+                if (cdGrupo == null)
                     throw new Exception("Extrato inexistente!");
 
                 // GRUPO EMPRESA => OBRIGATÓRIO!
@@ -72,7 +73,7 @@ namespace api.Negocios.Card
                     IdGrupo = Convert.ToInt32(queryString["" + (int)CAMPOS.ID_GRUPO]);
                 if (IdGrupo == 0) throw new Exception("Um grupo deve ser selecionado como para a baixa automática!");
 
-                if(tbExtrato.tbContaCorrente.cdGrupo != IdGrupo)
+                if(cdGrupo.Value != IdGrupo)
                     throw new Exception("Permissão negada! Movimentação bancária informada não se refere ao grupo associado ao usuário.");
 
                 grupo_empresa grupo_empresa = _db.Database.SqlQuery<grupo_empresa>("SELECT G.*" +
