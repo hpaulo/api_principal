@@ -487,7 +487,7 @@ namespace api.Negocios.Pos
                     {
                         //_db.LoginOperadoras.Add(param);
                         _db.Database.ExecuteSqlCommand("INSERT INTO pos.LoginOperadora (login, senha, status, cnpj, idOperadora" +
-                                                       ", idGrupo, estabelecimento, nrCNPJCentralizadora, cdEstabelecimentoConsulta)" +
+                                                       ", idGrupo, estabelecimento, cdEstabelecimentoConsulta, nrCNPJCentralizadora)" +
                                                        " VALUES('" + param.login + "', '" + param.senha + "', 1, '" + param.cnpj + "'" +
                                                        ", " + param.idOperadora + ", " + param.idGrupo +
                                                        ", " + (param.estabelecimento != null ? "'" + param.estabelecimento + "'" : "NULL") +
