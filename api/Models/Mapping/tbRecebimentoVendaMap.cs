@@ -38,6 +38,9 @@ namespace api.Models.Mapping
             this.Property(t => t.cdERP)
                 .HasMaxLength(15);
 
+            this.Property(t => t.cdSacado)
+                .HasMaxLength(10);
+
             // Table & Column Mappings
             this.ToTable("tbRecebimentoVenda", "card");
             this.Property(t => t.idRecebimentoVenda).HasColumnName("idRecebimentoVenda");
@@ -49,6 +52,7 @@ namespace api.Models.Mapping
             this.Property(t => t.vlVenda).HasColumnName("vlVenda");
             this.Property(t => t.qtParcelas).HasColumnName("qtParcelas");
             this.Property(t => t.cdERP).HasColumnName("cdERP");
+            this.Property(t => t.cdSacado).HasColumnName("cdSacado");
 
             // Relationships
             this.HasRequired(t => t.tbAdquirente)

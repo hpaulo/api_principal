@@ -155,6 +155,7 @@ namespace api.Negocios.Card
                             a.cdAdquirente,
                             a.nmAdquirente
                         }).FirstOrDefault(),
+                        cdSacado = registro.cdSacado,
                         dsBandeira = registro.dsBandeira,
                         vlVenda = registro.vlVenda,
                         qtParcelas = registro.qtParcelas,
@@ -312,6 +313,7 @@ namespace api.Negocios.Card
                         nrCNPJ = vd.nrCNPJ,
                         nrNSU = vd.nrNSU != null && !vd.nrNSU.ToString().Trim().Equals("") ? vd.nrNSU : "T" + vd.cdERP,
                         vlVenda = Convert.ToDecimal(vd.vlVenda),
+                        cdSacado = vd.GetType().GetProperty("cdSacado") != null ? vd.cdSacado : null,
                         qtParcelas = Convert.ToByte(vd.qtParcelas),
                     };
 
@@ -327,7 +329,7 @@ namespace api.Negocios.Card
                     if (venda == null)
                     {
                         _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoVenda" +
-                                                       " (nrCNPJ, nrNSU, cdERP, dtVenda, cdAdquirente, dsBandeira, vlVenda, qtParcelas)" +
+                                                       " (nrCNPJ, nrNSU, cdERP, dtVenda, cdAdquirente, dsBandeira, vlVenda, qtParcelas, cdSacado)" +
                                                        " VALUES ('" + tbRecebimentoVenda.nrCNPJ + "'" +
                                                        ", '" + tbRecebimentoVenda.nrNSU + "'" +
                                                        ", " + (tbRecebimentoVenda.cdERP == null ? "NULL" : "'" + tbRecebimentoVenda.cdERP + "'") +
@@ -336,6 +338,7 @@ namespace api.Negocios.Card
                                                        ", " + (tbRecebimentoVenda.dsBandeira == null ? "NULL" : "'" + tbRecebimentoVenda.dsBandeira + "'") +
                                                        ", " + tbRecebimentoVenda.vlVenda.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", " + tbRecebimentoVenda.qtParcelas +
+                                                       ", " + (tbRecebimentoVenda.cdSacado != null ? "'" + tbRecebimentoVenda.cdSacado + "'" : "NULL") +
                                                        ")");
                     }
                     else
@@ -346,6 +349,7 @@ namespace api.Negocios.Card
                                                        ", V.dsBandeira = " + (tbRecebimentoVenda.dsBandeira == null ? "NULL" : "'" + tbRecebimentoVenda.dsBandeira + "'") +
                                                        ", V.vlVenda = " + tbRecebimentoVenda.vlVenda.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", V.qtParcelas = " + tbRecebimentoVenda.qtParcelas +
+                                                       ", V.cdSacado = " + (tbRecebimentoVenda.cdSacado != null ? "'" + tbRecebimentoVenda.cdSacado + "'" : "NULL") +
                                                        " FROM card.tbRecebimentoVenda V" +
                                                        " WHERE V.idRecebimentoVenda = " + venda.idRecebimentoVenda);
 

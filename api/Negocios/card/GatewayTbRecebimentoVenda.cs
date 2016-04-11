@@ -414,6 +414,7 @@ namespace api.Negocios.Card
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
                         cdERP = e.cdERP,
+                        cdSacado = e.cdSacado,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -430,6 +431,7 @@ namespace api.Negocios.Card
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
                         cdERP = e.cdERP,
+                        cdSacado = e.cdSacado,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2) // PORTAL: Consulta Vendas ERP
@@ -458,6 +460,7 @@ namespace api.Negocios.Card
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
                         cdERP = e.cdERP,
+                        cdSacado = e.cdSacado,
                         //conciliado = e.Recebimentos.Count > 0
                         conciliado = vendasConciliadas.Contains(e.idRecebimentoVenda)
                     }).ToList<dynamic>();
