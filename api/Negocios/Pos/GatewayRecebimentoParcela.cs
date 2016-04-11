@@ -77,6 +77,9 @@ namespace api.Negocios.Pos
 
             CDCONTACORRENTE = 900,
 
+            // PERSONALIZADO
+            SEM_AJUSTES_ANTECIPACAO = 1000,
+
             //EXPORTAR
             EXPORTAR = 9999
 
@@ -995,8 +998,11 @@ namespace api.Negocios.Pos
             Dictionary<string, string> queryStringAjustes = new Dictionary<string, string>();
             string outValue = null;
 
-            if (semAjustesAntecipacao)
-                queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.SEM_AJUSTES_ANTECIPACAO, true.ToString() /*+ "~7"*/); // exibe os ajustes de antecipação do BANESE
+            if (queryStringRecebimentoParcela.TryGetValue("" + (int)CAMPOS.SEM_AJUSTES_ANTECIPACAO, out outValue))
+                queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.SEM_AJUSTES_ANTECIPACAO, queryStringRecebimentoParcela["" + (int)CAMPOS.SEM_AJUSTES_ANTECIPACAO]);
+            else
+                // Default
+                queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.SEM_AJUSTES_ANTECIPACAO, semAjustesAntecipacao.ToString());
 
             if (queryStringRecebimentoParcela.TryGetValue("" + (int)CAMPOS.CDADQUIRENTE, out outValue))
                 queryStringAjustes.Add("" + (int)GatewayTbRecebimentoAjuste.CAMPOS.CDADQUIRENTE, queryStringRecebimentoParcela["" + (int)CAMPOS.CDADQUIRENTE]);

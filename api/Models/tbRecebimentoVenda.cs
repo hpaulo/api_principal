@@ -21,6 +21,7 @@ namespace api.Models
         public decimal vlVenda { get; set; }
         public byte qtParcelas { get; set; }
         public string cdERP { get; set; }
+        public string cdSacado { get; set; }
         public virtual tbAdquirente tbAdquirente { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual ICollection<Recebimento> Recebimentos { get; set; }

@@ -1161,6 +1161,19 @@ namespace api.Negocios.Card
                                     }
 
                                 }
+                                else
+                                {
+                                    // Deleta saldo positivo de antecipação bancária
+                                    if (SALVAR_NA_BASE)
+                                    {
+                                        _db.Database.ExecuteSqlCommand("DELETE A" +
+                                                                       " FROM card.tbRecebimentoAjuste A" +
+                                                                       " WHERE A.idAntecipacaoBancariaDetalhe = " + idAntecipacaoBancariaDetalhe +
+                                                                       " AND A.vlAjuste > 0.0" // valor positivo
+                                                                      );
+                                        _db.SaveChanges();
+                                    }
+                                }
 
                                 transaction.Commit();
                             }
