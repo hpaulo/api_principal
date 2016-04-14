@@ -932,16 +932,18 @@ namespace api.Negocios.Card
                     else if (extensao.ToLower().Equals(".pdf"))
                     {
                         // PDF
-                        if (!conta.cdBanco.Equals("033") && !conta.cdBanco.Equals("004"))
+                        if (!conta.cdBanco.Equals("033") && !conta.cdBanco.Equals("004") && !conta.cdBanco.Equals("341"))
                         {
                             File.Delete(filePath); // Deleta o arquivo
-                            throw new Exception("Só é aceito PDF de contas do banco do Nordeste (004) e do Santander (033) !");
+                            throw new Exception("Só é aceito PDF de contas do banco do Nordeste (004), do Santander (033) e do Itaú (341) !");
                         }
                         // Parser
                         try
                         {
                             if (conta.cdBanco.Equals("033"))
                                 ofxDocument = ExtratoPDFSantander.Import(filePath);
+                            else if (conta.cdBanco.Equals("341"))
+                                ofxDocument = ExtratoPDFItau.Import(filePath);
                             else
                                 ofxDocument = ExtratoPDFBNB.Import(filePath);
                         }
@@ -999,7 +1001,7 @@ namespace api.Negocios.Card
                     #endregion
 
                     #region VALIDA NÚMERO DA CONTA
-                    if (!validaConta(conta.cdBanco, nrConta, conta.nrConta)) 
+                    if (!validaConta(conta.cdBanco, nrConta, conta.nrConta, extensao.ToLower())) 
                     {
                         // Deleta o arquivo
                         File.Delete(filePath);
@@ -1244,7 +1246,7 @@ namespace api.Negocios.Card
         /// <param name="contaOFX">Número da conta fornecido pelo documento</param>
         /// <param name="contaBD">Número da conta salvo na base</param>
         /// <returns></returns>
-        private static bool validaConta(string codBanco, string contaOFX, string contaBD)
+        private static bool validaConta(string codBanco, string contaOFX, string contaBD, string extensao)
         {
             string codBrasil = "001";
             string codBanese = "047"; // conta + hífen + dígito
@@ -1267,7 +1269,7 @@ namespace api.Negocios.Card
                 contaDocumento = contaDocumento.Substring(0, contaDocumento.IndexOf("("));
 
             // ITAU => Campo da Conta vem com a AGÊNCIA sendo os 4 primeiros dígitos
-            if (codBanco.Equals(codItau) && contaDocumento.Length > 5)
+            if (codBanco.Equals(codItau) && contaDocumento.Length > 5 && extensao.Equals(".ofx"))
             {
                 //agencia = contaDocumento.Substring(0, 4);
                 contaDocumento = contaDocumento.Substring(4);

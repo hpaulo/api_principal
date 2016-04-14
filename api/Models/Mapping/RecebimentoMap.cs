@@ -45,6 +45,9 @@ namespace api.Models.Mapping
             this.Property(t => t.nrCartao)
                 .HasMaxLength(20);
 
+            this.Property(t => t.cdBandeira)
+                .IsRequired();
+
             // Table & Column Mappings
             this.ToTable("Recebimento", "pos");
             this.Property(t => t.id).HasColumnName("id");
@@ -77,7 +80,7 @@ namespace api.Models.Mapping
             this.HasRequired(t => t.TerminalLogico)
                 .WithMany(t => t.Recebimentoes)
                 .HasForeignKey(d => d.idLogicoTerminal);
-            this.HasOptional(t => t.tbBandeira)
+            this.HasRequired(t => t.tbBandeira)
                 .WithMany(t => t.Recebimentos)
                 .HasForeignKey(d => d.cdBandeira);
             this.HasOptional(t => t.tbResumoVenda)

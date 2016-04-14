@@ -397,6 +397,7 @@
     <Compile Include="Negocios\Card\GatewayVendasErp.cs" />
     <Compile Include="Negocios\Util\DataBaseQueries.cs" />
     <Compile Include="Negocios\Util\ExtratoPDFBNB.cs" />
+    <Compile Include="Negocios\Util\ExtratoPDFItau.cs" />
     <Compile Include="Negocios\Util\ExtratoPDFSantander.cs" />
     <Compile Include="Controllers\Util\UtilNfeController.cs" />
     <Compile Include="Controllers\ValuesController.cs" />

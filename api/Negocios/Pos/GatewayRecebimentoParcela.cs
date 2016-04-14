@@ -367,20 +367,20 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.Recebimento.cdBandeira != null && e.Recebimento.tbBandeira.cdAdquirente == cdAdquirente).AsQueryable();
+                        entity = entity.Where(e => /*e.Recebimento.cdBandeira != null &&*/ e.Recebimento.tbBandeira.cdAdquirente == cdAdquirente).AsQueryable();
                         break;
                     case CAMPOS.CDBANDEIRA:
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
                         if (cdBandeira == -1)
                             entity = entity.Where(e => e.Recebimento.cdBandeira == null).AsQueryable();
-                        else if (cdBandeira == 0)
-                            entity = entity.Where(e => e.Recebimento.cdBandeira != null).AsQueryable();
+                        //else if (cdBandeira == 0)
+                        //    entity = entity.Where(e => e.Recebimento.cdBandeira != null).AsQueryable();
                         else
                             entity = entity.Where(e => e.Recebimento.cdBandeira == cdBandeira).AsQueryable();
                         break;
                     case CAMPOS.DSTIPO:
                         string dsTipo = Convert.ToString(item.Value).TrimEnd();
-                        entity = entity.Where(e => e.Recebimento.cdBandeira != null && e.Recebimento.tbBandeira.dsTipo.TrimEnd().Equals(dsTipo)).AsQueryable();
+                        entity = entity.Where(e => /*e.Recebimento.cdBandeira != null &&*/ e.Recebimento.tbBandeira.dsTipo.TrimEnd().Equals(dsTipo)).AsQueryable();
                         break;
                     case CAMPOS.CDCONTACORRENTE:
                         Int32 cdContaCorrente = Convert.ToInt32(item.Value);
