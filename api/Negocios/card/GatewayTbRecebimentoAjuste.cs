@@ -38,6 +38,7 @@ namespace api.Negocios.Card
                                                              "CRÉDITO ARV",
                                                              "CREDITO DE ANTECIPAÇÃO",
                                                              "CRÉDITO DE ANTECIPAÇÃO" };
+        public static string[] AJUSTES_ANTECIPACAO_VALECARD = { "ADIANTAMENTO AO CONVENIADO" };
 
         /// <summary>
         /// Enum CAMPOS
@@ -204,15 +205,19 @@ namespace api.Negocios.Card
                         {
                             if (excludeBanese)
                             {
-                                // Sem Banese => Por enquanto, só trata Cielo
-                                entity = entity.Where(e => e.tbBandeira.cdAdquirente != 2 || !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)).AsQueryable<tbRecebimentoAjuste>();
+                                // Sem Banese => Por enquanto, só trata Cielo e Valecard
+                                entity = entity.Where(e => (e.tbBandeira.cdAdquirente != 2 && e.tbBandeira.cdAdquirente != 14) ||
+                                                           (e.tbBandeira.cdAdquirente == 2 && !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)) ||
+                                                           (e.tbBandeira.cdAdquirente == 14 && !AJUSTES_ANTECIPACAO_VALECARD.Contains(e.dsMotivo))
+                                                     ).AsQueryable<tbRecebimentoAjuste>();
                             }
                             else
                             {
-                                // Por enquanto, só trata da Cielo e Banese
-                                entity = entity.Where(e => (e.tbBandeira.cdAdquirente != 7 && e.tbBandeira.cdAdquirente != 2) ||
+                                // Por enquanto, só trata da Cielo, Banese e Valecard
+                                entity = entity.Where(e => (e.tbBandeira.cdAdquirente != 2 && e.tbBandeira.cdAdquirente != 7 && e.tbBandeira.cdAdquirente != 14) ||
                                                            (e.tbBandeira.cdAdquirente == 2 && !AJUSTES_ANTECIPACAO_CIELO.Contains(e.dsMotivo)) ||
-                                                           (e.tbBandeira.cdAdquirente == 7 && !AJUSTES_ANTECIPACAO_BANESE.Contains(e.dsMotivo))
+                                                           (e.tbBandeira.cdAdquirente == 7 && !AJUSTES_ANTECIPACAO_BANESE.Contains(e.dsMotivo)) ||
+                                                           (e.tbBandeira.cdAdquirente == 14 && !AJUSTES_ANTECIPACAO_VALECARD.Contains(e.dsMotivo))
                                                      ).AsQueryable<tbRecebimentoAjuste>();
                             }
                         }

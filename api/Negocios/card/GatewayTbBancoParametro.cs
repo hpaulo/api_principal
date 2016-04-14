@@ -499,19 +499,17 @@ namespace api.Negocios.Card
             {
                 foreach (ParametroBancario parametro in param.Parametros)
                 {
-                    if (param.Deletar)
+                    tbBancoParametro value = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(parametro.CdBanco))
+                                                                 .Where(e => e.dsMemo.Equals(parametro.DsMemo))
+                                                                 .FirstOrDefault();
+                    if (value != null)
                     {
-                        try { Delete(token, parametro.CdBanco, parametro.DsMemo); }
-                        catch { }
-                    }
-                    else
-                    {
-
-                        tbBancoParametro value = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(parametro.CdBanco))
-                                                                     .Where(e => e.dsMemo.Equals(parametro.DsMemo))
-                                                                     .FirstOrDefault();
-
-                        if (value != null)
+                        if (param.Deletar)
+                        {
+                            // Remove
+                            _db.tbBancoParametro.Remove(value);
+                        }
+                        else
                         {
                             // TIPO
                             if (parametro.DsTipo != null && parametro.DsTipo != value.dsTipo)
@@ -543,14 +541,16 @@ namespace api.Negocios.Card
                             // Visibilidade
                             if (param.FlVisivel != value.flVisivel) value.flVisivel = param.FlVisivel;
                             // Antecipação
-                            if (param.FlAntecipacao != null && param.FlAntecipacao.Value != value.flAntecipacao) 
+                            if (param.FlAntecipacao != null && param.FlAntecipacao.Value != value.flAntecipacao)
                                 value.flAntecipacao = param.FlAntecipacao.Value;
-                            // Salva
-                            _db.SaveChanges();
-                            transaction.Commit();
                         }
+
+                        // Salva
+                        _db.SaveChanges();
                     }
                 }
+
+                transaction.Commit();
             }
             catch (Exception e)
             {

@@ -259,8 +259,8 @@ namespace api.Negocios.Pos
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
                         if (cdBandeira == -1)
                             entity = entity.Where(e => e.cdBandeira == null).AsQueryable();
-                        else if (cdBandeira == 0)
-                            entity = entity.Where(e => e.cdBandeira != null).AsQueryable();
+                        //else if (cdBandeira == 0)
+                        //    entity = entity.Where(e => e.cdBandeira != null).AsQueryable();
                         else
                             entity = entity.Where(e => e.cdBandeira == cdBandeira).AsQueryable();
                         break;
@@ -299,7 +299,7 @@ namespace api.Negocios.Pos
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdBandeira != null && e.tbBandeira.cdAdquirente == cdAdquirente).AsQueryable();
+                        entity = entity.Where(e => /*e.cdBandeira != null &&*/ e.tbBandeira.cdAdquirente == cdAdquirente).AsQueryable();
                         break;
 
                 }

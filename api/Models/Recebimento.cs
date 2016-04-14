@@ -25,7 +25,7 @@ namespace api.Models
         public string codVendaERP { get; set; }
         public string codResumoVenda { get; set; }
         public Nullable<int> numParcelaTotal { get; set; }
-        public Nullable<int> cdBandeira { get; set; }
+        public int cdBandeira { get; set; }
         public Nullable<int> idResumoVenda { get; set; }
         public string nrCartao { get; set; }
         public Nullable<int> idRecebimentoVenda { get; set; }
