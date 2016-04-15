@@ -1571,7 +1571,6 @@ namespace api.Negocios.Card
                                                                                                    AntecipacaoBancaria = t.Key.AntecipacaoBancaria,
                                                                                                    TipoCartao = t.GroupBy(r => r.TipoCartao).Count() == 1 ? t.Select(r => r.TipoCartao).FirstOrDefault() : "",
                                                                                                    Antecipado = true,
-                                                                                                   //Filial = t.Key.Filial
                                                                                                    Filial = t.GroupBy(r => r.Filial).Count() == 1 ? t.Select(r => r.Filial).FirstOrDefault() : "",
                                                                                                })
                                                                                                 .ToList<ConciliacaoBancaria>();
@@ -1590,154 +1589,256 @@ namespace api.Negocios.Card
                                 // Remove todas elas das parcelas a serem pré-conciliadas com as movimentações que não são de antecipação
                                 recebimentosParcela.RemoveAll(t => t.Antecipado != null && t.Antecipado.Value);
 
-                                #region REMOVE DAS PRÉ-CONCILIAÇÕES "NORMAIS" ESSAS PARCELAS ANTECIPADAS, CONCILIANDO COM MOVIMENTAÇÕES DE ANTECIPAÇÃO (CASO EXISTAM)
-                                if (extratoBancarioAntecipacao.Count > 0)
-                                {
-                                    // Tenta pré-conciliar com movimentações de antecipação
-                                    foreach (ConciliacaoBancaria recebimento in parcelasAntecipadas)
+                                if (extratoBancarioAntecipacao.Count == 0) 
+                                { 
+                                    if (!filtroTipoPreConciliado)
                                     {
-                                        // Movimentações da mesma adquirente, data e filial
-                                        List<ConciliacaoBancaria> movimentacoes = extratoBancarioAntecipacao.Where(t => t.Adquirente.Equals("") || t.Adquirente.Equals(recebimento.Adquirente))
-                                                                                                .Where(t => t.Filial.Equals("") || recebimento.Filial.Equals("") || t.Filial.Equals(recebimento.Filial))
-                                                                                                .Where(t => t.Data.Year == recebimento.Data.Year)
-                                                                                                .Where(t => t.Data.Month == recebimento.Data.Month)
-                                                                                                .Where(t => t.Data.Day == recebimento.Data.Day)
-                                                                                                .ToList<ConciliacaoBancaria>();
-                                        if (movimentacoes.Count == 0)
-                                        {
-                                            if (!filtroTipoNaoConciliado)
-                                                // Adiciona o cupom como não conciliado
-                                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, new List<ConciliacaoBancaria>() { recebimento });
+                                        // Adiciona cupom a cupom como não conciliado
+                                        adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, parcelasAntecipadas);
+                                    }
+                                }
+                                else 
+                                {
+                                    List<ConciliacaoBancaria> parcelasAntecipadasBanco = parcelasAntecipadas.Where(t => t.AntecipacaoBancaria > new decimal(0.0)).ToList();
+                                    if (parcelasAntecipadasBanco.Count > 0)
+                                    {
+                                        // Remove elas
+                                        parcelasAntecipadas.RemoveAll(t => t.AntecipacaoBancaria > new decimal(0.0));
 
-                                            continue;
-                                        }
-
-                                        decimal menorDiferenca = decimal.MaxValue;
-                                        decimal valorComparativo = recebimento.AntecipacaoBancaria > new decimal(0.0) ? recebimento.AntecipacaoBancaria : recebimento.ValorTotal;
-                                        int indice = -1;
-                                        // Procura a menor diferença
-                                        for (int m = 0; m < movimentacoes.Count; m++)
+                                        #region PRÉ-CONCILIA COM MOVIMENTAÇÕES DE ANTECIPAÇÃO, CONSIDERANDO ANTECIPAÇÃO BANCÁRIA
+                                        // Tenta pré-conciliar com movimentações de antecipação
+                                        for (int k = 0; k < parcelasAntecipadasBanco.Count; k++)
                                         {
-                                            ConciliacaoBancaria mov = movimentacoes[m];
-                                            decimal diferenca = Math.Abs(valorComparativo - mov.ValorTotal);
-                                            if (diferenca < menorDiferenca)
+                                            ConciliacaoBancaria recebimento = parcelasAntecipadasBanco[k];
+
+                                            // Movimentações da mesma adquirente, data e filial
+                                            List<ConciliacaoBancaria> movimentacoes = extratoBancarioAntecipacao.Where(t => t.Adquirente.Equals("") || t.Adquirente.Equals(recebimento.Adquirente))
+                                                                                                    //.Where(t => t.Filial.Equals("") || recebimento.Filial.Equals("") || t.Filial.Equals(recebimento.Filial))
+                                                                                                    .Where(t => t.Data.Year == recebimento.Data.Year)
+                                                                                                    .Where(t => t.Data.Month == recebimento.Data.Month)
+                                                                                                    .Where(t => t.Data.Day == recebimento.Data.Day)
+                                                                                                    .ToList<ConciliacaoBancaria>();
+                                            if (movimentacoes.Count == 0)
                                             {
-                                                indice = m;
-                                                menorDiferenca = diferenca;
+                                                if (!filtroTipoNaoConciliado)
+                                                    // Adiciona o cupom como não conciliado
+                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, new List<ConciliacaoBancaria>() { recebimento });
+
+                                                continue;
                                             }
-                                        }
 
-                                        if(menorDiferenca > TOLERANCIA_LOTE)
-                                        {
-                                            if (!filtroTipoNaoConciliado)
-                                                // Adiciona o cupom como não conciliado
-                                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, new List<ConciliacaoBancaria>() { recebimento });
-
-                                            continue;
-                                        }
-
-                                        // Pega a parcela de menor diferença
-                                        ConciliacaoBancaria movimentacao = movimentacoes[indice];
-
-                                        // Deleta a movimentação já pré-conciliada
-                                        extratoBancarioAntecipacao.Remove(movimentacao);
-
-                                        // Avalia a diferença
-                                        if (recebimento.AntecipacaoBancaria == new decimal(0.0) &&
-                                            recebimento.ValorTotal > movimentacao.ValorTotal &&
-                                            movimentacoes.Count > 1)
-                                        {
-                                            // Remove o que foi utilizado
-                                            movimentacoes.RemoveAt(indice);
-                                            // Verifica se a diferença foi complementada com outro lançamento no extrato
-                                            ConciliacaoBancaria mov = movimentacoes.Where(t => Math.Abs(t.ValorTotal - menorDiferenca) < TOLERANCIA_LOTE)
-                                                                                   .OrderByDescending(t => t.Filial) // prioriza o que tem filial
-                                                                                   .FirstOrDefault();
-
-                                            if (mov != null)
+                                            decimal menorDiferenca = decimal.MaxValue;
+                                            decimal valorComparativo = recebimento.AntecipacaoBancaria;
+                                            int indice = -1;
+                                            // Procura a menor diferença
+                                            for (int m = 0; m < movimentacoes.Count; m++)
                                             {
-                                                // Tenta achar a combinação to conjunto de parcelas para pré-conciliar com essa movimentação
+                                                ConciliacaoBancaria mov = movimentacoes[m];
+                                                decimal diferenca = Math.Abs(valorComparativo - mov.ValorTotal);
+                                                if (diferenca < menorDiferenca)
+                                                {
+                                                    indice = m;
+                                                    menorDiferenca = diferenca;
+                                                }
+                                            }
 
-                                                //List<int> l = recebimento.Grupo.GroupBy(r => r.Lote).Select(t => t.Key).ToList<int>();
+                                            if (menorDiferenca > TOLERANCIA_LOTE)
+                                            {
+                                                if (!filtroTipoNaoConciliado)
+                                                    // Adiciona o cupom como não conciliado
+                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, new List<ConciliacaoBancaria>() { recebimento });
 
-                                                // Obtém as parcelas antecipadas divididas em lotes
-                                                List<ConciliacaoBancaria> lotesAntecipados = recebimento.Grupo.GroupBy(r => r.Lote)
-                                                                    .Select(r => new ConciliacaoBancaria
-                                                                    {
-                                                                        Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                        Grupo = r.Select(x => new ConciliacaoBancaria.ConciliacaoGrupo
+                                                continue;
+                                            }
+
+                                            // Pega a parcela de menor diferença
+                                            ConciliacaoBancaria movimentacao = movimentacoes[indice];
+
+                                            // Deleta a movimentação já pré-conciliada
+                                            extratoBancarioAntecipacao.Remove(movimentacao);
+
+                                            // Adiciona na lista de pré-conciliados
+                                            if (!filtroTipoNaoConciliado)
+                                                adicionaElementosConciliadosNaLista(CollectionConciliacaoBancaria, recebimento, movimentacao, TIPO_CONCILIADO.PRE_CONCILIADO);
+                                        }
+
+                                        #endregion
+
+                                        // Clear
+                                        parcelasAntecipadasBanco.Clear();
+                                    }
+
+                                    if (parcelasAntecipadas.Count > 0)
+                                    {
+                                        #region PRÉ-CONCILIA COM MOVIMENTAÇÕES DE ANTECIPAÇÃO, CONSIDERANDO ANTECIPAÇÃO DIRETO NA ADQUIRENTE
+                                        // Por filial
+                                        parcelasAntecipadas = parcelasAntecipadas.Where(t => t.AntecipacaoBancaria == new decimal(0.0))
+                                                                                .GroupBy(t => new { t.Adquirente, t.Data, t.Filial })
+                                                                                .Select(t => new ConciliacaoBancaria
+                                                                                {
+                                                                                    Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                                    Grupo = t.Select(r => r.Grupo.First()).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                    ValorTotal = t.Select(r => r.ValorTotal).Sum(),
+                                                                                    ValorTotalBruto = t.Select(r => r.ValorTotalBruto).Sum(),
+                                                                                    Data = t.Key.Data,
+                                                                                    DataVenda = t.GroupBy(r => r.DataVenda).Count() == 1 ? t.Select(r => r.DataVenda).FirstOrDefault() : (DateTime?)null,
+                                                                                    Adquirente = t.Key.Adquirente,
+                                                                                    Bandeira = t.GroupBy(r => r.Bandeira).Count() == 1 ? t.Select(r => r.Bandeira).FirstOrDefault() : "",
+                                                                                    Lote = t.GroupBy(r => r.Lote).Count() == 1 ? t.Select(r => r.Lote).FirstOrDefault() : 0,
+                                                                                    AntecipacaoBancaria = new decimal(0.0),
+                                                                                    TipoCartao = t.GroupBy(r => r.TipoCartao).Count() == 1 ? t.Select(r => r.TipoCartao).FirstOrDefault() : "",
+                                                                                    Antecipado = true,
+                                                                                    Filial = t.Key.Filial,
+                                                                                })
+                                                                                .ToList<ConciliacaoBancaria>();
+
+                                        // Tenta pré-conciliar com movimentações de antecipação
+                                        for (int k = 0; k < parcelasAntecipadas.Count; k++)
+                                        {
+                                            ConciliacaoBancaria recebimento = parcelasAntecipadas[k];
+
+                                            // Movimentações da mesma adquirente, data e filial
+                                            List<ConciliacaoBancaria> movimentacoes = extratoBancarioAntecipacao.Where(t => t.Adquirente.Equals("") || t.Adquirente.Equals(recebimento.Adquirente))
+                                                                                                    .Where(t => t.Filial.Equals("") || recebimento.Filial.Equals("") || t.Filial.Equals(recebimento.Filial))
+                                                                                                    .Where(t => t.Data.Year == recebimento.Data.Year)
+                                                                                                    .Where(t => t.Data.Month == recebimento.Data.Month)
+                                                                                                    .Where(t => t.Data.Day == recebimento.Data.Day)
+                                                                                                    .ToList<ConciliacaoBancaria>();
+                                            if (movimentacoes.Count == 0)
+                                            {
+                                                if (!filtroTipoNaoConciliado)
+                                                    // Adiciona o cupom como não conciliado
+                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, new List<ConciliacaoBancaria>() { recebimento });
+
+                                                continue;
+                                            }
+
+                                            decimal menorDiferenca = decimal.MaxValue;
+                                            decimal valorComparativo = recebimento.ValorTotal;
+                                            int indice = -1;
+                                            // Procura a menor diferença
+                                            for (int m = 0; m < movimentacoes.Count; m++)
+                                            {
+                                                ConciliacaoBancaria mov = movimentacoes[m];
+                                                decimal diferenca = Math.Abs(valorComparativo - mov.ValorTotal);
+                                                if (diferenca < menorDiferenca)
+                                                {
+                                                    indice = m;
+                                                    menorDiferenca = diferenca;
+                                                }
+                                            }
+
+                                            if (menorDiferenca > TOLERANCIA_LOTE)
+                                            {
+                                                if (!filtroTipoNaoConciliado)
+                                                    // Adiciona o cupom como não conciliado
+                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, new List<ConciliacaoBancaria>() { recebimento });
+
+                                                continue;
+                                            }
+
+                                            // Pega a parcela de menor diferença
+                                            ConciliacaoBancaria movimentacao = movimentacoes[indice];
+
+                                            // Deleta a movimentação já pré-conciliada
+                                            extratoBancarioAntecipacao.Remove(movimentacao);
+
+                                            // Avalia a diferença
+                                            if (recebimento.ValorTotal > movimentacao.ValorTotal && movimentacoes.Count > 1)
+                                            {
+                                                // Remove o que foi utilizado
+                                                movimentacoes.RemoveAt(indice);
+                                                // Verifica se a diferença foi complementada com outro lançamento no extrato
+                                                ConciliacaoBancaria mov = movimentacoes.Where(t => Math.Abs(t.ValorTotal - menorDiferenca) < TOLERANCIA_LOTE)
+                                                                                       .OrderByDescending(t => t.Filial) // prioriza o que tem filial
+                                                                                       .FirstOrDefault();
+
+                                                if (mov != null)
+                                                {
+                                                    // Tenta achar a combinação to conjunto de parcelas para pré-conciliar com essa movimentação
+
+                                                    //List<int> l = recebimento.Grupo.GroupBy(r => r.Lote).Select(t => t.Key).ToList<int>();
+
+                                                    // Obtém as parcelas antecipadas divididas em lotes
+                                                    List<ConciliacaoBancaria> lotesAntecipados = recebimento.Grupo.GroupBy(r => r.Lote)
+                                                                        .Select(r => new ConciliacaoBancaria
                                                                         {
-                                                                            Antecipado = x.Antecipado,
-                                                                            Bandeira = x.Bandeira,
-                                                                            DataPrevista = x.DataPrevista,
-                                                                            DataVenda = x.DataVenda,
-                                                                            Documento = x.Documento,
-                                                                            Filial = x.Filial,
-                                                                            Id = x.Id,
-                                                                            Lote = x.Lote,
-                                                                            NumParcela = x.NumParcela,
-                                                                            TipoCartao = x.TipoCartao,
-                                                                            Valor = x.Valor,
-                                                                            ValorBruto = x.ValorBruto
-                                                                        }).OrderByDescending(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Lote).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
-                                                                        Data = recebimento.Data,
-                                                                        ValorTotal = r.Sum(x => x.Valor),
-                                                                        ValorTotalBruto = r.Sum(x => x.ValorBruto),
-                                                                        Adquirente = recebimento.Adquirente,
-                                                                        Bandeira = r.GroupBy(x => x.Bandeira).Count() == 1 ? r.Select(x => x.Bandeira).FirstOrDefault() : "",
-                                                                        Lote = r.Key,
-                                                                        TipoCartao = r.GroupBy(x => x.TipoCartao).Count() == 1 ? r.Select(x => x.TipoCartao).FirstOrDefault() : "",
-                                                                        Antecipado = true,
-                                                                        Filial = r.GroupBy(x => x.Filial).Count() == 1 ? r.Select(x => x.Filial).FirstOrDefault() : ""
-                                                                    })
-                                                    // Somente os lotes com valor inferior ao da movimentação
-                                                                    .Where(t => t.ValorTotal < mov.ValorTotal || Math.Abs(t.ValorTotal - mov.ValorTotal) < TOLERANCIA_LOTE)
-                                                                    .ToList<ConciliacaoBancaria>();
+                                                                            Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                            Grupo = r.Select(x => new ConciliacaoBancaria.ConciliacaoGrupo
+                                                                            {
+                                                                                Antecipado = x.Antecipado,
+                                                                                Bandeira = x.Bandeira,
+                                                                                DataPrevista = x.DataPrevista,
+                                                                                DataVenda = x.DataVenda,
+                                                                                Documento = x.Documento,
+                                                                                Filial = x.Filial,
+                                                                                Id = x.Id,
+                                                                                Lote = x.Lote,
+                                                                                NumParcela = x.NumParcela,
+                                                                                TipoCartao = x.TipoCartao,
+                                                                                Valor = x.Valor,
+                                                                                ValorBruto = x.ValorBruto
+                                                                            }).OrderByDescending(x => x.DataVenda).ThenBy(x => x.DataPrevista).ThenBy(x => x.Lote).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                            Data = recebimento.Data,
+                                                                            ValorTotal = r.Sum(x => x.Valor),
+                                                                            ValorTotalBruto = r.Sum(x => x.ValorBruto),
+                                                                            Adquirente = recebimento.Adquirente,
+                                                                            Bandeira = r.GroupBy(x => x.Bandeira).Count() == 1 ? r.Select(x => x.Bandeira).FirstOrDefault() : "",
+                                                                            Lote = r.Key,
+                                                                            TipoCartao = r.GroupBy(x => x.TipoCartao).Count() == 1 ? r.Select(x => x.TipoCartao).FirstOrDefault() : "",
+                                                                            Antecipado = true,
+                                                                            Filial = r.GroupBy(x => x.Filial).Count() == 1 ? r.Select(x => x.Filial).FirstOrDefault() : ""
+                                                                        })
+                                                        // Somente os lotes com valor inferior ao da movimentação
+                                                                        .Where(t => t.ValorTotal < mov.ValorTotal || Math.Abs(t.ValorTotal - mov.ValorTotal) < TOLERANCIA_LOTE)
+                                                                        .ToList<ConciliacaoBancaria>();
 
-                                                // tenta até 3 vezes (pega d
-                                                List<dynamic> tempList = new List<dynamic>();
-                                                int totalTentativas = lotesAntecipados.Count > 20 ? 5 : 1; // se tiver mais de 20 lotes, tenta 3 vezes (pega aletoriamente os lotes), se não, só tenta uma vez
-                                                for (int contTentativas = 0; contTentativas < totalTentativas && tempList.Count == 0; contTentativas++)
-                                                {
-                                                    conciliaPorLotes(tempList, lotesAntecipados, new List<ConciliacaoBancaria>() { mov }, !filtroTipoNaoConciliado);
-                                                }
-                                                if (tempList.Count > 0)
-                                                {
-                                                    // Pré-conciliou!
-                                                    if (!filtroTipoNaoConciliado)
-                                                        CollectionConciliacaoBancaria.AddRange(tempList);
-
-                                                    // Remove a movimentação
-                                                    extratoBancarioAntecipacao.Remove(mov);
-
-                                                    // Busca os lotes que foram pré-conciliados
-                                                    List<int> lotesPreConciliados = new List<int>();
-                                                    foreach (List<ConciliacaoBancaria.ConciliacaoGrupo> grupo in tempList.Select(t => (List<ConciliacaoBancaria.ConciliacaoGrupo>)t.RecebimentosParcela))
+                                                    // tenta até 3 vezes (pega d
+                                                    List<dynamic> tempList = new List<dynamic>();
+                                                    int totalTentativas = lotesAntecipados.Count > 20 ? 5 : 1; // se tiver mais de 20 lotes, tenta 3 vezes (pega aletoriamente os lotes), se não, só tenta uma vez
+                                                    for (int contTentativas = 0; contTentativas < totalTentativas && tempList.Count == 0; contTentativas++)
                                                     {
-                                                        lotesPreConciliados.AddRange(grupo.GroupBy(t => t.Lote).Select(t => t.Key));
+                                                        conciliaPorLotes(tempList, lotesAntecipados, new List<ConciliacaoBancaria>() { mov }, !filtroTipoNaoConciliado);
                                                     }
+                                                    if (tempList.Count > 0)
+                                                    {
+                                                        // Pré-conciliou!
+                                                        if (!filtroTipoNaoConciliado)
+                                                            CollectionConciliacaoBancaria.AddRange(tempList);
 
-                                                    // Remove possíveis duplicatas
-                                                    lotesPreConciliados = lotesPreConciliados.Distinct().ToList();
+                                                        // Remove a movimentação
+                                                        extratoBancarioAntecipacao.Remove(mov);
 
-                                                    // Remove do grupo os recebíveis dos lotes pré-conciliados
-                                                    recebimento.Grupo.RemoveAll(t => lotesPreConciliados.Contains(t.Lote));
+                                                        // Busca os lotes que foram pré-conciliados
+                                                        List<int> lotesPreConciliados = new List<int>();
+                                                        foreach (List<ConciliacaoBancaria.ConciliacaoGrupo> grupo in tempList.Select(t => (List<ConciliacaoBancaria.ConciliacaoGrupo>)t.RecebimentosParcela))
+                                                        {
+                                                            lotesPreConciliados.AddRange(grupo.GroupBy(t => t.Lote).Select(t => t.Key));
+                                                        }
 
-                                                    // Atualiza
-                                                    recebimento.ValorTotal = recebimento.Grupo.Select(r => r.Valor).Sum();
-                                                    recebimento.ValorTotalBruto = recebimento.Grupo.Select(r => r.ValorBruto).Sum();
-                                                    recebimento.DataVenda = recebimento.Grupo.GroupBy(r => r.DataVenda).Count() == 1 ? recebimento.Grupo.Select(r => r.DataVenda).FirstOrDefault() : (DateTime?)null;
-                                                    recebimento.Bandeira = recebimento.Grupo.GroupBy(r => r.Bandeira).Count() == 1 ? recebimento.Grupo.Select(r => r.Bandeira).FirstOrDefault() : "";
-                                                    recebimento.Lote = recebimento.Grupo.GroupBy(r => r.Lote).Count() == 1 ? recebimento.Grupo.Select(r => r.Lote).FirstOrDefault() : 0;
-                                                    recebimento.TipoCartao = recebimento.Grupo.GroupBy(r => r.TipoCartao).Count() == 1 ? recebimento.Grupo.Select(r => r.TipoCartao).FirstOrDefault() : "";
+                                                        // Remove possíveis duplicatas
+                                                        lotesPreConciliados = lotesPreConciliados.Distinct().ToList();
 
+                                                        // Remove do grupo os recebíveis dos lotes pré-conciliados
+                                                        recebimento.Grupo.RemoveAll(t => lotesPreConciliados.Contains(t.Lote));
+
+                                                        // Atualiza
+                                                        recebimento.ValorTotal = recebimento.Grupo.Select(r => r.Valor).Sum();
+                                                        recebimento.ValorTotalBruto = recebimento.Grupo.Select(r => r.ValorBruto).Sum();
+                                                        recebimento.DataVenda = recebimento.Grupo.GroupBy(r => r.DataVenda).Count() == 1 ? recebimento.Grupo.Select(r => r.DataVenda).FirstOrDefault() : (DateTime?)null;
+                                                        recebimento.Bandeira = recebimento.Grupo.GroupBy(r => r.Bandeira).Count() == 1 ? recebimento.Grupo.Select(r => r.Bandeira).FirstOrDefault() : "";
+                                                        recebimento.Lote = recebimento.Grupo.GroupBy(r => r.Lote).Count() == 1 ? recebimento.Grupo.Select(r => r.Lote).FirstOrDefault() : 0;
+                                                        recebimento.TipoCartao = recebimento.Grupo.GroupBy(r => r.TipoCartao).Count() == 1 ? recebimento.Grupo.Select(r => r.TipoCartao).FirstOrDefault() : "";
+
+                                                    }
                                                 }
                                             }
-                                        }
 
-                                        // Adiciona na lista de pré-conciliados
-                                        if (!filtroTipoNaoConciliado)
-                                            adicionaElementosConciliadosNaLista(CollectionConciliacaoBancaria, recebimento, movimentacao, TIPO_CONCILIADO.PRE_CONCILIADO);
+                                            // Adiciona na lista de pré-conciliados
+                                            if (!filtroTipoNaoConciliado)
+                                                adicionaElementosConciliadosNaLista(CollectionConciliacaoBancaria, recebimento, movimentacao, TIPO_CONCILIADO.PRE_CONCILIADO);
+                                        }
+                                        #endregion
                                     }
 
                                     // Verifica se ainda tem movimentações de antecipação
@@ -1750,17 +1851,11 @@ namespace api.Negocios.Card
                                         // Limpa a lista
                                         extratoBancarioAntecipacao.Clear();
                                     }
-                                    
-                                }
-                                else if (!filtroTipoPreConciliado)
-                                {
-                                    // Adiciona cupom a cupom como não conciliado
-                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, parcelasAntecipadas);
                                 }
 
                                 // Limpa a lista
                                 parcelasAntecipadas.Clear();
-                                #endregion
+                                
                             }
                             else if (extratoBancarioAntecipacao.Count > 0)
                             {
