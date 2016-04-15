@@ -198,7 +198,13 @@ namespace api.Negocios.Cliente
                         break;
                     case CAMPOS.DS_NOME:
                         string ds_nome = Convert.ToString(item.Value);
-                        where.Add(SIGLA_QUERY + ".ds_nome = '" + ds_nome + "'");
+                        if (ds_nome.Contains("%")) // usa LIKE
+                        {
+                            string busca = ds_nome.Replace("%", "").ToString();
+                            where.Add(SIGLA_QUERY + ".ds_nome LIKE '%" + busca + "%'");
+                        }
+                        else
+                            where.Add(SIGLA_QUERY + ".ds_nome = '" + ds_nome + "'");
                         break;
                     case CAMPOS.DT_CADASTRO:
                         DateTime dt_cadastro = Convert.ToDateTime(item.Value);

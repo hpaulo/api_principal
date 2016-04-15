@@ -306,7 +306,7 @@ namespace api.Negocios.Cliente
                         if (ds_fantasia.Contains("%")) // usa LIKE
                         {
                             string busca = ds_fantasia.Replace("%", "").ToString();
-                            where.Add(SIGLA_QUERY + ".ds_fantasia like '%" + ds_fantasia + "%'");
+                            where.Add(SIGLA_QUERY + ".ds_fantasia LIKE '%" + busca + "%'");
                         }
                         else
                             where.Add(SIGLA_QUERY + ".ds_fantasia = '" + ds_fantasia + "'");                        
