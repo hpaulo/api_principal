@@ -112,24 +112,9 @@ namespace api.Negocios.Util
                         //List<string> colunas2 = value.Split(' ').ToList();
                         string[] colunas = value.Split(' ');
 
-                        //Guardando valor da linha AG. TEF
-                        //if (!(temp[i].Trim().Substring(5).Trim().StartsWith("TRANSF") || temp[i].Trim().Substring(5).Trim().StartsWith("AG. TEF")) &&
-                        //    (!temp[i + 1].Contains("ItaúEmpresas") && !(temp[i + 1] == "") && !(temp[i + 1].Trim().Length <= maxLength) &&
-                        //    (temp[i + 1].Trim().Substring(5).Trim().StartsWith("TRANSF") || temp[i + 1].Trim().Substring(5).Trim().StartsWith("AG. TEF")) &&
-                        //    !(temp[i].ToString().Trim().Contains("SALDO"))) || (temp[i + 1].Contains("SALDO FINAL")))
-                        //{
-                        if ((((i + 1 < temp.Length && (temp[i + 1].Trim().Length <= maxLength && temp[i + 1].Trim() != "") && temp[i + 4].Trim().Substring(5).Trim().StartsWith("SALDO PARCIAL")) ||
-                            (i + 2 < temp.Length && (temp[i + 2].Trim().Length <= maxLength && temp[i + 2].Trim() != "") && temp[i + 1].Trim().Substring(5).Trim().StartsWith("SALDO PARCIAL")) ||
-                            (i + 3 < temp.Length && (temp[i + 3].Trim().Length <= maxLength && temp[i + 3].Trim() != "") && temp[i + 1].Trim().Substring(5).Trim().StartsWith("SALDO PARCIAL"))) &&
-                            (i + 6) < temp.Length && !(temp[i + 6].Trim().Length <= maxLength) && (temp[i + 6].Trim().Substring(5).Trim().StartsWith("TRANSF") ||
-                            temp[i + 6].Trim().Substring(5).Trim().StartsWith("AG. TEF"))) || !(temp[i].Trim().Substring(5).Trim().StartsWith("TRANSF") ||
-                            temp[i].Trim().Substring(5).Trim().StartsWith("AG. TEF")) && (!temp[i + 1].Contains("ItaúEmpresas") && !(temp[i + 1] == "") &&
-                            !(temp[i + 1].Trim().Length <= maxLength) && (temp[i + 1].Trim().Substring(5).Trim().StartsWith("TRANSF") ||
-                            temp[i + 1].Trim().Substring(5).Trim().StartsWith("AG. TEF")) || (((i + 3) < temp.Length && !(temp[i + 3].Trim().Length <= maxLength) &&
-                            (temp[i + 3].Trim().Substring(5).Trim().StartsWith("TRANSF") || temp[i + 3].Trim().Substring(5).Trim().StartsWith("AG. TEF"))) &&
-                            temp[i + 1].Trim().Substring(5).Trim().StartsWith("SALDO PARCIAL")) || ((i + 1 < temp.Length && temp[i + 1].Trim().Length <= maxLength) &&
-                            (i + 4) < temp.Length && !(temp[i + 4].Trim().Length <= maxLength) && (temp[i + 4].Trim().Substring(5).Trim().StartsWith("TRANSF") ||
-                            temp[i + 4].Trim().Substring(5).Trim().StartsWith("AG. TEF"))) && !(temp[i].ToString().Trim().Contains("SALDO"))) || (temp[i + 1].Contains("SALDO FINAL")))
+
+                        //Guardando valor da linha
+                        if (temp[i + 1].Contains("SALDO FINAL"))
                         {
                             for (int j = colunas.Length - 2; j >= 0; j--)
                             {
@@ -148,6 +133,49 @@ namespace api.Negocios.Util
                                 }
                             }
                         }
+                        else if (temp[i + 2].Contains("(-) SALDO A LIBERAR") || (temp[i + 1].Contains("SALDO PARCIAL") && temp[i + 4].Contains("(-) SALDO A LIBERAR")) || (temp[i + 2].Contains("ItaúEmpresas") && temp[i + 5].Contains("(-) SALDO A LIBERAR")) ||
+                            (temp[i + 3].Contains("ItaúEmpresas") && temp[i + 5].Contains("(-) SALDO A LIBERAR")) || (temp[i + 2].Contains("ItaúEmpresas") && temp[i + 4].Contains("SALDO PARCIAL") && temp[i + 7].Contains("(-) SALDO A LIBERAR")) ||
+                            (temp[i + 1].Contains("SALDO PARCIAL") && temp[i + 3].Contains("ItaúEmpresas") && temp[i + 7].Contains("(-) SALDO A LIBERAR")) || (temp[i + 1].Contains("SALDO PARCIAL") && temp[i + 4].Contains("ItaúEmpresas") && temp[i + 7].Contains("(-) SALDO A LIBERAR")) ||
+                            (temp[i + 1].Contains("SALDO PARCIAL") && temp[i + 5].Contains("ItaúEmpresas") && temp[i + 7].Contains("(-) SALDO A LIBERAR")))
+                        {
+                            for (int j = colunas.Length - 2; j >= 0; j--)
+                            {
+                                if (colunas[j] != "")
+                                {
+                                    try
+                                    {
+                                        transaction.Amount = Convert.ToDecimal(colunas[j]);
+                                    }
+                                    catch
+                                    {
+                                        throw new Exception("'" + colunas[j] + "' não corresponde a um número válido (2)");
+                                    }
+                                    value = value.Trim().Substring(0, value.IndexOf(colunas[j])).Trim();
+                                    break;
+                                }
+                            }
+                        }
+                        else if (temp[i + 1] != "" && !(temp[i + 1].Trim().Length <= maxLength) && ((temp[i].Substring(0, 5).Trim() != temp[i + 1].Substring(0, 5).Trim()) || (temp[i + 2] == "ItaúEmpresas" && temp[i].Substring(0, 5).Trim() != temp[i + 4].Substring(0, 5).Trim()) ||
+                            (temp[i + 1].Contains("SALDO PARCIAL") && temp[i].Substring(0, 5).Trim() != temp[i + 3].Substring(0, 5).Trim()) || (temp[i + 2] == "ItaúEmpresas" && temp[i + 4].Contains("SALDO PARCIAL") && temp[i].Substring(0, 5).Trim() != temp[i + 6].Substring(0, 5).Trim()) ||
+                            (temp[i + 1].Contains("SALDO PARCIAL") && temp[i + 3] == "ItaúEmpresas" && temp[i].Substring(0, 5).Trim() != temp[i + 6].Substring(0, 5).Trim()) || (temp[i + 1].Contains("SALDO PARCIAL") && temp[i + 4] == "ItaúEmpresas" && temp[i].Substring(0, 5).Trim() != temp[i + 6].Substring(0, 5).Trim())))
+                        {
+                            for (int j = colunas.Length - 2; j >= 0; j--)
+                            {
+                                if (colunas[j] != "")
+                                {
+                                    try
+                                    {
+                                        transaction.Amount = Convert.ToDecimal(colunas[j]);
+                                    }
+                                    catch
+                                    {
+                                        throw new Exception("'" + colunas[j] + "' não corresponde a um número válido (3)");
+                                    }
+                                    value = value.Trim().Substring(0, value.IndexOf(colunas[j])).Trim();
+                                    break;
+                                }
+                            }
+                        }
                         else
                         {
                             try
@@ -156,7 +184,7 @@ namespace api.Negocios.Util
                             }
                             catch
                             {
-                                throw new Exception("'" + colunas[colunas.Length - 1] + "' não corresponde a um número válido (2)");
+                                throw new Exception("'" + colunas[colunas.Length - 1] + "' não corresponde a um número válido (4)");
                             }
                             value = value.Replace(colunas[colunas.Length - 1], "").Trim();
                         }
