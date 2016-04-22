@@ -1142,7 +1142,7 @@ namespace api.Negocios.Card
                                         Id = Convert.ToInt32(t["idRecebimentoAjuste"]),
                                         Documento = Convert.ToString(t["dsMotivo"]),
                                         Valor = Convert.ToDecimal(t["vlAjuste"]),
-                                        ValorBruto = Convert.ToDecimal(t["vlBruto"]),
+                                        ValorBruto = Convert.ToDecimal(t["vlBruto"]) != new decimal(0.0) ? Convert.ToDecimal(t["vlBruto"]) : Convert.ToDecimal(t["vlAjuste"]) > new decimal(0.0) ? Convert.ToDecimal(t["vlAjuste"]) : new decimal(0.0),
                                         Adquirente = Convert.ToString(t["nmAdquirente"]),
                                         Bandeira = Convert.ToString(t["dsBandeira"]),
                                         Lote = t["idResumoVenda"].Equals(DBNull.Value) ? 0 : Convert.ToInt32(t["idResumoVenda"]),
@@ -1166,7 +1166,7 @@ namespace api.Negocios.Card
                                                                                     NumParcela = -1,
                                                                                     Documento = x.Documento,
                                                                                     Valor = x.Valor,
-                                                                                    ValorBruto = x.ValorBruto != new decimal(0.0) ? x.ValorBruto : x.Valor > new decimal(0.0) ? x.Valor : new decimal(0.0),
+                                                                                    ValorBruto = x.ValorBruto, //!= new decimal(0.0) ? x.ValorBruto : x.Valor > new decimal(0.0) ? x.Valor : new decimal(0.0),
                                                                                     Bandeira = x.Bandeira.ToUpper(),
                                                                                     Lote = x.Lote,
                                                                                     AntecipacaoBancaria = x.AntecipacaoBancaria,
@@ -1184,8 +1184,9 @@ namespace api.Negocios.Card
                                                                                 .ThenBy(x => x.Valor)
                                                                                 .ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
                                                                             ValorTotal = r.Select(x => x.Valor).Cast<decimal>().Sum(),
-                                                                            ValorTotalBruto = (r.Where(x => x.ValorBruto != new decimal(0.0)).Count() > 0 ? r.Where(x => x.ValorBruto != new decimal(0.0)).Select(x => x.ValorBruto).Cast<decimal>().Sum() : new decimal(0.0)) +
-                                                                                              (r.Where(x => x.ValorBruto == new decimal(0.0) && x.Valor > new decimal(0.0)).Count() > 0 ? r.Where(x => x.ValorBruto == new decimal(0.0) && x.Valor > new decimal(0.0)).Select(x => x.Valor).Cast<decimal>().Sum() : new decimal(0.0)),
+                                                                            ValorTotalBruto = r.Select(x => x.ValorBruto).Cast<decimal>().Sum(),
+                                                                                              //(r.Where(x => x.ValorBruto != new decimal(0.0)).Count() > 0 ? r.Where(x => x.ValorBruto != new decimal(0.0)).Select(x => x.ValorBruto).Cast<decimal>().Sum() : new decimal(0.0)) +
+                                                                                              //(r.Where(x => x.ValorBruto == new decimal(0.0) && x.Valor > new decimal(0.0)).Count() > 0 ? r.Where(x => x.ValorBruto == new decimal(0.0) && x.Valor > new decimal(0.0)).Select(x => x.Valor).Cast<decimal>().Sum() : new decimal(0.0)),
                                                                             Data = r.Select(x => x.Data).FirstOrDefault(),
                                                                             Adquirente = r.Key.ToUpper(),
                                                                             Bandeira = r.GroupBy(x => x.Bandeira).Count() == 1 ? r.Select(x => x.Bandeira.ToUpper()).FirstOrDefault() : "",
@@ -1208,6 +1209,7 @@ namespace api.Negocios.Card
                                         recebimento.Grupo.Add(grupo);
                                     recebimento.Grupo = recebimento.Grupo.OrderBy(x => x.Bandeira).ThenBy(x => x.DataPrevista).ThenBy(x => x.Lote).ThenBy(x => x.Valor).ToList<ConciliacaoBancaria.ConciliacaoGrupo>();
                                     recebimento.ValorTotal += ajustes.ValorTotal;
+                                    recebimento.ValorTotalBruto += ajustes.ValorTotalBruto;
                                     if (!recebimento.Bandeira.Equals(ajustes.Bandeira))
                                         recebimento.Bandeira = "";
                                     if (!recebimento.TipoCartao.Equals(ajustes.TipoCartao))
@@ -1681,9 +1683,19 @@ namespace api.Negocios.Card
                                             // Deleta a movimentação já pré-conciliada
                                             extratoBancarioAntecipacao.Remove(movimentacao);
 
-                                            // Adiciona na lista de pré-conciliados
-                                            if (!filtroTipoNaoConciliado)
-                                                adicionaElementosConciliadosNaLista(CollectionConciliacaoBancaria, recebimento, movimentacao, TIPO_CONCILIADO.PRE_CONCILIADO);
+                                            // Avalia se o valor total antecipado alcançou o valor do cupom
+                                            if (Math.Abs(recebimento.ValorTotal - movimentacao.ValorTotal) < TOLERANCIA_LOTE)
+                                            {
+                                                // Adiciona na lista de pré-conciliados
+                                                if (!filtroTipoNaoConciliado)
+                                                    adicionaElementosConciliadosNaLista(CollectionConciliacaoBancaria, recebimento, movimentacao, TIPO_CONCILIADO.PRE_CONCILIADO);
+                                            }
+                                            else if (!filtroTipoNaoConciliado) // Não pré-conciliou
+                                            {
+                                                // Adiciona o cupom como não conciliado
+                                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, new List<ConciliacaoBancaria>() { recebimento });
+                                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, new List<ConciliacaoBancaria>() { movimentacao });
+                                            }
                                         }
 
                                         #endregion
