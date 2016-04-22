@@ -196,13 +196,14 @@ namespace api.Negocios.Card
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
 
-            try { 
+            try 
+            { 
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbAdquirente = new List<dynamic>();
                 Retorno retorno = new Retorno();
 
                 string outValue = null;
-                Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo != 0)
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
@@ -210,7 +211,7 @@ namespace api.Negocios.Card
                     else
                         queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
                 }
-                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token);
+                string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (!CnpjEmpresa.Equals(""))
                 {
                     if (queryString.TryGetValue("" + (int)CAMPOS.CNPJ, out outValue))
