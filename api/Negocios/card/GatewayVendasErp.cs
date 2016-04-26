@@ -304,6 +304,13 @@ namespace api.Negocios.Card
                     string dsBandeira = vd.dsBandeira;
                     if (dsBandeira.Length > 50) dsBandeira = dsBandeira.Substring(0, 50);
 
+                    string cdSacado = null;
+                    try
+                    {
+                        cdSacado = vd.cdSacado;
+                    }
+                    catch { }
+
                     tbRecebimentoVenda tbRecebimentoVenda = new tbRecebimentoVenda
                     {
                         dsBandeira = dsBandeira,
@@ -313,7 +320,7 @@ namespace api.Negocios.Card
                         nrCNPJ = vd.nrCNPJ,
                         nrNSU = vd.nrNSU != null && !vd.nrNSU.ToString().Trim().Equals("") ? vd.nrNSU : "T" + vd.cdERP,
                         vlVenda = Convert.ToDecimal(vd.vlVenda),
-                        cdSacado = vd.GetType().GetProperty("cdSacado") != null ? vd.cdSacado : null,
+                        cdSacado = cdSacado,
                         qtParcelas = Convert.ToByte(vd.qtParcelas),
                     };
 

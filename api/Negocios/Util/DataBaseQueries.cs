@@ -22,12 +22,59 @@ namespace api.Negocios.Util
 
         public SimpleDataBaseQuery(SimpleDataBaseQuery simpleDataBaseQuery)
         {
-            this.select = simpleDataBaseQuery.select;
-            this.join = simpleDataBaseQuery.join != null ? simpleDataBaseQuery.join : new Dictionary<string, string>(); ;
+            // SELECT
+            if (simpleDataBaseQuery.select == null)
+                this.select = null;
+            else
+            {
+                this.select = new string[simpleDataBaseQuery.select.Length];
+                for (int k = 0; k < simpleDataBaseQuery.select.Length; k++)
+                    this.select[k] = simpleDataBaseQuery.select[k];
+            }
+
+            // JOIN
+            if (simpleDataBaseQuery.join == null)
+                this.join = null;
+            else
+            {
+                this.join = new Dictionary<string, string>();
+                foreach (KeyValuePair<string, string> j in simpleDataBaseQuery.join)
+                    this.join.Add(j.Key, j.Value);
+            }
+            
+            // FROM
             this.from = simpleDataBaseQuery.from;
-            this.where = simpleDataBaseQuery.where;
-            this.groupby = simpleDataBaseQuery.groupby;
-            this.orderby = simpleDataBaseQuery.orderby;
+
+            // WHERE
+            if (simpleDataBaseQuery.where == null)
+                this.where = null;
+            else
+            {
+                this.where = new string[simpleDataBaseQuery.where.Length];
+                for (int k = 0; k < simpleDataBaseQuery.where.Length; k++)
+                    this.where[k] = simpleDataBaseQuery.where[k];
+            }
+
+            // GROUP BY
+            if (simpleDataBaseQuery.groupby == null)
+                this.groupby = null;
+            else
+            {
+                this.groupby = new string[simpleDataBaseQuery.groupby.Length];
+                for (int k = 0; k < simpleDataBaseQuery.groupby.Length; k++)
+                    this.groupby[k] = simpleDataBaseQuery.groupby[k];
+            }
+
+            // ORDER BY
+            if (simpleDataBaseQuery.orderby == null)
+                this.orderby = null;
+            else
+            {
+                this.orderby = new string[simpleDataBaseQuery.orderby.Length];
+                for (int k = 0; k < simpleDataBaseQuery.orderby.Length; k++)
+                    this.orderby[k] = simpleDataBaseQuery.orderby[k];
+            }
+
             this.take = simpleDataBaseQuery.take;
             this.readUncommited = simpleDataBaseQuery.readUncommited;
             this.readDistinct = simpleDataBaseQuery.readDistinct;
