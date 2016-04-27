@@ -243,6 +243,7 @@ namespace api.Models
         public DbSet<tbAntecipacaoBancaria> tbAntecipacaoBancarias { get; set; }
         public DbSet<tbAntecipacaoBancariaDetalhe> tbAntecipacaoBancariaDetalhes { get; set; }
         public DbSet<tbRecebimentoVenda> tbRecebimentoVendas { get; set; }
+        public DbSet<tbBandeiraSacado> tbBandeiraSacados { get; set; }
 
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
@@ -472,6 +473,7 @@ namespace api.Models
             modelBuilder.Configurations.Add(new tbAntecipacaoBancariaMap());
             modelBuilder.Configurations.Add(new tbAntecipacaoBancariaDetalheMap());
             modelBuilder.Configurations.Add(new tbRecebimentoVendaMap());
+            modelBuilder.Configurations.Add(new tbBandeiraSacadoMap());
         }
     }
 }

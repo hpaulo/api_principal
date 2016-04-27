@@ -117,10 +117,17 @@ namespace api.Negocios.Card
         private static void adicionaElementosConciliadosNaLista(List<dynamic> listaConciliacao,
                                                      ConciliacaoVendas recebimento,
                                                      ConciliacaoVendas venda,
-                                                     TIPO_CONCILIADO tipo)
+                                                     TIPO_CONCILIADO tipo, bool filtroTipoConciliadoDivergente = false)
         {
             if (recebimento != null && venda != null)
             {
+                if (tipo.Equals(TIPO_CONCILIADO.CONCILIADO) && ConciliacaoVendas.possuiDivergenciasNaVenda(recebimento, venda))
+                {
+                    tipo = TIPO_CONCILIADO.CONCILIADO_DIVERGENTE;
+                }
+                else if (filtroTipoConciliadoDivergente)
+                    return;
+
                 // Adiciona
                 listaConciliacao.Add(new
                 {
@@ -232,12 +239,14 @@ namespace api.Negocios.Card
                     bool filtroTipoConciliado = false;
                     bool filtroTipoPreConciliado = false;
                     bool filtroTipoNaoConciliado = false;
+                    bool filtroTipoConciliadoDivergente = false;
                     if (queryString.TryGetValue("" + (int)CAMPOS.TIPO, out outValue))
                     {
                         TIPO_CONCILIADO tipo = (TIPO_CONCILIADO)Convert.ToInt32(queryString["" + (int)CAMPOS.TIPO]);
                         if (tipo.Equals(TIPO_CONCILIADO.CONCILIADO)) filtroTipoConciliado = true;
                         else if (tipo.Equals(TIPO_CONCILIADO.PRE_CONCILIADO)) filtroTipoPreConciliado = true;
                         else if (tipo.Equals(TIPO_CONCILIADO.NAO_CONCILIADO)) filtroTipoNaoConciliado = true;
+                        else if (tipo.Equals(TIPO_CONCILIADO.CONCILIADO_DIVERGENTE)) filtroTipoConciliadoDivergente = true;
                     }
 
 
@@ -271,11 +280,15 @@ namespace api.Negocios.Card
                             dataBaseQueryRB.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
                         if (!dataBaseQueryRB.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
                             dataBaseQueryRB.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+                        if (!dataBaseQueryRB.join.ContainsKey("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY))
+                            dataBaseQueryRB.join.Add("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY, " ON " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira AND " +  GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdGrupo = " + GatewayEmpresa.SIGLA_QUERY + ".id_grupo");
 
                         dataBaseQueryRB.select = new string[] { GatewayRecebimento.SIGLA_QUERY + ".id as idRecebimento",
                                                           GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda",
                                                           GatewayRecebimento.SIGLA_QUERY + ".nsu",
                                                           GatewayRecebimento.SIGLA_QUERY + ".codResumoVenda",
+                                                          //GatewayTbBandeira.SIGLA_QUERY + ".cdSacado",
+                                                          GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdSacado",
                                                           GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira",
                                                           GatewayRecebimento.SIGLA_QUERY + ".dtaVenda",
                                                           GatewayRecebimento.SIGLA_QUERY + ".valorVendaBruta",
@@ -301,6 +314,7 @@ namespace api.Negocios.Card
 
                         dataBaseQueryVD.select = new string[] { GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda",
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU",
+                                                          GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado",
                                                           "dsBandeira = UPPER(" + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dsBandeira)",
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dtVenda",
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".vlVenda",
@@ -360,6 +374,7 @@ namespace api.Negocios.Card
                                                             {
                                                                 Tipo = TIPO_VENDA, // venda
                                                                 Id = Convert.ToInt32(r["idRecebimentoVenda"]),
+                                                                Sacado = Convert.ToString(r["cdSacado"].Equals(DBNull.Value) ? "" : r["cdSacado"]),
                                                                 Nsu = Convert.ToString(r["nrNSU"]),
                                                                 Bandeira = Convert.ToString(r["dsBandeira"].Equals(DBNull.Value) ? "" : r["dsBandeira"]),
                                                                 Data = (DateTime)r["dtVenda"],
@@ -426,6 +441,7 @@ namespace api.Negocios.Card
                                                                 {
                                                                     Tipo = TIPO_RECEBIMENTO, // recebimento
                                                                     Id = Convert.ToInt32(r["idRecebimento"]),
+                                                                    Sacado = Convert.ToString(r["cdSacado"].Equals(DBNull.Value) ? "" : r["cdSacado"]),
                                                                     Nsu = Convert.ToString(r["nsu"]),
                                                                     CodResumoVendas = r["codResumoVenda"].Equals(DBNull.Value) ? "" : Convert.ToString(r["codResumoVenda"]),
                                                                     Bandeira = Convert.ToString(r["dsBandeira"]).ToUpper(),
@@ -482,15 +498,14 @@ namespace api.Negocios.Card
                                 //    continue; // falha!
 
                                 // Adiciona
-                                adicionaElementosConciliadosNaLista(CollectionConciliacaoVendas, recebimento, venda, TIPO_CONCILIADO.CONCILIADO);
+                                adicionaElementosConciliadosNaLista(CollectionConciliacaoVendas, recebimento, venda, TIPO_CONCILIADO.CONCILIADO, filtroTipoConciliadoDivergente);
                             }
                             #endregion
                         }
 
                         // Só busca por possíveis conciliações se não tiver sido requisitado um filtro do tipo CONCILIADO
-                        if (!filtroTipoConciliado)
+                        if (!filtroTipoConciliado && !filtroTipoConciliadoDivergente)
                         {
-
                             // NÃO CONCILIADOS
                             // Adiciona na cláusula where IDRECEBIMENTOVENDA IS NULL
                             SimpleDataBaseQuery queryVdNaoConciliados = new SimpleDataBaseQuery(dataBaseQueryVD);
@@ -513,6 +528,7 @@ namespace api.Negocios.Card
                                                             {
                                                                 Tipo = TIPO_VENDA, // venda
                                                                 Id = Convert.ToInt32(r["idRecebimentoVenda"]),
+                                                                Sacado = Convert.ToString(r["cdSacado"].Equals(DBNull.Value) ? "" : r["cdSacado"]),
                                                                 Nsu = Convert.ToString(r["nrNSU"]),
                                                                 Bandeira = Convert.ToString(r["dsBandeira"].Equals(DBNull.Value) ? "" : r["dsBandeira"]),
                                                                 Data = (DateTime)r["dtVenda"],
@@ -631,6 +647,7 @@ namespace api.Negocios.Card
                                                                     {
                                                                         Tipo = TIPO_RECEBIMENTO, // recebimento
                                                                         Id = Convert.ToInt32(r["idRecebimento"]),
+                                                                        Sacado = Convert.ToString(r["cdSacado"].Equals(DBNull.Value) ? "" : r["cdSacado"]),
                                                                         Nsu = Convert.ToString(r["nsu"]),
                                                                         CodResumoVendas = r["codResumoVenda"].Equals(DBNull.Value) ? "" : Convert.ToString(r["codResumoVenda"]),
                                                                         Bandeira = Convert.ToString(r["dsBandeira"]).ToUpper(),
@@ -821,7 +838,7 @@ namespace api.Negocios.Card
 
                         // Consulta vendas num intervalo possível de data da venda com valores dentro da margem tolerável
                         // Ordena considerando menor intervalo de data, nsu começando com T e bandeira 
-                        string script = "SELECT R.id, R.numParcelaTotal, R.nsu, B.dsBandeira" +
+                        string script = "SELECT R.id, R.numParcelaTotal, R.nsu, B.dsBandeira, B.cdSacado" +
                                         ", R.dtaVenda, E.ds_fantasia, E.filial, A.nmAdquirente" +
                                         ", R.valorVendaBruta, diferencaValorVenda = ABS(R.valorVendaBruta - " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ")" +
                                         ", diferencaDtVenda = ABS(DATEDIFF(DAY, R.dtaVenda, '" + DataBaseQueries.GetDate(dtaVenda) + "'))" +
@@ -863,6 +880,7 @@ namespace api.Negocios.Card
                             recebimentos = resultado.Select(r => new
                                                 {
                                                     id = Convert.ToInt32(r["id"]),
+                                                    sacado = Convert.ToString(r["cdSacado"].Equals(DBNull.Value) ? "" : r["cdSacado"]),
                                                     qtParcelas = Convert.ToInt32(r["numParcelaTotal"]),
                                                     nrNSU = Convert.ToString(r["cnpj"]),
                                                     bandeira = Convert.ToString(r["dsBandeira"]).ToUpper(),
