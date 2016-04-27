@@ -5,10 +5,13 @@ using System.Web;
 
 namespace api.Models.Object
 {
-    public class CorrigeVendasErp
+    public class CorrigeVendaERP
     {
         public List<int> idsRecebimento;
-        public string data;
-        public string nrCNPJ;
+
+        public CorrigeVendaERP(List<int> idsRecebimento)
+        {
+            this.idsRecebimento = idsRecebimento;
+        }
     }
 }

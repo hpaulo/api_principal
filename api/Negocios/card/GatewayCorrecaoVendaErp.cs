@@ -29,7 +29,7 @@ namespace api.Negocios.Card
         /// </summary>
         public GatewayCorrecaoVendaErp()
         {
-           // _db.Configuration.ProxyCreationEnabled = false;
+            // _db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -61,11 +61,8 @@ namespace api.Negocios.Card
 
                 if (param.idsRecebimento == null || param.idsRecebimento.Count == 0)
                 {
-                    if(param.data == null)
+                    if (param.data == null)
                         throw new Exception("O período deve ser informado!");
-
-                    if (param.cdAdquirente <= 0)
-                        throw new Exception("Adquirente deve ser informada!");
 
                     // Obtém os recebíveis conciliados baseadas no filtro
                     DateTime dtIni, dtFim;
@@ -86,9 +83,9 @@ namespace api.Negocios.Card
                     param.idsRecebimento = _db.Database.SqlQuery<int>("SELECT R.id" +
                                                                     " FROM pos.Recebimento R (NOLOCK)" +
                                                                     " JOIN card.tbBandeira B (NOLOCK) ON B.cdBandeira = R.cdBandeira" +
-                                                                    " WHERE R.dtaVenda BETWEEN '" + DataBaseQueries.GetDate(dtIni) + "' AND '" + DataBaseQueries.GetDate(dtFim) + "'" + 
+                                                                    " WHERE R.dtaVenda BETWEEN '" + DataBaseQueries.GetDate(dtIni) + "' AND '" + DataBaseQueries.GetDate(dtFim) + " 23:59:00'" +
                                                                     (param.nrCNPJ != null ? " AND R.cnpj = '" + param.nrCNPJ + "'" : "") +
-                                                                    " AND B.cdAdquirente = " + param.cdAdquirente +
+                        //" AND B.cdAdquirente = " + param.cdAdquirente +
                                                                     " AND R.idRecebimentoVenda IS NOT NULL")
                                                        .ToList();
 
@@ -96,15 +93,15 @@ namespace api.Negocios.Card
                     {
                         throw new Exception("Não há recebíveis conciliados com vendas " + (dtIni.Equals(dtFim) ? " em " + dtIni.ToShortDateString() : " no período de " + dtIni.ToShortDateString() + " a " + dtFim.ToShortDateString()) +
                                             (param.nrCNPJ != null ? " para a empresa " + param.nrCNPJ : "") +
-                                            " e adquirente " + _db.Database.SqlQuery<string>("SELECT UPPER(A.nmAdquirente)" +
-                                                                                             " FROM card.tbAdquirente A (NOLOCK)" +
-                                                                                             " WHERE A.cdAdquirente = " + param.cdAdquirente)
-                                                                           .FirstOrDefault() +
+                            /*" e adquirente " + _db.Database.SqlQuery<string>("SELECT UPPER(A.nmAdquirente)" +
+                                                                             " FROM card.tbAdquirente A (NOLOCK)" +
+                                                                             " WHERE A.cdAdquirente = " + param.cdAdquirente)
+                                                           .FirstOrDefault() +*/
                                             ".");
                     }
 
                 }
-                
+
 
                 string idsRecebimento = string.Join(", ", param.idsRecebimento);
 
@@ -119,18 +116,18 @@ namespace api.Negocios.Card
 
                 if (gruposRecebimentos.Length < param.idsRecebimento.Count)
                     throw new Exception("Há " + (param.idsRecebimento.Count - gruposRecebimentos.Length) + ((param.idsRecebimento.Count - gruposRecebimentos.Length) == 1 ? " identificador de recebível inexistente!" : " identificadores de recebíveis inexistentes!"));
-                
+
 
                 // GRUPO EMPRESA => OBRIGATÓRIO!
                 Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
-                if (IdGrupo == 0) 
+                if (IdGrupo == 0)
                     throw new Exception("Um grupo deve ser selecionado como para a correção das vendas no ERP!");
 
                 if (gruposRecebimentos.Any(t => t != IdGrupo))
                     throw new Exception("Permissão negada! " + (gruposRecebimentos.Length == 1 ? "Recebível informado não se refere" : "Recebíveis informados não se referem") + " ao grupo associado ao usuário.");
 
-                grupo_empresa grupo_empresa = _db.Database.SqlQuery<grupo_empresa>("SELECT G.*" + 
-                                                                                   " FROM cliente.grupo_empresa G (NOLOCK)" + 
+                grupo_empresa grupo_empresa = _db.Database.SqlQuery<grupo_empresa>("SELECT G.*" +
+                                                                                   " FROM cliente.grupo_empresa G (NOLOCK)" +
                                                                                    " WHERE G.id_grupo = " + IdGrupo)
                                                           .FirstOrDefault();
 
@@ -138,32 +135,34 @@ namespace api.Negocios.Card
                     throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
 
 
-                #region AVALIA SE POSSUI ALGUM VENDA CONCILIADO COM MAIS DE UM RECEBÍVEL
-                List<int> idsRecebimentoVenda = _db.Database.SqlQuery<int>("SELECT R.idRecebimentoVenda" +
-                                                                           " FROM pos.Recebimento R (NOLOCK)" +
-                                                                           " WHERE R.idRecebimentoVenda IS NOT NULL" +
-                                                                           " AND R.idRecebimentoVenda IN" +
-                                                                           " (SELECT R.idRecebimentoVenda" +
-                                                                           "  FROM pos.Recebimento R (NOLOCK)" +
-                                                                           "  WHERE R.id IN (" + idsRecebimento + ")" +
-                                                                           " )" +
-                                                                           " GROUP BY R.idRecebimentoVenda" +
-                                                                           " HAVING COUNT(*) > 1")
-                                                             .ToList();
-                if (idsRecebimentoVenda.Count > 0)
+                SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString);
+                string script = String.Empty;
+                List<IDataRecord> resultado;
+                List<int> idsReceb = new List<int>();
+                try
                 {
-                    SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString);
+                    connection.Open();
+                }
+                catch
+                {
+                    throw new Exception("Não foi possível estabelecer conexão com a base de dados");
+                }
 
-                    try
-                    {
-                        connection.Open();
-                    }
-                    catch
-                    {
-                        throw new Exception("Não foi possível estabelecer conexão com a base de dados");
-                    }
-
-                    try
+                try
+                {
+                    #region AVALIA SE POSSUI ALGUM VENDA CONCILIADO COM MAIS DE UM RECEBÍVEL
+                    List<int> idsRecebimentoVenda = _db.Database.SqlQuery<int>("SELECT R.idRecebimentoVenda" +
+                                                                               " FROM pos.Recebimento R (NOLOCK)" +
+                                                                               " WHERE R.idRecebimentoVenda IS NOT NULL" +
+                                                                               " AND R.idRecebimentoVenda IN" +
+                                                                               " (SELECT R.idRecebimentoVenda" +
+                                                                               "  FROM pos.Recebimento R (NOLOCK)" +
+                                                                               "  WHERE R.id IN (" + idsRecebimento + ")" +
+                                                                               " )" +
+                                                                               " GROUP BY R.idRecebimentoVenda" +
+                                                                               " HAVING COUNT(*) > 1")
+                                                                 .ToList();
+                    if (idsRecebimentoVenda.Count > 0)
                     {
                         string error = "Há " + idsRecebimentoVenda.Count +
                                        (idsRecebimentoVenda.Count == 1 ? " venda que está conciliada" :
@@ -177,7 +176,7 @@ namespace api.Negocios.Card
                         foreach (int idRecebimentoVenda in idsRecebimentoVenda)
                         {
                             // Obtém as informações da base
-                            string script = "SELECT R.dtaVenda AS R_dtVenda" +
+                            script = "SELECT R.dtaVenda AS R_dtVenda" +
                                             ", R.nsu AS R_nsu" +
                                             ", R.valorVendaBruta AS R_vlVenda" +
                                             ", R_filial = UPPER(ER.ds_fantasia + CASE WHEN ER.filial IS NULL THEN '' ELSE ' ' + ER.filial END)" +
@@ -199,7 +198,7 @@ namespace api.Negocios.Card
                                             " JOIN cliente.empresa EV (NOLOCK) ON EV.nu_cnpj = V.nrCNPJ" +
                                             " JOIN card.tbAdquirente AAV (NOLOCK) ON AAV.cdAdquirente = V.cdAdquirente" +
                                             " WHERE R.idRecebimentoVenda = " + idRecebimentoVenda;
-                            List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
+                            resultado = DataBaseQueries.SqlQuery(script, connection);
 
                             error += Environment.NewLine + "==========VENDA=========";
                             if (resultado == null || resultado.Count == 0)
@@ -235,7 +234,7 @@ namespace api.Negocios.Card
                                     string R_bandeira = Convert.ToString(r["R_dsBandeira"]);
                                     string R_adquirente = Convert.ToString(r["R_nmAdquirente"]);
                                     int R_qtParcelas = Convert.ToInt32(r["R_qtParcelas"].Equals(DBNull.Value) ? 1 : r["R_qtParcelas"]);
-                                    
+
                                     error += Environment.NewLine + "=> RECEBÍVEL";
                                     error += Environment.NewLine + "   Adquirente: " + R_adquirente;
                                     error += Environment.NewLine + "   Bandeira: " + R_bandeira;
@@ -252,35 +251,116 @@ namespace api.Negocios.Card
 
                         throw new Exception(error);
                     }
-                    catch (Exception e)
-                    {
-                        if (e is DbEntityValidationException)
-                        {
-                            string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                            throw new Exception(erro.Equals("") ? "Falha ao listar recebimento parcela" : erro);
-                        }
-                        throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
-                    }
-                    finally
-                    {
-                        try
-                        {
-                            connection.Close();
-                        }
-                        catch { }
-                    }
+                    #endregion
 
-                    
+
+                    #region DESCOBRE AS VENDAS QUE PRECISAM SER CORRIGIDAS
+                    script = "SELECT R.id AS R_Id" +
+                            /*", R.dtaVenda AS R_dtVenda" +
+                            ", R.codResumoVenda AS R_codResumoVenda" +
+                            ", R.nsu AS R_nsu"+ 
+                            ", BS.cdSacado AS R_sacado" +
+                            ", R.valorVendaBruta AS R_vlVenda" +
+                            ", R_filial = UPPER(ER.ds_fantasia + CASE WHEN ER.filial IS NULL THEN '' ELSE ' ' + ER.filial END)" +
+                            ", B.dsBandeira AS R_dsBandeira" +
+                            ", AAR.nmAdquirente AS R_nmAdquirente" +
+                            ", R.numParcelaTotal AS R_qtParcelas" +
+                            ", V.idRecebimentoVenda AS V_id" +
+                            ", V.dtVenda AS V_dtVenda" +
+                            ", V.nrNSU AS V_nsu" +
+                            ", V.cdSacado AS V_sacado" +
+                            ", V.vlVenda AS V_vlVenda" +
+                            ", V_filial = UPPER(EV.ds_fantasia + CASE WHEN EV.filial IS NULL THEN '' ELSE ' ' + EV.filial END)" +
+                            ", V.dsBandeira AS V_dsBandeira" +
+                            ", AAV.nmAdquirente AS V_nmAdquirente" +
+                            ", V.qtParcelas AS V_qtParcelas" +*/
+                            " FROM pos.Recebimento R (NOLOCK)" +
+                            " JOIN cliente.empresa ER (NOLOCK) ON ER.nu_cnpj = R.cnpj" +
+                            //" JOIN card.tbBandeira B (NOLOCK) ON B.cdBandeira = R.cdBandeira" +
+                            //" JOIN card.tbAdquirente AAR (NOLOCK) ON AAR.cdAdquirente = B.cdAdquirente" +
+                            " JOIN card.tbRecebimentoVenda V (NOLOCK) ON V.idRecebimentoVenda = R.idRecebimentoVenda" +
+                            //" JOIN cliente.empresa EV (NOLOCK) ON EV.nu_cnpj = V.nrCNPJ" +
+                            //" JOIN card.tbAdquirente AAV (NOLOCK) ON AAV.cdAdquirente = V.cdAdquirente" +
+                            " LEFT JOIN card.tbBandeiraSacado BS on	BS.cdGrupo = ER.id_grupo and BS.cdBandeira = R.cdBandeira" +
+                            " WHERE R.id IN (" + string.Join(", ", param.idsRecebimento) + ")" +
+                            " AND (" +
+                            " CONVERT(VARCHAR(10), R.dtaVenda, 120) <> V.dtVenda" +
+		                    " OR V.cdSacado <> BS.cdSacado" +
+		                    " OR V.qtParcelas <> R.numParcelaTotal" +
+		                    " OR V.vlVenda <> R.valorVendaBruta" +
+		                    " OR SUBSTRING('000000000000' + CONVERT(VARCHAR(12), R.nsu), LEN(R.nsu) + 1, 12) <> SUBSTRING('000000000000' + CONVERT(VARCHAR(12), V.nrNSU), LEN(V.nrNSU) + 1, 12)" +
+                            ")";
+
+                    resultado = DataBaseQueries.SqlQuery(script, connection);
+                    if (resultado != null && resultado.Count > 0)
+                    {
+                        idsReceb = resultado.Select(r => Convert.ToInt32(r["R_Id"])).ToList();
+                        //for (int k = 0; k < resultado.Count; k++)
+                        //{
+                        //    var r = resultado[k];
+
+                        //    int V_id = Convert.ToInt32(r["V_id"]);
+                        //    DateTime V_dtVenda = (DateTime)r["V_dtVenda"];
+                        //    string V_nsu = Convert.ToString(r["V_nsu"]);
+                        //    string V_sacado = Convert.ToString(r["V_sacado"].Equals(DBNull.Value) ? "" : r["V_sacado"]);
+                        //    decimal V_vlVenda = Convert.ToDecimal(r["V_vlVenda"]);
+                        //    string V_filial = Convert.ToString(r["V_filial"]);
+                        //    string V_bandeira = Convert.ToString(r["V_dsBandeira"].Equals(DBNull.Value) ? "" : r["V_dsBandeira"]);
+                        //    string V_adquirente = Convert.ToString(r["V_nmAdquirente"]);
+                        //    byte V_qtParcelas = Convert.ToByte(r["V_qtParcelas"].Equals(DBNull.Value) ? 0 : r["V_qtParcelas"]);
+
+                        //    ConciliacaoVendas venda = new ConciliacaoVendas(GatewayConciliacaoVendas.TIPO_VENDA, V_id, V_nsu, null, V_dtVenda,
+                        //                                                    V_filial, V_adquirente, V_bandeira, V_sacado, V_vlVenda, V_qtParcelas);
+
+                        //    int R_id = Convert.ToInt32(r["R_id"]);
+                        //    DateTime R_dtVenda = (DateTime)r["R_dtVenda"];
+                        //    string R_nsu = Convert.ToString(r["R_nsu"]);
+                        //    string R_sacado = Convert.ToString(r["R_sacado"].Equals(DBNull.Value) ? "" : r["R_sacado"]);
+                        //    string R_codResumoVenda = Convert.ToString(r["R_codResumoVenda"]);
+                        //    decimal R_vlVenda = Convert.ToDecimal(r["R_vlVenda"]);
+                        //    string R_filial = Convert.ToString(r["R_filial"]);
+                        //    string R_bandeira = Convert.ToString(r["R_dsBandeira"].Equals(DBNull.Value) ? "" : r["R_dsBandeira"]);
+                        //    string R_adquirente = Convert.ToString(r["R_nmAdquirente"]);
+                        //    int R_qtParcelas = Convert.ToInt32(r["R_qtParcelas"].Equals(DBNull.Value) ? 0 : r["R_qtParcelas"]);
+
+                        //    ConciliacaoVendas recebimento = new ConciliacaoVendas(GatewayConciliacaoVendas.TIPO_RECEBIMENTO, R_id, R_nsu, R_codResumoVenda, R_dtVenda,
+                        //                                                          R_filial, R_adquirente, R_bandeira, R_sacado, R_vlVenda, R_qtParcelas);
+
+                        //    if (ConciliacaoVendas.possuiDivergenciasNaVenda(recebimento, venda))
+                        //        idsReceb.Add(R_id);
+                        //}
+                    }
+                    #endregion
                 }
-                #endregion
+                catch (Exception e)
+                {
+                    if (e is DbEntityValidationException)
+                    {
+                        string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
+                        throw new Exception(erro.Equals("") ? "Falha ao listar realizar a correção das vendas" : erro);
+                    }
+                    throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
+                }
+                finally
+                {
+                    try
+                    {
+                        connection.Close();
+                    }
+                    catch { }
+                }
+
+                if (idsReceb.Count == 0)
+                    throw new Exception("Não há nenhuma venda para ser corrigida!");
 
 
                 string url = "http://" + grupo_empresa.dsAPI + DOMINIO;
                 //string url = "http://localhost:60049/";
-                string complemento = "vendas/corrigevendaserp/" + token;
+                string complemento = "vendas/corrigevendas/" + token;
 
+                CorrigeVendaERP o = new CorrigeVendaERP(idsReceb);
 
-                HttpContent json = new StringContent(JsonConvert.SerializeObject(param.idsRecebimento), Encoding.UTF8, "application/json");
+                HttpContent json = new StringContent(JsonConvert.SerializeObject(o), Encoding.UTF8, "application/json");
                 HttpClient client = new System.Net.Http.HttpClient();
                 client.BaseAddress = new Uri(url);
                 client.Timeout = TimeSpan.FromMinutes(5); // 5 minutos de timeout

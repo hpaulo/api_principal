@@ -23,6 +23,7 @@ namespace api.Models
             this.tbContaCorrentes = new List<tbContaCorrente>();
             this.tbLoginAdquirenteEmpresas = new List<tbLoginAdquirenteEmpresa>();
             this.tbRecebimentoTEFs = new List<tbRecebimentoTEF>();
+            this.tbBandeiraSacados = new List<tbBandeiraSacado>();
         }
 
         public int id_grupo { get; set; }
@@ -53,6 +54,7 @@ namespace api.Models
         public virtual ICollection<tbContaCorrente> tbContaCorrentes { get; set; }
         public virtual ICollection<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
         public virtual ICollection<tbRecebimentoTEF> tbRecebimentoTEFs { get; set; }
+        public virtual ICollection<tbBandeiraSacado> tbBandeiraSacados { get; set; }
         
     }
 }

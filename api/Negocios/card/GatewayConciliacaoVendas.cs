@@ -46,14 +46,16 @@ namespace api.Negocios.Card
             // RELACIONAMENTOS
             CDADQUIRENTE = 200,
 
-            IDRECEBIMENTO = 300
+            //IDRECEBIMENTO = 300
+            IDRECEBIMENTOVENDA = 300
         };
 
         public enum TIPO_CONCILIADO
         {
             CONCILIADO = 1,
             PRE_CONCILIADO = 2,
-            NAO_CONCILIADO = 3
+            NAO_CONCILIADO = 3,
+            CONCILIADO_DIVERGENTE = 4,
         };
 
         public static string TIPO_VENDA = "V";
@@ -115,10 +117,17 @@ namespace api.Negocios.Card
         private static void adicionaElementosConciliadosNaLista(List<dynamic> listaConciliacao,
                                                      ConciliacaoVendas recebimento,
                                                      ConciliacaoVendas venda,
-                                                     TIPO_CONCILIADO tipo)
+                                                     TIPO_CONCILIADO tipo, bool filtroTipoConciliadoDivergente = false)
         {
             if (recebimento != null && venda != null)
             {
+                if (tipo.Equals(TIPO_CONCILIADO.CONCILIADO) && ConciliacaoVendas.possuiDivergenciasNaVenda(recebimento, venda))
+                {
+                    tipo = TIPO_CONCILIADO.CONCILIADO_DIVERGENTE;
+                }
+                else if (filtroTipoConciliadoDivergente)
+                    return;
+
                 // Adiciona
                 listaConciliacao.Add(new
                 {
@@ -188,8 +197,8 @@ namespace api.Negocios.Card
                     if (queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
                     {
                         data = queryString["" + (int)CAMPOS.DATA];
-                        queryStringRecebimento.Add("" + (int)GatewayRecebimento.CAMPOS.DTAVENDA, data);
-                        //queryStringTbRecebimentoVenda.Add("" + (int)GatewayTbRecebimentoVenda.CAMPOS.DTTITULO, data);
+                        //queryStringRecebimento.Add("" + (int)GatewayRecebimento.CAMPOS.DTAVENDA, data);
+                        queryStringTbRecebimentoVenda.Add("" + (int)GatewayTbRecebimentoVenda.CAMPOS.DTVENDA, data);
                     }
                     // GRUPO EMPRESA => OBRIGATÓRIO!
                     Int32 IdGrupo = Permissoes.GetIdGrupo(token);
@@ -207,8 +216,8 @@ namespace api.Negocios.Card
                         CnpjEmpresa = queryString["" + (int)CAMPOS.NU_CNPJ];
                     if (!CnpjEmpresa.Equals(""))
                     {
-                        queryStringRecebimento.Add("" + (int)GatewayRecebimento.CAMPOS.CNPJ, CnpjEmpresa);
-                        //queryStringTbRecebimentoVenda.Add("" + (int)GatewayTbRecebimentoVenda.CAMPOS.NRCNPJ, CnpjEmpresa);
+                        //queryStringRecebimento.Add("" + (int)GatewayRecebimento.CAMPOS.CNPJ, CnpjEmpresa);
+                        queryStringTbRecebimentoVenda.Add("" + (int)GatewayTbRecebimentoVenda.CAMPOS.NRCNPJ, CnpjEmpresa);
                     }
                     // ADQUIRENTE
                     string cdAdquirente = String.Empty;
@@ -222,20 +231,22 @@ namespace api.Negocios.Card
                     // NSU
                     if (queryString.TryGetValue("" + (int)CAMPOS.NSU, out outValue))
                     {
-                        queryStringRecebimento.Add("" + (int)GatewayRecebimento.CAMPOS.NSU, queryString["" + (int)CAMPOS.NSU]);
-                        //queryStringTbRecebimentoVenda.Add("" + (int)GatewayTbRecebimentoVenda.CAMPOS.NRNSU, nsu);
+                        //queryStringRecebimento.Add("" + (int)GatewayRecebimento.CAMPOS.NSU, queryString["" + (int)CAMPOS.NSU]);
+                        queryStringTbRecebimentoVenda.Add("" + (int)GatewayTbRecebimentoVenda.CAMPOS.NRNSU, queryString["" + (int)CAMPOS.NSU]);
                     }
 
                     // FILTRO DE TIPO ?
                     bool filtroTipoConciliado = false;
                     bool filtroTipoPreConciliado = false;
                     bool filtroTipoNaoConciliado = false;
+                    bool filtroTipoConciliadoDivergente = false;
                     if (queryString.TryGetValue("" + (int)CAMPOS.TIPO, out outValue))
                     {
                         TIPO_CONCILIADO tipo = (TIPO_CONCILIADO)Convert.ToInt32(queryString["" + (int)CAMPOS.TIPO]);
                         if (tipo.Equals(TIPO_CONCILIADO.CONCILIADO)) filtroTipoConciliado = true;
                         else if (tipo.Equals(TIPO_CONCILIADO.PRE_CONCILIADO)) filtroTipoPreConciliado = true;
                         else if (tipo.Equals(TIPO_CONCILIADO.NAO_CONCILIADO)) filtroTipoNaoConciliado = true;
+                        else if (tipo.Equals(TIPO_CONCILIADO.CONCILIADO_DIVERGENTE)) filtroTipoConciliadoDivergente = true;
                     }
 
 
@@ -269,11 +280,15 @@ namespace api.Negocios.Card
                             dataBaseQueryRB.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
                         if (!dataBaseQueryRB.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
                             dataBaseQueryRB.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+                        if (!dataBaseQueryRB.join.ContainsKey("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY))
+                            dataBaseQueryRB.join.Add("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY, " ON " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira AND " +  GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdGrupo = " + GatewayEmpresa.SIGLA_QUERY + ".id_grupo");
 
                         dataBaseQueryRB.select = new string[] { GatewayRecebimento.SIGLA_QUERY + ".id as idRecebimento",
                                                           GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda",
                                                           GatewayRecebimento.SIGLA_QUERY + ".nsu",
                                                           GatewayRecebimento.SIGLA_QUERY + ".codResumoVenda",
+                                                          //GatewayTbBandeira.SIGLA_QUERY + ".cdSacado",
+                                                          GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdSacado",
                                                           GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira",
                                                           GatewayRecebimento.SIGLA_QUERY + ".dtaVenda",
                                                           GatewayRecebimento.SIGLA_QUERY + ".valorVendaBruta",
@@ -299,6 +314,7 @@ namespace api.Negocios.Card
 
                         dataBaseQueryVD.select = new string[] { GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda",
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU",
+                                                          GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado",
                                                           "dsBandeira = UPPER(" + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dsBandeira)",
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dtVenda",
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".vlVenda",
@@ -323,33 +339,53 @@ namespace api.Negocios.Card
                         {
                             #region OBTÉM AS INFORMAÇÕES DE DADOS JÁ CONCILIADOS PREVIAMENTE
 
-                            // Adiciona na cláusula where IDEXTRATO IS NOT NULL
-                            SimpleDataBaseQuery queryRbConciliados = new SimpleDataBaseQuery(dataBaseQueryRB);
-                            queryRbConciliados.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda IS NOT NULL");
+                            // Adiciona na cláusula where IDRECEBIMENTOVENDA IS NOT NULL
+                            SimpleDataBaseQuery queryVdConciliados = new SimpleDataBaseQuery(dataBaseQueryVD);
+                            if (!queryVdConciliados.join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
+                                queryVdConciliados.join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda = " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda");
 
-                            List<IDataRecord> resultado = DataBaseQueries.SqlQuery(queryRbConciliados.Script(), connection);
+                            //SimpleDataBaseQuery queryRbConciliados = new SimpleDataBaseQuery(dataBaseQueryRB);
+                            //queryRbConciliados.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda IS NOT NULL");
 
-                            List<dynamic> recebimentosConciliados = new List<dynamic>();
+                            //List<IDataRecord> resultado = DataBaseQueries.SqlQuery(queryRbConciliados.Script(), connection);
+
+                            List<IDataRecord> resultado = DataBaseQueries.SqlQuery(queryVdConciliados.Script(), connection);
+
+                            //List<dynamic> recebimentosConciliados = new List<dynamic>();
+                            List<ConciliacaoVendas> vendasConciliadas = new List<ConciliacaoVendas>();
 
                             if (resultado != null && resultado.Count > 0)
                             {
-                                recebimentosConciliados = resultado.Select(r => new
+                                //recebimentosConciliados = resultado.Select(r => new
+                                //                            {
+                                //                                Tipo = TIPO_RECEBIMENTO, // recebimento
+                                //                                Id = Convert.ToInt32(r["idRecebimento"]),
+                                //                                IdRecebimentoVenda = Convert.ToInt32(r["idRecebimentoVenda"]),
+                                //                                Nsu = Convert.ToString(r["nsu"]),
+                                //                                CodResumoVendas = r["codResumoVenda"].Equals(DBNull.Value) ? "" : Convert.ToString(r["codResumoVenda"]),
+                                //                                Bandeira = Convert.ToString(r["dsBandeira"]).ToUpper(),
+                                //                                Data = (DateTime)r["dtaVenda"],
+                                //                                Filial = Convert.ToString(r["ds_fantasia"]) + (r["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(r["filial"])),
+                                //                                Valor = Convert.ToDecimal(r["valorVendaBruta"]),
+                                //                                Adquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
+                                //                                Parcelas = Convert.ToInt32(r["numParcelaTotal"].Equals(DBNull.Value) ? 1 : r["numParcelaTotal"]),
+                                //                            }).ToList<dynamic>();
+                                vendasConciliadas = resultado.Select(r => new ConciliacaoVendas
                                                             {
-                                                                Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                Id = Convert.ToInt32(r["idRecebimento"]),
-                                                                IdRecebimentoVenda = Convert.ToInt32(r["idRecebimentoVenda"]),
-                                                                Nsu = Convert.ToString(r["nsu"]),
-                                                                CodResumoVendas = r["codResumoVenda"].Equals(DBNull.Value) ? "" : Convert.ToString(r["codResumoVenda"]),
-                                                                Bandeira = Convert.ToString(r["dsBandeira"]).ToUpper(),
-                                                                Data = (DateTime)r["dtaVenda"],
+                                                                Tipo = TIPO_VENDA, // venda
+                                                                Id = Convert.ToInt32(r["idRecebimentoVenda"]),
+                                                                Sacado = Convert.ToString(r["cdSacado"].Equals(DBNull.Value) ? "" : r["cdSacado"]),
+                                                                Nsu = Convert.ToString(r["nrNSU"]),
+                                                                Bandeira = Convert.ToString(r["dsBandeira"].Equals(DBNull.Value) ? "" : r["dsBandeira"]),
+                                                                Data = (DateTime)r["dtVenda"],
                                                                 Filial = Convert.ToString(r["ds_fantasia"]) + (r["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(r["filial"])),
-                                                                Valor = Convert.ToDecimal(r["valorVendaBruta"]),
+                                                                Valor = Convert.ToDecimal(r["vlVenda"]),
                                                                 Adquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
-                                                                Parcelas = Convert.ToInt32(r["numParcelaTotal"].Equals(DBNull.Value) ? 1 : r["numParcelaTotal"]),
-                                                            }).ToList<dynamic>();
+                                                                Parcelas = Convert.ToInt32(r["qtParcelas"]),
+                                                            }).ToList<ConciliacaoVendas>();
                             }
 
-                            totalConciliados = recebimentosConciliados.Count;
+                            totalConciliados = vendasConciliadas.Count;
 
                             // Total Conciliados
                             retorno.TotalDeRegistros = totalConciliados;
@@ -358,101 +394,165 @@ namespace api.Negocios.Card
                             if (totalConciliados > 0 && pageNumber > 0 && pageSize > 0 && (skipRows >= totalConciliados || totalConciliados > pageSize))
                             {
                                 if (skipRows >= totalConciliados)
-                                    recebimentosConciliados = new List<dynamic>();//recebimentosConciliados.Skip(totalConciliados).Take(0); // pega nenhum
+                                    vendasConciliadas = new List<ConciliacaoVendas>();//recebimentosConciliados.Skip(totalConciliados).Take(0); // pega nenhum
                                 else
                                 {
                                     int take = skipRows + pageSize >= totalConciliados ? totalConciliados - skipRows : pageSize;
-                                    recebimentosConciliados = recebimentosConciliados.Skip(skipRows).Take(take).ToList<dynamic>();
+                                    vendasConciliadas = vendasConciliadas.Skip(skipRows).Take(take).ToList();
                                 }
                             }
                             else if (filtroTipoConciliado)
                                 pageNumber = 1;
 
+                            // Cláusula where
+                            //string whereDtVenda = String.Empty;
+                            //if (data.Contains("|")) // BETWEEN
+                            //{
+                            //    string[] busca = data.Split('|');
+                            //    DateTime dtIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            //    DateTime dtFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            //    whereDtVenda = GatewayRecebimento.SIGLA_QUERY + ".dtaVenda BETWEEN '" + DataBaseQueries.GetDate(dtIni) + "' AND '" + DataBaseQueries.GetDate(dtFim) + " 23:59:00'";
+                            //}
+                            //else
+                            //{
+                            //    DateTime dt = DateTime.ParseExact(data + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            //    whereDtVenda = GatewayRecebimento.SIGLA_QUERY + ".dtaVenda = '" + DataBaseQueries.GetDate(dt) + "'";
+                            //}
+
 
                             // Adiciona como conciliados
-                            for (int k = 0; k < recebimentosConciliados.Count && (pageSize == 0 || CollectionConciliacaoVendas.Count < pageSize); k++)
+                            for (int k = 0; k < vendasConciliadas.Count && (pageSize == 0 || CollectionConciliacaoVendas.Count < pageSize); k++)
                             {
-                                var receb = recebimentosConciliados[k];
+                                ConciliacaoVendas venda = vendasConciliadas[k];
                                 // Recebimento
-                                Int32 idRecebimentoVenda = Convert.ToInt32(receb.IdRecebimentoVenda);
+                                Int32 idRecebimentoVenda = venda.Id;
 
-                                ConciliacaoVendas recebimento = new ConciliacaoVendas
-                                                                {
-                                                                    Tipo = TIPO_RECEBIMENTO, // recebimento
-                                                                    Id = receb.Id,
-                                                                    Nsu = receb.Nsu,
-                                                                    CodResumoVendas = receb.CodResumoVendas,
-                                                                    Bandeira = receb.Bandeira,
-                                                                    Data = receb.Data,
-                                                                    Filial = receb.Filial,
-                                                                    Valor = receb.Valor,
-                                                                    Adquirente = receb.Adquirente,
-                                                                    Parcelas = receb.Parcelas,
-                                                                };
+                                SimpleDataBaseQuery queryRbConciliado = new SimpleDataBaseQuery(dataBaseQueryRB);
+                                queryRbConciliado.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda = " + idRecebimentoVenda);
+                                //queryRbConciliado.AddWhereClause(whereDtVenda);
 
-                                SimpleDataBaseQuery queryVDConciliado = new SimpleDataBaseQuery(dataBaseQueryVD);
-                                queryVDConciliado.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda = " + idRecebimentoVenda);
+                                resultado = DataBaseQueries.SqlQuery(queryRbConciliado.Script(), connection);
 
-                                resultado = DataBaseQueries.SqlQuery(queryVDConciliado.Script(), connection);
-
-                                ConciliacaoVendas venda = null;
+                                ConciliacaoVendas recebimento = null;
 
                                 if (resultado != null && resultado.Count > 0)
                                 {
-                                    venda = resultado.Select(r => new ConciliacaoVendas
+                                    recebimento = resultado.Select(r => new ConciliacaoVendas
                                                                 {
-                                                                    Tipo = TIPO_VENDA,
-                                                                    Id = Convert.ToInt32(r["idRecebimentoVenda"]),
-                                                                    Nsu = Convert.ToString(r["nrNSU"]),
-                                                                    Bandeira = Convert.ToString(r["dsBandeira"].Equals(DBNull.Value) ? "" : r["dsBandeira"]),
-                                                                    Data = (DateTime)r["dtVenda"],
+                                                                    Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                    Id = Convert.ToInt32(r["idRecebimento"]),
+                                                                    Sacado = Convert.ToString(r["cdSacado"].Equals(DBNull.Value) ? "" : r["cdSacado"]),
+                                                                    Nsu = Convert.ToString(r["nsu"]),
+                                                                    CodResumoVendas = r["codResumoVenda"].Equals(DBNull.Value) ? "" : Convert.ToString(r["codResumoVenda"]),
+                                                                    Bandeira = Convert.ToString(r["dsBandeira"]).ToUpper(),
+                                                                    Data = (DateTime)r["dtaVenda"],
                                                                     Filial = Convert.ToString(r["ds_fantasia"]) + (r["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(r["filial"])),
-                                                                    Valor = Convert.ToDecimal(r["vlVenda"]),
+                                                                    Valor = Convert.ToDecimal(r["valorVendaBruta"]),
                                                                     Adquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
-                                                                    Parcelas = Convert.ToInt32(r["qtParcelas"]),
+                                                                    Parcelas = Convert.ToInt32(r["numParcelaTotal"].Equals(DBNull.Value) ? 1 : r["numParcelaTotal"]),
                                                                 }).FirstOrDefault();
                                 }
 
-                                if (venda == null)
+                                if (recebimento == null)
                                     continue; // falha!
 
+
+                                //ConciliacaoVendas recebimento = new ConciliacaoVendas
+                                //                                {
+                                //                                    Tipo = TIPO_RECEBIMENTO, // recebimento
+                                //                                    Id = receb.Id,
+                                //                                    Nsu = receb.Nsu,
+                                //                                    CodResumoVendas = receb.CodResumoVendas,
+                                //                                    Bandeira = receb.Bandeira,
+                                //                                    Data = receb.Data,
+                                //                                    Filial = receb.Filial,
+                                //                                    Valor = receb.Valor,
+                                //                                    Adquirente = receb.Adquirente,
+                                //                                    Parcelas = receb.Parcelas,
+                                //                                };
+
+                                //SimpleDataBaseQuery queryVDConciliado = new SimpleDataBaseQuery(dataBaseQueryVD);
+                                //queryVDConciliado.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda = " + idRecebimentoVenda);
+
+                                //resultado = DataBaseQueries.SqlQuery(queryVDConciliado.Script(), connection);
+
+                                //ConciliacaoVendas venda = null;
+
+                                //if (resultado != null && resultado.Count > 0)
+                                //{
+                                //    venda = resultado.Select(r => new ConciliacaoVendas
+                                //                                {
+                                //                                    Tipo = TIPO_VENDA,
+                                //                                    Id = Convert.ToInt32(r["idRecebimentoVenda"]),
+                                //                                    Nsu = Convert.ToString(r["nrNSU"]),
+                                //                                    Bandeira = Convert.ToString(r["dsBandeira"].Equals(DBNull.Value) ? "" : r["dsBandeira"]),
+                                //                                    Data = (DateTime)r["dtVenda"],
+                                //                                    Filial = Convert.ToString(r["ds_fantasia"]) + (r["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(r["filial"])),
+                                //                                    Valor = Convert.ToDecimal(r["vlVenda"]),
+                                //                                    Adquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
+                                //                                    Parcelas = Convert.ToInt32(r["qtParcelas"]),
+                                //                                }).FirstOrDefault();
+                                //}
+
+                                //if (venda == null)
+                                //    continue; // falha!
+
                                 // Adiciona
-                                adicionaElementosConciliadosNaLista(CollectionConciliacaoVendas, recebimento, venda, TIPO_CONCILIADO.CONCILIADO);
+                                adicionaElementosConciliadosNaLista(CollectionConciliacaoVendas, recebimento, venda, TIPO_CONCILIADO.CONCILIADO, filtroTipoConciliadoDivergente);
                             }
                             #endregion
                         }
 
                         // Só busca por possíveis conciliações se não tiver sido requisitado um filtro do tipo CONCILIADO
-                        if (!filtroTipoConciliado)
+                        if (!filtroTipoConciliado && !filtroTipoConciliadoDivergente)
                         {
-
                             // NÃO CONCILIADOS
-                            // Adiciona na cláusula where IDEXTRATO IS NOT NULL
-                            SimpleDataBaseQuery queryRbNaoConciliados = new SimpleDataBaseQuery(dataBaseQueryRB);
-                            queryRbNaoConciliados.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda IS NULL");
+                            // Adiciona na cláusula where IDRECEBIMENTOVENDA IS NULL
+                            SimpleDataBaseQuery queryVdNaoConciliados = new SimpleDataBaseQuery(dataBaseQueryVD);
+                            if (!queryVdNaoConciliados.join.ContainsKey("LEFT JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
+                                queryVdNaoConciliados.join.Add("LEFT JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda = " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda");
+                            queryVdNaoConciliados.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda IS NULL");
 
-                            List<IDataRecord> resultado = DataBaseQueries.SqlQuery(queryRbNaoConciliados.Script(), connection);
+                            //SimpleDataBaseQuery queryRbNaoConciliados = new SimpleDataBaseQuery(dataBaseQueryRB);
+                            //queryRbNaoConciliados.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda IS NULL");
 
-                            List<ConciliacaoVendas> recebimentos = new List<ConciliacaoVendas>();
+                            //List<IDataRecord> resultado = DataBaseQueries.SqlQuery(queryRbNaoConciliados.Script(), connection);
+                            List<IDataRecord> resultado = DataBaseQueries.SqlQuery(queryVdNaoConciliados.Script(), connection);
+
+                            List<ConciliacaoVendas> vendas = new List<ConciliacaoVendas>();
+                            //List<ConciliacaoVendas> recebimentos = new List<ConciliacaoVendas>();
 
                             if (resultado != null && resultado.Count > 0)
                             {
-                                recebimentos = resultado.Select(r => new ConciliacaoVendas
-                                {
-                                    Tipo = TIPO_RECEBIMENTO, // recebimento
-                                    Id = Convert.ToInt32(r["idRecebimento"]),
-                                    Nsu = Convert.ToString(r["nsu"]),
-                                    CodResumoVendas = r["codResumoVenda"].Equals(DBNull.Value) ? "" : Convert.ToString(r["codResumoVenda"]),
-                                    Bandeira = Convert.ToString(r["dsBandeira"]).ToUpper(),
-                                    Data = (DateTime)r["dtaVenda"],
-                                    Filial = Convert.ToString(r["ds_fantasia"]) + (r["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(r["filial"])),
-                                    Valor = Convert.ToDecimal(r["valorVendaBruta"]),
-                                    Adquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
-                                    Parcelas = Convert.ToInt32(r["numParcelaTotal"].Equals(DBNull.Value) ? 1 : r["numParcelaTotal"]),
-                                }).ToList<ConciliacaoVendas>();
+                                vendas = resultado.Select(r => new ConciliacaoVendas
+                                                            {
+                                                                Tipo = TIPO_VENDA, // venda
+                                                                Id = Convert.ToInt32(r["idRecebimentoVenda"]),
+                                                                Sacado = Convert.ToString(r["cdSacado"].Equals(DBNull.Value) ? "" : r["cdSacado"]),
+                                                                Nsu = Convert.ToString(r["nrNSU"]),
+                                                                Bandeira = Convert.ToString(r["dsBandeira"].Equals(DBNull.Value) ? "" : r["dsBandeira"]),
+                                                                Data = (DateTime)r["dtVenda"],
+                                                                Filial = Convert.ToString(r["ds_fantasia"]) + (r["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(r["filial"])),
+                                                                Valor = Convert.ToDecimal(r["vlVenda"]),
+                                                                Adquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
+                                                                Parcelas = Convert.ToInt32(r["qtParcelas"]),
+                                                            }).ToList<ConciliacaoVendas>();
+                                //recebimentos = resultado.Select(r => new ConciliacaoVendas
+                                //{
+                                //    Tipo = TIPO_RECEBIMENTO, // recebimento
+                                //    Id = Convert.ToInt32(r["idRecebimento"]),
+                                //    Nsu = Convert.ToString(r["nsu"]),
+                                //    CodResumoVendas = r["codResumoVenda"].Equals(DBNull.Value) ? "" : Convert.ToString(r["codResumoVenda"]),
+                                //    Bandeira = Convert.ToString(r["dsBandeira"]).ToUpper(),
+                                //    Data = (DateTime)r["dtaVenda"],
+                                //    Filial = Convert.ToString(r["ds_fantasia"]) + (r["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(r["filial"])),
+                                //    Valor = Convert.ToDecimal(r["valorVendaBruta"]),
+                                //    Adquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
+                                //    Parcelas = Convert.ToInt32(r["numParcelaTotal"].Equals(DBNull.Value) ? 1 : r["numParcelaTotal"]),
+                                //}).ToList<ConciliacaoVendas>();
                             }
 
-                            int totalNaoConciliados = recebimentos.Count;
+                            int totalNaoConciliados = vendas.Count;
 
                             retorno.TotalDeRegistros += totalNaoConciliados;
 
@@ -460,7 +560,7 @@ namespace api.Negocios.Card
                             {
                                 #region OBTÉM AS INFORMAÇÕES DE DADOS NÃO-CONCILIADOS E BUSCA PRÉ-CONCILIAÇÕES
 
-                                #region OBTÉM SOMENTE OS RECEBIMENTOS NÃO-CONCILIADOS
+                                #region OBTÉM SOMENTE AS VENDAS NÃO-CONCILIADAS
 
                                 int skipRowsNaoConciliados = 0;
 
@@ -489,7 +589,7 @@ namespace api.Negocios.Card
 
                                     // PAGINAÇÃO
                                     if (pageNumber > 0 && pageSize > 0)
-                                        recebimentos = recebimentos.Skip(skipRowsNaoConciliados).Take(take).ToList<ConciliacaoVendas>();
+                                        vendas = vendas.Skip(skipRowsNaoConciliados).Take(take).ToList<ConciliacaoVendas>();
                                     else if (!filtroTipoNaoConciliado)
                                         pageNumber = 1;
                                 }
@@ -498,142 +598,116 @@ namespace api.Negocios.Card
                                 #endregion
 
                                 // Somente os não conciliados
-                                if (!dataBaseQueryVD.join.ContainsKey("LEFT JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
-                                    dataBaseQueryVD.join.Add("LEFT JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda = " + GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda");
-                                dataBaseQueryVD.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda IS NULL");
+                                dataBaseQueryRB.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda IS NULL");
+                                //if (!dataBaseQueryVD.join.ContainsKey("LEFT JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
+                                //    dataBaseQueryVD.join.Add("LEFT JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda = " + GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda");
+                                //dataBaseQueryVD.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda IS NULL");
+
 
                                 // Vendas                            
                                 if (!preConciliaComGrupo && !CnpjEmpresa.Equals(""))
-                                    dataBaseQueryVD.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrCNPJ = '" + CnpjEmpresa + "'");
+                                    dataBaseQueryRB.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".cnpj = '" + CnpjEmpresa + "'");
+                                    //dataBaseQueryVD.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrCNPJ = '" + CnpjEmpresa + "'");
                                 //queryTbRecebimentoVenda = queryTbRecebimentoVenda.Where(e => e.nrCNPJ.Equals(CnpjEmpresa));
 
 
                                 List<int> idsPreConciliados = new List<int>();
-                                /*string filialConsulta = String.Empty;
-                                if(!CnpjEmpresa.Equals("")){ 
-                                    filialConsulta = _db.empresas.Where(e => e.nu_cnpj.Equals(CnpjEmpresa)).Select(e =>  e.ds_fantasia + (e.filial != null ? " " + e.filial : "")).FirstOrDefault();
-                                    if(filialConsulta == null) filialConsulta = String.Empty;
-                                }*/
 
                                 int contSkips = 0;
-                                for (int k = 0; k < recebimentos.Count && (pageSize == 0 || CollectionConciliacaoVendas.Count < pageSize); k++)
+                                for (int k = 0; k < vendas.Count && (pageSize == 0 || CollectionConciliacaoVendas.Count < pageSize); k++)
                                 {
-                                    ConciliacaoVendas receb = recebimentos[k];
+                                    //ConciliacaoVendas receb = recebimentos[k];
+                                    ConciliacaoVendas venda = vendas[k];
 
-                                    List<ConciliacaoVendas> vendas = new List<ConciliacaoVendas>();
+                                    //List<ConciliacaoVendas> vendas = new List<ConciliacaoVendas>();
+                                    List<ConciliacaoVendas> recebimentos = new List<ConciliacaoVendas>();
 
                                     // SE FOR ENVIADO O FILTRO DE "NÃO CONCILIADO", EXIBE TODOS OS QUE NÃO TIVEREM TÍTULOS ASSOCIADOS, INDEPENDENTEMENTE SE PUDER SER PRÉ-CONCILIADO
                                     if (!filtroTipoNaoConciliado)
                                     {
-                                        //string filialConsulta = receb.Filial;
-
-                                        //DateTime dataIni = receb.Data.AddDays(RANGE_DIAS_ANTERIOR * -1);
-                                        //DateTime dataFim = receb.Data.AddDays(RANGE_DIAS_POSTERIOR);
-                                        string nsu = "" + Convert.ToInt32(receb.Nsu);
-                                        //decimal valor = receb.Valor;
-                                        //int parcelas = receb.Parcelas;
-                                        //string bandeira = receb.Bandeira.Substring(receb.Bandeira.IndexOf("-") + 2).Trim(); // bandeira de pos.Recebimento => pega o que vem após o hífen
-
-                                        SimpleDataBaseQuery queryVDNaoConciliado = new SimpleDataBaseQuery(dataBaseQueryVD);
+                                        string nsu = "" + Convert.ToInt32(venda.Nsu);
+                                        
+                                        SimpleDataBaseQuery queryRbNaoConciliado = new SimpleDataBaseQuery(dataBaseQueryRB);
 
                                         // WHERE
-                                        queryVDNaoConciliado.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dtVenda BETWEEN '" + DataBaseQueries.GetDate(receb.Data) + "' AND '" + DataBaseQueries.GetDate(receb.Data) + " 23:59:00'");
-                                        queryVDNaoConciliado.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU LIKE '%" + nsu + "'");
-                                        //queryVDNaoConciliado.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".vlVenda = " + receb.Valor.ToString(CultureInfo.GetCultureInfo("en-GB")));
-                                        //queryVDNaoConciliado.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".qtParcelas = 0 OR " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".qtParcelas = " + receb.Parcelas);
-                                        // Bandeira
-                                        //queryVDNaoConciliado.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dsBandeira IS NULL OR " + 
-                                        //                                    //"SUBSTRING('CIELO - MASTERCARD', CHARINDEX('-', 'CIELO - MASTERCARD') + 2, LEN('CIELO - MASTERCARD') - CHARINDEX('-', 'CIELO - MASTERCARD') - 1) " +
-                                        //                                    "'" + bandeira + "' LIKE '%' + " +
-                                        //                                    // Bandeira de card.tbRecebimentoVenda => pega o que vem antes do espaço (se houver)
-                                        //                                    "(CASE WHEN CHARINDEX(' ', " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dsBandeira) > 0 THEN SUBSTRING(" + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dsBandeira, 0, CHARINDEX(' ', " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dsBandeira)) ELSE " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dsBandeira END)" +
-                                        //                                    " + '%'");
+                                        queryRbNaoConciliado.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".dtaVenda BETWEEN '" + DataBaseQueries.GetDate(venda.Data) + "' AND '" + DataBaseQueries.GetDate(venda.Data) + " 23:59:00'");
+                                        queryRbNaoConciliado.AddWhereClause("SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayRecebimento.SIGLA_QUERY + ".nsu), LEN(" + GatewayRecebimento.SIGLA_QUERY + ".nsu) + 1, 12) = SUBSTRING('000000000000' + CONVERT(VARCHAR(12), '" + nsu + "'), LEN('" + nsu + "') + 1, 12)");
+                                        //queryVDNaoConciliado.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU LIKE '%" + nsu + "'");
+                                        
                                         if (idsPreConciliados.Count > 0)
-                                            queryVDNaoConciliado.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda NOT IN (" + string.Join(", ", idsPreConciliados) + ")");
+                                            queryRbNaoConciliado.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".id NOT IN (" + string.Join(", ", idsPreConciliados) + ")");
+                                            //queryVDNaoConciliado.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda NOT IN (" + string.Join(", ", idsPreConciliados) + ")");
 
-                                        // Para cada recebimento Parcela, procurar
-                                        resultado = DataBaseQueries.SqlQuery(queryVDNaoConciliado.Script(), connection);
-                                        vendas = new List<ConciliacaoVendas>();
+                                        // Para cada tbRecebimentoVenda, procurar
+                                        resultado = DataBaseQueries.SqlQuery(queryRbNaoConciliado.Script(), connection);
+
                                         if (resultado != null && resultado.Count > 0)
                                         {
-                                            vendas = resultado.Select(r => new ConciliacaoVendas
-                                                                {
-                                                                    Tipo = TIPO_VENDA,
-                                                                    Id = Convert.ToInt32(r["idRecebimentoVenda"]),
-                                                                    Nsu = Convert.ToString(r["nrNSU"]),
-                                                                    Bandeira = Convert.ToString(r["dsBandeira"].Equals(DBNull.Value) ? "" : r["dsBandeira"]),
-                                                                    Data = (DateTime)r["dtVenda"],
-                                                                    Filial = Convert.ToString(r["ds_fantasia"]) + (r["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(r["filial"])),
-                                                                    Valor = Convert.ToDecimal(r["vlVenda"]),
-                                                                    Adquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
-                                                                    Parcelas = Convert.ToInt32(r["qtParcelas"])
-                                                                })
-                                                               .ToList<ConciliacaoVendas>();
+                                            recebimentos = resultado.Select(r => new ConciliacaoVendas
+                                                                    {
+                                                                        Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                        Id = Convert.ToInt32(r["idRecebimento"]),
+                                                                        Sacado = Convert.ToString(r["cdSacado"].Equals(DBNull.Value) ? "" : r["cdSacado"]),
+                                                                        Nsu = Convert.ToString(r["nsu"]),
+                                                                        CodResumoVendas = r["codResumoVenda"].Equals(DBNull.Value) ? "" : Convert.ToString(r["codResumoVenda"]),
+                                                                        Bandeira = Convert.ToString(r["dsBandeira"]).ToUpper(),
+                                                                        Data = (DateTime)r["dtaVenda"],
+                                                                        Filial = Convert.ToString(r["ds_fantasia"]) + (r["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(r["filial"])),
+                                                                        Valor = Convert.ToDecimal(r["valorVendaBruta"]),
+                                                                        Adquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
+                                                                        Parcelas = Convert.ToInt32(r["numParcelaTotal"].Equals(DBNull.Value) ? 1 : r["numParcelaTotal"]),
+                                                                    }).ToList<ConciliacaoVendas>();
+                                            //vendas = resultado.Select(r => new ConciliacaoVendas
+                                            //                    {
+                                            //                        Tipo = TIPO_VENDA,
+                                            //                        Id = Convert.ToInt32(r["idRecebimentoVenda"]),
+                                            //                        Nsu = Convert.ToString(r["nrNSU"]),
+                                            //                        Bandeira = Convert.ToString(r["dsBandeira"].Equals(DBNull.Value) ? "" : r["dsBandeira"]),
+                                            //                        Data = (DateTime)r["dtVenda"],
+                                            //                        Filial = Convert.ToString(r["ds_fantasia"]) + (r["filial"].Equals(DBNull.Value) ? "" : " " + Convert.ToString(r["filial"])),
+                                            //                        Valor = Convert.ToDecimal(r["vlVenda"]),
+                                            //                        Adquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
+                                            //                        Parcelas = Convert.ToInt32(r["qtParcelas"])
+                                            //                    })
+                                            //                   .ToList<ConciliacaoVendas>();
                                         }
                                     }
 
-                                    if (vendas.Count > 0)
+                                    if (recebimentos.Count > 0)
                                     {
-                                        ConciliacaoVendas vdPreConciliado = null;
+                                        ConciliacaoVendas rbPreConciliado = null;
+                                        //ConciliacaoVendas vdPreConciliado = null;
 
                                         // Mesma filial da parcela
-                                        List<ConciliacaoVendas> vendFilial = vendas.Where(e => e.Filial.Equals(receb.Filial)).ToList<ConciliacaoVendas>();
-                                        if (vendFilial.Count > 0)
+                                        List<ConciliacaoVendas> rbFilial = recebimentos.Where(e => e.Filial.Equals(venda.Filial)).ToList<ConciliacaoVendas>();
+                                        if (rbFilial.Count > 0)
                                         {
-                                            // Tem pra mesma filial
-                                            foreach (ConciliacaoVendas vd in vendFilial)
+                                            if (rbFilial.Count == 1)
                                             {
-                                                // NSUs com mesmo comprimento
-                                                string nsu1 = vd.Nsu;
-                                                string nsu2 = receb.Nsu;
-                                                while (nsu1.Length < nsu2.Length) nsu1 = "0" + nsu1;
-                                                while (nsu2.Length < nsu1.Length) nsu2 = "0" + nsu2;
-
-                                                if (nsu1.Equals(nsu2) && Math.Abs(vd.Valor - receb.Valor) <= TOLERANCIA)
-                                                {
-                                                    vdPreConciliado = vd;
-                                                    break;
-                                                }
+                                                rbPreConciliado = rbFilial.First();
                                             }
-                                            // Se não achou, pega somente os que não são da mesma filial
-                                            if (vdPreConciliado == null)
-                                                vendas = vendas.Where(e => !e.Filial.Equals(receb.Filial)).ToList<ConciliacaoVendas>();
-
-                                            //// Pega o primeiro (temp)
-                                            //vdPreConciliado = vendFilial.FirstOrDefault();
-                                        }
-                                        //else
-                                        //    // Pega o primeiro (temp)
-                                        //    vdPreConciliado = vendas.FirstOrDefault();
-
-
-                                        if (vdPreConciliado == null)
-                                        {
-                                            // Não achou na mesma filial => Busca em outra filial do mesmo grupo
-                                            foreach (ConciliacaoVendas vd in vendas)
+                                            else
                                             {
-                                                // NSUs com mesmo comprimento
-                                                string nsu1 = vd.Nsu;
-                                                string nsu2 = receb.Nsu;
-                                                while (nsu1.Length < nsu2.Length) nsu1 = "0" + nsu1;
-                                                while (nsu2.Length < nsu1.Length) nsu2 = "0" + nsu2;
-
-                                                if (nsu1.Equals(nsu2) && Math.Abs(vd.Valor - receb.Valor) <= TOLERANCIA)
+                                                // Não pré-concilia pois tem mais de um
+                                                if (!filtroTipoPreConciliado)
                                                 {
-                                                    vdPreConciliado = vd;
-                                                    break;
+                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoVendas, new List<ConciliacaoVendas>() { venda });
+                                                    //if (filtroTipoNaoConciliado) retorno.TotalDeRegistros++;
                                                 }
+                                                continue;
                                             }
                                         }
+                                        else if(recebimentos.Count == 1)
+                                            rbPreConciliado = recebimentos.First();
 
-                                        if (vdPreConciliado != null)
+                                        if (rbPreConciliado != null)
                                         {
                                             // Pré-conciliado
-                                            idsPreConciliados.Add(vdPreConciliado.Id);
+                                            idsPreConciliados.Add(rbPreConciliado.Id);
                                             if (!filtroTipoNaoConciliado)
                                             {
                                                 if (!filtroTipoPreConciliado || contSkips >= skipRows)
-                                                    adicionaElementosConciliadosNaLista(CollectionConciliacaoVendas, receb, vdPreConciliado, TIPO_CONCILIADO.PRE_CONCILIADO);
+                                                    adicionaElementosConciliadosNaLista(CollectionConciliacaoVendas, rbPreConciliado, venda, TIPO_CONCILIADO.PRE_CONCILIADO);
                                                 //if (filtroTipoPreConciliado) retorno.TotalDeRegistros++;
                                                 contSkips++;
                                             }
@@ -643,7 +717,7 @@ namespace api.Negocios.Card
                                             // Não conciliado
                                             if (!filtroTipoPreConciliado)
                                             {
-                                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoVendas, new List<ConciliacaoVendas>(){ receb });
+                                                adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoVendas, new List<ConciliacaoVendas>(){ venda });
                                                 //if (filtroTipoNaoConciliado) retorno.TotalDeRegistros++;
                                             }
                                         }
@@ -653,7 +727,7 @@ namespace api.Negocios.Card
                                         // Não encontrado!
                                         if (!filtroTipoPreConciliado)
                                         {
-                                            adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoVendas, new List<ConciliacaoVendas>() { receb });
+                                            adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoVendas, new List<ConciliacaoVendas>() { venda });
                                             //if (filtroTipoNaoConciliado) retorno.TotalDeRegistros++;
                                         }
                                     }
@@ -682,23 +756,23 @@ namespace api.Negocios.Card
 
                     // Ordena
                     CollectionConciliacaoVendas = CollectionConciliacaoVendas
-                                                                    .OrderBy(c => c.Recebimento.Data)
-                                                                    .ThenBy(c => c.Recebimento.Valor)
+                                                                    .OrderBy(c => c.Venda.Data)
+                                                                    .ThenBy(c => c.Venda.Valor)
                                                                     .ThenBy(c => c.Adquirente)
-                                                                    .ThenBy(c => c.Recebimento.Bandeira)
+                                                                    .ThenBy(c => c.Venda.Bandeira)
                                                                     .ToList<dynamic>();
 
                     // TOTAL
                     retorno.Totais = new Dictionary<string, object>();
-                    retorno.Totais.Add("valor", CollectionConciliacaoVendas.Select(r => r.Recebimento.Valor).Cast<decimal>().Sum());
+                    retorno.Totais.Add("valor", CollectionConciliacaoVendas.Select(r => r.Venda.Valor).Cast<decimal>().Sum());
 
                     #endregion
                 }
                 else if (colecao == 1)
                 {
                     #region BUSCA VENDAS
-                    if (!queryString.TryGetValue("" + (int)CAMPOS.IDRECEBIMENTO, out outValue))
-                        throw new Exception("Para consultar vendas, deve ser enviado dados do recebível!");
+                    if (!queryString.TryGetValue("" + (int)CAMPOS.IDRECEBIMENTOVENDA, out outValue))
+                        throw new Exception("Para consultar vendas, deve ser enviado dados de uma venda!");
 
                     SqlConnection connection = new SqlConnection(ConfigurationManager.ConnectionStrings["painel_taxservices_dbContext"].ConnectionString);
 
@@ -715,133 +789,155 @@ namespace api.Negocios.Card
                     {
 
 
-                        Int32 idRecebimento = Convert.ToInt32(queryString["" + (int)CAMPOS.IDRECEBIMENTO]);
+                        Int32 idRecebimentoVenda = Convert.ToInt32(queryString["" + (int)CAMPOS.IDRECEBIMENTOVENDA]);
 
-                        //Recebimento recebimento = _db.Recebimentos.Where(e => e.idRecebimento == idRecebimento)
-                        //                                          .FirstOrDefault();
-                        List<IDataRecord> resultado = DataBaseQueries.SqlQuery("SELECT R.cnpj, B.cdAdquirente, R.valorVendaBruta, R.dtaVenda, R.numParcelaTotal, B.dsBandeira" +
-                                                                               " FROM pos.Recebimento R (NOLOCK)" +
-                                                                               " JOIN card.tbBandeira B (NOLOCK) ON R.cdBandeira = B.cdBandeira" +
-                                                                               " WHERE R.id = " + idRecebimento, connection);
+                        //List<IDataRecord> resultado = DataBaseQueries.SqlQuery("SELECT R.cnpj, B.cdAdquirente, R.valorVendaBruta, R.dtaVenda, R.numParcelaTotal, B.dsBandeira" +
+                        //                                                       " FROM pos.Recebimento R (NOLOCK)" +
+                        //                                                       " JOIN card.tbBandeira B (NOLOCK) ON R.cdBandeira = B.cdBandeira" +
+                        //                                                       " WHERE R.id = " + idRecebimento, connection);
+                        List<IDataRecord> resultado = DataBaseQueries.SqlQuery("SELECT V.nrCNPJ, V.cdAdquirente, V.vlVenda, V.dtVenda, V.qtParcelas, dsBandeira = CASE WHEN V.dsBandeira IS NULL THEN '' ELSE V.dsBandeira END" +
+                                                                               " FROM card.tbRecebimentovenda V (NOLOCK)" +
+                                                                               " WHERE V.idRecebimentoVenda = " + idRecebimentoVenda, connection);
                         if (resultado == null || resultado.Count == 0)
                             throw new Exception("Recebimento inválido!");
-                        
-                        var recebimento = resultado.Select(r => new
-                                         {
-                                             cnpj = Convert.ToString(r["cnpj"]),
-                                             cdAdquirente = Convert.ToInt32(r["cdAdquirente"]),
-                                             bandeira = Convert.ToString(r["dsBandeira"]),
-                                             valorVendaBruta = Convert.ToDecimal(r["valorVendaBruta"]),
-                                             dtaVenda = (DateTime)r["dtaVenda"],
-                                             numParcelaTotal = Convert.ToInt32(r["numParcelaTotal"].Equals(DBNull.Value) ? 1 : r["numParcelaTotal"])
-                                         }).FirstOrDefault();
+
+                        var venda = resultado.Select(r => new
+                                            {
+                                                cnpj = Convert.ToString(r["nrCNPJ"]),
+                                                cdAdquirente = Convert.ToInt32(r["cdAdquirente"]),
+                                                bandeira = Convert.ToString(r["dsBandeira"]),
+                                                valorVendaBruta = Convert.ToDecimal(r["vlVenda"]),
+                                                dtaVenda = (DateTime)r["dtVenda"],
+                                                numParcelaTotal = Convert.ToInt32(r["qtParcelas"])
+                                            }).FirstOrDefault();
+
+                        //var recebimento = resultado.Select(r => new
+                        //                 {
+                        //                     cnpj = Convert.ToString(r["cnpj"]),
+                        //                     cdAdquirente = Convert.ToInt32(r["cdAdquirente"]),
+                        //                     bandeira = Convert.ToString(r["dsBandeira"]),
+                        //                     valorVendaBruta = Convert.ToDecimal(r["valorVendaBruta"]),
+                        //                     dtaVenda = (DateTime)r["dtaVenda"],
+                        //                     numParcelaTotal = Convert.ToInt32(r["numParcelaTotal"].Equals(DBNull.Value) ? 1 : r["numParcelaTotal"])
+                        //                 }).FirstOrDefault();
 
                         // Pode ter enviado de uma filial diferente
-                        string nrCNPJ = recebimento.cnpj;
+                        string nrCNPJ = venda.cnpj;
                         if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
                             nrCNPJ = queryString["" + (int)CAMPOS.NU_CNPJ];
 
-                        int cdAdquirente = recebimento.cdAdquirente; // recebimento.Recebimento.tbBandeira.cdAdquirente
-                        decimal valorVendaBruta = recebimento.valorVendaBruta;
-                        int numParcelas = recebimento.numParcelaTotal;
-                        string bandeira = recebimento.bandeira.Substring(recebimento.bandeira.IndexOf("-") + 2).Trim(); // bandeira de pos.Recebimento => pega o que vem após o hífen
+                        int cdAdquirente = venda.cdAdquirente; // recebimento.Recebimento.tbBandeira.cdAdquirente
+                        decimal valorVendaBruta = venda.valorVendaBruta;
+                        int numParcelas = venda.numParcelaTotal;
+                        //string bandeira = venda.bandeira.Substring(venda.bandeira.IndexOf("-") + 2).Trim(); // bandeira de pos.Recebimento => pega o que vem após o hífen
 
-                        DateTime dtaVenda = recebimento.dtaVenda;
+                        DateTime dtaVenda = venda.dtaVenda;
                         DateTime data = Convert.ToDateTime(dtaVenda.ToShortDateString());
                         DateTime dataIni = data.AddDays(RANGE_DIAS_ANTERIOR * -1);
                         DateTime dataFim = data.AddDays(RANGE_DIAS_POSTERIOR);
 
                         // Consulta vendas num intervalo possível de data da venda com valores dentro da margem tolerável
                         // Ordena considerando menor intervalo de data, nsu começando com T e bandeira 
-                        string script = "SELECT V.idRecebimentoVenda, V.qtParcelas, V.nrNSU, V.dsBandeira" +
-                                        ", V.dtVenda, E.ds_fantasia, E.filial, A.nmAdquirente" +
-                                        ", V.vlVenda, diferencaValorVenda = ABS(V.vlVenda - " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ")" +
-                                        ", diferencaDtVenda = ABS(DATEDIFF(DAY, V.dtVenda, '" + DataBaseQueries.GetDate(dtaVenda) + "'))" +
-                                        ", diferencaBandeira = CASE WHEN V.dsBandeira IS NULL THEN 1 ELSE" + 
-                                                               " CASE WHEN '" + bandeira + "' LIKE '%' + " +
-                                                                      // Bandeira de card.tbRecebimentoVenda => pega o que vem antes do espaço (se houver)
-                                                                      "(CASE WHEN CHARINDEX(' ', V.dsBandeira) > 0 THEN SUBSTRING(V.dsBandeira, 0, CHARINDEX(' ', V.dsBandeira)) ELSE V.dsBandeira END)" +
-                                                                      " + '%'" + 
-                                                               " THEN 0 ELSE 2 END" + 
-                                                     " END" +
-                                        " FROM card.tbRecebimentoVenda V (NOLOCK)" +
-                                        " JOIN cliente.empresa E (NOLOCK) ON E.nu_cnpj = V.nrCNPJ" +
-                                        " JOIN card.tbAdquirente A (NOLOCK) ON A.cdAdquirente = V.cdAdquirente" +
-                                        " LEFT JOIN pos.Recebimento R (NOLOCK) ON R.idRecebimentoVenda = V.idRecebimentoVenda" +
+                        string script = "SELECT R.id, R.numParcelaTotal, R.nsu, B.dsBandeira, B.cdSacado" +
+                                        ", R.dtaVenda, E.ds_fantasia, E.filial, A.nmAdquirente" +
+                                        ", R.valorVendaBruta, diferencaValorVenda = ABS(R.valorVendaBruta - " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ")" +
+                                        ", diferencaDtVenda = ABS(DATEDIFF(DAY, R.dtaVenda, '" + DataBaseQueries.GetDate(dtaVenda) + "'))" +
+                                        " FROM pos.Recebimento R (NOLOCK)" +
+                                        " JOIN cliente.empresa E (NOLOCK) ON E.nu_cnpj = R.cnpj" +
+                                        " JOIN card.tbBandeira B (NOLOCK) ON B.cdBandeira = R.cdBandeira" +
+                                        " JOIN card.tbAdquirente A (NOLOCK) ON A.cdAdquirente = B.cdAdquirente" +
                                         " WHERE R.idRecebimentoVenda IS NULL" +
-                                        " AND V.dtVenda BETWEEN '" + DataBaseQueries.GetDate(dataIni) + "' AND '" + DataBaseQueries.GetDate(dataFim) + " 23:59:00'" +
-                                        " AND V.nrCNPJ = '" + nrCNPJ + "'" +
-                                        " AND V.cdAdquirente = " + cdAdquirente +
-                                        " AND ABS(V.vlVenda - " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ") <= " + TOLERANCIA.ToString(CultureInfo.GetCultureInfo("en-GB"))
+                                        " AND R.dtaVenda BETWEEN '" + DataBaseQueries.GetDate(dataIni) + "' AND '" + DataBaseQueries.GetDate(dataFim) + " 23:59:00'" +
+                                        " AND R.cnpj = '" + nrCNPJ + "'" +
+                                        " AND ABS(R.valorVendaBruta - " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ") <= " + TOLERANCIA.ToString(CultureInfo.GetCultureInfo("en-GB"))
                                         ;
+                        //string script = "SELECT V.idRecebimentoVenda, V.qtParcelas, V.nrNSU, V.dsBandeira" +
+                        //                ", V.dtVenda, E.ds_fantasia, E.filial, A.nmAdquirente" +
+                        //                ", V.vlVenda, diferencaValorVenda = ABS(V.vlVenda - " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ")" +
+                        //                ", diferencaDtVenda = ABS(DATEDIFF(DAY, V.dtVenda, '" + DataBaseQueries.GetDate(dtaVenda) + "'))" +
+                        //                ", diferencaBandeira = CASE WHEN V.dsBandeira IS NULL THEN 1 ELSE" + 
+                        //                                       " CASE WHEN '" + bandeira + "' LIKE '%' + " +
+                        //                                              // Bandeira de card.tbRecebimentoVenda => pega o que vem antes do espaço (se houver)
+                        //                                              "(CASE WHEN CHARINDEX(' ', V.dsBandeira) > 0 THEN SUBSTRING(V.dsBandeira, 0, CHARINDEX(' ', V.dsBandeira)) ELSE V.dsBandeira END)" +
+                        //                                              " + '%'" + 
+                        //                                       " THEN 0 ELSE 2 END" + 
+                        //                             " END" +
+                        //                " FROM card.tbRecebimentoVenda V (NOLOCK)" +
+                        //                " JOIN cliente.empresa E (NOLOCK) ON E.nu_cnpj = V.nrCNPJ" +
+                        //                " JOIN card.tbAdquirente A (NOLOCK) ON A.cdAdquirente = V.cdAdquirente" +
+                        //                " LEFT JOIN pos.Recebimento R (NOLOCK) ON R.idRecebimentoVenda = V.idRecebimentoVenda" +
+                        //                " WHERE R.idRecebimentoVenda IS NULL" +
+                        //                " AND V.dtVenda BETWEEN '" + DataBaseQueries.GetDate(dataIni) + "' AND '" + DataBaseQueries.GetDate(dataFim) + " 23:59:00'" +
+                        //                " AND V.nrCNPJ = '" + nrCNPJ + "'" +
+                        //                " AND V.cdAdquirente = " + cdAdquirente +
+                        //                " AND ABS(V.vlVenda - " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ") <= " + TOLERANCIA.ToString(CultureInfo.GetCultureInfo("en-GB"))
+                        //                ;
 
                         resultado = DataBaseQueries.SqlQuery(script, connection);
-                        List<dynamic> vendas = new List<dynamic>();
+                        List<dynamic> recebimentos = new List<dynamic>();
                         if (resultado != null && resultado.Count > 0)
                         {
-                            vendas = resultado.Select(r => new
+                            recebimentos = resultado.Select(r => new
                                                 {
-                                                    idRecebimentoVenda = Convert.ToInt32(r["idRecebimentoVenda"]),
-                                                    qtParcelas = Convert.ToInt32(r["qtParcelas"]),
-                                                    nrNSU = Convert.ToString(r["nrNSU"]),
-                                                    bandeira = Convert.ToString(r["dsBandeira"].Equals(DBNull.Value) ? "" : r["dsBandeira"]).ToUpper(),
+                                                    id = Convert.ToInt32(r["id"]),
+                                                    sacado = Convert.ToString(r["cdSacado"].Equals(DBNull.Value) ? "" : r["cdSacado"]),
+                                                    qtParcelas = Convert.ToInt32(r["numParcelaTotal"]),
+                                                    nrNSU = Convert.ToString(r["cnpj"]),
+                                                    bandeira = Convert.ToString(r["dsBandeira"]).ToUpper(),
                                                     dtVenda = (DateTime)r["dtVenda"],
                                                     empresa = Convert.ToString(r["ds_fantasia"].ToString() + (r["filial"].Equals(DBNull.Value) ? "" : " " + r["filial"].ToString())).ToUpper(),
-                                                    vlVenda = Convert.ToDecimal(r["vlVenda"]),
+                                                    vlVenda = Convert.ToDecimal(r["valorVendaBruta"]),
                                                     tbAdquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
                                                     // Malandragens
                                                     diferencaValorVenda = Convert.ToDecimal(r["diferencaValorVenda"]),
                                                     diferencaDtVenda = Convert.ToInt32(r["diferencaDtVenda"]),
-                                                    diferencaBandeira = Convert.ToInt32(r["diferencaBandeira"])
+                                                    //diferencaBandeira = Convert.ToInt32(r["diferencaBandeira"])
                                                 })
                                                 .OrderBy(e => e.diferencaDtVenda)
                                                 .ThenBy(e => e.diferencaValorVenda)
                                                 .ThenByDescending(e => e.nrNSU.StartsWith("T"))
-                                                .ThenBy(e => e.diferencaBandeira)
+                                                //.ThenBy(e => e.diferencaBandeira)
                                                 .ToList<dynamic>();
+                            //vendas = resultado.Select(r => new
+                            //                    {
+                            //                        idRecebimentoVenda = Convert.ToInt32(r["idRecebimentoVenda"]),
+                            //                        qtParcelas = Convert.ToInt32(r["qtParcelas"]),
+                            //                        nrNSU = Convert.ToString(r["nrNSU"]),
+                            //                        bandeira = Convert.ToString(r["dsBandeira"].Equals(DBNull.Value) ? "" : r["dsBandeira"]).ToUpper(),
+                            //                        dtVenda = (DateTime)r["dtVenda"],
+                            //                        empresa = Convert.ToString(r["ds_fantasia"].ToString() + (r["filial"].Equals(DBNull.Value) ? "" : " " + r["filial"].ToString())).ToUpper(),
+                            //                        vlVenda = Convert.ToDecimal(r["vlVenda"]),
+                            //                        tbAdquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
+                            //                        // Malandragens
+                            //                        diferencaValorVenda = Convert.ToDecimal(r["diferencaValorVenda"]),
+                            //                        diferencaDtVenda = Convert.ToInt32(r["diferencaDtVenda"]),
+                            //                        //diferencaBandeira = Convert.ToInt32(r["diferencaBandeira"])
+                            //                    })
+                            //                    .OrderBy(e => e.diferencaDtVenda)
+                            //                    .ThenBy(e => e.diferencaValorVenda)
+                            //                    .ThenByDescending(e => e.nrNSU.StartsWith("T"))
+                            //                    //.ThenBy(e => e.diferencaBandeira)
+                            //                    .ToList<dynamic>();
                         }
 
-                        // Mesmo número de parcelas
-                        List<dynamic> vendasParcelas = vendas.Where(e => e.qtParcelas == numParcelas).ToList<dynamic>();
-
-                        if (vendasParcelas.Count > 0)
+                        
+                        // Envia todos
+                        foreach (var r in recebimentos)
                         {
-                            // Envia somente eles
-                            foreach (var v in vendasParcelas)
+                            CollectionConciliacaoVendas.Add(new ConciliacaoVendas
                             {
-                                CollectionConciliacaoVendas.Add(new ConciliacaoVendas
-                                                        {
-                                                            Tipo = TIPO_VENDA, // venda
-                                                            Id = v.idRecebimentoVenda,
-                                                            Parcelas = v.qtParcelas,
-                                                            Nsu = v.nrNSU,
-                                                            Bandeira = v.bandeira,
-                                                            Data = v.dtVenda,
-                                                            Filial = v.empresa,
-                                                            Valor = v.vlVenda,
-                                                            Adquirente = v.tbAdquirente,
-                                                        });
-                            }
+                                Tipo = TIPO_RECEBIMENTO, //TIPO_VENDA,
+                                Id = r.idRecebimentoVenda,
+                                Parcelas = r.qtParcelas,
+                                Nsu = r.nrNSU,
+                                Bandeira = r.bandeira,
+                                Data = r.dtVenda,
+                                Filial = r.empresa,
+                                Valor = r.vlVenda,
+                                Adquirente = r.tbAdquirente,
+                            });
                         }
-                        else
-                        {
-                            // Envia todos
-                            foreach (var v in vendas)
-                            {
-                                CollectionConciliacaoVendas.Add(new ConciliacaoVendas
-                                {
-                                    Tipo = TIPO_VENDA, // venda
-                                    Id = v.idRecebimentoVenda,
-                                    Parcelas = v.qtParcelas,
-                                    Nsu = v.nrNSU,
-                                    Bandeira = v.bandeira,
-                                    Data = v.dtVenda,
-                                    Filial = v.empresa,
-                                    Valor = v.vlVenda,
-                                    Adquirente = v.tbAdquirente,
-                                });
-                            }
-                        }
+                        
                     }
                     catch (Exception e)
                     {
@@ -990,7 +1086,7 @@ namespace api.Negocios.Card
             else _db = _dbContext;
             try
             {
-                if (param == null || param.data == null || param.nrCNPJ == null || param.cdAdquirente == 0)
+                if (param == null || param.data == null || param.nrCNPJ == null)// || param.cdAdquirente == 0)
                     throw new Exception("Parâmetro inválido!");
 
                 List<string> datas = new List<string>();
@@ -1011,13 +1107,10 @@ namespace api.Negocios.Card
                 else
                     datas.Add(param.data);
 
-                //foreach (string data in datas)
-                //{
-                //    //_db.Database.SqlQuery<string>("EXECUTE [card].[sp_upd_ConciliaVendas] '" + 
-                //    //                               param.nrCNPJ  + "', '" + data + "', " + param.cdAdquirente);
-                //    _db.Database.ExecuteSqlCommand("EXECUTE [card].[sp_upd_ConciliaVendas] '" + 
-                //                                    param.nrCNPJ  + "', '" + data + "', " + param.cdAdquirente);
-                //}
+                foreach (string data in datas)
+                {
+                    _db.Database.ExecuteSqlCommand("EXECUTE [card].[sp_upd_ConciliaVendas] '" + param.nrCNPJ + "', '" + data + "'");
+                }
 
             }
             catch (Exception e)

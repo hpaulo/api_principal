@@ -14,6 +14,7 @@ namespace api.Models
             this.tbRecebimentoResumoManuals = new List<tbRecebimentoResumoManual>();
             this.tbResumoVendas = new List<tbResumoVenda>();
             this.tbAntecipacaoBancariaDetalhes = new List<tbAntecipacaoBancariaDetalhe>();
+            this.tbBandeiraSacados = new List<tbBandeiraSacado>();
         }
 
         public int cdBandeira { get; set; }
@@ -27,5 +28,6 @@ namespace api.Models
         public virtual ICollection<tbRecebimentoResumoManual> tbRecebimentoResumoManuals { get; set; }
         public virtual ICollection<tbResumoVenda> tbResumoVendas { get; set; }
         public virtual ICollection<tbAntecipacaoBancariaDetalhe> tbAntecipacaoBancariaDetalhes { get; set; }
+        public virtual ICollection<tbBandeiraSacado> tbBandeiraSacados { get; set; }
     }
 }
