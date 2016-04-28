@@ -11,6 +11,7 @@ using System.Data.Entity;
 using System.Data;
 using api.Negocios.Util;
 using System.Globalization;
+using api.Negocios.Cliente;
 
 namespace api.Negocios.Card
 {
@@ -106,7 +107,9 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdAdquirente.Equals(cdAdquirente)).AsQueryable<tbRecebimentoVenda>();
+                        //entity = entity.Where(e => e.cdAdquirente.Equals(cdAdquirente)).AsQueryable<tbRecebimentoVenda>();
+                        entity = entity.Where(e => _db.tbBandeiraSacados.Where(t => t.cdSacado.Equals(e.cdSacado) && t.cdGrupo == e.empresa.id_grupo)
+                                                                        .Where(t => t.tbBandeira.cdAdquirente == cdAdquirente).Count() > 0).AsQueryable<tbRecebimentoVenda>();
                         break;
                     case CAMPOS.DSBANDEIRA:
                         string dsBandeira = Convert.ToString(item.Value);
@@ -155,10 +158,10 @@ namespace api.Negocios.Card
                     if (orderby == 0) entity = entity.OrderBy(e => e.dtVenda).AsQueryable<tbRecebimentoVenda>();
                     else entity = entity.OrderByDescending(e => e.dtVenda).AsQueryable<tbRecebimentoVenda>();
                     break;
-                case CAMPOS.CDADQUIRENTE:
-                    if (orderby == 0) entity = entity.OrderBy(e => e.cdAdquirente).AsQueryable<tbRecebimentoVenda>();
-                    else entity = entity.OrderByDescending(e => e.cdAdquirente).AsQueryable<tbRecebimentoVenda>();
-                    break;
+                //case CAMPOS.CDADQUIRENTE:
+                //    if (orderby == 0) entity = entity.OrderBy(e => e.cdAdquirente).AsQueryable<tbRecebimentoVenda>();
+                //    else entity = entity.OrderByDescending(e => e.cdAdquirente).AsQueryable<tbRecebimentoVenda>();
+                //    break;
                 case CAMPOS.DSBANDEIRA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsBandeira).AsQueryable<tbRecebimentoVenda>();
                     else entity = entity.OrderByDescending(e => e.dsBandeira).AsQueryable<tbRecebimentoVenda>();
@@ -246,7 +249,13 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        where.Add(SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente);
+                        if (!join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                            join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj = " + SIGLA_QUERY + ".nrCNPJ");
+                        if (!join.ContainsKey("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY))
+                            join.Add("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY, " ON " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdSacado = " + SIGLA_QUERY + ".cdSacado AND "  + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdGrupo = " + GatewayEmpresa.SIGLA_QUERY + ".id_grupo");
+                        if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdBandeira");
+                        where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente);
                         break;
                     case CAMPOS.DSBANDEIRA:
                         string dsBandeira = Convert.ToString(item.Value);
@@ -289,10 +298,10 @@ namespace api.Negocios.Card
                     if (orderby == 0) order.Add(SIGLA_QUERY + ".dtVenda ASC");
                     else order.Add(SIGLA_QUERY + ".dtVenda DESC");
                     break;
-                case CAMPOS.CDADQUIRENTE:
-                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdAdquirente ASC");
-                    else order.Add(SIGLA_QUERY + ".cdAdquirente DESC");
-                    break;
+                //case CAMPOS.CDADQUIRENTE:
+                //    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdAdquirente ASC");
+                //    else order.Add(SIGLA_QUERY + ".cdAdquirente DESC");
+                //    break;
                 case CAMPOS.DSBANDEIRA:
                     if (orderby == 0) order.Add(SIGLA_QUERY + ".dsBandeira ASC");
                     else order.Add(SIGLA_QUERY + ".dsBandeira DESC");
@@ -369,24 +378,23 @@ namespace api.Negocios.Card
                     if (retorno.TotalDeRegistros > 0)
                     {
                         retorno.Totais.Add("valorTotal", query.Select(e => e.vlVenda).Cast<decimal>().Sum());
-                        //retorno.Totais.Add("totalCorrigidos", query.Where(e => e.dtBaixaERP != null).Count());
-                        //retorno.Totais.Add("totalConciliados", query.Where(e => e.Recebimentos.Count > 0).Count());
-                        vendasConciliadas = _db.Database.SqlQuery<int>("SELECT DISTINCT R.idRecebimentoVenda" + 
+                        retorno.Totais.Add("totalCorrigidos", query.Where(e => e.dtAjuste != null).Count());
+                        string script = "SELECT DISTINCT R.idRecebimentoVenda" +
                                                                " FROM pos.Recebimento R (NOLOCK)" +
-                                                               " WHERE R.idRecebimentoVenda IN (" + string.Join(", ", query.Select(e => e.idRecebimentoVenda)) + ")"
-                                                              ).ToList();
+                                                               " WHERE R.idRecebimentoVenda IN (" + string.Join(", ", query.Select(e => e.idRecebimentoVenda)) + ")";
+                        vendasConciliadas = _db.Database.SqlQuery<int>(script).ToList();
 
                         retorno.Totais.Add("totalConciliados", vendasConciliadas.Count);
                     }
                     else
                     {
                         retorno.Totais.Add("valorTotal", new decimal(0.0));
-                        //retorno.Totais.Add("totalCorrigidos", 0);
+                        retorno.Totais.Add("totalCorrigidos", 0);
                         retorno.Totais.Add("totalConciliados", 0);
 
                     }
  
-                    query = query.OrderBy(e => e.dtVenda).ThenBy(e => e.empresa.ds_fantasia).ThenBy(e => e.tbAdquirente.nmAdquirente).ThenBy(e => e.vlVenda).ThenBy(e => e.nrNSU);
+                    query = query.OrderBy(e => e.dtVenda).ThenBy(e => e.empresa.ds_fantasia)/*.ThenBy(e => e.tbAdquirente.nmAdquirente)*/.ThenBy(e => e.vlVenda).ThenBy(e => e.nrNSU);
                 }
 
                 // PAGINAÇÃO
@@ -409,7 +417,7 @@ namespace api.Negocios.Card
                         nrCNPJ = e.nrCNPJ,
                         nrNSU = e.nrNSU,
                         dtVenda = e.dtVenda,
-                        cdAdquirente = e.cdAdquirente,
+                        //cdAdquirente = e.cdAdquirente,
                         dsBandeira = e.dsBandeira,
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
@@ -426,7 +434,7 @@ namespace api.Negocios.Card
                         nrCNPJ = e.nrCNPJ,
                         nrNSU = e.nrNSU,
                         dtVenda = e.dtVenda,
-                        cdAdquirente = e.cdAdquirente,
+                        //cdAdquirente = e.cdAdquirente,
                         dsBandeira = e.dsBandeira,
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
@@ -449,19 +457,25 @@ namespace api.Negocios.Card
                                               })
                                               .FirstOrDefault(),
                         dtVenda = e.dtVenda,
-                        tbAdquirente = _db.tbAdquirentes.Where(a => a.cdAdquirente == e.cdAdquirente)
-                                                        .Select(a => new
-                                                        {
-                                                            a.cdAdquirente,
-                                                            a.nmAdquirente
-                                                        })
-                                                        .FirstOrDefault(),
+                        //tbAdquirente = _db.tbAdquirentes.Where(a => a.cdAdquirente == e.cdAdquirente)
+                        //                                .Select(a => new
+                        //                                {
+                        //                                    a.cdAdquirente,
+                        //                                    a.nmAdquirente
+                        //                                })
+                        //                                .FirstOrDefault(),
+                        tbAdquirente = _db.tbBandeiraSacados.Where(t => t.cdSacado.Equals(e.cdSacado) && t.cdGrupo == e.empresa.id_grupo)
+                                                            .Select(t => new {
+                                                                cdAdquirente = t.tbBandeira.cdAdquirente, 
+                                                                nmAdquirente = t.tbBandeira.tbAdquirente.nmAdquirente
+                                                            })
+                                                            .FirstOrDefault(),
                         dsBandeira = e.dsBandeira,
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
                         cdERP = e.cdERP,
                         cdSacado = e.cdSacado,
-                        //conciliado = e.Recebimentos.Count > 0
+                        dtAjuste = e.dtAjuste,
                         conciliado = vendasConciliadas.Contains(e.idRecebimentoVenda)
                     }).ToList<dynamic>();
                 }
@@ -592,8 +606,8 @@ namespace api.Negocios.Card
                     value.nrNSU = param.nrNSU;
                 if (param.dtVenda != null && param.dtVenda != value.dtVenda)
                     value.dtVenda = param.dtVenda;
-                if (param.cdAdquirente != null && param.cdAdquirente != value.cdAdquirente)
-                    value.cdAdquirente = param.cdAdquirente;
+                //if (param.cdAdquirente != null && param.cdAdquirente != value.cdAdquirente)
+                //    value.cdAdquirente = param.cdAdquirente;
                 if (param.dsBandeira != null && param.dsBandeira != value.dsBandeira)
                     value.dsBandeira = param.dsBandeira;
                 if (param.vlVenda != null && param.vlVenda != value.vlVenda)

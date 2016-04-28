@@ -20,8 +20,8 @@ namespace api.Models.Mapping
                 .HasMaxLength(30)
                 .IsRequired();
 
-            this.Property(t => t.cdAdquirente)
-                .IsRequired();
+            //this.Property(t => t.cdAdquirente)
+            //    .IsRequired();
 
             this.Property(t => t.dsBandeira)
                 .HasMaxLength(50);
@@ -36,10 +36,14 @@ namespace api.Models.Mapping
                 .IsRequired();
 
             this.Property(t => t.cdERP)
-                .HasMaxLength(15);
+                .HasMaxLength(15)
+                .IsRequired();
 
             this.Property(t => t.cdSacado)
                 .HasMaxLength(10);
+
+            this.Property(t => t.flInsert)
+                .IsRequired();
 
             // Table & Column Mappings
             this.ToTable("tbRecebimentoVenda", "card");
@@ -47,17 +51,19 @@ namespace api.Models.Mapping
             this.Property(t => t.nrCNPJ).HasColumnName("nrCNPJ");
             this.Property(t => t.nrNSU).HasColumnName("nrNSU");
             this.Property(t => t.dtVenda).HasColumnName("dtVenda");
-            this.Property(t => t.cdAdquirente).HasColumnName("cdAdquirente");
+            //this.Property(t => t.cdAdquirente).HasColumnName("cdAdquirente");
             this.Property(t => t.dsBandeira).HasColumnName("dsBandeira");
             this.Property(t => t.vlVenda).HasColumnName("vlVenda");
             this.Property(t => t.qtParcelas).HasColumnName("qtParcelas");
             this.Property(t => t.cdERP).HasColumnName("cdERP");
             this.Property(t => t.cdSacado).HasColumnName("cdSacado");
+            this.Property(t => t.dtAjuste).HasColumnName("dtAjuste");
+            this.Property(t => t.flInsert).HasColumnName("flInsert");
 
             // Relationships
-            this.HasRequired(t => t.tbAdquirente)
-                .WithMany(t => t.tbRecebimentoVendas)
-                .HasForeignKey(d => d.cdAdquirente);
+            //this.HasRequired(t => t.tbAdquirente)
+            //    .WithMany(t => t.tbRecebimentoVendas)
+            //    .HasForeignKey(d => d.cdAdquirente);
             this.HasRequired(t => t.empresa)
                 .WithMany(t => t.tbRecebimentoVendas)
                 .HasForeignKey(d => d.nrCNPJ);

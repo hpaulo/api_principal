@@ -57,6 +57,7 @@ namespace api.Negocios.Card
             data = data.Substring(0, 4) + "-" + data.Substring(4, 2) + "-" + data.Substring(6, 2);
 
             string url = "http://" + dsAPI + DOMINIO;
+            //string url = "http://localhost:50939";
             string complemento = "vendas/consultavendas/" + token + "?" + ("" + (int)CAMPOS.DATA) + "=" + data;
 
 
@@ -140,22 +141,38 @@ namespace api.Negocios.Card
                     string nrCNPJ = registro.nrCNPJ;
                     Int32 cdAdquirente = Convert.ToInt32(registro.cdAdquirente);
 
+                    var empresa = _db.empresas.Where(f => f.nu_cnpj.Equals(nrCNPJ)).Select(f => new
+                                                {
+                                                    f.nu_cnpj,
+                                                    f.ds_fantasia,
+                                                    f.filial,
+                                                    f.id_grupo
+                                                }).FirstOrDefault();
+
+                    string cdSacado = registro.cdSacado;
+
                     vendas.Add(new
                     {
-                        empresa = _db.empresas.Where(f => f.nu_cnpj.Equals(nrCNPJ)).Select(f => new
-                        {
-                            f.nu_cnpj,
-                            f.ds_fantasia,
-                            f.filial
-                        }).FirstOrDefault(),
+                        empresa = new {
+                            empresa.nu_cnpj,
+                            empresa.ds_fantasia,
+                            empresa.filial,
+                        },
                         nrNSU = registro.nrNSU,
                         dtVenda = registro.dtVenda,
-                        tbAdquirente = _db.tbAdquirentes.Where(a => a.cdAdquirente == cdAdquirente).Select(a => new
-                        {
-                            a.cdAdquirente,
-                            a.nmAdquirente
-                        }).FirstOrDefault(),
-                        cdSacado = registro.cdSacado,
+                        //tbAdquirente = _db.tbAdquirentes.Where(a => a.cdAdquirente == cdAdquirente).Select(a => new
+                        //{
+                        //    a.cdAdquirente,
+                        //    a.nmAdquirente
+                        //}).FirstOrDefault(),
+                        tbAdquirente = _db.tbBandeiraSacados.Where(t => t.cdSacado.Equals(cdSacado) && t.cdGrupo == empresa.id_grupo)
+                                                           .Select(t => new
+                                                           {
+                                                               cdAdquirente = t.tbBandeira.cdAdquirente,
+                                                               nmAdquirente = t.tbBandeira.tbAdquirente.nmAdquirente
+                                                           })
+                                                           .FirstOrDefault(),
+                        cdSacado = cdSacado,
                         dsBandeira = registro.dsBandeira,
                         vlVenda = registro.vlVenda,
                         qtParcelas = registro.qtParcelas,
@@ -171,7 +188,7 @@ namespace api.Negocios.Card
                 {
                     vendas = vendas.OrderBy(r => r.empresa.ds_fantasia)
                                      .ThenBy(r => r.dtVenda)
-                                     .ThenBy(r => r.tbAdquirente.nmAdquirente)
+                                     //.ThenBy(r => r.tbAdquirente.nmAdquirente)
                                      .ThenBy(r => r.dsBandeira)
                                      .Skip(skipRows).Take(pageSize)
                                      .ToList<dynamic>();
@@ -181,7 +198,7 @@ namespace api.Negocios.Card
                     pageNumber = 1;
                     vendas = vendas.OrderBy(r => r.empresa.ds_fantasia)
                                      .ThenBy(r => r.dtVenda)
-                                     .ThenBy(r => r.tbAdquirente.nmAdquirente)
+                                     //.ThenBy(r => r.tbAdquirente.nmAdquirente)
                                      .ThenBy(r => r.dsBandeira)
                                      .ToList<dynamic>();
                 }
@@ -295,6 +312,8 @@ namespace api.Negocios.Card
 
             List<dynamic> Registros = retorno.Registros as List<dynamic>;
 
+            //List<dynamic> test = Registros.Where(t => Convert.ToString(t.nrCNPJ).Equals("08297710000480")).ToList();
+
             for (var k = 0; k < Registros.Count; k++)
             {
                 dynamic vd = Registros[k];
@@ -302,22 +321,34 @@ namespace api.Negocios.Card
                 try
                 {
                     string dsBandeira = vd.dsBandeira;
-                    if (dsBandeira.Length > 50) dsBandeira = dsBandeira.Substring(0, 50);
+                    if (dsBandeira != null && dsBandeira.Length > 50) dsBandeira = dsBandeira.Substring(0, 50);
 
                     string cdSacado = null;
                     try
                     {
                         cdSacado = vd.cdSacado;
+                        cdSacado = cdSacado.Trim();
                     }
                     catch { }
+                    if (cdSacado != null)
+                    {
+                        if (cdSacado.Equals(""))
+                            cdSacado = null;
+                        else if (cdSacado.Length > 10)
+                            throw new Exception("Sacado '" + cdSacado + "' com mais de 10 caracteres!");
+                    }
+
+                    string nrCNPJ = vd.nrCNPJ;
+                    //if (nrCNPJ.Equals("08297710000480"))
+                    //    nrCNPJ += "";
 
                     tbRecebimentoVenda tbRecebimentoVenda = new tbRecebimentoVenda
                     {
                         dsBandeira = dsBandeira,
-                        cdAdquirente = vd.cdAdquirente,
+                        //cdAdquirente = vd.cdAdquirente,
                         cdERP = vd.cdERP,
                         dtVenda = vd.dtVenda,
-                        nrCNPJ = vd.nrCNPJ,
+                        nrCNPJ = nrCNPJ,
                         nrNSU = vd.nrNSU != null && !vd.nrNSU.ToString().Trim().Equals("") ? vd.nrNSU : "T" + vd.cdERP,
                         vlVenda = Convert.ToDecimal(vd.vlVenda),
                         cdSacado = cdSacado,
@@ -327,7 +358,7 @@ namespace api.Negocios.Card
                     tbRecebimentoVenda venda = _db.Database.SqlQuery<tbRecebimentoVenda>("SELECT V.*" +
                                                                                          " FROM card.tbRecebimentoVenda V (NOLOCK)" +
                                                                                          " WHERE V.nrCNPJ = '" + tbRecebimentoVenda.nrCNPJ + "'" +
-                                                                                         " AND V.nrNSU = '" + tbRecebimentoVenda.nrNSU + "'" +
+                                                                                         //" AND V.nrNSU = '" + tbRecebimentoVenda.nrNSU + "'" +
                                                                                          " AND V.dtVenda = '" + DataBaseQueries.GetDate(tbRecebimentoVenda.dtVenda) + "'" +
                                                                                          " AND V.cdERP = '" + tbRecebimentoVenda.cdERP + "'"
                                                                                         )
@@ -336,12 +367,12 @@ namespace api.Negocios.Card
                     if (venda == null)
                     {
                         _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoVenda" +
-                                                       " (nrCNPJ, nrNSU, cdERP, dtVenda, cdAdquirente, dsBandeira, vlVenda, qtParcelas, cdSacado)" +
+                                                       " (nrCNPJ, nrNSU, cdERP, dtVenda, dsBandeira, vlVenda, qtParcelas, cdSacado)" +
                                                        " VALUES ('" + tbRecebimentoVenda.nrCNPJ + "'" +
                                                        ", '" + tbRecebimentoVenda.nrNSU + "'" +
-                                                       ", " + (tbRecebimentoVenda.cdERP == null ? "NULL" : "'" + tbRecebimentoVenda.cdERP + "'") +
+                                                       ", '" +  tbRecebimentoVenda.cdERP + "'" +
                                                        ", '" + DataBaseQueries.GetDate(tbRecebimentoVenda.dtVenda) + "'" +
-                                                       ", " + tbRecebimentoVenda.cdAdquirente +
+                                                       //", " + tbRecebimentoVenda.cdAdquirente +
                                                        ", " + (tbRecebimentoVenda.dsBandeira == null ? "NULL" : "'" + tbRecebimentoVenda.dsBandeira + "'") +
                                                        ", " + tbRecebimentoVenda.vlVenda.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", " + tbRecebimentoVenda.qtParcelas +
@@ -351,8 +382,7 @@ namespace api.Negocios.Card
                     else
                     {
                         _db.Database.ExecuteSqlCommand("UPDATE V" +
-                                                       " SET V.dtVenda = '" + DataBaseQueries.GetDate(tbRecebimentoVenda.dtVenda) + "'" +
-                                                       ", V.cdAdquirente = " + tbRecebimentoVenda.cdAdquirente +
+                                                       " SET V.nrNSU = '" + tbRecebimentoVenda.nrNSU + "'" +
                                                        ", V.dsBandeira = " + (tbRecebimentoVenda.dsBandeira == null ? "NULL" : "'" + tbRecebimentoVenda.dsBandeira + "'") +
                                                        ", V.vlVenda = " + tbRecebimentoVenda.vlVenda.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", V.qtParcelas = " + tbRecebimentoVenda.qtParcelas +

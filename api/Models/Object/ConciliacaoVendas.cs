@@ -41,14 +41,11 @@ namespace api.Models.Object
         public static bool possuiDivergenciasNaVenda(ConciliacaoVendas recebimento, ConciliacaoVendas venda)
         {
             if (recebimento == null || venda == null)
-                return true;
-
-            // Se um for null e o outro não for null, tem divergência
-            if (recebimento.Sacado == null ^ venda.Sacado == null)
-                return true;
+                return false;
 
             // Sacado diferente
-            if (!recebimento.Sacado.Equals(venda.Sacado))
+            if (recebimento.Sacado != null && venda.Sacado != null &&
+                !recebimento.Sacado.Trim().Equals("") && !recebimento.Sacado.Equals(venda.Sacado))
                 return true;
 
             // Número de parcelas diferente
@@ -72,8 +69,8 @@ namespace api.Models.Object
                 return true;
 
             // Adquirente diferente
-            if (!recebimento.Adquirente.Equals(venda.Adquirente))
-                return true;
+            //if (!recebimento.Adquirente.Equals(venda.Adquirente))
+            //    return true;
 
             // Não há divergências
             return false;

@@ -95,11 +95,14 @@ namespace api.Bibliotecas
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
-            if (_dbContext == null)
+            finally
             {
-                // Fecha conexão
-                _db.Database.Connection.Close();
-                _db.Dispose();
+                if (_dbContext == null)
+                {
+                    // Fecha conexão
+                    _db.Database.Connection.Close();
+                    _db.Dispose();
+                }
             }
         }
     }
