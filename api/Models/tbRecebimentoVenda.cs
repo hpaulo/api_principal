@@ -16,13 +16,16 @@ namespace api.Models
         public string nrCNPJ { get; set; } 
         public string nrNSU { get; set; } 
         public DateTime dtVenda { get; set; }
-        public int cdAdquirente { get; set; } 
+        public int? cdAdquirente { get; set; } 
         public string dsBandeira { get; set; }
         public decimal vlVenda { get; set; }
         public byte qtParcelas { get; set; }
         public string cdERP { get; set; }
         public string cdSacado { get; set; }
-        public virtual tbAdquirente tbAdquirente { get; set; }
+        public DateTime? dtAjuste { get; set; }
+        public bool flInsert { get; set; }
+        //public string cdERPPagamento { get; set; }
+        //public virtual tbAdquirente tbAdquirente { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual ICollection<Recebimento> Recebimentos { get; set; }
     }

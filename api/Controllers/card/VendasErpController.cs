@@ -58,7 +58,7 @@ namespace api.Controllers.Card
 
 
         // POST /VendasErp/token/
-        public HttpResponseMessage Post(string token, [FromBody]ImportacaoErp param)
+        public HttpResponseMessage Post(string token, [FromBody]ImportaVendas param)
         {
             // Abre nova conexão
             using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())

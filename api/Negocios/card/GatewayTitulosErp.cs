@@ -225,7 +225,7 @@ namespace api.Negocios.Card
         }
 
         // GET "titulos/consultatitulos"
-        public static void ImportaTitulos(string token, ImportacaoErp param, painel_taxservices_dbContext _dbContext = null)
+        public static void ImportaTitulos(string token, ImportaTitulos param, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();

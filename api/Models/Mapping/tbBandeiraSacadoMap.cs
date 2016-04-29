@@ -12,8 +12,8 @@ namespace api.Models.Mapping
 
             // Properties
             this.Property(t => t.cdSacado)
-                .IsRequired()
-                .HasMaxLength(10);
+                .HasMaxLength(10)
+                .IsRequired();
 
             // Table & Column Mappings
             this.ToTable("tbBandeiraSacado", "card");

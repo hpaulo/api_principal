@@ -20,8 +20,8 @@ namespace api.Models.Mapping
                 .HasMaxLength(30)
                 .IsRequired();
 
-            this.Property(t => t.cdAdquirente)
-                .IsRequired();
+            //this.Property(t => t.cdAdquirente)
+            //    .IsRequired();
 
             this.Property(t => t.dsBandeira)
                 .HasMaxLength(50);
@@ -36,10 +36,20 @@ namespace api.Models.Mapping
                 .IsRequired();
 
             this.Property(t => t.cdERP)
-                .HasMaxLength(15);
+                .HasMaxLength(15)
+                .IsRequired();
+
+            //this.Property(t => t.cdERPPagamento)
+            //    .HasMaxLength(15);
 
             this.Property(t => t.cdSacado)
                 .HasMaxLength(10);
+
+            this.Property(t => t.flInsert)
+                .IsRequired();
+
+            this.Property(t => t.cdAdquirente)
+                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
 
             // Table & Column Mappings
             this.ToTable("tbRecebimentoVenda", "card");
@@ -53,11 +63,14 @@ namespace api.Models.Mapping
             this.Property(t => t.qtParcelas).HasColumnName("qtParcelas");
             this.Property(t => t.cdERP).HasColumnName("cdERP");
             this.Property(t => t.cdSacado).HasColumnName("cdSacado");
+            this.Property(t => t.dtAjuste).HasColumnName("dtAjuste");
+            this.Property(t => t.flInsert).HasColumnName("flInsert");
+            //this.Property(t => t.cdERPPagamento).HasColumnName("cdERPPagamento");
 
             // Relationships
-            this.HasRequired(t => t.tbAdquirente)
-                .WithMany(t => t.tbRecebimentoVendas)
-                .HasForeignKey(d => d.cdAdquirente);
+            //this.HasOptional(t => t.tbAdquirente)
+            //    .WithMany(t => t.tbRecebimentoVendas)
+            //    .HasForeignKey(d => d.cdAdquirente);
             this.HasRequired(t => t.empresa)
                 .WithMany(t => t.tbRecebimentoVendas)
                 .HasForeignKey(d => d.nrCNPJ);

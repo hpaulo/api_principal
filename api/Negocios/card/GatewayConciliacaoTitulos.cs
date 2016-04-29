@@ -60,9 +60,9 @@ namespace api.Negocios.Card
         public static string TIPO_TITULO = "T";
         public static string TIPO_RECEBIMENTO = "R";
         // Pré-Conciliação
-        private const int RANGE_DIAS_ANTERIOR = 5;
+        private const int RANGE_DIAS_ANTERIOR = 8;
         private const int RANGE_DIAS_POSTERIOR = 5;
-        private static decimal TOLERANCIA = new decimal(0.1); // R$0,10 
+        private static decimal TOLERANCIA = new decimal(0.1); // R$0,10
 
 
         /// <summary>
