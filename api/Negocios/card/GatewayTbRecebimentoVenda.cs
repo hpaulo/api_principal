@@ -417,12 +417,13 @@ namespace api.Negocios.Card
                         nrCNPJ = e.nrCNPJ,
                         nrNSU = e.nrNSU,
                         dtVenda = e.dtVenda,
-                        //cdAdquirente = e.cdAdquirente,
+                        cdAdquirente = e.cdAdquirente,
                         dsBandeira = e.dsBandeira,
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
                         cdERP = e.cdERP,
                         cdSacado = e.cdSacado,
+                        //cdERPPagamento = e.cdERPPagamento,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -434,11 +435,12 @@ namespace api.Negocios.Card
                         nrCNPJ = e.nrCNPJ,
                         nrNSU = e.nrNSU,
                         dtVenda = e.dtVenda,
-                        //cdAdquirente = e.cdAdquirente,
+                        cdAdquirente = e.cdAdquirente,
                         dsBandeira = e.dsBandeira,
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
                         cdERP = e.cdERP,
+                        //cdERPPagamento = e.cdERPPagamento,
                         cdSacado = e.cdSacado,
                     }).ToList<dynamic>();
                 }
@@ -457,23 +459,24 @@ namespace api.Negocios.Card
                                               })
                                               .FirstOrDefault(),
                         dtVenda = e.dtVenda,
-                        //tbAdquirente = _db.tbAdquirentes.Where(a => a.cdAdquirente == e.cdAdquirente)
-                        //                                .Select(a => new
-                        //                                {
-                        //                                    a.cdAdquirente,
-                        //                                    a.nmAdquirente
-                        //                                })
-                        //                                .FirstOrDefault(),
-                        tbAdquirente = _db.tbBandeiraSacados.Where(t => t.cdSacado.Equals(e.cdSacado) && t.cdGrupo == e.empresa.id_grupo)
-                                                            .Select(t => new {
-                                                                cdAdquirente = t.tbBandeira.cdAdquirente, 
-                                                                nmAdquirente = t.tbBandeira.tbAdquirente.nmAdquirente
-                                                            })
-                                                            .FirstOrDefault(),
+                        tbAdquirente = _db.tbAdquirentes.Where(a => a.cdAdquirente == e.cdAdquirente)
+                                                        .Select(a => new
+                                                        {
+                                                            a.cdAdquirente,
+                                                            a.nmAdquirente
+                                                        })
+                                                        .FirstOrDefault(),
+                        //tbAdquirente = _db.tbBandeiraSacados.Where(t => t.cdSacado.Equals(e.cdSacado) && t.cdGrupo == e.empresa.id_grupo)
+                        //                                    .Select(t => new {
+                        //                                        cdAdquirente = t.tbBandeira.cdAdquirente, 
+                        //                                        nmAdquirente = t.tbBandeira.tbAdquirente.nmAdquirente
+                        //                                    })
+                        //                                    .FirstOrDefault(),
                         dsBandeira = e.dsBandeira,
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
                         cdERP = e.cdERP,
+                        //cdERPPagamento = e.cdERPPagamento,
                         cdSacado = e.cdSacado,
                         dtAjuste = e.dtAjuste,
                         conciliado = vendasConciliadas.Contains(e.idRecebimentoVenda)

@@ -56,6 +56,7 @@ namespace api.Negocios.Card
             PRE_CONCILIADO = 2,
             NAO_CONCILIADO = 3,
             CONCILIADO_DIVERGENTE = 4,
+            CONCILIADO_SEM_SACADO = 5,
         };
 
         public static string TIPO_VENDA = "V";
@@ -120,16 +121,12 @@ namespace api.Negocios.Card
         private static void adicionaElementosConciliadosNaLista(List<dynamic> listaConciliacao,
                                                      ConciliacaoVendas recebimento,
                                                      ConciliacaoVendas venda,
-                                                     TIPO_CONCILIADO tipo, bool filtroTipoConciliadoDivergente = false)
+                                                     TIPO_CONCILIADO tipo)
         {
             if (recebimento != null && venda != null)
             {
                 if (tipo.Equals(TIPO_CONCILIADO.CONCILIADO) && ConciliacaoVendas.possuiDivergenciasNaVenda(recebimento, venda))
-                {
                     tipo = TIPO_CONCILIADO.CONCILIADO_DIVERGENTE;
-                }
-                else if (filtroTipoConciliadoDivergente)
-                    return;
 
                 // Adiciona
                 listaConciliacao.Add(new
@@ -246,6 +243,7 @@ namespace api.Negocios.Card
                     bool filtroTipoPreConciliado = false;
                     bool filtroTipoNaoConciliado = false;
                     bool filtroTipoConciliadoDivergente = false;
+                    bool filtroTipoConciliadoSemSacado = false;
                     if (queryString.TryGetValue("" + (int)CAMPOS.TIPO, out outValue))
                     {
                         TIPO_CONCILIADO tipo = (TIPO_CONCILIADO)Convert.ToInt32(queryString["" + (int)CAMPOS.TIPO]);
@@ -253,6 +251,7 @@ namespace api.Negocios.Card
                         else if (tipo.Equals(TIPO_CONCILIADO.PRE_CONCILIADO)) filtroTipoPreConciliado = true;
                         else if (tipo.Equals(TIPO_CONCILIADO.NAO_CONCILIADO)) filtroTipoNaoConciliado = true;
                         else if (tipo.Equals(TIPO_CONCILIADO.CONCILIADO_DIVERGENTE)) filtroTipoConciliadoDivergente = true;
+                        else if (tipo.Equals(TIPO_CONCILIADO.CONCILIADO_SEM_SACADO)) filtroTipoConciliadoSemSacado = true;
                     }
 
 
@@ -313,16 +312,16 @@ namespace api.Negocios.Card
 
                         // TITULO
                         // Adiciona join com tbAdquirente, caso não exista
-                        //if (!dataBaseQueryVD.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
-                        //    dataBaseQueryVD.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdAdquirente");
+                        if (!dataBaseQueryVD.join.ContainsKey("LEFT JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                            dataBaseQueryVD.join.Add("LEFT JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdAdquirente");
                         if (!dataBaseQueryVD.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
                             dataBaseQueryVD.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrCNPJ = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
-                        if (!dataBaseQueryVD.join.ContainsKey("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY))
-                            dataBaseQueryVD.join.Add("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY, " ON " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdSacado = " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado AND " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdGrupo = " + GatewayEmpresa.SIGLA_QUERY + ".id_grupo");
-                        if (!dataBaseQueryVD.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
-                            dataBaseQueryVD.join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdBandeira");
-                        if (!dataBaseQueryVD.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
-                            dataBaseQueryVD.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
+                        //if (!dataBaseQueryVD.join.ContainsKey("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY))
+                        //    dataBaseQueryVD.join.Add("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY, " ON " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdSacado = " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado AND " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdGrupo = " + GatewayEmpresa.SIGLA_QUERY + ".id_grupo");
+                        //if (!dataBaseQueryVD.join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                        //    dataBaseQueryVD.join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdBandeira");
+                        //if (!dataBaseQueryVD.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                        //    dataBaseQueryVD.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
                         
 
                         dataBaseQueryVD.select = new string[] { GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda",
@@ -334,7 +333,16 @@ namespace api.Negocios.Card
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".qtParcelas",
                                                           GatewayEmpresa.SIGLA_QUERY + ".ds_fantasia",
                                                           GatewayEmpresa.SIGLA_QUERY + ".filial",
-                                                          GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",                                                         
+                                                          GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",  
+                                                          //"nmAdquirente = (SELECT A.nmAdquirente" + 
+                                                          //                " FROM card.tbAdquirente A (NOLOCK)" + 
+                                                          //                " WHERE A.cdAdquirente = (SELECT MAX(B.cdAdquirente)" + 
+                                                          //                                        " FROM card.tbBandeiraSacado BS (NOLOCK)" +
+                                                          //                                        " JOIN card.tbBandeira B (NOLOCK) ON B.cdBandeira = BS.cdBandeira" + 
+                                                          //                                        " WHERE BS.cdGrupo = " + GatewayEmpresa.SIGLA_QUERY + ".id_grupo" + 
+                                                          //                                        " AND BS.cdSacado = " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado" + 
+                                                          //                                        ")" +
+                                                          //                ")"
                                                         };
                         dataBaseQueryVD.groupby = null;
                         dataBaseQueryVD.readUncommited = true;
@@ -357,15 +365,23 @@ namespace api.Negocios.Card
                             if (!queryVdConciliados.join.ContainsKey("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
                                 queryVdConciliados.join.Add("INNER JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda = " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".idRecebimentoVenda");
 
-                            //if (filtroTipoConciliadoDivergente)
-                            //{
-                            //    queryVdConciliados.AddWhereClause(" CONVERT(VARCHAR(10), " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda, 120) <> " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dtVenda" +
-                            //                                      " OR (" + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdSacado IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado <> " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdSacado)" +
-                            //                                      " OR (" + GatewayRecebimento.SIGLA_QUERY + ".numParcelaTotal IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".qtParcelas <> " + GatewayRecebimento.SIGLA_QUERY + ".numParcelaTotal" +
-                            //                                      " OR " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".vlVenda <> " + GatewayRecebimento.SIGLA_QUERY + ".valorVendaBruta" +
-                            //                                      " OR SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayRecebimento.SIGLA_QUERY + ".nsu), LEN(" + GatewayRecebimento.SIGLA_QUERY + ".nsu) + 1, 12) <> SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU), LEN(" + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU) + 1, 12)"
-                            //                                      );
-                            //}
+                            if (filtroTipoConciliadoDivergente)
+                            {
+                                queryVdConciliados.join.Add("INNER JOIN cliente.empresa ER", " ON ER.nu_cnpj = " + GatewayRecebimento.SIGLA_QUERY + ".cnpj");
+                                queryVdConciliados.join.Add("LEFT JOIN card.tbBandeiraSacado BSR", " ON BSR.cdGrupo = ER.id_grupo AND BSR.cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
+                                queryVdConciliados.AddWhereClause(" CONVERT(VARCHAR(10), " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda, 120) <> " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dtVenda" +
+                                                                  " OR (" + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdAdquirente IS NOT NULL AND BSR.cdSacado IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado <> BSR.cdSacado)" +
+                                                                  " OR (" + GatewayRecebimento.SIGLA_QUERY + ".numParcelaTotal IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".qtParcelas <> " + GatewayRecebimento.SIGLA_QUERY + ".numParcelaTotal)" +
+                                                                  " OR " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".vlVenda <> " + GatewayRecebimento.SIGLA_QUERY + ".valorVendaBruta"
+                                                                  //" OR SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayRecebimento.SIGLA_QUERY + ".nsu), LEN(" + GatewayRecebimento.SIGLA_QUERY + ".nsu) + 1, 12) <> SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU), LEN(" + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU) + 1, 12)"
+                                                                  );
+                            }
+                            else if (filtroTipoConciliadoSemSacado)
+                            {
+                                queryVdConciliados.join.Add("INNER JOIN cliente.empresa ER", " ON ER.nu_cnpj = " + GatewayRecebimento.SIGLA_QUERY + ".cnpj");
+                                queryVdConciliados.join.Add("LEFT JOIN card.tbBandeiraSacado BSR", " ON BSR.cdGrupo = ER.id_grupo AND BSR.cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
+                                queryVdConciliados.AddWhereClause("BSR.cdSacado IS NULL OR " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado IS NULL OR " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdAdquirente IS NULL");
+                            }
 
                             //SimpleDataBaseQuery queryRbConciliados = new SimpleDataBaseQuery(dataBaseQueryRB);
                             //queryRbConciliados.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda IS NOT NULL");
@@ -410,7 +426,7 @@ namespace api.Negocios.Card
 
                             //totalConciliados = vendasConciliadas.Count;
 
-                            // Total Conciliados
+                            //// Total Conciliados
                             //retorno.TotalDeRegistros = totalConciliados;
 
                             // PAGINAÇÃO
@@ -521,7 +537,7 @@ namespace api.Negocios.Card
                                 //    continue; // falha!
 
                                 // Adiciona
-                                adicionaElementosConciliadosNaLista(CollectionConciliacaoVendas, recebimento, venda, TIPO_CONCILIADO.CONCILIADO, filtroTipoConciliadoDivergente);
+                                adicionaElementosConciliadosNaLista(CollectionConciliacaoVendas, recebimento, venda, TIPO_CONCILIADO.CONCILIADO);
                             }
 
                             // Total Conciliados
@@ -531,7 +547,7 @@ namespace api.Negocios.Card
                         }
 
                         // Só busca por possíveis conciliações se não tiver sido requisitado um filtro do tipo CONCILIADO
-                        if (!filtroTipoConciliado && !filtroTipoConciliadoDivergente)
+                        if (!filtroTipoConciliado && !filtroTipoConciliadoDivergente && !filtroTipoConciliadoSemSacado)
                         {
                             // NÃO CONCILIADOS
                             // Adiciona na cláusula where IDRECEBIMENTOVENDA IS NULL
@@ -822,11 +838,11 @@ namespace api.Negocios.Card
                         //                                                       " FROM pos.Recebimento R (NOLOCK)" +
                         //                                                       " JOIN card.tbBandeira B (NOLOCK) ON R.cdBandeira = B.cdBandeira" +
                         //                                                       " WHERE R.id = " + idRecebimento, connection);
-                        List<IDataRecord> resultado = DataBaseQueries.SqlQuery("SELECT V.nrCNPJ, B.cdAdquirente, V.vlVenda, V.dtVenda, V.qtParcelas, dsBandeira = CASE WHEN V.dsBandeira IS NULL THEN '' ELSE V.dsBandeira END" +
+                        List<IDataRecord> resultado = DataBaseQueries.SqlQuery("SELECT V.nrCNPJ, V.vlVenda, V.dtVenda, V.qtParcelas, dsBandeira = CASE WHEN V.dsBandeira IS NULL THEN '' ELSE V.dsBandeira END" + //, V.cdAdquirente
                                                                                " FROM card.tbRecebimentovenda V (NOLOCK)" +
-                                                                               " JOIN cliente.empresa E (NOLOCK) ON E.nu_cnpj = V.nrCNPJ" +
-                                                                               " LEFT JOIN card.tbBandeiraSacado BS ON BS.cdSacado = V.cdSacado AND E.id_grupo = BS.cdGrupo" +
-                                                                               " JOIN card.tbBandeira B ON B.cdBandeira = BS.cdBandeira" +
+                                                                               //" JOIN cliente.empresa E (NOLOCK) ON E.nu_cnpj = V.nrCNPJ" +
+                                                                               //" LEFT JOIN card.tbBandeiraSacado BS ON BS.cdSacado = V.cdSacado AND E.id_grupo = BS.cdGrupo" +
+                                                                               //" JOIN card.tbBandeira B ON B.cdBandeira = BS.cdBandeira" +
                                                                                " WHERE V.idRecebimentoVenda = " + idRecebimentoVenda, connection);
                         if (resultado == null || resultado.Count == 0)
                             throw new Exception("Recebimento inválido!");
@@ -834,7 +850,7 @@ namespace api.Negocios.Card
                         var venda = resultado.Select(r => new
                                             {
                                                 cnpj = Convert.ToString(r["nrCNPJ"]),
-                                                cdAdquirente = Convert.ToInt32(r["cdAdquirente"]),
+                                                //cdAdquirente = r["cdAdquirente"].Equals(DBNull.Value) ? (int?) null : Convert.ToInt32(r["cdAdquirente"]),
                                                 bandeira = Convert.ToString(r["dsBandeira"]),
                                                 valorVendaBruta = Convert.ToDecimal(r["vlVenda"]),
                                                 dtaVenda = (DateTime)r["dtVenda"],
@@ -856,7 +872,7 @@ namespace api.Negocios.Card
                         if (queryString.TryGetValue("" + (int)CAMPOS.NU_CNPJ, out outValue))
                             nrCNPJ = queryString["" + (int)CAMPOS.NU_CNPJ];
 
-                        int cdAdquirente = venda.cdAdquirente; // recebimento.Recebimento.tbBandeira.cdAdquirente
+                        //int? cdAdquirente = venda.cdAdquirente; // recebimento.Recebimento.tbBandeira.cdAdquirente
                         decimal valorVendaBruta = venda.valorVendaBruta;
                         int numParcelas = venda.numParcelaTotal;
                         //string bandeira = venda.bandeira.Substring(venda.bandeira.IndexOf("-") + 2).Trim(); // bandeira de pos.Recebimento => pega o que vem após o hífen

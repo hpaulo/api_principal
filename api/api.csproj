@@ -387,6 +387,7 @@
     <Compile Include="Models\Object\CorrigeVendaERP.cs" />
     <Compile Include="Models\Object\CorrigeVendasErp.cs" />
     <Compile Include="Models\Object\EmpresaAtualizar.cs" />
+    <Compile Include="Models\Object\ImportaVendas.cs" />
     <Compile Include="Models\Object\LogCargaValorSite.cs" />
     <Compile Include="Models\tbAntecipacaoBancaria.cs" />
     <Compile Include="Models\tbAntecipacaoBancariaDetalhe.cs" />

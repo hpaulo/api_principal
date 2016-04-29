@@ -39,11 +39,17 @@ namespace api.Models.Mapping
                 .HasMaxLength(15)
                 .IsRequired();
 
+            //this.Property(t => t.cdERPPagamento)
+            //    .HasMaxLength(15);
+
             this.Property(t => t.cdSacado)
                 .HasMaxLength(10);
 
             this.Property(t => t.flInsert)
                 .IsRequired();
+
+            this.Property(t => t.cdAdquirente)
+                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
 
             // Table & Column Mappings
             this.ToTable("tbRecebimentoVenda", "card");
@@ -51,7 +57,7 @@ namespace api.Models.Mapping
             this.Property(t => t.nrCNPJ).HasColumnName("nrCNPJ");
             this.Property(t => t.nrNSU).HasColumnName("nrNSU");
             this.Property(t => t.dtVenda).HasColumnName("dtVenda");
-            //this.Property(t => t.cdAdquirente).HasColumnName("cdAdquirente");
+            this.Property(t => t.cdAdquirente).HasColumnName("cdAdquirente");
             this.Property(t => t.dsBandeira).HasColumnName("dsBandeira");
             this.Property(t => t.vlVenda).HasColumnName("vlVenda");
             this.Property(t => t.qtParcelas).HasColumnName("qtParcelas");
@@ -59,9 +65,10 @@ namespace api.Models.Mapping
             this.Property(t => t.cdSacado).HasColumnName("cdSacado");
             this.Property(t => t.dtAjuste).HasColumnName("dtAjuste");
             this.Property(t => t.flInsert).HasColumnName("flInsert");
+            //this.Property(t => t.cdERPPagamento).HasColumnName("cdERPPagamento");
 
             // Relationships
-            //this.HasRequired(t => t.tbAdquirente)
+            //this.HasOptional(t => t.tbAdquirente)
             //    .WithMany(t => t.tbRecebimentoVendas)
             //    .HasForeignKey(d => d.cdAdquirente);
             this.HasRequired(t => t.empresa)

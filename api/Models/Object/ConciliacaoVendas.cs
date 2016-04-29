@@ -45,7 +45,9 @@ namespace api.Models.Object
 
             // Sacado diferente
             if (recebimento.Sacado != null && venda.Sacado != null &&
-                !recebimento.Sacado.Trim().Equals("") && !recebimento.Sacado.Equals(venda.Sacado))
+                !recebimento.Sacado.Trim().Equals("") &&
+                venda.Adquirente != null && !venda.Adquirente.Trim().Equals("") &&
+                !recebimento.Sacado.Equals(venda.Sacado))
                 return true;
 
             // Número de parcelas diferente
@@ -61,15 +63,11 @@ namespace api.Models.Object
                 return true;
 
             // NSU diferente
-            string nsuR = recebimento.Nsu;
-            string nsuV = venda.Nsu;
-            while (nsuR.Length < nsuV.Length) nsuR = "0" + nsuR;
-            while (nsuV.Length < nsuR.Length) nsuV = "0" + nsuV;
-            if (!nsuR.Equals(nsuV))
-                return true;
-
-            // Adquirente diferente
-            //if (!recebimento.Adquirente.Equals(venda.Adquirente))
+            //string nsuR = recebimento.Nsu;
+            //string nsuV = venda.Nsu;
+            //while (nsuR.Length < nsuV.Length) nsuR = "0" + nsuR;
+            //while (nsuV.Length < nsuR.Length) nsuV = "0" + nsuV;
+            //if (!nsuR.Equals(nsuV))
             //    return true;
 
             // Não há divergências

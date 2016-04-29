@@ -8,13 +8,11 @@ namespace api.Models.Mapping
         public tbBandeiraSacadoMap()
         {
             // Primary Key
-            this.HasKey(t => new { t.cdGrupo, t.cdSacado });
+            this.HasKey(t => new { t.cdGrupo, t.cdBandeira });
 
             // Properties
             this.Property(t => t.cdSacado)
-                .HasMaxLength(10);
-
-            this.Property(t => t.cdBandeira)
+                .HasMaxLength(10)
                 .IsRequired();
 
             // Table & Column Mappings

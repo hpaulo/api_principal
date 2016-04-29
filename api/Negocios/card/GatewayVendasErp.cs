@@ -45,20 +45,27 @@ namespace api.Negocios.Card
         {
             DATA = 100,
             ID_GRUPO = 101,
+            NRCNPJ = 102,
         };
 
         private readonly static string DOMINIO = System.Configuration.ConfigurationManager.AppSettings["DOMINIO"];
 
 
 
-        private static Retorno carregaVendas(painel_taxservices_dbContext _db, string token, string dsAPI, string data)
+        private static Retorno carregaVendas(painel_taxservices_dbContext _db, string token, string dsAPI, string data, string nrCNPJ)
         {
+            if (data == null)
+                return null;
+
             // Coloca a data no padrão de sql
             data = data.Substring(0, 4) + "-" + data.Substring(4, 2) + "-" + data.Substring(6, 2);
 
             string url = "http://" + dsAPI + DOMINIO;
             //string url = "http://localhost:50939";
             string complemento = "vendas/consultavendas/" + token + "?" + ("" + (int)CAMPOS.DATA) + "=" + data;
+
+            if(nrCNPJ != null)
+                complemento += "&" + ("" + (int)CAMPOS.NRCNPJ) + "=" + nrCNPJ;
 
 
             HttpClient client = new System.Net.Http.HttpClient();
@@ -117,6 +124,10 @@ namespace api.Negocios.Card
 
                 data = queryString["" + (int)CAMPOS.DATA];
 
+                string nrCNPJ = null;
+                if (queryString.TryGetValue("" + (int)CAMPOS.NRCNPJ, out outValue))
+                    nrCNPJ = queryString["" + (int)CAMPOS.NRCNPJ];
+
                 // GRUPO EMPRESA => OBRIGATÓRIO!
                 Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                 if (IdGrupo == 0 && queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
@@ -132,13 +143,13 @@ namespace api.Negocios.Card
                     throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
 
                 // Obtém as vendas
-                Retorno retorno = carregaVendas(_db, token, grupo_empresa.dsAPI, data);
+                Retorno retorno = carregaVendas(_db, token, grupo_empresa.dsAPI, data, nrCNPJ);
 
                 // Obtém os registros
                 List<dynamic> vendas = new List<dynamic>();
                 foreach (dynamic registro in retorno.Registros)
                 {
-                    string nrCNPJ = registro.nrCNPJ;
+                    nrCNPJ = registro.nrCNPJ;
                     Int32 cdAdquirente = Convert.ToInt32(registro.cdAdquirente);
 
                     var empresa = _db.empresas.Where(f => f.nu_cnpj.Equals(nrCNPJ)).Select(f => new
@@ -150,6 +161,12 @@ namespace api.Negocios.Card
                                                 }).FirstOrDefault();
 
                     string cdSacado = registro.cdSacado;
+                    //string cdERPPagamento = null;
+                    //try
+                    //{
+                    //    cdERPPagamento = registro.cdERPPagamento;
+                    //}
+                    //catch { }
 
                     vendas.Add(new
                     {
@@ -177,6 +194,7 @@ namespace api.Negocios.Card
                         vlVenda = registro.vlVenda,
                         qtParcelas = registro.qtParcelas,
                         cdERP = registro.cdERP,
+                        //cdERPPagamento = cdERPPagamento,
                         //dtCorrecaoERP = registro.dtCorrecaoERP,
                     });
                 }
@@ -235,7 +253,7 @@ namespace api.Negocios.Card
         }
 
         // GET "vendas/consultavendas"
-        public static void ImportaVendas(string token, ImportacaoErp param, painel_taxservices_dbContext _dbContext = null)
+        public static void ImportaVendas(string token, ImportaVendas param, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
@@ -258,7 +276,7 @@ namespace api.Negocios.Card
                     if (grupo_empresa.dsAPI == null || grupo_empresa.dsAPI.Equals(""))
                         throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
 
-                    Retorno retorno = carregaVendas(_db, token, grupo_empresa.dsAPI, param.data);
+                    Retorno retorno = carregaVendas(_db, token, grupo_empresa.dsAPI, param.data, param.nrCNPJ);
 
                     Semaphore semaforo = new Semaphore(0, 1);
 
@@ -330,6 +348,13 @@ namespace api.Negocios.Card
                         cdSacado = cdSacado.Trim();
                     }
                     catch { }
+                    //string cdERPPagamento = null;
+                    //try
+                    //{
+                    //    cdERPPagamento = vd.cdERPPagamento;
+                    //    cdERPPagamento = cdERPPagamento.Trim();
+                    //}
+                    //catch { }
                     if (cdSacado != null)
                     {
                         if (cdSacado.Equals(""))
@@ -353,21 +378,23 @@ namespace api.Negocios.Card
                         vlVenda = Convert.ToDecimal(vd.vlVenda),
                         cdSacado = cdSacado,
                         qtParcelas = Convert.ToByte(vd.qtParcelas),
+                        //cdERPPagamento = cdERPPagamento,
                     };
 
                     tbRecebimentoVenda venda = _db.Database.SqlQuery<tbRecebimentoVenda>("SELECT V.*" +
                                                                                          " FROM card.tbRecebimentoVenda V (NOLOCK)" +
                                                                                          " WHERE V.nrCNPJ = '" + tbRecebimentoVenda.nrCNPJ + "'" +
-                                                                                         //" AND V.nrNSU = '" + tbRecebimentoVenda.nrNSU + "'" +
+                                                                                         " AND V.nrNSU = '" + tbRecebimentoVenda.nrNSU + "'" +
                                                                                          " AND V.dtVenda = '" + DataBaseQueries.GetDate(tbRecebimentoVenda.dtVenda) + "'" +
                                                                                          " AND V.cdERP = '" + tbRecebimentoVenda.cdERP + "'"
+                                                                                         //" AND (V.cdERPPagamento IS NULL" + (cdERPPagamento == null ? "" : " OR V.cdERPPagamento = '" + tbRecebimentoVenda.cdERPPagamento + "'") + ")"
                                                                                         )
                                                              .FirstOrDefault();
 
                     if (venda == null)
                     {
                         _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoVenda" +
-                                                       " (nrCNPJ, nrNSU, cdERP, dtVenda, dsBandeira, vlVenda, qtParcelas, cdSacado)" +
+                                                       " (nrCNPJ, nrNSU, cdERP, dtVenda, dsBandeira, vlVenda, qtParcelas, cdSacado)" + //, cdERPPagamento)" +
                                                        " VALUES ('" + tbRecebimentoVenda.nrCNPJ + "'" +
                                                        ", '" + tbRecebimentoVenda.nrNSU + "'" +
                                                        ", '" +  tbRecebimentoVenda.cdERP + "'" +
@@ -377,16 +404,18 @@ namespace api.Negocios.Card
                                                        ", " + tbRecebimentoVenda.vlVenda.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", " + tbRecebimentoVenda.qtParcelas +
                                                        ", " + (tbRecebimentoVenda.cdSacado != null ? "'" + tbRecebimentoVenda.cdSacado + "'" : "NULL") +
+                                                       //", " + (tbRecebimentoVenda.cdERPPagamento != null ? "'" + tbRecebimentoVenda.cdERPPagamento + "'" : "NULL") +
                                                        ")");
                     }
                     else
                     {
                         _db.Database.ExecuteSqlCommand("UPDATE V" +
-                                                       " SET V.nrNSU = '" + tbRecebimentoVenda.nrNSU + "'" +
-                                                       ", V.dsBandeira = " + (tbRecebimentoVenda.dsBandeira == null ? "NULL" : "'" + tbRecebimentoVenda.dsBandeira + "'") +
+                                                       " SET V.dsBandeira = " + (tbRecebimentoVenda.dsBandeira == null ? "NULL" : "'" + tbRecebimentoVenda.dsBandeira + "'") +
+                                                       //", V.nrNSU = '" + tbRecebimentoVenda.nrNSU + "'" +
                                                        ", V.vlVenda = " + tbRecebimentoVenda.vlVenda.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", V.qtParcelas = " + tbRecebimentoVenda.qtParcelas +
                                                        ", V.cdSacado = " + (tbRecebimentoVenda.cdSacado != null ? "'" + tbRecebimentoVenda.cdSacado + "'" : "NULL") +
+                                                       //", V.cdERPPagamento = " + (tbRecebimentoVenda.cdERPPagamento != null ? "'" + tbRecebimentoVenda.cdERPPagamento + "'" : "NULL") +
                                                        " FROM card.tbRecebimentoVenda V" +
                                                        " WHERE V.idRecebimentoVenda = " + venda.idRecebimentoVenda);
 
