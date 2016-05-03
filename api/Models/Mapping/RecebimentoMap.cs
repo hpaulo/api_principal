@@ -48,6 +48,10 @@ namespace api.Models.Mapping
             this.Property(t => t.cdBandeira)
                 .IsRequired();
 
+            this.Property(t => t.cdSacado)
+                .HasMaxLength(10)
+                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
+
             // Table & Column Mappings
             this.ToTable("Recebimento", "pos");
             this.Property(t => t.id).HasColumnName("id");
@@ -69,6 +73,7 @@ namespace api.Models.Mapping
             this.Property(t => t.idResumoVenda).HasColumnName("idResumoVenda");
             this.Property(t => t.nrCartao).HasColumnName("nrCartao");
             this.Property(t => t.idRecebimentoVenda).HasColumnName("idRecebimentoVenda");
+            this.Property(t => t.cdSacado).HasColumnName("cdSacado");
 
             // Relationships
             this.HasRequired(t => t.empresa)

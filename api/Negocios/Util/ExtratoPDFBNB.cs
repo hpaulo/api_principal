@@ -204,7 +204,7 @@ namespace api.Negocios.Util
 
                             if (!tratamento)
                                 tratamento = true;
-                            else
+                            else if (transaction.Memo != null)
                             {
                                 tratamento = false;
                                 transaction.Memo = textTemp.Trim();

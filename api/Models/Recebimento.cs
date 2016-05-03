@@ -29,6 +29,7 @@ namespace api.Models
         public Nullable<int> idResumoVenda { get; set; }
         public string nrCartao { get; set; }
         public Nullable<int> idRecebimentoVenda { get; set; }
+        public string cdSacado { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual BandeiraPos BandeiraPos { get; set; }
         public virtual TerminalLogico TerminalLogico { get; set; }

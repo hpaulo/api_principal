@@ -226,6 +226,18 @@ namespace api.Negocios.Card
                         cdBandeira = e.cdBandeira,
                     }).ToList<dynamic>();
                 }
+                else if (colecao == 2)
+                {
+                    CollectionTbBandeiraSacado = query.Select(e => new
+                    {
+                        cdGrupo = e.cdGrupo,
+                        cdSacado = e.cdSacado,
+                        tbBandeira = new { 
+                                            e.cdBandeira, 
+                                            e.tbBandeira.dsBandeira 
+                                         }
+                    }).ToList<dynamic>();
+                }
 
                 transaction.Commit();
 
@@ -239,7 +251,7 @@ namespace api.Negocios.Card
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao realizar a baixa automática" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao consultar bandeira-sacado" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
@@ -263,21 +275,26 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
+                Int32 cdGrupo = Permissoes.GetIdGrupo(token, _db);
+
+                param.cdGrupo = cdGrupo;
+
                 _db.tbBandeiraSacados.Add(param);
                 _db.SaveChanges();
-                transaction.Commit();
+
+                //transaction.Commit();
                 return param.cdGrupo;
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao realizar a baixa automática" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao realizar adicionar bandeira-sacado" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
@@ -298,25 +315,25 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 cdGrupo, painel_taxservices_dbContext _dbContext = null)
+        public static void Delete(string token, Int32 cdGrupo, Int32 cdBandeira, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
-                _db.tbBandeiraSacados.Remove(_db.tbBandeiraSacados.Where(e => e.cdGrupo.Equals(cdGrupo)).First());
+                _db.tbBandeiraSacados.RemoveRange(_db.tbBandeiraSacados.Where(e => e.cdGrupo == cdGrupo && e.cdBandeira == cdBandeira));
                 _db.SaveChanges();
-                transaction.Commit();
+                //transaction.Commit();
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao realizar a baixa automática" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao remover bandeira-sacado" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
@@ -340,28 +357,32 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbBandeiraSacado value = _db.tbBandeiraSacados
-                                .Where(e => e.cdGrupo.Equals(param.cdGrupo))
+                                .Where(e => e.cdGrupo == param.cdGrupo)
+                                .Where(e => e.cdBandeira == param.cdBandeira)
                                 .First<tbBandeiraSacado>();
-                if (param.cdGrupo != null && param.cdGrupo != value.cdGrupo)
-                    value.cdGrupo = param.cdGrupo;
+
+                //if (param.cdGrupo != null && param.cdGrupo != value.cdGrupo)
+                //    value.cdGrupo = param.cdGrupo;
+                //if (param.cdBandeira != 0 && param.cdBandeira != value.cdBandeira)
+                //    value.cdBandeira = param.cdBandeira;
+
                 if (param.cdSacado != null && param.cdSacado != value.cdSacado)
                     value.cdSacado = param.cdSacado;
-                if (param.cdBandeira != null && param.cdBandeira != value.cdBandeira)
-                    value.cdBandeira = param.cdBandeira;
+                
                 _db.SaveChanges();
-                transaction.Commit();
+                //transaction.Commit();
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao realizar a baixa automática" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao atualizar bandeira-sacado" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }

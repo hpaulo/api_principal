@@ -63,12 +63,18 @@ namespace api.Models.Object
                 return true;
 
             // NSU diferente
-            //string nsuR = recebimento.Nsu;
-            //string nsuV = venda.Nsu;
-            //while (nsuR.Length < nsuV.Length) nsuR = "0" + nsuR;
-            //while (nsuV.Length < nsuR.Length) nsuV = "0" + nsuV;
-            //if (!nsuR.Equals(nsuV))
-            //    return true;
+            if (!recebimento.Adquirente.Equals("POLICARD") &&
+                !recebimento.Adquirente.Equals("GETNET") &&
+                !recebimento.Adquirente.Equals("VALECARD") &&
+                !recebimento.Adquirente.Equals("SODEXO"))
+            {
+                string nsuR = recebimento.Nsu;
+                string nsuV = venda.Nsu;
+                while (nsuR.Length < nsuV.Length) nsuR = "0" + nsuR;
+                while (nsuV.Length < nsuR.Length) nsuV = "0" + nsuV;
+                if (!nsuR.Equals(nsuV))
+                    return true;
+            }
 
             // Não há divergências
             return false;

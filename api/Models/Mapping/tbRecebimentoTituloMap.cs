@@ -17,7 +17,7 @@ namespace api.Models.Mapping
                 .IsRequired();
 
             this.Property(t => t.nrNSU)
-                .HasMaxLength(30)
+                .HasMaxLength(41)
                 .IsRequired();
 
             this.Property(t => t.cdAdquirente)
@@ -36,7 +36,7 @@ namespace api.Models.Mapping
                 .IsRequired();
 
             this.Property(t => t.cdERP)
-                .HasMaxLength(15);
+                .HasMaxLength(40);
 
             // Table & Column Mappings
             this.ToTable("tbRecebimentoTitulo", "card");

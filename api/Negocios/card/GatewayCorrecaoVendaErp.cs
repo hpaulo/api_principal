@@ -86,15 +86,15 @@ namespace api.Negocios.Card
                             " JOIN card.tbBandeira B (NOLOCK) ON B.cdBandeira = R.cdBandeira" +
                             " JOIN cliente.empresa ER (NOLOCK) ON ER.nu_cnpj = R.cnpj" +
                             " JOIN card.tbRecebimentoVenda V (NOLOCK) ON V.idRecebimentoVenda = R.idRecebimentoVenda" +
-                            " LEFT JOIN card.tbBandeiraSacado BS on	BS.cdGrupo = ER.id_grupo and BS.cdBandeira = R.cdBandeira" +
+                            //" LEFT JOIN card.tbBandeiraSacado BS on	BS.cdGrupo = ER.id_grupo and BS.cdBandeira = R.cdBandeira" +
                             " WHERE R.dtaVenda BETWEEN '" + DataBaseQueries.GetDate(dtIni) + "' AND '" + DataBaseQueries.GetDate(dtFim) + " 23:59:00'" +
                             (param.nrCNPJ != null ? " AND R.cnpj = '" + param.nrCNPJ + "'" : "") +
                             " AND (" +
                             " CONVERT(VARCHAR(10), R.dtaVenda, 120) <> V.dtVenda" +
-                            " OR (V.cdAdquirente IS NOT NULL AND BS.cdSacado IS NOT NULL AND V.cdSacado IS NOT NULL AND V.cdSacado <> BS.cdSacado)" +
+                            " OR (V.cdAdquirente IS NOT NULL AND R.cdSacado IS NOT NULL AND V.cdSacado IS NOT NULL AND V.cdSacado <> R.cdSacado)" +
                             " OR (R.numParcelaTotal IS NOT NULL AND V.qtParcelas <> R.numParcelaTotal)" +
                             " OR V.vlVenda <> R.valorVendaBruta" +
-                            //" OR SUBSTRING('000000000000' + CONVERT(VARCHAR(12), R.nsu), LEN(R.nsu) + 1, 12) <> SUBSTRING('000000000000' + CONVERT(VARCHAR(12), V.nrNSU), LEN(V.nrNSU) + 1, 12)" +
+                            " OR (B.cdAdquirente NOT IN (5, 6, 11, 14) AND SUBSTRING('000000000000' + CONVERT(VARCHAR(12), R.nsu), LEN(R.nsu) + 1, 12) <> SUBSTRING('000000000000' + CONVERT(VARCHAR(12), V.nrNSU), LEN(V.nrNSU) + 1, 12))" +
                             ")";
 
                     // Obtém os recebíveis conciliados com divergência que respeitam o filtro
@@ -112,16 +112,18 @@ namespace api.Negocios.Card
                     #region DESCOBRE AS VENDAS QUE PRECISAM SER CORRIGIDAS
                     script = "SELECT R.id" +
                             " FROM pos.Recebimento R (NOLOCK)" +
+                            " JOIN card.tbBandeira B (NOLOCK) ON B.cdBandeira = R.cdBandeira" +
                             " JOIN cliente.empresa ER (NOLOCK) ON ER.nu_cnpj = R.cnpj" +
                             " JOIN card.tbRecebimentoVenda V (NOLOCK) ON V.idRecebimentoVenda = R.idRecebimentoVenda" +
-                            " LEFT JOIN card.tbBandeiraSacado BS on	BS.cdGrupo = ER.id_grupo and BS.cdBandeira = R.cdBandeira" +
+                            //" LEFT JOIN card.tbBandeiraSacado BS on	BS.cdGrupo = ER.id_grupo and BS.cdBandeira = R.cdBandeira" +
                             " WHERE R.id IN (" + string.Join(", ", param.idsRecebimento) + ")" +
                             " AND (" +
                             " CONVERT(VARCHAR(10), R.dtaVenda, 120) <> V.dtVenda" +
-                            " OR (V.cdAdquirente IS NOT NULL AND BS.cdSacado IS NOT NULL AND V.cdSacado IS NOT NULL AND V.cdSacado <> BS.cdSacado)" +
+                            " OR (V.cdAdquirente IS NOT NULL AND R.cdSacado IS NOT NULL AND V.cdSacado IS NOT NULL AND V.cdSacado <> R.cdSacado)" +
                             " OR (R.numParcelaTotal IS NOT NULL AND V.qtParcelas <> R.numParcelaTotal)" +
                             " OR V.vlVenda <> R.valorVendaBruta" +
-                            //" OR SUBSTRING('000000000000' + CONVERT(VARCHAR(12), R.nsu), LEN(R.nsu) + 1, 12) <> SUBSTRING('000000000000' + CONVERT(VARCHAR(12), V.nrNSU), LEN(V.nrNSU) + 1, 12)" +
+                            // POLICARD, GETNET, SODEXO e VALECARD não trazem NSU do sitef
+                            " OR (B.cdAdquirente NOT IN (5, 6, 11, 14) AND SUBSTRING('000000000000' + CONVERT(VARCHAR(12), R.nsu), LEN(R.nsu) + 1, 12) <> SUBSTRING('000000000000' + CONVERT(VARCHAR(12), V.nrNSU), LEN(V.nrNSU) + 1, 12))" +
                             ")";
                     param.idsRecebimento = _db.Database.SqlQuery<int>(script).ToList();
                     #endregion
@@ -362,7 +364,7 @@ namespace api.Negocios.Card
                                       Environment.NewLine + Environment.NewLine;
                         }
 
-                        throw new Exception("Vendas corrigidas que precisam ter duplicatas inseridas no sistema: " + 
+                        throw new Exception("Vendas corrigidas que precisam ser corrigidas manualmente no sistema do cliente: " + 
                                             Environment.NewLine + Environment.NewLine + result);
                     }
                 }
