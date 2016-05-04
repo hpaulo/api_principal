@@ -285,15 +285,16 @@ namespace api.Negocios.Card
                             dataBaseQueryRB.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente");
                         if (!dataBaseQueryRB.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
                             dataBaseQueryRB.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".cnpj = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
-                        if (!dataBaseQueryRB.join.ContainsKey("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY))
-                            dataBaseQueryRB.join.Add("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY, " ON " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira AND " +  GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdGrupo = " + GatewayEmpresa.SIGLA_QUERY + ".id_grupo");
+                        //if (!dataBaseQueryRB.join.ContainsKey("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY))
+                        //    dataBaseQueryRB.join.Add("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY, " ON " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira AND " +  GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdGrupo = " + GatewayEmpresa.SIGLA_QUERY + ".id_grupo");
 
                         dataBaseQueryRB.select = new string[] { GatewayRecebimento.SIGLA_QUERY + ".id as idRecebimento",
                                                           GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda",
                                                           GatewayRecebimento.SIGLA_QUERY + ".nsu",
                                                           GatewayRecebimento.SIGLA_QUERY + ".codResumoVenda",
                                                           //GatewayTbBandeira.SIGLA_QUERY + ".cdSacado",
-                                                          GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdSacado",
+                                                          //GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdSacado",
+                                                          GatewayRecebimento.SIGLA_QUERY + ".cdSacado",
                                                           GatewayTbBandeira.SIGLA_QUERY + ".dsBandeira",
                                                           GatewayRecebimento.SIGLA_QUERY + ".dtaVenda",
                                                           GatewayRecebimento.SIGLA_QUERY + ".valorVendaBruta",
@@ -367,13 +368,14 @@ namespace api.Negocios.Card
 
                             if (filtroTipoConciliadoDivergente)
                             {
+                                queryVdConciliados.join.Add("INNER JOIN card.tbBandeira BR", " ON BR.cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
                                 queryVdConciliados.join.Add("INNER JOIN cliente.empresa ER", " ON ER.nu_cnpj = " + GatewayRecebimento.SIGLA_QUERY + ".cnpj");
-                                queryVdConciliados.join.Add("LEFT JOIN card.tbBandeiraSacado BSR", " ON BSR.cdGrupo = ER.id_grupo AND BSR.cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
+                                //queryVdConciliados.join.Add("LEFT JOIN card.tbBandeiraSacado BSR", " ON BSR.cdGrupo = ER.id_grupo AND BSR.cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
                                 queryVdConciliados.AddWhereClause(" CONVERT(VARCHAR(10), " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda, 120) <> " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dtVenda" +
-                                                                  " OR (" + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdAdquirente IS NOT NULL AND BSR.cdSacado IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado <> BSR.cdSacado)" +
+                                                                  " OR (" + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdAdquirente IS NOT NULL AND " + GatewayRecebimento.SIGLA_QUERY + ".cdSacado IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado <> " + GatewayRecebimento.SIGLA_QUERY + ".cdSacado)" +
                                                                   " OR (" + GatewayRecebimento.SIGLA_QUERY + ".numParcelaTotal IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".qtParcelas <> " + GatewayRecebimento.SIGLA_QUERY + ".numParcelaTotal)" +
-                                                                  " OR " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".vlVenda <> " + GatewayRecebimento.SIGLA_QUERY + ".valorVendaBruta"
-                                                                  //" OR SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayRecebimento.SIGLA_QUERY + ".nsu), LEN(" + GatewayRecebimento.SIGLA_QUERY + ".nsu) + 1, 12) <> SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU), LEN(" + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU) + 1, 12)"
+                                                                  " OR " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".vlVenda <> " + GatewayRecebimento.SIGLA_QUERY + ".valorVendaBruta" +
+                                                                  " OR (BR.cdAdquirente NOT IN (5, 6, 11, 14) AND SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayRecebimento.SIGLA_QUERY + ".nsu), LEN(" + GatewayRecebimento.SIGLA_QUERY + ".nsu) + 1, 12) <> SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU), LEN(" + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".nrNSU) + 1, 12))"
                                                                   );
                             }
                             else if (filtroTipoConciliadoSemSacado)
