@@ -349,7 +349,7 @@ namespace api.Negocios.Card
                          " FROM pos.Recebimento R (NOLOCK)" +
                          " JOIN card.tbRecebimentoVenda V ON R.idRecebimentoVenda = V.idRecebimentoVenda" +
                          " WHERE R.id IN (" + idsRecebimento + ")" +
-                         " AND V.flInsert = 1";
+                         " AND V.dsMensagem IS NOT NULL";
                 try
                 {
                     tbRecebimentoVenda[] vendas = _db.Database.SqlQuery<tbRecebimentoVenda>(script).ToArray();
@@ -359,8 +359,10 @@ namespace api.Negocios.Card
                         foreach (tbRecebimentoVenda venda in vendas)
                         {
                             result += "NSU: " + venda.nrNSU + Environment.NewLine +
+                                      (venda.cdSacado != null ? "Sacado : " + venda.cdSacado + Environment.NewLine : "") +
                                       "Valor: " + venda.vlVenda.ToString("C") + Environment.NewLine +
                                       "Parcelas: " + venda.qtParcelas + Environment.NewLine + 
+                                      "Mensagem: '" + venda.dsMensagem + "'" +
                                       Environment.NewLine + Environment.NewLine;
                         }
 
@@ -368,9 +370,11 @@ namespace api.Negocios.Card
                                             Environment.NewLine + Environment.NewLine + result);
                     }
                 }
-                catch
+                catch(Exception e)
                 {
-                    //throw new Exception("Falha de comunicação com o servidor");
+                    if(e.Message.StartsWith("Vendas corrigidas que precisam ser corrigidas manualmente"))
+                        throw new Exception(e.Message);
+                    throw new Exception("Falha de comunicação com o servidor");
                 }
 
             }

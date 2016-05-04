@@ -33,9 +33,9 @@ namespace api.Negocios.Card
         public enum CAMPOS
         {
             CDGRUPO = 100,
-            CDSACADO = 101,
-            CDBANDEIRA = 102,
-
+            CDBANDEIRA = 101,
+            QTPARCELAS = 102,
+            CDSACADO = 103,
         };
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace api.Negocios.Card
                 {
                     case CAMPOS.CDGRUPO:
                         Int32 cdGrupo = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdGrupo.Equals(cdGrupo)).AsQueryable<tbBandeiraSacado>();
+                        entity = entity.Where(e => e.cdGrupo == cdGrupo).AsQueryable<tbBandeiraSacado>();
                         break;
                     case CAMPOS.CDSACADO:
                         string cdSacado = Convert.ToString(item.Value);
@@ -72,7 +72,11 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDBANDEIRA:
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdBandeira.Equals(cdBandeira)).AsQueryable<tbBandeiraSacado>();
+                        entity = entity.Where(e => e.cdBandeira == cdBandeira).AsQueryable<tbBandeiraSacado>();
+                        break;
+                    case CAMPOS.QTPARCELAS:
+                        byte qtParcelas = Convert.ToByte(item.Value);
+                        entity = entity.Where(e => e.qtParcelas == qtParcelas).AsQueryable<tbBandeiraSacado>();
                         break;
                 }
             }
@@ -94,6 +98,10 @@ namespace api.Negocios.Card
                 case CAMPOS.CDBANDEIRA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.cdBandeira).AsQueryable<tbBandeiraSacado>();
                     else entity = entity.OrderByDescending(e => e.cdBandeira).AsQueryable<tbBandeiraSacado>();
+                    break;
+                case CAMPOS.QTPARCELAS:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.qtParcelas).AsQueryable<tbBandeiraSacado>();
+                    else entity = entity.OrderByDescending(e => e.qtParcelas).AsQueryable<tbBandeiraSacado>();
                     break;
             }
             #endregion
@@ -140,6 +148,10 @@ namespace api.Negocios.Card
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
                         where.Add(SIGLA_QUERY + ".cdBandeira = " + cdBandeira);
                         break;
+                    case CAMPOS.QTPARCELAS:
+                        byte qtParcelas = Convert.ToByte(item.Value);
+                        where.Add(SIGLA_QUERY + ".qtParcelas = " + qtParcelas);
+                        break;
                 }
             }
             #endregion
@@ -160,6 +172,10 @@ namespace api.Negocios.Card
                 case CAMPOS.CDBANDEIRA:
                     if (orderby == 0) order.Add(SIGLA_QUERY + ".cdBandeira ASC");
                     else order.Add(SIGLA_QUERY + ".cdBandeira DESC");
+                    break;
+                case CAMPOS.QTPARCELAS:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".qtParcelas ASC");
+                    else order.Add(SIGLA_QUERY + ".qtParcelas DESC");
                     break;
             }
             #endregion
@@ -183,6 +199,17 @@ namespace api.Negocios.Card
             DbContextTransaction transaction = _db.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
             try
             {
+                // Implementar o filtro por Grupo apartir do TOKEN do Usuário
+                string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.CDGRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.CDGRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.CDGRUPO, IdGrupo.ToString());
+                }
+
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbBandeiraSacado = new List<dynamic>();
                 Retorno retorno = new Retorno();
@@ -214,6 +241,7 @@ namespace api.Negocios.Card
                         cdGrupo = e.cdGrupo,
                         cdSacado = e.cdSacado,
                         cdBandeira = e.cdBandeira,
+                        qtParcelas = e.qtParcelas,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -224,6 +252,7 @@ namespace api.Negocios.Card
                         cdGrupo = e.cdGrupo,
                         cdSacado = e.cdSacado,
                         cdBandeira = e.cdBandeira,
+                        qtParcelas = e.qtParcelas,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2)
@@ -232,6 +261,7 @@ namespace api.Negocios.Card
                     {
                         cdGrupo = e.cdGrupo,
                         cdSacado = e.cdSacado,
+                        qtParcelas = e.qtParcelas,
                         tbBandeira = new { 
                                             e.cdBandeira, 
                                             e.tbBandeira.dsBandeira 
@@ -279,8 +309,18 @@ namespace api.Negocios.Card
             try
             {
                 Int32 cdGrupo = Permissoes.GetIdGrupo(token, _db);
+                if(cdGrupo != 0)
+                    param.cdGrupo = cdGrupo;
 
-                param.cdGrupo = cdGrupo;
+                // Consulta bandeira
+                tbBandeira tbBandeira = _db.tbBandeiras.Where(t => t.cdBandeira == param.cdBandeira).FirstOrDefault();
+                if (tbBandeira == null)
+                    throw new Exception("Bandeira inexistente!");
+
+                if (tbBandeira.dsTipo.StartsWith("DÉBITO"))
+                    param.qtParcelas = 0;
+                else if (param.qtParcelas == 0)
+                    param.qtParcelas = 36; // default
 
                 _db.tbBandeiraSacados.Add(param);
                 _db.SaveChanges();
@@ -294,7 +334,7 @@ namespace api.Negocios.Card
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
-                    throw new Exception(erro.Equals("") ? "Falha ao realizar adicionar bandeira-sacado" : erro);
+                    throw new Exception(erro.Equals("") ? "Falha ao adicionar bandeira-sacado" : erro);
                 }
                 throw new Exception(e.InnerException == null ? e.Message : e.InnerException.InnerException == null ? e.InnerException.Message : e.InnerException.InnerException.Message);
             }
@@ -315,7 +355,7 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, Int32 cdGrupo, Int32 cdBandeira, painel_taxservices_dbContext _dbContext = null)
+        public static void Delete(string token, Int32 cdGrupo, Int32 cdBandeira, byte qtParcelas, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
@@ -323,7 +363,7 @@ namespace api.Negocios.Card
             //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
-                _db.tbBandeiraSacados.RemoveRange(_db.tbBandeiraSacados.Where(e => e.cdGrupo == cdGrupo && e.cdBandeira == cdBandeira));
+                _db.tbBandeiraSacados.RemoveRange(_db.tbBandeiraSacados.Where(e => e.cdGrupo == cdGrupo && e.cdBandeira == cdBandeira && e.qtParcelas == qtParcelas));
                 _db.SaveChanges();
                 //transaction.Commit();
             }
@@ -363,14 +403,28 @@ namespace api.Negocios.Card
                 tbBandeiraSacado value = _db.tbBandeiraSacados
                                 .Where(e => e.cdGrupo == param.cdGrupo)
                                 .Where(e => e.cdBandeira == param.cdBandeira)
+                                .Where(e => e.qtParcelas == param.qtParcelas)
                                 .First<tbBandeiraSacado>();
 
                 //if (param.cdGrupo != null && param.cdGrupo != value.cdGrupo)
                 //    value.cdGrupo = param.cdGrupo;
-                //if (param.cdBandeira != 0 && param.cdBandeira != value.cdBandeira)
-                //    value.cdBandeira = param.cdBandeira;
+                if (param.cdBandeira != value.cdBandeira)
+                    value.cdBandeira = param.cdBandeira;
+                if (param.cdBandeira != value.cdBandeira)
+                {
+                    // Consulta bandeira
+                    tbBandeira tbBandeira = _db.tbBandeiras.Where(t => t.cdBandeira == param.cdBandeira).FirstOrDefault();
+                    if (tbBandeira == null)
+                        throw new Exception("Bandeira inexistente!");
 
-                if (param.cdSacado != null && param.cdSacado != value.cdSacado)
+                    if (tbBandeira.dsTipo.StartsWith("DÉBITO"))
+                        value.qtParcelas = 0;
+                    else if (param.qtParcelas == 0)
+                        value.qtParcelas = 36; // default
+                    else
+                        value.qtParcelas = param.qtParcelas;
+                }
+                if (param.cdSacado != null && !param.cdSacado.Equals(value.cdSacado))
                     value.cdSacado = param.cdSacado;
                 
                 _db.SaveChanges();
