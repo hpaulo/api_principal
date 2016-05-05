@@ -26,7 +26,7 @@ namespace api.Models.Mapping
                 .HasMaxLength(8);
 
             // Table & Column Mappings
-            this.ToTable("webpages_Users");
+            this.ToTable("webpages_Users", "dbo");
             this.Property(t => t.id_users).HasColumnName("id_users");
             this.Property(t => t.ds_login).HasColumnName("ds_login");
             this.Property(t => t.ds_email).HasColumnName("ds_email");
