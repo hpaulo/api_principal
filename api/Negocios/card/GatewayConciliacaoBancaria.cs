@@ -2680,15 +2680,13 @@ namespace api.Negocios.Card
                     catch { }
                 }
 
-                transaction.Commit();
-
                 // Ordena
                 CollectionConciliacaoBancaria = CollectionConciliacaoBancaria
                                                                 .OrderBy(c => c.Data.Year)
                                                                 .ThenBy(c => c.Data.Month)
                                                                 .ThenBy(c => c.Data.Day)
                                                                 .ThenBy(c => c.RecebimentosParcela != null ? c.ValorTotalRecebimento : c.ValorTotalExtrato)
-                                                                .ThenByDescending(c => c.Adquirente)
+                                                                //.ThenByDescending(c => c.AdquirenteRecebimento)
                                                                 .ThenByDescending(c => c.Bandeira)
                                                                 .ToList<dynamic>();
 
@@ -2711,6 +2709,8 @@ namespace api.Negocios.Card
                 retorno.ItensPorPagina = pageSize;
 
                 retorno.Registros = CollectionConciliacaoBancaria;
+
+                transaction.Commit();
 
                 return retorno;
             }

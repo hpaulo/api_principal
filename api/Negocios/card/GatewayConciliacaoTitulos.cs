@@ -564,12 +564,14 @@ namespace api.Negocios.Card
 
                                     DateTime dataIni = recebParcela.Data.AddDays(RANGE_DIAS_ANTERIOR * -1);
                                     DateTime dataFim = recebParcela.Data.AddDays(RANGE_DIAS_POSTERIOR);
-                                    string nsu = "" + Convert.ToInt32(recebParcela.Nsu);
+                                    //string nsu = "" + Convert.ToInt32(recebParcela.Nsu);
 
                                     SimpleDataBaseQuery queryTINaoConciliado = new SimpleDataBaseQuery(dataBaseQueryTI);
 
                                     // WHERE
                                     queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtTitulo BETWEEN '" + DataBaseQueries.GetDate(dataIni) + "' AND '" + DataBaseQueries.GetDate(dataFim) + " 23:59:00'");
+                                    // Número da parcela igual
+                                    queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrParcela IN (" + (recebParcela.NumParcela == 0 ? "0, 1" : recebParcela.NumParcela.ToString()) + ")");
                                     if (idsPreConciliados.Count > 0)
                                         queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".idRecebimentoTitulo NOT IN (" + string.Join(", ", idsPreConciliados) + ")");
 
@@ -582,7 +584,7 @@ namespace api.Negocios.Card
                                     {
                                         // Tenta usando a NSU
                                         SimpleDataBaseQuery queryTINaoConciliadoNSU = new SimpleDataBaseQuery(queryTINaoConciliado);
-                                        queryTINaoConciliadoNSU.AddWhereClause("SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nsu), LEN(" + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nsu) + 1, 12) = SUBSTRING('000000000000' + CONVERT(VARCHAR(12), '" + recebParcela.Nsu + "'), LEN('" + recebParcela.Nsu + "') + 1, 12)");
+                                        queryTINaoConciliadoNSU.AddWhereClause("SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrNSU), LEN(" + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrNSU) + 1, 12) = SUBSTRING('000000000000' + CONVERT(VARCHAR(12), '" + recebParcela.Nsu + "'), LEN('" + recebParcela.Nsu + "') + 1, 12)");
                                         //queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrNSU LIKE '%" + nsu + "'");
                                         
                                         // Para cada tbRecebimentoVenda, procurar
@@ -599,8 +601,6 @@ namespace api.Negocios.Card
                                         // Sacado igual
                                         //if (recebParcela.Sacado != null && !recebParcela.Sacado.Trim().Equals(""))
                                         //    queryTINaoConciliadoParVal.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdSacado IS NOT NULL AND " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdSacado = '" + recebParcela.Sacado + "'");
-                                        // Número da parcela igual
-                                        queryTINaoConciliadoParVal.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".qtParcelas IN (" + (recebParcela.NumParcela == 0 ? "0, 1" : recebParcela.NumParcela.ToString()) + ")");
                                         // Valor da venda igual
                                         queryTINaoConciliadoParVal.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlVenda = " + recebParcela.ValorVenda.Value.ToString(CultureInfo.GetCultureInfo("en-GB")));
 
