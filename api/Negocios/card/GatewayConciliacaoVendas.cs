@@ -92,6 +92,7 @@ namespace api.Negocios.Card
                         Filial = item.Filial.Trim(),
                         Parcelas = item.Parcelas,
                         Adquirente = item.Adquirente,
+                        DataCorrecao = item.DataCorrecao,
                     },
                     Recebimento = item.Tipo != TIPO_RECEBIMENTO ? null : new
                     {
@@ -143,6 +144,7 @@ namespace api.Negocios.Card
                         Filial = venda.Filial.Trim(),
                         Parcelas = venda.Parcelas,
                         Adquirente = venda.Adquirente,
+                        DataCorrecao = venda.DataCorrecao,
                     },
                     Recebimento = new
                     {
@@ -332,6 +334,7 @@ namespace api.Negocios.Card
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dtVenda",
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".vlVenda",
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".qtParcelas",
+                                                          GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dtAjuste",
                                                           GatewayEmpresa.SIGLA_QUERY + ".ds_fantasia",
                                                           GatewayEmpresa.SIGLA_QUERY + ".filial",
                                                           GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",  
@@ -371,6 +374,7 @@ namespace api.Negocios.Card
                                 queryVdConciliados.join.Add("INNER JOIN card.tbBandeira BR", " ON BR.cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
                                 queryVdConciliados.join.Add("INNER JOIN cliente.empresa ER", " ON ER.nu_cnpj = " + GatewayRecebimento.SIGLA_QUERY + ".cnpj");
                                 //queryVdConciliados.join.Add("LEFT JOIN card.tbBandeiraSacado BSR", " ON BSR.cdGrupo = ER.id_grupo AND BSR.cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
+                                queryVdConciliados.AddWhereClause(GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dtAjuste IS NULL");
                                 queryVdConciliados.AddWhereClause(" CONVERT(VARCHAR(10), " + GatewayRecebimento.SIGLA_QUERY + ".dtaVenda, 120) <> " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dtVenda" +
                                                                   " OR (" + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdAdquirente IS NOT NULL AND " + GatewayRecebimento.SIGLA_QUERY + ".cdSacado IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado <> " + GatewayRecebimento.SIGLA_QUERY + ".cdSacado)" +
                                                                   " OR (" + GatewayRecebimento.SIGLA_QUERY + ".numParcelaTotal IS NOT NULL AND " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".qtParcelas <> " + GatewayRecebimento.SIGLA_QUERY + ".numParcelaTotal)" +
@@ -380,9 +384,9 @@ namespace api.Negocios.Card
                             }
                             else if (filtroTipoConciliadoSemSacado)
                             {
-                                queryVdConciliados.join.Add("INNER JOIN cliente.empresa ER", " ON ER.nu_cnpj = " + GatewayRecebimento.SIGLA_QUERY + ".cnpj");
-                                queryVdConciliados.join.Add("LEFT JOIN card.tbBandeiraSacado BSR", " ON BSR.cdGrupo = ER.id_grupo AND BSR.cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
-                                queryVdConciliados.AddWhereClause("BSR.cdSacado IS NULL OR " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado IS NULL OR " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdAdquirente IS NULL");
+                                //queryVdConciliados.join.Add("INNER JOIN cliente.empresa ER", " ON ER.nu_cnpj = " + GatewayRecebimento.SIGLA_QUERY + ".cnpj");
+                                //queryVdConciliados.join.Add("LEFT JOIN card.tbBandeiraSacado BSR", " ON BSR.cdGrupo = ER.id_grupo AND BSR.cdBandeira = " + GatewayRecebimento.SIGLA_QUERY + ".cdBandeira");
+                                queryVdConciliados.AddWhereClause(GatewayRecebimento.SIGLA_QUERY + ".cdSacado IS NULL OR " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdSacado IS NULL OR " + GatewayTbRecebimentoVenda.SIGLA_QUERY + ".cdAdquirente IS NULL");
                             }
 
                             //SimpleDataBaseQuery queryRbConciliados = new SimpleDataBaseQuery(dataBaseQueryRB);
@@ -409,6 +413,7 @@ namespace api.Negocios.Card
                                                                 Valor = Convert.ToDecimal(r["vlVenda"]),
                                                                 Adquirente = Convert.ToString(r["nmAdquirente"].Equals(DBNull.Value) ? "" : r["nmAdquirente"]).ToUpper(),
                                                                 Parcelas = Convert.ToInt32(r["qtParcelas"]),
+                                                                DataCorrecao = r["dtAjuste"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)r["dtAjuste"],
                                                             }).ToList<ConciliacaoVendas>();
                             }
 
@@ -507,6 +512,7 @@ namespace api.Negocios.Card
                                                                 Valor = Convert.ToDecimal(r["vlVenda"]),
                                                                 Adquirente = Convert.ToString(r["nmAdquirente"].Equals(DBNull.Value) ? "" : r["nmAdquirente"]).ToUpper(),
                                                                 Parcelas = Convert.ToInt32(r["qtParcelas"]),
+                                                                DataCorrecao = r["dtAjuste"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)r["dtAjuste"],
                                                             }).ToList<ConciliacaoVendas>();
                             }
 
@@ -650,7 +656,7 @@ namespace api.Negocios.Card
                                             //{
                                             //    // Elimina por quantidade de parcelas
                                             //    List<ConciliacaoVendas> rbParcelas = recebimentos.Where(e => e.Parcelas == venda.Parcelas).ToList<ConciliacaoVendas>();
-                                            //    if(rbParcelas.Count == 1)
+                                            //    if (rbParcelas.Count == 1)
                                             //        rbPreConciliado = rbParcelas.First();
                                             //}
                                         }

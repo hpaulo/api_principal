@@ -89,7 +89,7 @@ namespace api.Negocios.Card
                             //" LEFT JOIN card.tbBandeiraSacado BS on	BS.cdGrupo = ER.id_grupo and BS.cdBandeira = R.cdBandeira" +
                             " WHERE R.dtaVenda BETWEEN '" + DataBaseQueries.GetDate(dtIni) + "' AND '" + DataBaseQueries.GetDate(dtFim) + " 23:59:00'" +
                             (param.nrCNPJ != null ? " AND R.cnpj = '" + param.nrCNPJ + "'" : "") +
-                            " AND (" +
+                            " AND V.dtAjuste IS NULL AND (" +
                             " CONVERT(VARCHAR(10), R.dtaVenda, 120) <> V.dtVenda" +
                             " OR (V.cdAdquirente IS NOT NULL AND R.cdSacado IS NOT NULL AND V.cdSacado IS NOT NULL AND V.cdSacado <> R.cdSacado)" +
                             " OR (R.numParcelaTotal IS NOT NULL AND V.qtParcelas <> R.numParcelaTotal)" +
@@ -117,7 +117,7 @@ namespace api.Negocios.Card
                             " JOIN card.tbRecebimentoVenda V (NOLOCK) ON V.idRecebimentoVenda = R.idRecebimentoVenda" +
                             //" LEFT JOIN card.tbBandeiraSacado BS on	BS.cdGrupo = ER.id_grupo and BS.cdBandeira = R.cdBandeira" +
                             " WHERE R.id IN (" + string.Join(", ", param.idsRecebimento) + ")" +
-                            " AND (" +
+                            " AND V.dtAjuste IS NULL AND (" +
                             " CONVERT(VARCHAR(10), R.dtaVenda, 120) <> V.dtVenda" +
                             " OR (V.cdAdquirente IS NOT NULL AND R.cdSacado IS NOT NULL AND V.cdSacado IS NOT NULL AND V.cdSacado <> R.cdSacado)" +
                             " OR (R.numParcelaTotal IS NOT NULL AND V.qtParcelas <> R.numParcelaTotal)" +
@@ -356,18 +356,28 @@ namespace api.Negocios.Card
                     if (vendas.Length > 0)
                     {
                         string result = String.Empty;
-                        foreach (tbRecebimentoVenda venda in vendas)
-                        {
-                            result += "NSU: " + venda.nrNSU + Environment.NewLine +
-                                      (venda.cdSacado != null ? "Sacado : " + venda.cdSacado + Environment.NewLine : "") +
-                                      "Valor: " + venda.vlVenda.ToString("C") + Environment.NewLine +
-                                      "Parcelas: " + venda.qtParcelas + Environment.NewLine + 
-                                      "Mensagem: '" + venda.dsMensagem + "'" +
-                                      Environment.NewLine + Environment.NewLine;
-                        }
+                        //foreach (tbRecebimentoVenda venda in vendas)
+                        //{
+                        //    result += "NSU: " + venda.nrNSU + Environment.NewLine +
+                        //              (venda.cdSacado != null ? "Sacado : " + venda.cdSacado + Environment.NewLine : "") +
+                        //              "Valor: " + venda.vlVenda.ToString("C") + Environment.NewLine +
+                        //              "Parcelas: " + venda.qtParcelas + Environment.NewLine + 
+                        //              "Mensagem: '" + venda.dsMensagem + "'" +
+                        //              Environment.NewLine + Environment.NewLine;
+                        //}
+                        //throw new Exception("Vendas corrigidas que precisam ser corrigidas manualmente no sistema do cliente: " + 
+                        //                    Environment.NewLine + Environment.NewLine + result);
 
-                        throw new Exception("Vendas corrigidas que precisam ser corrigidas manualmente no sistema do cliente: " + 
-                                            Environment.NewLine + Environment.NewLine + result);
+                        if (vendas.Length == 1)
+                            result = "Há 1 venda que precisa ser corrigida manualmente no sistema do cliente.";
+                        else
+                            result = "Há " + vendas.Length + " vendas que precisam ser corrigidas manualmente no sistema do cliente.";
+
+                        result += Environment.NewLine + "Por favor, acesse a tela ADMINISTRATIVO > INTEGRAÇÃO ERP > VENDAS" +
+                                                        " e seleciono como filtro de TIPO a opção CORREÇÃO MANUAL " +
+                                                        " usando como filtro de data o mesmo período selecionado aqui na Conciliação de Vendas.";
+
+                        throw new Exception(result);
                     }
                 }
                 catch(Exception e)

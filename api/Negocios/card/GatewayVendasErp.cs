@@ -440,6 +440,7 @@ namespace api.Negocios.Card
                                                        ", V.qtParcelas = " + tbRecebimentoVenda.qtParcelas +
                                                        ", V.cdSacado = " + (tbRecebimentoVenda.cdSacado != null ? "'" + tbRecebimentoVenda.cdSacado + "'" : "NULL") +
                                                        ", V.dsMensagem = NULL" +
+                                                       ", V.dtAjuste = NULL" +
                                                        " FROM card.tbRecebimentoVenda V" +
                                                        " WHERE V.idRecebimentoVenda = " + venda.idRecebimentoVenda);
                         _db.SaveChanges();
