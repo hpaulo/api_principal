@@ -294,6 +294,8 @@ namespace api.Negocios.Card
                     args.Add(_db);
                     args.Add(semaforo);
                     args.Add(retorno);
+                    args.Add(IdGrupo);
+                    args.Add(param);
                     bw.RunWorkerAsync(args);
 
                     semaforo.WaitOne();
@@ -333,10 +335,14 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db = args[0] as painel_taxservices_dbContext;
             Semaphore semaforo = args[1] as Semaphore;
             Retorno retorno = args[2] as Retorno;
+            Int32 idGrupo = Convert.ToInt32(args[3]);
+            ImportaVendas param = args[4] as ImportaVendas;
 
             List<dynamic> Registros = retorno.Registros as List<dynamic>;
 
             //List<dynamic> test = Registros.Where(t => Convert.ToString(t.nrCNPJ).Equals("08297710000480")).ToList();
+
+            List<int> idsRecebimentoVenda = new List<int>();
 
             for (var k = 0; k < Registros.Count; k++)
             {
@@ -397,10 +403,11 @@ namespace api.Negocios.Card
                                                                                         )
                                                              .FirstOrDefault();
 
+                    int idRecebimentoVenda = 0;
                     if (venda == null)
                     {
                         _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoVenda" +
-                                                       " (nrCNPJ, nrNSU, cdERP, dtVenda, dsBandeira, vlVenda, qtParcelas, cdSacado)" + //, cdERPPagamento)" +
+                                                       " (nrCNPJ, nrNSU, cdERP, dtVenda, dsBandeira, vlVenda, qtParcelas, cdSacado)" + 
                                                        " VALUES ('" + tbRecebimentoVenda.nrCNPJ + "'" +
                                                        ", '" + tbRecebimentoVenda.nrNSU + "'" +
                                                        ", '" +  tbRecebimentoVenda.cdERP + "'" +
@@ -410,8 +417,19 @@ namespace api.Negocios.Card
                                                        ", " + tbRecebimentoVenda.vlVenda.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", " + tbRecebimentoVenda.qtParcelas +
                                                        ", " + (tbRecebimentoVenda.cdSacado != null ? "'" + tbRecebimentoVenda.cdSacado + "'" : "NULL") +
-                                                       //", " + (tbRecebimentoVenda.cdERPPagamento != null ? "'" + tbRecebimentoVenda.cdERPPagamento + "'" : "NULL") +
                                                        ")");
+                        _db.SaveChanges();
+                        transaction.Commit();
+
+                        // Obtém o id da venda
+                        idRecebimentoVenda = _db.Database.SqlQuery<int>("SELECT V.idRecebimentoVenda" +
+                                                                        " FROM card.tbRecebimentoVenda V (NOLOCK)" +
+                                                                        " WHERE V.nrCNPJ = '" + tbRecebimentoVenda.nrCNPJ + "'" +
+                                                                        " AND V.nrNSU = '" + tbRecebimentoVenda.nrNSU + "'" +
+                                                                        " AND V.dtVenda = '" + DataBaseQueries.GetDate(tbRecebimentoVenda.dtVenda) + "'" +
+                                                                        " AND V.cdERP = '" + tbRecebimentoVenda.cdERP + "'"
+                                                                    )
+                                                             .FirstOrDefault();
                     }
                     else
                     {
@@ -421,13 +439,19 @@ namespace api.Negocios.Card
                                                        ", V.vlVenda = " + tbRecebimentoVenda.vlVenda.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", V.qtParcelas = " + tbRecebimentoVenda.qtParcelas +
                                                        ", V.cdSacado = " + (tbRecebimentoVenda.cdSacado != null ? "'" + tbRecebimentoVenda.cdSacado + "'" : "NULL") +
-                                                       //", V.cdERPPagamento = " + (tbRecebimentoVenda.cdERPPagamento != null ? "'" + tbRecebimentoVenda.cdERPPagamento + "'" : "NULL") +
+                                                       ", V.dsMensagem = NULL" +
+                                                       ", V.dtAjuste = NULL" +
                                                        " FROM card.tbRecebimentoVenda V" +
                                                        " WHERE V.idRecebimentoVenda = " + venda.idRecebimentoVenda);
+                        _db.SaveChanges();
+                        transaction.Commit();
 
+                        idRecebimentoVenda = venda.idRecebimentoVenda;
                     }
-                    _db.SaveChanges();
-                    transaction.Commit();
+
+                    // Adiciona
+                    //if (!idsRecebimentoVenda.Contains(idRecebimentoVenda))
+                    idsRecebimentoVenda.Add(idRecebimentoVenda);
                 }
                 catch (Exception e)
                 {
@@ -443,6 +467,45 @@ namespace api.Negocios.Card
                     retorno.Totais = new Dictionary<string, object>();
                     retorno.Totais.Add("erro", "Venda: " + json + ". Erro: " + erro);
                     break;
+                }
+            }
+
+
+            // Avalia vendas que não foram atualizadas
+            if (idsRecebimentoVenda.Count > 0 && param != null)
+            {
+                idsRecebimentoVenda = idsRecebimentoVenda.Distinct().ToList();
+                string dtVenda = param.data.Substring(0, 4) + "-" + param.data.Substring(4, 2) + "-" + param.data.Substring(6, 2);
+                string script = "SELECT V.idRecebimentoVenda" +
+                                " FROM card.tbRecebimentoVenda V (NOLOCK)" +
+                                " JOIN cliente.empresa E (NOLOCK) ON E.nu_cnpj = V.nrCNPJ" +
+                                " WHERE V.dtVenda BETWEEN '" + dtVenda + "' AND '" + dtVenda + " 23:59:00'" +
+                                " AND " + (param.nrCNPJ == null ? "E.id_grupo = " + idGrupo : "V.nrCNPJ = '" + param.nrCNPJ + "'") +
+                                " AND V.idRecebimentoVenda NOT IN (" + string.Join(", ", idsRecebimentoVenda) + ")";
+                int[] vendasASeremDeletadas = new int[0];
+                try
+                {
+                    vendasASeremDeletadas = _db.Database.SqlQuery<int>(script).ToArray();
+                }
+                catch { }
+
+                if (vendasASeremDeletadas != null && vendasASeremDeletadas.Length > 0)
+                {
+                    script = "UPDATE R" +
+                             " SET R.idRecebimentoVenda = NULL" +
+                             " FROM pos.Recebimento R" +
+                             " JOIN card.tbRecebimentoVenda V ON R.idRecebimentoVenda = V.idRecebimentoVenda" +
+                             " WHERE V.idRecebimentoVenda IN (" + string.Join(", ", vendasASeremDeletadas) + ")";
+                    try
+                    {
+                        _db.Database.ExecuteSqlCommand(script);
+                        // Deleta
+                        script = "DELETE V" +
+                                 " FROM card.tbRecebimentoVenda V" +
+                                 " WHERE V.idRecebimentoVenda IN (" + string.Join(", ", vendasASeremDeletadas) + ")";
+                        _db.Database.ExecuteSqlCommand(script);
+                    }
+                    catch { }
                 }
             }
 
@@ -601,6 +664,8 @@ namespace api.Negocios.Card
                         args.Add(_db);
                         args.Add(semaforo);
                         args.Add(retorno);
+                        args.Add(idGrupo);
+                        args.Add(null);
                         bw.RunWorkerAsync(args);
 
                         semaforo.WaitOne();

@@ -18,11 +18,13 @@ namespace api.Models.Object
         public string Sacado;
         public decimal Valor;
         public Int32 Parcelas;
+        public DateTime? DataCorrecao;
 
         public ConciliacaoVendas() { }
 
         public ConciliacaoVendas(string Tipo, Int32 Id, string Nsu, string CodResumoVendas, DateTime Data,
-                                 string Filial, string Adquirente, string Bandeira, string Sacado, decimal Valor, Int32 Parcelas)
+                                 string Filial, string Adquirente, string Bandeira, string Sacado, decimal Valor, 
+                                 Int32 Parcelas, DateTime? DataCorrecao)
         {
             this.Tipo = Tipo;
             this.Id = Id;
@@ -35,12 +37,13 @@ namespace api.Models.Object
             this.Sacado = Sacado;
             this.Valor = Valor;
             this.Parcelas = Parcelas;
+            this.DataCorrecao = DataCorrecao;
         }
 
 
         public static bool possuiDivergenciasNaVenda(ConciliacaoVendas recebimento, ConciliacaoVendas venda)
         {
-            if (recebimento == null || venda == null)
+            if (recebimento == null || venda == null || venda.DataCorrecao != null)
                 return false;
 
             // Sacado diferente

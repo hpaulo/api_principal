@@ -128,7 +128,7 @@ namespace api.Controllers.Card
 
 
         // DELETE /tbBandeiraSacado/token/cdGrupo
-        public HttpResponseMessage Delete(string token, Int32 cdGrupo, Int32 cdBandeira)
+        public HttpResponseMessage Delete(string token, Int32 cdGrupo, Int32 cdBandeira, byte qtParcelas)
         {
             // Abre nova conexão
             using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
@@ -136,12 +136,12 @@ namespace api.Controllers.Card
                 tbLogAcessoUsuario log = new tbLogAcessoUsuario();
                 try
                 {
-                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("cdGrupo : " + cdGrupo + "; cdBandeira : " + cdBandeira), "Delete", _db);
+                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("cdGrupo : " + cdGrupo + "; cdBandeira : " + cdBandeira + "; qtParcelas : " + qtParcelas), "Delete", _db);
 
                     HttpResponseMessage retorno = new HttpResponseMessage();
                     if (Permissoes.Autenticado(token, _db))
                     {
-                        GatewayTbBandeiraSacado.Delete(token, cdGrupo, cdBandeira, _db);
+                        GatewayTbBandeiraSacado.Delete(token, cdGrupo, cdBandeira, qtParcelas, _db);
                         log.codResposta = (int)HttpStatusCode.OK;
                         Bibliotecas.LogAcaoUsuario.Save(log, _db);
                         return Request.CreateResponse(HttpStatusCode.OK);

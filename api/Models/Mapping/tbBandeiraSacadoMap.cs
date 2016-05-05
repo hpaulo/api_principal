@@ -8,7 +8,7 @@ namespace api.Models.Mapping
         public tbBandeiraSacadoMap()
         {
             // Primary Key
-            this.HasKey(t => new { t.cdGrupo, t.cdBandeira });
+            this.HasKey(t => new { t.cdGrupo, t.cdBandeira, t.qtParcelas });
 
             // Properties
             this.Property(t => t.cdSacado)
@@ -20,6 +20,7 @@ namespace api.Models.Mapping
             this.Property(t => t.cdGrupo).HasColumnName("cdGrupo");
             this.Property(t => t.cdSacado).HasColumnName("cdSacado");
             this.Property(t => t.cdBandeira).HasColumnName("cdBandeira");
+            this.Property(t => t.qtParcelas).HasColumnName("qtParcelas");
 
             // Relationships
             this.HasRequired(t => t.grupo_empresa)

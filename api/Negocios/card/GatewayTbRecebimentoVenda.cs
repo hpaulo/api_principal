@@ -12,6 +12,7 @@ using System.Data;
 using api.Negocios.Util;
 using System.Globalization;
 using api.Negocios.Cliente;
+using api.Negocios.Pos;
 
 namespace api.Negocios.Card
 {
@@ -43,9 +44,22 @@ namespace api.Negocios.Card
             VLVENDA = 106,
             QTPARCELAS = 107,
             CDERP = 108,
+            CDSACADO = 109,
+            DTAJUSTE = 110,
+            DSMENSAGEM = 111,
+
+            TIPO = 200,
 
             // RELACIONAMENTOS
             ID_GRUPO = 216,
+        };
+
+        public enum TIPO_FILTRO
+        {
+            CONCILIADO = 1,
+            NAO_CONCILIADO = 2,
+            CORRIGIDO = 3,
+            CORRECAO_MANUAL = 4
         };
 
         /// <summary>
@@ -107,9 +121,7 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        //entity = entity.Where(e => e.cdAdquirente.Equals(cdAdquirente)).AsQueryable<tbRecebimentoVenda>();
-                        entity = entity.Where(e => _db.tbBandeiraSacados.Where(t => t.cdSacado.Equals(e.cdSacado) && t.cdGrupo == e.empresa.id_grupo)
-                                                                        .Where(t => t.tbBandeira.cdAdquirente == cdAdquirente).Count() > 0).AsQueryable<tbRecebimentoVenda>();
+                        entity = entity.Where(e => e.cdAdquirente == cdAdquirente).AsQueryable<tbRecebimentoVenda>();
                         break;
                     case CAMPOS.DSBANDEIRA:
                         string dsBandeira = Convert.ToString(item.Value);
@@ -127,6 +139,29 @@ namespace api.Negocios.Card
                         string cdERP = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.cdERP.Equals(cdERP)).AsQueryable<tbRecebimentoVenda>();
                         break;
+                    case CAMPOS.CDSACADO:
+                        string cdSacado = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.cdSacado.Equals(cdSacado)).AsQueryable<tbRecebimentoVenda>();
+                        break;
+                    case CAMPOS.DTAJUSTE:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtAjuste != null && e.dtAjuste >= dtaIni && e.dtAjuste <= dtaFim).AsQueryable<tbRecebimentoVenda>();
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            entity = entity.Where(e => e.dtAjuste != null && e.dtAjuste.Value.Year == dtaIni.Year && e.dtAjuste.Value.Month == dtaIni.Month && e.dtAjuste.Value.Day == dtaIni.Day).AsQueryable<tbRecebimentoVenda>();
+                        }
+                        break;
+                    case CAMPOS.DSMENSAGEM:
+                        string dsMensagem = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.dsMensagem.Equals(dsMensagem)).AsQueryable<tbRecebimentoVenda>();
+                        break;
 
                     // RELACIONAMENTOS
                     case CAMPOS.ID_GRUPO:
@@ -136,6 +171,42 @@ namespace api.Negocios.Card
                 }
             }
             #endregion
+
+            string outValue = null;
+            if(queryString.TryGetValue("" + (int)CAMPOS.TIPO, out outValue))
+            {
+                string script = String.Empty;
+                TIPO_FILTRO tipo = (TIPO_FILTRO)Convert.ToInt32(queryString["" + (int)CAMPOS.TIPO]);
+                switch(tipo)
+                {
+                    case TIPO_FILTRO.CONCILIADO:
+                        // entity = entity.Where(e =>  e.Recebimentos.Count > 0).AsQueryable<tbRecebimentoVenda>();
+                        script = "SELECT DISTINCT V.idRecebimentoVenda" +
+                                 " FROM card.tbRecebimentoVenda V (NOLOCK)" +
+                                 " LEFT JOIN pos.Recebimento R (NOLOCK) ON R.idRecebimentoVenda = V.idRecebimentoVenda" +
+                                 " WHERE R.idRecebimentoVenda IS NOT NULL" +
+                                 " AND V.idRecebimentoVenda IN (" + string.Join(", ", entity.Select(e => e.idRecebimentoVenda)) + ")";
+                        int[] vendasConciliadas = _db.Database.SqlQuery<int>(script).ToArray();
+                        entity = entity.Where(e =>  vendasConciliadas.Contains(e.idRecebimentoVenda)).AsQueryable<tbRecebimentoVenda>();
+                        break;
+                    case TIPO_FILTRO.NAO_CONCILIADO:
+                        // entity = entity.Where(e =>  e.Recebimentos.Count == 0).AsQueryable<tbRecebimentoVenda>();
+                        script = "SELECT V.idRecebimentoVenda" +
+                                 " FROM card.tbRecebimentoVenda V (NOLOCK)" +
+                                 " LEFT JOIN pos.Recebimento R (NOLOCK) ON R.idRecebimentoVenda = V.idRecebimentoVenda" +
+                                 " WHERE R.idRecebimentoVenda IS NULL" +
+                                 " AND V.idRecebimentoVenda IN (" + string.Join(", ", entity.Select(e => e.idRecebimentoVenda)) + ")";
+                        int[] vendasNaoConciliadas = _db.Database.SqlQuery<int>(script).ToArray();
+                        entity = entity.Where(e => vendasNaoConciliadas.Contains(e.idRecebimentoVenda)).AsQueryable<tbRecebimentoVenda>();
+                        break;
+                    case TIPO_FILTRO.CORRIGIDO:
+                        entity = entity.Where(e => e.dtAjuste != null).AsQueryable<tbRecebimentoVenda>();
+                        break;
+                    case TIPO_FILTRO.CORRECAO_MANUAL:
+                        entity = entity.Where(e => e.dtAjuste != null && e.dsMensagem != null).AsQueryable<tbRecebimentoVenda>();
+                        break;
+                }
+            }
 
             #region ORDER BY - ADICIONA A ORDENAÇÃO A QUERY
             // ADICIONA A ORDENAÇÃO A QUERY
@@ -158,10 +229,10 @@ namespace api.Negocios.Card
                     if (orderby == 0) entity = entity.OrderBy(e => e.dtVenda).AsQueryable<tbRecebimentoVenda>();
                     else entity = entity.OrderByDescending(e => e.dtVenda).AsQueryable<tbRecebimentoVenda>();
                     break;
-                //case CAMPOS.CDADQUIRENTE:
-                //    if (orderby == 0) entity = entity.OrderBy(e => e.cdAdquirente).AsQueryable<tbRecebimentoVenda>();
-                //    else entity = entity.OrderByDescending(e => e.cdAdquirente).AsQueryable<tbRecebimentoVenda>();
-                //    break;
+                case CAMPOS.CDADQUIRENTE:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdAdquirente).AsQueryable<tbRecebimentoVenda>();
+                    else entity = entity.OrderByDescending(e => e.cdAdquirente).AsQueryable<tbRecebimentoVenda>();
+                    break;
                 case CAMPOS.DSBANDEIRA:
                     if (orderby == 0) entity = entity.OrderBy(e => e.dsBandeira).AsQueryable<tbRecebimentoVenda>();
                     else entity = entity.OrderByDescending(e => e.dsBandeira).AsQueryable<tbRecebimentoVenda>();
@@ -177,6 +248,18 @@ namespace api.Negocios.Card
                 case CAMPOS.CDERP:
                     if (orderby == 0) entity = entity.OrderBy(e => e.cdERP).AsQueryable<tbRecebimentoVenda>();
                     else entity = entity.OrderByDescending(e => e.cdERP).AsQueryable<tbRecebimentoVenda>();
+                    break;
+                case CAMPOS.CDSACADO:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.cdSacado).AsQueryable<tbRecebimentoVenda>();
+                    else entity = entity.OrderByDescending(e => e.cdSacado).AsQueryable<tbRecebimentoVenda>();
+                    break;
+                case CAMPOS.DTAJUSTE:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dtAjuste).AsQueryable<tbRecebimentoVenda>();
+                    else entity = entity.OrderByDescending(e => e.dtAjuste).AsQueryable<tbRecebimentoVenda>();
+                    break;
+                case CAMPOS.DSMENSAGEM:
+                    if (orderby == 0) entity = entity.OrderBy(e => e.dsMensagem).AsQueryable<tbRecebimentoVenda>();
+                    else entity = entity.OrderByDescending(e => e.dsMensagem).AsQueryable<tbRecebimentoVenda>();
                     break;
             }
             #endregion
@@ -249,13 +332,7 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        if (!join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
-                            join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj = " + SIGLA_QUERY + ".nrCNPJ");
-                        if (!join.ContainsKey("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY))
-                            join.Add("LEFT JOIN card.tbBandeiraSacado " + GatewayTbBandeiraSacado.SIGLA_QUERY, " ON " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdSacado = " + SIGLA_QUERY + ".cdSacado AND "  + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdGrupo = " + GatewayEmpresa.SIGLA_QUERY + ".id_grupo");
-                        if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
-                            join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira = " + GatewayTbBandeiraSacado.SIGLA_QUERY + ".cdBandeira");
-                        where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente);
+                        where.Add(SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente);
                         break;
                     case CAMPOS.DSBANDEIRA:
                         string dsBandeira = Convert.ToString(item.Value);
@@ -273,9 +350,63 @@ namespace api.Negocios.Card
                         string cdERP = Convert.ToString(item.Value);
                         where.Add(SIGLA_QUERY + ".cdERP = '" + cdERP + "'");
                         break;
+                    case CAMPOS.CDSACADO:
+                        string cdSacado = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".cdSacado = '" + cdSacado + "'");
+                        break;
+                    case CAMPOS.DTAJUSTE:
+                        if (item.Value.Contains("|")) // BETWEEN
+                        {
+                            string[] busca = item.Value.Split('|');
+                            DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dtInicio = DataBaseQueries.GetDate(dtaIni);
+                            string dtFim = DataBaseQueries.GetDate(dtaFim);
+                            where.Add(SIGLA_QUERY + ".dtAjuste BETWEEN '" + dtInicio + "' AND '" + dtFim + " 23:59:00'");
+                        }
+                        else // IGUAL
+                        {
+                            string busca = item.Value;
+                            DateTime data = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            string dt = DataBaseQueries.GetDate(data);
+                            where.Add(SIGLA_QUERY + ".dtAjuste BETWEEN '" + dt + "' AND '" + dt + " 23:59:00'");
+                        }
+                        break;
+                    case CAMPOS.DSMENSAGEM:
+                        string dsMensagem = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".dsMensagem = '" + dsMensagem + "'");
+                        break;
                 }
             }
             #endregion
+
+            string outValue = null;
+            if (queryString.TryGetValue("" + (int)CAMPOS.TIPO, out outValue))
+            {
+                string script = String.Empty;
+                TIPO_FILTRO tipo = (TIPO_FILTRO)Convert.ToInt32(queryString["" + (int)CAMPOS.TIPO]);
+                switch (tipo)
+                {
+                    case TIPO_FILTRO.CONCILIADO:
+                        // Adiciona o join
+                        if (!join.ContainsKey("LEFT JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
+                            join.Add("LEFT JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda = " + SIGLA_QUERY + ".idRecebimentoVenda");
+                        where.Add(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda IS NOT NULL");
+                        break;
+                    case TIPO_FILTRO.NAO_CONCILIADO:
+                        // Adiciona o join
+                        if (!join.ContainsKey("LEFT JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY))
+                            join.Add("LEFT JOIN pos.Recebimento " + GatewayRecebimento.SIGLA_QUERY, " ON " + GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda = " + SIGLA_QUERY + ".idRecebimentoVenda");
+                        where.Add(GatewayRecebimento.SIGLA_QUERY + ".idRecebimentoVenda IS NULL");
+                        break;
+                    case TIPO_FILTRO.CORRIGIDO:
+                        where.Add(SIGLA_QUERY + ".dtAjuste IS NOT NULL");
+                        break;
+                    case TIPO_FILTRO.CORRECAO_MANUAL:
+                        where.Add(SIGLA_QUERY + ".dtAjuste IS NOT NULL && " + SIGLA_QUERY + ".dsMensagem IS NOT NULL");
+                        break;
+                }
+            }
 
             #region ORDER BY - ADICIONA A ORDENAÇÃO A QUERY
             // ADICIONA A ORDENAÇÃO A QUERY
@@ -298,10 +429,10 @@ namespace api.Negocios.Card
                     if (orderby == 0) order.Add(SIGLA_QUERY + ".dtVenda ASC");
                     else order.Add(SIGLA_QUERY + ".dtVenda DESC");
                     break;
-                //case CAMPOS.CDADQUIRENTE:
-                //    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdAdquirente ASC");
-                //    else order.Add(SIGLA_QUERY + ".cdAdquirente DESC");
-                //    break;
+                case CAMPOS.CDADQUIRENTE:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdAdquirente ASC");
+                    else order.Add(SIGLA_QUERY + ".cdAdquirente DESC");
+                    break;
                 case CAMPOS.DSBANDEIRA:
                     if (orderby == 0) order.Add(SIGLA_QUERY + ".dsBandeira ASC");
                     else order.Add(SIGLA_QUERY + ".dsBandeira DESC");
@@ -317,6 +448,18 @@ namespace api.Negocios.Card
                 case CAMPOS.CDERP:
                     if (orderby == 0) order.Add(SIGLA_QUERY + ".cdERP ASC");
                     else order.Add(SIGLA_QUERY + ".cdERP DESC");
+                    break;
+                case CAMPOS.CDSACADO:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".cdSacado ASC");
+                    else order.Add(SIGLA_QUERY + ".cdSacado DESC");
+                    break;
+                case CAMPOS.DTAJUSTE:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dtAjuste ASC");
+                    else order.Add(SIGLA_QUERY + ".dtAjuste DESC");
+                    break;
+                case CAMPOS.DSMENSAGEM:
+                    if (orderby == 0) order.Add(SIGLA_QUERY + ".dsMensagem ASC");
+                    else order.Add(SIGLA_QUERY + ".dsMensagem DESC");
                     break;
             }
             #endregion
@@ -379,9 +522,10 @@ namespace api.Negocios.Card
                     {
                         retorno.Totais.Add("valorTotal", query.Select(e => e.vlVenda).Cast<decimal>().Sum());
                         retorno.Totais.Add("totalCorrigidos", query.Where(e => e.dtAjuste != null).Count());
+                        retorno.Totais.Add("totalCorrecaoManual", query.Where(e => e.dtAjuste != null && e.dsMensagem != null).Count());
                         string script = "SELECT DISTINCT R.idRecebimentoVenda" +
-                                                               " FROM pos.Recebimento R (NOLOCK)" +
-                                                               " WHERE R.idRecebimentoVenda IN (" + string.Join(", ", query.Select(e => e.idRecebimentoVenda)) + ")";
+                                        " FROM pos.Recebimento R (NOLOCK)" +
+                                        " WHERE R.idRecebimentoVenda IN (" + string.Join(", ", query.Select(e => e.idRecebimentoVenda)) + ")";
                         vendasConciliadas = _db.Database.SqlQuery<int>(script).ToList();
 
                         retorno.Totais.Add("totalConciliados", vendasConciliadas.Count);
@@ -391,7 +535,7 @@ namespace api.Negocios.Card
                         retorno.Totais.Add("valorTotal", new decimal(0.0));
                         retorno.Totais.Add("totalCorrigidos", 0);
                         retorno.Totais.Add("totalConciliados", 0);
-
+                        retorno.Totais.Add("totalCorrecaoManual", 0);
                     }
  
                     query = query.OrderBy(e => e.dtVenda).ThenBy(e => e.empresa.ds_fantasia)/*.ThenBy(e => e.tbAdquirente.nmAdquirente)*/.ThenBy(e => e.vlVenda).ThenBy(e => e.nrNSU);
@@ -423,7 +567,8 @@ namespace api.Negocios.Card
                         qtParcelas = e.qtParcelas,
                         cdERP = e.cdERP,
                         cdSacado = e.cdSacado,
-                        //cdERPPagamento = e.cdERPPagamento,
+                        dsMensagem = e.dsMensagem,
+                        dtAjuste = e.dtAjuste,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -440,7 +585,8 @@ namespace api.Negocios.Card
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
                         cdERP = e.cdERP,
-                        //cdERPPagamento = e.cdERPPagamento,
+                        dsMensagem = e.dsMensagem,
+                        dtAjuste = e.dtAjuste,
                         cdSacado = e.cdSacado,
                     }).ToList<dynamic>();
                 }
@@ -466,18 +612,12 @@ namespace api.Negocios.Card
                                                             a.nmAdquirente
                                                         })
                                                         .FirstOrDefault(),
-                        //tbAdquirente = _db.tbBandeiraSacados.Where(t => t.cdSacado.Equals(e.cdSacado) && t.cdGrupo == e.empresa.id_grupo)
-                        //                                    .Select(t => new {
-                        //                                        cdAdquirente = t.tbBandeira.cdAdquirente, 
-                        //                                        nmAdquirente = t.tbBandeira.tbAdquirente.nmAdquirente
-                        //                                    })
-                        //                                    .FirstOrDefault(),
                         dsBandeira = e.dsBandeira,
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
                         cdERP = e.cdERP,
-                        //cdERPPagamento = e.cdERPPagamento,
                         cdSacado = e.cdSacado,
+                        dsMensagem = e.dsMensagem,
                         dtAjuste = e.dtAjuste,
                         conciliado = vendasConciliadas.Contains(e.idRecebimentoVenda)
                     }).ToList<dynamic>();

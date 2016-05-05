@@ -23,7 +23,7 @@ namespace api.Models
         public string cdERP { get; set; }
         public string cdSacado { get; set; }
         public DateTime? dtAjuste { get; set; }
-        public bool flInsert { get; set; }
+        public string dsMensagem { get; set; }
         //public string cdERPPagamento { get; set; }
         //public virtual tbAdquirente tbAdquirente { get; set; }
         public virtual empresa empresa { get; set; }

@@ -45,8 +45,8 @@ namespace api.Models.Mapping
             this.Property(t => t.cdSacado)
                 .HasMaxLength(10);
 
-            this.Property(t => t.flInsert)
-                .IsRequired();
+            this.Property(t => t.dsMensagem)
+                .HasMaxLength(100);
 
             this.Property(t => t.cdAdquirente)
                 .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
@@ -64,7 +64,7 @@ namespace api.Models.Mapping
             this.Property(t => t.cdERP).HasColumnName("cdERP");
             this.Property(t => t.cdSacado).HasColumnName("cdSacado");
             this.Property(t => t.dtAjuste).HasColumnName("dtAjuste");
-            this.Property(t => t.flInsert).HasColumnName("flInsert");
+            this.Property(t => t.dsMensagem).HasColumnName("dsMensagem");
             //this.Property(t => t.cdERPPagamento).HasColumnName("cdERPPagamento");
 
             // Relationships
