@@ -220,7 +220,7 @@ namespace api.Models
         public DbSet<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
         public DbSet<tbManifesto> tbManifestos { get; set; }
         public DbSet<tbLogManifesto> tbLogManifestos { get; set; }
-        public DbSet<tbBancoParametro> tbBancoParametro { get; set; }
+        public DbSet<tbBancoParametro> tbBancoParametros { get; set; }
         public DbSet<tbEmpresa> tbEmpresas { get; set; }
         public DbSet<tbEmpresaFilial> tbEmpresaFiliais { get; set; }
         public DbSet<tbEmpresaGrupo> tbEmpresaGrupos { get; set; }

@@ -8,6 +8,7 @@ namespace api.Models.Object
 {
     public class ParametroBancario
     {
+        public int CdGrupo { get; set; }
         private string cdBanco;
         public string CdBanco
         {

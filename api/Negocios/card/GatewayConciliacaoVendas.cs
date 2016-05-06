@@ -62,7 +62,7 @@ namespace api.Negocios.Card
         public static string TIPO_VENDA = "V";
         public static string TIPO_RECEBIMENTO = "R";
         // Pré-Conciliação
-        private const int RANGE_DIAS_ANTERIOR = 1;
+        private const int RANGE_DIAS_ANTERIOR = 15;
         private const int RANGE_DIAS_POSTERIOR = 1;
         private static decimal TOLERANCIA = new decimal(0.1); // R$0,10 
 

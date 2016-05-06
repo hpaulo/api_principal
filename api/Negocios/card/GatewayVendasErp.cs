@@ -390,7 +390,6 @@ namespace api.Negocios.Card
                         vlVenda = Convert.ToDecimal(vd.vlVenda),
                         cdSacado = cdSacado,
                         qtParcelas = Convert.ToByte(vd.qtParcelas),
-                        //cdERPPagamento = cdERPPagamento,
                     };
 
                     tbRecebimentoVenda venda = _db.Database.SqlQuery<tbRecebimentoVenda>("SELECT V.*" +
@@ -399,7 +398,6 @@ namespace api.Negocios.Card
                                                                                          " AND V.nrNSU = '" + tbRecebimentoVenda.nrNSU + "'" +
                                                                                          " AND V.dtVenda = '" + DataBaseQueries.GetDate(tbRecebimentoVenda.dtVenda) + "'" +
                                                                                          " AND V.cdERP = '" + tbRecebimentoVenda.cdERP + "'"
-                                                                                         //" AND (V.cdERPPagamento IS NULL" + (cdERPPagamento == null ? "" : " OR V.cdERPPagamento = '" + tbRecebimentoVenda.cdERPPagamento + "'") + ")"
                                                                                         )
                                                              .FirstOrDefault();
 

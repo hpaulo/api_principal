@@ -382,7 +382,7 @@ namespace api.Negocios.Card
                 }
                 catch(Exception e)
                 {
-                    if(e.Message.StartsWith("Vendas corrigidas que precisam ser corrigidas manualmente"))
+                    if (e.Message.StartsWith("Há") && e.Message.Contains("Por favor, acesse a tela ADMINISTRATIVO > INTEGRAÇÃO ERP > VENDAS"))
                         throw new Exception(e.Message);
                     throw new Exception("Falha de comunicação com o servidor");
                 }

@@ -1,3 +1,4 @@
+using api.Models.Object;
 using System;
 using System.Collections.Generic;
 
@@ -24,6 +25,7 @@ namespace api.Models
             this.tbLoginAdquirenteEmpresas = new List<tbLoginAdquirenteEmpresa>();
             this.tbRecebimentoTEFs = new List<tbRecebimentoTEF>();
             this.tbBandeiraSacados = new List<tbBandeiraSacado>();
+            //this.tbBancoParametros = new List<tbBancoParametro>();
         }
 
         public int id_grupo { get; set; }
@@ -55,6 +57,7 @@ namespace api.Models
         public virtual ICollection<tbLoginAdquirenteEmpresa> tbLoginAdquirenteEmpresas { get; set; }
         public virtual ICollection<tbRecebimentoTEF> tbRecebimentoTEFs { get; set; }
         public virtual ICollection<tbBandeiraSacado> tbBandeiraSacados { get; set; }
+        //public virtual ICollection<tbBancoParametro> tbBancoParametros { get; set; }
         
     }
 }

@@ -41,6 +41,8 @@ namespace api.Negocios.Card
             NRCNPJ = 105,
             DSTIPOCARTAO = 106,
             CDBANDEIRA = 107,
+            FLANTECIPACAO = 108,
+            CDGRUPO = 109,
 
             // RELACIONAMENTOS
             DSADQUIRENTE = 201,
@@ -62,7 +64,7 @@ namespace api.Negocios.Card
         private static IQueryable<tbBancoParametro> getQuery(painel_taxservices_dbContext _db, int colecao, int campo, int orderby, int pageSize, int pageNumber, Dictionary<string, string> queryString)
         {
             // DEFINE A QUERY PRINCIPAL
-            var entity = _db.tbBancoParametro.AsQueryable<tbBancoParametro>();
+            var entity = _db.tbBancoParametros.AsQueryable<tbBancoParametro>();
 
             #region WHERE - ADICIONA OS FILTROS A QUERY
 
@@ -153,7 +155,8 @@ namespace api.Negocios.Card
                             }
                         }
                         // Para os parâmetros que não estão associados à uma filial, só são exibidos os que constam nos extratos bancários associados ao grupo
-                        entity = entity.Where(e => (e.nrCnpj == null && memos.Contains(e.dsMemo))//grupo.tbContaCorrentes.Where(c => c.tbExtratos.Where(x => x.tbContaCorrente.cdBanco.Equals(e.cdBanco) && x.dsDocumento.Equals(e.dsMemo)).Count() > 0).Count() > 0) 
+                        entity = entity.Where(e => (e.cdGrupo != null && e.cdGrupo == id_grupo) ||
+                                                   (e.nrCnpj == null && memos.Contains(e.dsMemo))//grupo.tbContaCorrentes.Where(c => c.tbExtratos.Where(x => x.tbContaCorrente.cdBanco.Equals(e.cdBanco) && x.dsDocumento.Equals(e.dsMemo)).Count() > 0).Count() > 0) 
                                                    || (e.nrCnpj != null && e.empresa.id_grupo == id_grupo)).AsQueryable<tbBancoParametro>();
                         break;
                 }
@@ -287,7 +290,8 @@ namespace api.Negocios.Card
                         nrCnpj = e.nrCnpj,
                         dsTipoCartao = e.dsTipoCartao.TrimEnd(),
                         cdBandeira = e.cdBandeira,
-                        flAntecipacao = e.flAntecipacao
+                        flAntecipacao = e.flAntecipacao,
+                        cdGrupo = e.cdGrupo,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -303,7 +307,8 @@ namespace api.Negocios.Card
                         nrCnpj = e.nrCnpj,
                         dsTipoCartao = e.dsTipoCartao.TrimEnd(),
                         cdBandeira = e.cdBandeira,
-                        flAntecipacao = e.flAntecipacao
+                        flAntecipacao = e.flAntecipacao,
+                        cdGrupo = e.cdGrupo,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2) // [WEB] 
@@ -328,11 +333,15 @@ namespace api.Negocios.Card
                             ds_fantasia = e.empresa.ds_fantasia,
                             filial = e.empresa.filial
                         },
-                        grupoempresa = e.nrCnpj == null ? null : new
+                        grupoempresa = e.nrCnpj != null ? new
                         {
                             id_grupo = e.empresa.id_grupo,
                             ds_nome = e.empresa.grupo_empresa.ds_nome
-                        },
+                        } : e.cdGrupo != 0 ? _db.grupo_empresa.Where(t => t.id_grupo == e.cdGrupo).Select(t => new
+                        {
+                            id_grupo = t.id_grupo,
+                            ds_nome = t.ds_nome
+                        }).FirstOrDefault() : null,
                         bandeira = e.cdBandeira == null ? null : new
                         {
                             cdBandeira = e.tbBandeira.cdBandeira,
@@ -401,8 +410,9 @@ namespace api.Negocios.Card
             DbContextTransaction transaction = _db.Database.BeginTransaction();
             try 
             { 
-                tbBancoParametro parametro = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(param.cdBanco))
+                tbBancoParametro parametro = _db.tbBancoParametros.Where(e => e.cdBanco.Equals(param.cdBanco))
                                                                  .Where(e => e.dsMemo.Equals(param.dsMemo))
+                                                                 .Where(e => e.cdGrupo == param.cdGrupo)
                                                                  .FirstOrDefault();
 
                 if (parametro != null) throw new Exception("Parâmetro bancário já existe");
@@ -414,7 +424,7 @@ namespace api.Negocios.Card
 
                 param.flVisivel = true;
 
-                _db.tbBancoParametro.Add(param);
+                _db.tbBancoParametros.Add(param);
                 _db.SaveChanges();
                 transaction.Commit();
                 return param.cdBanco;
@@ -446,7 +456,7 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Delete(string token, string cdBanco, string dsMemo, painel_taxservices_dbContext _dbContext = null)
+        public static void Delete(string token, string cdBanco, string dsMemo, int cdGrupo, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
@@ -454,13 +464,14 @@ namespace api.Negocios.Card
             DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
-                tbBancoParametro parametro = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(cdBanco))
+                tbBancoParametro parametro = _db.tbBancoParametros.Where(e => e.cdBanco.Equals(cdBanco))
                                                                  .Where(e => e.dsMemo.Equals(dsMemo))
+                                                                 .Where(e => e.cdGrupo == cdGrupo)
                                                                  .FirstOrDefault();
 
                 if (parametro == null) throw new Exception("Parâmetro bancário inexistente");
 
-                _db.tbBancoParametro.Remove(parametro);
+                _db.tbBancoParametros.Remove(parametro);
                 _db.SaveChanges();
                 transaction.Commit();
             }
@@ -497,54 +508,94 @@ namespace api.Negocios.Card
             DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
+                Int32 idGrupo = Permissoes.GetIdGrupo(token, _db);
+
                 foreach (ParametroBancario parametro in param.Parametros)
                 {
-                    tbBancoParametro value = _db.tbBancoParametro.Where(e => e.cdBanco.Equals(parametro.CdBanco))
+                    tbBancoParametro value = _db.tbBancoParametros.Where(e => e.cdBanco.Equals(parametro.CdBanco))
                                                                  .Where(e => e.dsMemo.Equals(parametro.DsMemo))
+                                                                 .Where(e => e.cdGrupo == parametro.CdGrupo)
                                                                  .FirstOrDefault();
                     if (value != null)
                     {
                         if (param.Deletar)
                         {
                             // Remove
-                            _db.tbBancoParametro.Remove(value);
+                            _db.tbBancoParametros.Remove(value);
                         }
                         else
                         {
-                            // TIPO
-                            if (parametro.DsTipo != null && parametro.DsTipo != value.dsTipo)
-                                value.dsTipo = parametro.DsTipo;
-                            // Adquirente
-                            if (param.CdAdquirente != null && param.CdAdquirente != value.cdAdquirente)
+                            // Grupo
+                            if (parametro.CdGrupo == 0 && idGrupo != 0 && value.nrCnpj == null && (param.NrCnpj == null || param.NrCnpj.Trim().Equals("")))
                             {
-                                if (param.CdAdquirente == -1) value.cdAdquirente = null;
-                                else value.cdAdquirente = param.CdAdquirente;
-                            }
-                            // Filial
-                            if (param.NrCnpj != null && (value.nrCnpj == null || !param.NrCnpj.Equals(value.nrCnpj)))
-                            {
-                                if (param.NrCnpj.Equals("")) value.nrCnpj = null;
-                                else value.nrCnpj = param.NrCnpj;
-                            }
-                            // Tipo Cartão
-                            if (param.DsTipoCartao != null && (value.dsTipoCartao == null || !param.DsTipoCartao.Equals(value.dsTipoCartao.TrimEnd())))
-                            {
-                                if (param.DsTipoCartao.Equals("")) value.dsTipoCartao = null;
-                                else value.dsTipoCartao = param.DsTipoCartao;
-                            }
-                            // Bandeira
-                            if (param.CdBandeira != null && param.CdBandeira != value.cdBandeira)
-                            {
-                                if (param.CdBandeira == -1) value.cdBandeira = null;
-                                else value.cdBandeira = param.CdBandeira;
-                            }
-                            // Visibilidade
-                            if (param.FlVisivel != value.flVisivel) value.flVisivel = param.FlVisivel;
-                            // Antecipação
-                            if (param.FlAntecipacao != null && param.FlAntecipacao.Value != value.flAntecipacao)
-                                value.flAntecipacao = param.FlAntecipacao.Value;
-                        }
+                                // Estava como um parâmetro que serve para todos os grupos
+                                // Não tem filial associada
+                                // => Marca a parametrização como sendo específica do grupo
 
+                                // Cria o parâmetro
+                                tbBancoParametro parametroG = new tbBancoParametro();
+                                parametroG.cdBanco = value.cdBanco;
+                                parametroG.dsMemo = value.dsMemo;
+                                parametroG.cdGrupo = idGrupo;
+                                parametroG.cdAdquirente = param.CdAdquirente == null ? value.cdAdquirente : param.CdAdquirente == -1 ? null : param.CdAdquirente;
+                                parametroG.dsTipo = parametro.DsTipo == null ? value.dsTipo : parametro.DsTipo;
+                                parametroG.dsTipoCartao = param.DsTipoCartao == null ? value.dsTipoCartao : param.DsTipoCartao.Equals("") ? null : param.DsTipoCartao;
+                                parametroG.cdBandeira = param.CdBandeira == null ? value.cdBandeira : param.CdBandeira == -1 ? null : param.CdBandeira;
+                                parametroG.flVisivel = param.FlVisivel;
+                                parametroG.flAntecipacao = param.FlAntecipacao == null ? value.flAntecipacao : param.FlAntecipacao.Value;
+                                // Avalia cnpj
+                                if (param.NrCnpj != null)
+                                {
+                                    if (param.NrCnpj.Equals("")) parametroG.nrCnpj = null;
+                                    else 
+                                    {
+                                        int cdGrupo = _db.empresas.Where(t => t.nu_cnpj.Equals(param.NrCnpj)).Select(t => t.id_grupo).FirstOrDefault();
+                                        if (cdGrupo == idGrupo)
+                                            parametroG.nrCnpj = param.NrCnpj;
+                                        else
+                                            parametroG.nrCnpj = null;
+                                    }
+                                }
+
+                                // Add
+                                _db.tbBancoParametros.Add(parametroG);
+                            }
+                            else
+                            {
+                                // TIPO
+                                if (parametro.DsTipo != null && parametro.DsTipo != value.dsTipo)
+                                    value.dsTipo = parametro.DsTipo;
+                                // Adquirente
+                                if (param.CdAdquirente != null && param.CdAdquirente != value.cdAdquirente)
+                                {
+                                    if (param.CdAdquirente == -1) value.cdAdquirente = null;
+                                    else value.cdAdquirente = param.CdAdquirente;
+                                }
+                                // Filial
+                                if (param.NrCnpj != null && (value.nrCnpj == null || !param.NrCnpj.Equals(value.nrCnpj)))
+                                {
+                                    if (param.NrCnpj.Equals("")) value.nrCnpj = null;
+                                    else value.nrCnpj = param.NrCnpj;
+                                }
+                                // Tipo Cartão
+                                if (param.DsTipoCartao != null && (value.dsTipoCartao == null || !param.DsTipoCartao.Equals(value.dsTipoCartao.TrimEnd())))
+                                {
+                                    if (param.DsTipoCartao.Equals("")) value.dsTipoCartao = null;
+                                    else value.dsTipoCartao = param.DsTipoCartao;
+                                }
+                                // Bandeira
+                                if (param.CdBandeira != null && param.CdBandeira != value.cdBandeira)
+                                {
+                                    if (param.CdBandeira == -1) value.cdBandeira = null;
+                                    else value.cdBandeira = param.CdBandeira;
+                                }
+                                // Visibilidade
+                                if (param.FlVisivel != value.flVisivel) value.flVisivel = param.FlVisivel;
+                                // Antecipação
+                                if (param.FlAntecipacao != null && param.FlAntecipacao.Value != value.flAntecipacao)
+                                    value.flAntecipacao = param.FlAntecipacao.Value;
+                            }
+                        }
                         // Salva
                         _db.SaveChanges();
                     }

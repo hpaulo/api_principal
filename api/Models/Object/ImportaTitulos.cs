@@ -9,5 +9,6 @@ namespace api.Models.Object
     {
         public string data { get; set; }
         //public Int32 id_grupo { get; set; }
+        public string tipoData { get; set; }
     }
 }

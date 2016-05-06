@@ -681,7 +681,7 @@ namespace api.Negocios.Card
                     #endregion
 
                     #region PARÂMETRO BANCÁRIO
-                    //tbBancoParametro parametro = _db.tbBancoParametro.Where(p => p.dsMemo.Equals(extrato.dsDocumento))
+                    //tbBancoParametro parametro = _db.tbBancoParametros.Where(p => p.dsMemo.Equals(extrato.dsDocumento))
                     //                                                 .Where(p => p.cdBanco.Equals(extrato.tbContaCorrente.cdBanco))
                     //                                                 .FirstOrDefault();
 
