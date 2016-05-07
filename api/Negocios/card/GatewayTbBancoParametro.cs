@@ -85,7 +85,7 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        if(cdAdquirente == -1)
+                        if (cdAdquirente == -1)
                             // Somente os registros sem adquirentes associados
                             entity = entity.Where(e => e.cdAdquirente == null).AsQueryable<tbBancoParametro>();
                         else
@@ -101,7 +101,7 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.NRCNPJ:
                         string nrCnpj = Convert.ToString(item.Value);
-                        if(nrCnpj.Equals("")) entity = entity.Where(e => e.nrCnpj == null).AsQueryable<tbBancoParametro>();
+                        if (nrCnpj.Equals("")) entity = entity.Where(e => e.nrCnpj == null).AsQueryable<tbBancoParametro>();
                         else entity = entity.Where(e => e.nrCnpj != null && e.nrCnpj.Equals(nrCnpj)).AsQueryable<tbBancoParametro>();
                         break;
                     case CAMPOS.DSTIPOCARTAO:
@@ -117,7 +117,7 @@ namespace api.Negocios.Card
                         else
                             entity = entity.Where(e => e.cdBandeira == cdBandeira).AsQueryable<tbBancoParametro>();
                         break;
-                        
+
 
                     // PERSONALIZADO
                     case CAMPOS.DSADQUIRENTE:
@@ -132,7 +132,7 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.ID_GRUPO:
                         Int32 id_grupo = Convert.ToInt32(item.Value);
-                        grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == id_grupo).FirstOrDefault();
+                        /*grupo_empresa grupo = _db.grupo_empresa.Where(g => g.id_grupo == id_grupo).FirstOrDefault();
                         if (grupo == null) continue;
                         // Armazena todos os parâmetros existentes para o grupo, baseado nos extratos "upados"
                         //List<ParametroBancario> parametros = new List<ParametroBancario>();
@@ -140,24 +140,18 @@ namespace api.Negocios.Card
                         foreach (tbContaCorrente tbContaCorrente in grupo.tbContaCorrentes) {
                             foreach (tbExtrato tbExtrato in tbContaCorrente.tbExtratos)
                             {
-                                //if (!parametros.Any(p => p.CdBanco.Equals(tbExtrato.tbContaCorrente.cdBanco) && 
-                                                         //p.DsMemo.Equals(tbExtrato.dsDocumento)))
                                 if(!memos.Contains(tbExtrato.dsDocumento))
                                 {
                                     memos.Add(tbExtrato.dsDocumento);
-                                    /*parametros.Add(new ParametroBancario()
-                                    {
-                                        CdBanco = tbExtrato.tbContaCorrente.cdBanco,
-                                        DsMemo = tbExtrato.dsDocumento,
-                                        DsTipo = tbExtrato.dsTipo
-                                    });*/
                                 }
                             }
                         }
                         // Para os parâmetros que não estão associados à uma filial, só são exibidos os que constam nos extratos bancários associados ao grupo
-                        entity = entity.Where(e => (e.cdGrupo != null && e.cdGrupo == id_grupo) ||
+                        entity = entity.Where(e => (e.cdGrupo != 0 && e.cdGrupo == id_grupo) ||
                                                    (e.nrCnpj == null && memos.Contains(e.dsMemo))//grupo.tbContaCorrentes.Where(c => c.tbExtratos.Where(x => x.tbContaCorrente.cdBanco.Equals(e.cdBanco) && x.dsDocumento.Equals(e.dsMemo)).Count() > 0).Count() > 0) 
                                                    || (e.nrCnpj != null && e.empresa.id_grupo == id_grupo)).AsQueryable<tbBancoParametro>();
+                        */
+                        entity = entity.Where(e => e.cdGrupo == id_grupo).AsQueryable<tbBancoParametro>();
                         break;
                 }
             }
@@ -226,14 +220,23 @@ namespace api.Negocios.Card
             else _db = _dbContext;
             DbContextTransaction transaction = _db.Database.BeginTransaction(IsolationLevel.ReadUncommitted);
 
-            try 
-            { 
+            try
+            {
                 //DECLARAÇÕES
                 List<dynamic> CollectionTbBancoParametro = new List<dynamic>();
                 Retorno retorno = new Retorno();
 
-                // FILTRO DE FILIAL
+                // FILTRO DE GRUPO
                 string outValue = null;
+                Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
+                if (IdGrupo != 0)
+                {
+                    if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
+                        queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
+                    else
+                        queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
+                }
+                // FILTRO DE FILIAL
                 string CnpjEmpresa = Permissoes.GetCNPJEmpresa(token, _db);
                 if (!CnpjEmpresa.Equals(""))
                 {
@@ -241,18 +244,6 @@ namespace api.Negocios.Card
                         queryString["" + (int)CAMPOS.NRCNPJ] = CnpjEmpresa;
                     else
                         queryString.Add("" + (int)CAMPOS.NRCNPJ, CnpjEmpresa);
-                }
-                else
-                {
-                    // NÃO ESTÁ ASSOCIADO A UM FILIAL => VERIFICA SE ESTÁ ASSOCIADO A UM GRUPO
-                    Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
-                    if (IdGrupo != 0)
-                    {
-                        if (queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
-                            queryString["" + (int)CAMPOS.ID_GRUPO] = IdGrupo.ToString();
-                        else
-                            queryString.Add("" + (int)CAMPOS.ID_GRUPO, IdGrupo.ToString());
-                    }
                 }
 
                 // POR DEFAULT, LISTA SOMENTE OS QUE ESTÃO VISÍVEIS
@@ -316,7 +307,7 @@ namespace api.Negocios.Card
                     List<dynamic> bancoParametros = query.Select(e => new
                     {
                         dsMemo = e.dsMemo,
-                        adquirente = e.cdAdquirente == null ? null : new 
+                        adquirente = e.cdAdquirente == null ? null : new
                                         {
                                             cdAdquirente = e.tbAdquirente.cdAdquirente,
                                             nmAdquirente = e.tbAdquirente.nmAdquirente,
@@ -333,15 +324,11 @@ namespace api.Negocios.Card
                             ds_fantasia = e.empresa.ds_fantasia,
                             filial = e.empresa.filial
                         },
-                        grupoempresa = e.nrCnpj != null ? new
+                        grupoempresa = new
                         {
-                            id_grupo = e.empresa.id_grupo,
-                            ds_nome = e.empresa.grupo_empresa.ds_nome
-                        } : e.cdGrupo != 0 ? _db.grupo_empresa.Where(t => t.id_grupo == e.cdGrupo).Select(t => new
-                        {
-                            id_grupo = t.id_grupo,
-                            ds_nome = t.ds_nome
-                        }).FirstOrDefault() : null,
+                            id_grupo = e.cdGrupo,
+                            ds_nome = e.grupo_empresa.ds_nome
+                        },
                         bandeira = e.cdBandeira == null ? null : new
                         {
                             cdBandeira = e.tbBandeira.cdBandeira,
@@ -407,9 +394,9 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
-            try 
-            { 
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
+            try
+            {
                 tbBancoParametro parametro = _db.tbBancoParametros.Where(e => e.cdBanco.Equals(param.cdBanco))
                                                                  .Where(e => e.dsMemo.Equals(param.dsMemo))
                                                                  .Where(e => e.cdGrupo == param.cdGrupo)
@@ -418,20 +405,28 @@ namespace api.Negocios.Card
                 if (parametro != null) throw new Exception("Parâmetro bancário já existe");
 
                 if (param.cdAdquirente == -1) param.cdAdquirente = null;
-                if (param.nrCnpj != null && param.nrCnpj.Equals("")) param.nrCnpj = null;
                 if (param.dsTipoCartao != null && param.dsTipoCartao.Equals("")) param.dsTipoCartao = null;
                 if (param.cdBandeira == -1) param.cdBandeira = null;
+                if (param.nrCnpj != null)
+                {
+                    if(param.nrCnpj.Equals("")) param.nrCnpj = null;
+                    else 
+                    {
+                        int idGrupo = _db.empresas.Where(t => t.nu_cnpj.Equals(param.nrCnpj)).Select(t => t.id_grupo).FirstOrDefault();
+                        if (idGrupo != param.cdGrupo) param.nrCnpj = null;
+                    }
+                }
 
                 param.flVisivel = true;
 
                 _db.tbBancoParametros.Add(param);
                 _db.SaveChanges();
-                transaction.Commit();
+                //transaction.Commit();
                 return param.cdBanco;
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -461,7 +456,7 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
             else _db = _dbContext;
-            DbContextTransaction transaction = _db.Database.BeginTransaction();
+            //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
                 tbBancoParametro parametro = _db.tbBancoParametros.Where(e => e.cdBanco.Equals(cdBanco))
@@ -473,11 +468,11 @@ namespace api.Negocios.Card
 
                 _db.tbBancoParametros.Remove(parametro);
                 _db.SaveChanges();
-                transaction.Commit();
+                //transaction.Commit();
             }
             catch (Exception e)
             {
-                transaction.Rollback();
+                //transaction.Rollback();
                 if (e is DbEntityValidationException)
                 {
                     string erro = MensagemErro.getMensagemErro((DbEntityValidationException)e);
@@ -508,14 +503,14 @@ namespace api.Negocios.Card
             DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
-                Int32 idGrupo = Permissoes.GetIdGrupo(token, _db);
+                //Int32 idGrupo = Permissoes.GetIdGrupo(token, _db);
 
                 foreach (ParametroBancario parametro in param.Parametros)
                 {
                     tbBancoParametro value = _db.tbBancoParametros.Where(e => e.cdBanco.Equals(parametro.CdBanco))
-                                                                 .Where(e => e.dsMemo.Equals(parametro.DsMemo))
-                                                                 .Where(e => e.cdGrupo == parametro.CdGrupo)
-                                                                 .FirstOrDefault();
+                                                                  .Where(e => e.dsMemo.Equals(parametro.DsMemo))
+                                                                  .Where(e => e.cdGrupo == parametro.CdGrupo)
+                                                                  .FirstOrDefault();
                     if (value != null)
                     {
                         if (param.Deletar)
@@ -525,76 +520,44 @@ namespace api.Negocios.Card
                         }
                         else
                         {
-                            // Grupo
-                            if (parametro.CdGrupo == 0 && idGrupo != 0 && value.nrCnpj == null && (param.NrCnpj == null || param.NrCnpj.Trim().Equals("")))
+                            // TIPO
+                            if (parametro.DsTipo != null && parametro.DsTipo != value.dsTipo)
+                                value.dsTipo = parametro.DsTipo;
+                            // Adquirente
+                            if (param.CdAdquirente != null && param.CdAdquirente != value.cdAdquirente)
                             {
-                                // Estava como um parâmetro que serve para todos os grupos
-                                // Não tem filial associada
-                                // => Marca a parametrização como sendo específica do grupo
-
-                                // Cria o parâmetro
-                                tbBancoParametro parametroG = new tbBancoParametro();
-                                parametroG.cdBanco = value.cdBanco;
-                                parametroG.dsMemo = value.dsMemo;
-                                parametroG.cdGrupo = idGrupo;
-                                parametroG.cdAdquirente = param.CdAdquirente == null ? value.cdAdquirente : param.CdAdquirente == -1 ? null : param.CdAdquirente;
-                                parametroG.dsTipo = parametro.DsTipo == null ? value.dsTipo : parametro.DsTipo;
-                                parametroG.dsTipoCartao = param.DsTipoCartao == null ? value.dsTipoCartao : param.DsTipoCartao.Equals("") ? null : param.DsTipoCartao;
-                                parametroG.cdBandeira = param.CdBandeira == null ? value.cdBandeira : param.CdBandeira == -1 ? null : param.CdBandeira;
-                                parametroG.flVisivel = param.FlVisivel;
-                                parametroG.flAntecipacao = param.FlAntecipacao == null ? value.flAntecipacao : param.FlAntecipacao.Value;
-                                // Avalia cnpj
-                                if (param.NrCnpj != null)
-                                {
-                                    if (param.NrCnpj.Equals("")) parametroG.nrCnpj = null;
-                                    else 
-                                    {
-                                        int cdGrupo = _db.empresas.Where(t => t.nu_cnpj.Equals(param.NrCnpj)).Select(t => t.id_grupo).FirstOrDefault();
-                                        if (cdGrupo == idGrupo)
-                                            parametroG.nrCnpj = param.NrCnpj;
-                                        else
-                                            parametroG.nrCnpj = null;
-                                    }
-                                }
-
-                                // Add
-                                _db.tbBancoParametros.Add(parametroG);
+                                if (param.CdAdquirente == -1) value.cdAdquirente = null;
+                                else value.cdAdquirente = param.CdAdquirente;
                             }
-                            else
+                            // Filial
+                            if (param.NrCnpj != null && (value.nrCnpj == null || !param.NrCnpj.Equals(value.nrCnpj)))
                             {
-                                // TIPO
-                                if (parametro.DsTipo != null && parametro.DsTipo != value.dsTipo)
-                                    value.dsTipo = parametro.DsTipo;
-                                // Adquirente
-                                if (param.CdAdquirente != null && param.CdAdquirente != value.cdAdquirente)
+                                if (param.NrCnpj.Equals("")) value.nrCnpj = null;
+                                else
                                 {
-                                    if (param.CdAdquirente == -1) value.cdAdquirente = null;
-                                    else value.cdAdquirente = param.CdAdquirente;
-                                }
-                                // Filial
-                                if (param.NrCnpj != null && (value.nrCnpj == null || !param.NrCnpj.Equals(value.nrCnpj)))
-                                {
-                                    if (param.NrCnpj.Equals("")) value.nrCnpj = null;
+                                    int idGrupo = _db.empresas.Where(t => t.nu_cnpj.Equals(param.NrCnpj)).Select(t => t.id_grupo).FirstOrDefault();
+                                    if (idGrupo != parametro.CdGrupo) value.nrCnpj = null;
                                     else value.nrCnpj = param.NrCnpj;
                                 }
-                                // Tipo Cartão
-                                if (param.DsTipoCartao != null && (value.dsTipoCartao == null || !param.DsTipoCartao.Equals(value.dsTipoCartao.TrimEnd())))
-                                {
-                                    if (param.DsTipoCartao.Equals("")) value.dsTipoCartao = null;
-                                    else value.dsTipoCartao = param.DsTipoCartao;
-                                }
-                                // Bandeira
-                                if (param.CdBandeira != null && param.CdBandeira != value.cdBandeira)
-                                {
-                                    if (param.CdBandeira == -1) value.cdBandeira = null;
-                                    else value.cdBandeira = param.CdBandeira;
-                                }
-                                // Visibilidade
-                                if (param.FlVisivel != value.flVisivel) value.flVisivel = param.FlVisivel;
-                                // Antecipação
-                                if (param.FlAntecipacao != null && param.FlAntecipacao.Value != value.flAntecipacao)
-                                    value.flAntecipacao = param.FlAntecipacao.Value;
                             }
+                            // Tipo Cartão
+                            if (param.DsTipoCartao != null && (value.dsTipoCartao == null || !param.DsTipoCartao.Equals(value.dsTipoCartao.TrimEnd())))
+                            {
+                                if (param.DsTipoCartao.Equals("")) value.dsTipoCartao = null;
+                                else value.dsTipoCartao = param.DsTipoCartao;
+                            }
+                            // Bandeira
+                            if (param.CdBandeira != null && param.CdBandeira != value.cdBandeira)
+                            {
+                                if (param.CdBandeira == -1) value.cdBandeira = null;
+                                else value.cdBandeira = param.CdBandeira;
+                            }
+                            // Visibilidade
+                            if (param.FlVisivel != value.flVisivel) value.flVisivel = param.FlVisivel;
+                            // Antecipação
+                            if (param.FlAntecipacao != null && param.FlAntecipacao.Value != value.flAntecipacao)
+                                value.flAntecipacao = param.FlAntecipacao.Value;
+                            //}
                         }
                         // Salva
                         _db.SaveChanges();

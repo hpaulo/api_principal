@@ -64,9 +64,9 @@ namespace api.Models.Mapping
             this.HasOptional(t => t.tbBandeira)
                 .WithMany(t => t.tbBancoParametros)
                 .HasForeignKey(d => d.cdBandeira);
-            //this.HasOptional(t => t.grupo_empresa)
-            //    .WithMany(t => t.tbBancoParametros)
-            //    .HasForeignKey(d => d.cdGrupo);
+            this.HasRequired(t => t.grupo_empresa)
+                .WithMany(t => t.tbBancoParametros)
+                .HasForeignKey(d => d.cdGrupo);
         }
     }
 }

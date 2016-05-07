@@ -212,7 +212,7 @@ namespace api.Negocios.Card
                     if (!dataBaseQueryEX.join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
                         dataBaseQueryEX.join.Add("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + GatewayTbExtrato.SIGLA_QUERY + ".cdContaCorrente");
                     if (!dataBaseQueryEX.join.ContainsKey("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY))
-                        dataBaseQueryEX.join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + GatewayTbExtrato.SIGLA_QUERY + ".dsDocumento");
+                        dataBaseQueryEX.join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdGrupo = " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdGrupo AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + GatewayTbExtrato.SIGLA_QUERY + ".dsDocumento");
                     if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
                         dataBaseQueryEX.join.Add("LEFT JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente");
                     if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
@@ -678,51 +678,6 @@ namespace api.Negocios.Card
                         listaFinal.Insert(competenciaListaFinal, competenciaAtualizada);
                     }
 
-                    #endregion
-
-                    #region PARÂMETRO BANCÁRIO
-                    //tbBancoParametro parametro = _db.tbBancoParametros.Where(p => p.dsMemo.Equals(extrato.dsDocumento))
-                    //                                                 .Where(p => p.cdBanco.Equals(extrato.tbContaCorrente.cdBanco))
-                    //                                                 .FirstOrDefault();
-
-                    //if (parametro == null)
-                    //{
-                    //    e.adquirente = "Indefinida";
-                    //    e.bandeira = "Indefinida";
-                    //    e.tipocartao = "";
-                    //}
-                    //else
-                    //{
-                    //    e.adquirente = parametro.cdAdquirente != null ? parametro.tbAdquirente.nmAdquirente : "Indefinida";
-                    //    e.bandeira = parametro.cdBandeira != null ? parametro.tbBandeira.dsBandeira : "Indefinida";
-                    //    e.tipocartao = parametro.dsTipoCartao != null ? parametro.dsTipoCartao : "";
-                    //}
-
-                    //List<dynamic> bandeiras = new List<dynamic>() { new { bandeira = e.bandeira, tipocartao = e.tipocartao } };
-
-                    // Analisa pela conciliação a adquirente e bandeira
-                    //if (extratoConciliado)
-                    //{
-                        // Memo sem adquirente?
-                        //if (e.adquirente.ToUpper().Equals("INDEFINIDA"))
-                        //{
-                        //    e.adquirente = conciliadosPorBandeiras.Select(t => t.adquirente).First();
-                        //    //if (extrato.RecebimentoParcelas.Count > 0)
-                        //    //    e.adquirente = extrato.RecebimentoParcelas.First().Recebimento.tbBandeira.tbAdquirente.nmAdquirente;
-                        //    //else
-                        //    //    e.adquirente = extrato.tbRecebimentoAjustes.First().tbBandeira.tbAdquirente.nmAdquirente;
-                        //}
-
-                        // Memo sem bandeira?
-                        //if (e.bandeira.ToUpper().Equals("INDEFINIDA"))
-                        //{
-                        //    // Obtém as bandeiras
-                        //    //List<dynamic> bandeirasConciliadasParcelas = extrato.RecebimentoParcelas.GroupBy(r => new { r.Recebimento.tbBandeira.dsBandeira, r.Recebimento.tbBandeira.dsTipo }).Select(r => new { bandeira = r.Key.dsBandeira, tipocartao = r.Key.dsTipo }).ToList<dynamic>();
-                        //    //List<dynamic> bandeirasConciliadasAjustes = extrato.tbRecebimentoAjustes.GroupBy(r => new { r.tbBandeira.dsBandeira, r.tbBandeira.dsTipo }).Select(r => new { bandeira = r.Key.dsBandeira, tipocartao = r.Key.dsTipo }).ToList<dynamic>();
-                        //    //bandeiras = bandeirasConciliadasParcelas.Concat(bandeirasConciliadasAjustes).OrderBy(r => r.bandeira).ToList<dynamic>();
-                        //    bandeiras = conciliadosPorBandeiras.Select(t => new { bandeira = t.bandeira, tipocartao = t.tipocartao }).ToList<dynamic>();
-                        //}
-                    //}
                     #endregion
 
                     #region ADQUIRENTE

@@ -21,6 +21,6 @@ namespace api.Models.Object
         public virtual tbAdquirente tbAdquirente { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual tbBandeira tbBandeira { get; set; }
-        //public virtual grupo_empresa grupo_empresa { get; set; }
+        public virtual grupo_empresa grupo_empresa { get; set; }
     }
 }
