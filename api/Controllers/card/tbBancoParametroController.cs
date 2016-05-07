@@ -127,7 +127,7 @@ namespace api.Controllers.Card
         }
 
         // DELETE /tbBancoParametro/token/cdBanco
-        public HttpResponseMessage Delete(string token, string cdBanco, string dsMemo)
+        public HttpResponseMessage Delete(string token, string cdBanco, string dsMemo, int cdGrupo)
         {
             // Abre nova conexão
             using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())
@@ -135,12 +135,12 @@ namespace api.Controllers.Card
                 tbLogAcessoUsuario log = new tbLogAcessoUsuario();
                 try
                 {
-                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("cdBanco : " + cdBanco + "; dsMemo : " + dsMemo), "Delete", _db);
+                    log = Bibliotecas.LogAcaoUsuario.New(token, JsonConvert.SerializeObject("cdBanco : " + cdBanco + "; dsMemo : " + dsMemo + "; cdGrupo : " + cdGrupo), "Delete", _db);
 
                     HttpResponseMessage retorno = new HttpResponseMessage();
                     if (Permissoes.Autenticado(token, _db))
                     {
-                        GatewayTbBancoParametro.Delete(token, cdBanco, dsMemo, _db);
+                        GatewayTbBancoParametro.Delete(token, cdBanco, dsMemo, cdGrupo, _db);
                         log.codResposta = (int)HttpStatusCode.OK;
                         Bibliotecas.LogAcaoUsuario.Save(log, _db);
                         return Request.CreateResponse(HttpStatusCode.OK);

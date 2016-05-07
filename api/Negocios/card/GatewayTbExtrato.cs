@@ -141,8 +141,9 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.NU_CNPJ:
                         string nrCnpj = Convert.ToString(item.Value);
-                        entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                        entity = entity.Where(e => _db.tbBancoParametros.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
                                                                        .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                       .Where(b => b.cdGrupo == e.tbContaCorrente.cdGrupo)
                                                                        .Where(b => b.nrCnpj == null || b.nrCnpj.Equals(nrCnpj)) // somente as movimentações que se referem a filial => os memos "genéricos" ou específicos da filial (identificado pelo estabelecimento)
                                                                        .Count() > 0).AsQueryable<tbExtrato>();
                         break;
@@ -152,18 +153,21 @@ namespace api.Negocios.Card
                             // Considera também os que tem dsTipo != null
                             int cdAdquirente = Convert.ToInt32(item.Value.Replace("!",""));
                             if (cdAdquirente == -1)
-                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                entity = entity.Where(e => _db.tbBancoParametros.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
                                                                                .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdGrupo == e.tbContaCorrente.cdGrupo)
                                                                                .Where(b => b.cdAdquirente == null && (b.dsTipoCartao != null || b.flAntecipacao))
                                                                                .Count() > 0).AsQueryable<tbExtrato>();
                             else if (cdAdquirente == 0)
-                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                entity = entity.Where(e => _db.tbBancoParametros.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
                                                                                .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdGrupo == e.tbContaCorrente.cdGrupo)
                                                                                .Where(b => b.cdAdquirente != null || (b.cdAdquirente == null && (b.dsTipoCartao != null || b.flAntecipacao)))
                                                                                .Count() > 0).AsQueryable<tbExtrato>();
                             else
-                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                entity = entity.Where(e => _db.tbBancoParametros.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
                                                                                .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdGrupo == e.tbContaCorrente.cdGrupo)
                                                                                .Where(b => b.cdAdquirente == cdAdquirente || (b.cdAdquirente == null && (b.dsTipoCartao != null || b.flAntecipacao)))
                                                                                .Count() > 0).AsQueryable<tbExtrato>();
                         }
@@ -171,18 +175,21 @@ namespace api.Negocios.Card
                         {
                             int cdAdquirente = Convert.ToInt32(item.Value);
                             if (cdAdquirente == -1)
-                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                entity = entity.Where(e => _db.tbBancoParametros.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
                                                                                .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdGrupo == e.tbContaCorrente.cdGrupo)
                                                                                .Where(b => b.cdAdquirente == null)
                                                                                .Count() > 0).AsQueryable<tbExtrato>();
                             else if (cdAdquirente == 0)
-                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                entity = entity.Where(e => _db.tbBancoParametros.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
                                                                                .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdGrupo == e.tbContaCorrente.cdGrupo)
                                                                                .Where(b => b.cdAdquirente != null)
                                                                                .Count() > 0).AsQueryable<tbExtrato>();
                             else
-                                entity = entity.Where(e => _db.tbBancoParametro.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
+                                entity = entity.Where(e => _db.tbBancoParametros.Where(b => b.cdBanco.Equals(e.tbContaCorrente.cdBanco))
                                                                                .Where(b => b.dsMemo.Equals(e.dsDocumento))
+                                                                               .Where(b => b.cdGrupo == e.tbContaCorrente.cdGrupo)
                                                                                .Where(b => b.cdAdquirente == cdAdquirente)
                                                                                .Count() > 0).AsQueryable<tbExtrato>();
                         }
@@ -435,14 +442,14 @@ namespace api.Negocios.Card
                         if (!join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
                             join.Add("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + SIGLA_QUERY + ".cdContaCorrente");
                         if (!join.ContainsKey("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY))
-                            join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + SIGLA_QUERY + ".dsDocumento");
+                            join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdGrupo = " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdGrupo AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + SIGLA_QUERY + ".dsDocumento");
                         where.Add(GatewayTbBancoParametro.SIGLA_QUERY + ".nrCnpj IS NULL OR " + GatewayTbBancoParametro.SIGLA_QUERY + ".nrCnpj = '" + nrCnpj +  "'"); // somente as movimentações que se referem a filial => os memos "genéricos" ou específicos da filial (identificado pelo estabelecimento)
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         if (!join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
                             join.Add("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + SIGLA_QUERY + ".cdContaCorrente");
                         if (!join.ContainsKey("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY))
-                            join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + SIGLA_QUERY + ".dsDocumento");
+                            join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdGrupo = " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdGrupo AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + SIGLA_QUERY + ".dsDocumento");
                         if (item.Value.Contains("!"))
                         {
                             // Considera também os que tem dsTipo != null
@@ -861,6 +868,7 @@ namespace api.Negocios.Card
                 tbContaCorrente conta = _db.tbContaCorrentes.Where(e => e.cdContaCorrente == cdContaCorrente).FirstOrDefault();
                 if (conta == null) throw new Exception("Conta corrente inexistente");
                 if (!conta.flAtivo) throw new Exception("Conta corrente está inativada");
+                if (conta.cdGrupo != idGrupo) throw new Exception("Conta não pertence ao grupo " + idGrupo + "!");
                 #endregion
 
                 #region OBTÉM O DIRETÓRIO A SER SALVO O EXTRATO
@@ -1167,6 +1175,7 @@ namespace api.Negocios.Card
                             parametro.cdBandeira = null;
                             parametro.dsTipoCartao = null;
                             parametro.nrCnpj = null;
+                            parametro.cdGrupo = idGrupo;
                             parametro.cdBanco = conta.cdBanco;
                             parametro.dsMemo = extrato.dsDocumento;
                             parametro.dsTipo = extrato.dsTipo;

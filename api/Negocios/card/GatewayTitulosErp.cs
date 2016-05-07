@@ -41,19 +41,28 @@ namespace api.Negocios.Card
         {
             DATA = 100,
             ID_GRUPO = 101,
+            TIPODATA = 102
         };
 
         private readonly static string DOMINIO = System.Configuration.ConfigurationManager.AppSettings["DOMINIO"];
 
 
 
-        private static Retorno carregaTitulos(painel_taxservices_dbContext _db, string token, string dsAPI, string data)
+        private static Retorno carregaTitulos(painel_taxservices_dbContext _db, string token, string dsAPI, string data, string tipoData)
         {
+            if (data == null)
+                return null;
+
             // Coloca a data no padrão de sql
             data = data.Substring(0, 4) + "-" + data.Substring(4, 2) + "-" + data.Substring(6, 2);
 
+            if (tipoData == null || (!tipoData.Equals("R") && !tipoData.Equals("V")))
+                tipoData = "R";
+
+
             string url = "http://" + dsAPI + DOMINIO;
-            string complemento = "titulos/consultatitulos/" + token + "?" + ("" + (int)CAMPOS.DATA) + "=" + data;
+            //string url = "http://localhost:50939";
+            string complemento = "titulos/consultatitulos/" + token + "?" + ("" + (int)CAMPOS.DATA) + "=" + data + "&" + ("" + (int)CAMPOS.TIPODATA) + "=" + tipoData;
 
 
             HttpClient client = new System.Net.Http.HttpClient();
@@ -102,20 +111,20 @@ namespace api.Negocios.Card
             DbContextTransaction transaction = _db.Database.BeginTransaction(System.Data.IsolationLevel.ReadUncommitted);
             try
             {
-                //try
-                //{
-                //    ((IObjectContextAdapter)_db).ObjectContext.Refresh(RefreshMode.StoreWins, _db.ChangeTracker.Entries().Select(c => c.Entity));
-
-                //}
-                //catch { }
-
                 //DECLARAÇÕES
                 string outValue = null;
 
                 // DATA
                 string data = String.Empty;
+                string tipoData = "R";
                 if (!queryString.TryGetValue("" + (int)CAMPOS.DATA, out outValue))
                     throw new Exception("A data deve ser informada!");
+                if (!queryString.TryGetValue("" + (int)CAMPOS.TIPODATA, out outValue))
+                {
+                    tipoData = queryString["" + (int)CAMPOS.TIPODATA];
+                    if (!tipoData.Equals("V") && !tipoData.Equals("R"))
+                        tipoData = "R"; // default
+                }
 
                 data = queryString["" + (int)CAMPOS.DATA];
 
@@ -134,7 +143,7 @@ namespace api.Negocios.Card
                     throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
 
                 // Obtém os títulos
-                Retorno retorno = carregaTitulos(_db, token, grupo_empresa.dsAPI, data);
+                Retorno retorno = carregaTitulos(_db, token, grupo_empresa.dsAPI, data, tipoData);
 
                 // Obtém os registros
                 List<dynamic> titulos = new List<dynamic>();
@@ -249,7 +258,7 @@ namespace api.Negocios.Card
                     if (grupo_empresa.dsAPI == null || grupo_empresa.dsAPI.Equals(""))
                         throw new Exception("Permissão negada! Empresa não possui o serviço ativo");
 
-                    Retorno retorno = carregaTitulos(_db, token, grupo_empresa.dsAPI, param.data);
+                    Retorno retorno = carregaTitulos(_db, token, grupo_empresa.dsAPI, param.data, param.tipoData);
 
                     Semaphore semaforo = new Semaphore(0, 1);
 
@@ -261,6 +270,8 @@ namespace api.Negocios.Card
                     args.Add(_db);
                     args.Add(semaforo);
                     args.Add(retorno);
+                    args.Add(IdGrupo);
+                    args.Add(param);
                     bw.RunWorkerAsync(args);
 
                     semaforo.WaitOne();
@@ -300,6 +311,8 @@ namespace api.Negocios.Card
             painel_taxservices_dbContext _db = args[0] as painel_taxservices_dbContext;
             Semaphore semaforo = args[1] as Semaphore;
             Retorno retorno = args[2] as Retorno;
+            Int32 idGrupo = Convert.ToInt32(args[3]);
+            ImportaTitulos param = args[4] as ImportaTitulos;
 
             List<dynamic> Registros = retorno.Registros as List<dynamic>;
 
@@ -316,6 +329,7 @@ namespace api.Negocios.Card
             //                             })
             //                             .OrderByDescending(e => e.count)
             //                             .ToList<dynamic>();
+            List<int> idsRecebimentoTitulo = new List<int>();
 
             for (var k = 0; k < Registros.Count; k++)
             {
@@ -342,14 +356,6 @@ namespace api.Negocios.Card
                         vlVenda = Convert.ToDecimal(tit.vlVenda),
                     };
 
-                    //tbRecebimentoTitulo titulo = _db.tbRecebimentoTitulos
-                    //                                        // Unique
-                    //                                        .Where(e => e.nrCNPJ.Equals(tbRecebimentoTitulo.nrCNPJ))
-                    //                                        .Where(e => e.nrNSU.Equals(tbRecebimentoTitulo.nrNSU))
-                    //                                        .Where(e => e.dtTitulo.Equals(tbRecebimentoTitulo.dtTitulo))
-                    //                                        .Where(e => e.nrParcela == tbRecebimentoTitulo.nrParcela)
-                    //                                        .Where(e => e.cdERP == tbRecebimentoTitulo.cdERP)
-                    //                                        .FirstOrDefault();
                     tbRecebimentoTitulo titulo = _db.Database.SqlQuery<tbRecebimentoTitulo>("SELECT T.*" +
                                                                                             " FROM card.tbRecebimentoTitulo T (NOLOCK)" +
                                                                                             " WHERE T.nrCNPJ = '" + tbRecebimentoTitulo.nrCNPJ + "'" +
@@ -360,9 +366,9 @@ namespace api.Negocios.Card
                                                                                            )
                                                              .FirstOrDefault();
 
+                    int idRecebimentoTitulo = 0;
                     if (titulo == null)
                     {
-                        //_db.tbRecebimentoTitulos.Add(tbRecebimentoTitulo);
                         _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoTitulo" +
                                                        " (nrCNPJ, nrNSU, dtTitulo, nrParcela, cdERP, dtVenda" + 
                                                        ", cdAdquirente, dsBandeira, vlVenda, qtParcelas, vlParcela, dtBaixaERP)" +
@@ -379,17 +385,22 @@ namespace api.Negocios.Card
                                                        ", " + tbRecebimentoTitulo.vlParcela.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", " + (tbRecebimentoTitulo.dtBaixaERP == null ? "NULL" : "'" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtBaixaERP.Value) + "'") +
                                                        ")");
+                        _db.SaveChanges();
+                        transaction.Commit();
+
+                        // Obtém o id do título
+                        idRecebimentoTitulo = _db.Database.SqlQuery<int>("SELECT T.idRecebimentoTitulo" +
+                                                                        " FROM card.tbRecebimentoTitulo T (NOLOCK)" +
+                                                                        " WHERE T.nrCNPJ = '" + tbRecebimentoTitulo.nrCNPJ + "'" +
+                                                                        " AND T.nrNSU = '" + tbRecebimentoTitulo.nrNSU + "'" +
+                                                                        " AND T.dtTitulo = '" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtTitulo) + "'" +
+                                                                        " AND T.nrParcela = " + tbRecebimentoTitulo.nrParcela +
+                                                                        " AND T.cdERP = '" + tbRecebimentoTitulo.cdERP + "'"
+                                                                        )
+                                                             .FirstOrDefault();
                     }
                     else
                     {
-                        //titulo.dtVenda = tbRecebimentoTitulo.dtVenda;
-                        //titulo.cdAdquirente = tbRecebimentoTitulo.cdAdquirente;
-                        //titulo.dsBandeira = tbRecebimentoTitulo.dsBandeira;
-                        //titulo.vlVenda = tbRecebimentoTitulo.vlVenda;
-                        //titulo.qtParcelas = tbRecebimentoTitulo.qtParcelas;
-                        //titulo.vlParcela = tbRecebimentoTitulo.vlParcela;
-                        //titulo.dtBaixaERP = tbRecebimentoTitulo.dtBaixaERP;
-
                         _db.Database.ExecuteSqlCommand("UPDATE T" +
                                                        " SET T.dtVenda = " + (tbRecebimentoTitulo.dtVenda == null ? "NULL" : "'" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtVenda.Value) + "'") +
                                                        ", T.cdAdquirente = " + tbRecebimentoTitulo.cdAdquirente +
@@ -400,10 +411,16 @@ namespace api.Negocios.Card
                                                        ", T.dtBaixaERP = " + (tbRecebimentoTitulo.dtBaixaERP == null ? "NULL" : "'" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtBaixaERP.Value) + "'") +
                                                        " FROM card.tbRecebimentoTitulo T" +
                                                        " WHERE T.idRecebimentoTitulo = " + titulo.idRecebimentoTitulo);
-                        
+
+                        _db.SaveChanges();
+                        transaction.Commit();
+
+                        idRecebimentoTitulo = titulo.idRecebimentoTitulo;
                     }
-                    _db.SaveChanges();
-                    transaction.Commit();
+
+                    // Adiciona
+                    //if (!idsRecebimentoTitulo.Contains(idRecebimentoTitulo))
+                    idsRecebimentoTitulo.Add(idRecebimentoTitulo);
                 }
                 catch (Exception e)
                 {
@@ -419,6 +436,45 @@ namespace api.Negocios.Card
                     retorno.Totais = new Dictionary<string, object>();
                     retorno.Totais.Add("erro", "Título: " + json + ". Erro: " + erro);
                     break;
+                }
+            }
+
+            // Avalia títulos que não foram atualizados
+            if (idsRecebimentoTitulo.Count > 0 && param != null)
+            {
+                idsRecebimentoTitulo = idsRecebimentoTitulo.Distinct().ToList();
+                string data = param.data.Substring(0, 4) + "-" + param.data.Substring(4, 2) + "-" + param.data.Substring(6, 2);
+                string tipoData = param.tipoData == null || (!param.tipoData.Equals("V") && !param.tipoData.Equals("R")) ? "R" : param.tipoData;
+                string script = "SELECT T.idRecebimentoTitulo" +
+                                " FROM card.tbRecebimentoTitulo T (NOLOCK)" +
+                                " JOIN cliente.empresa E (NOLOCK) ON E.nu_cnpj = T.nrCNPJ" +
+                                " WHERE " + (tipoData.Equals("V") ? "T.dtVenda" : "T.dtTitulo") + " BETWEEN '" + data + "' AND '" + data + " 23:59:00'" +
+                                " AND E.id_grupo = " + idGrupo +
+                                " AND T.idRecebimentoTitulo NOT IN (" + string.Join(", ", idsRecebimentoTitulo) + ")";
+                int[] titulosASeremDeletados = new int[0];
+                try
+                {
+                    titulosASeremDeletados = _db.Database.SqlQuery<int>(script).ToArray();
+                }
+                catch { }
+
+                if (titulosASeremDeletados != null && titulosASeremDeletados.Length > 0)
+                {
+                    script = "UPDATE P" +
+                             " SET P.idRecebimentoTitulo = NULL" +
+                             " FROM pos.RecebimentoParcela P" +
+                             " JOIN card.tbRecebimentoVenda T ON P.idRecebimentoTitulo = T.idRecebimentoTitulo" +
+                             " WHERE T.idRecebimentoTitulo IN (" + string.Join(", ", titulosASeremDeletados) + ")";
+                    try
+                    {
+                        _db.Database.ExecuteSqlCommand(script);
+                        // Deleta
+                        script = "DELETE T" +
+                                 " FROM card.tbRecebimentoTitulo T" +
+                                 " WHERE V.idRecebimentoVenda IN (" + string.Join(", ", titulosASeremDeletados) + ")";
+                        _db.Database.ExecuteSqlCommand(script);
+                    }
+                    catch { }
                 }
             }
 
@@ -589,6 +645,8 @@ namespace api.Negocios.Card
                         args.Add(_db);
                         args.Add(semaforo);
                         args.Add(retorno);
+                        args.Add(idGrupo);
+                        args.Add(null);
                         bw.RunWorkerAsync(args);
 
                         semaforo.WaitOne();

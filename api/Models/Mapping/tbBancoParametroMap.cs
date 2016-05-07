@@ -13,7 +13,7 @@ namespace api.Models.Mapping
         public tbBancoParametroMap()
         {
             // Primary Key
-            this.HasKey(t => new { t.cdBanco, t.dsMemo });
+            this.HasKey(t => new { t.cdBanco, t.dsMemo, t.cdGrupo });
 
             // Properties
             this.Property(t => t.dsMemo)
@@ -52,6 +52,7 @@ namespace api.Models.Mapping
             this.Property(t => t.dsTipoCartao).HasColumnName("dsTipoCartao");
             this.Property(t => t.cdBandeira).HasColumnName("cdBandeira");
             this.Property(t => t.flAntecipacao).HasColumnName("flAntecipacao");
+            this.Property(t => t.cdGrupo).HasColumnName("cdGrupo");
 
             // Relationships
             this.HasOptional(t => t.tbAdquirente)
@@ -63,7 +64,9 @@ namespace api.Models.Mapping
             this.HasOptional(t => t.tbBandeira)
                 .WithMany(t => t.tbBancoParametros)
                 .HasForeignKey(d => d.cdBandeira);
-
+            this.HasRequired(t => t.grupo_empresa)
+                .WithMany(t => t.tbBancoParametros)
+                .HasForeignKey(d => d.cdGrupo);
         }
     }
 }

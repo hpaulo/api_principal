@@ -881,7 +881,7 @@ namespace api.Negocios.Card
                     if (!dataBaseQueryEX.join.ContainsKey("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY))
                         dataBaseQueryEX.join.Add("INNER JOIN card.tbContaCorrente " + GatewayTbContaCorrente.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdContaCorrente = " + GatewayTbExtrato.SIGLA_QUERY + ".cdContaCorrente");
                     if (!dataBaseQueryEX.join.ContainsKey("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY))
-                        dataBaseQueryEX.join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + GatewayTbExtrato.SIGLA_QUERY + ".dsDocumento");
+                        dataBaseQueryEX.join.Add("INNER JOIN card.tbBancoParametro " + GatewayTbBancoParametro.SIGLA_QUERY, " ON " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdGrupo = " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdGrupo AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdBanco = " + GatewayTbContaCorrente.SIGLA_QUERY + ".cdBanco AND " + GatewayTbBancoParametro.SIGLA_QUERY + ".dsMemo = " + GatewayTbExtrato.SIGLA_QUERY + ".dsDocumento");
                     if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
                         dataBaseQueryEX.join.Add("LEFT JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbBancoParametro.SIGLA_QUERY + ".cdAdquirente");
                     if (!dataBaseQueryEX.join.ContainsKey("LEFT JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
@@ -1259,35 +1259,6 @@ namespace api.Negocios.Card
                                                         })
                                                         .FirstOrDefault();
 
-                                //ConciliacaoBancaria movimentacao = _db.tbExtratos.Where(e => e.idExtrato == idExtrato)
-                                //    .Select(e => new ConciliacaoBancaria
-                                //    {
-                                //        Tipo = TIPO_EXTRATO, // extrato
-                                //        Grupo = new List<ConciliacaoBancaria.ConciliacaoGrupo> {
-                                //            new ConciliacaoBancaria.ConciliacaoGrupo {
-                                //                Id = e.idExtrato,
-                                //                Documento = e.nrDocumento,
-                                //                Valor = e.vlMovimento ?? new decimal(0.0),
-                                //                Filial = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia.ToUpper() + (p.empresa.filial != null ? " " + p.empresa.filial.ToUpper() : "")) ?? "").FirstOrDefault() ?? "",
-                                //            }
-                                //        },
-                                //        ValorTotal = e.vlMovimento ?? new decimal(0.0),
-                                //        Data = e.dtExtrato,
-                                //        Adquirente = _db.tbBancoParametro.Where(p => p.dsMemo.Equals(e.dsDocumento)).Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco)).Select(p => p.tbAdquirente.nmAdquirente.ToUpper() ?? "").FirstOrDefault() ?? "",
-                                //        Memo = e.dsDocumento,
-                                //        Conta = new ConciliacaoBancaria.ConciliacaoConta
-                                //                {
-                                //                    CdContaCorrente = e.tbContaCorrente.cdContaCorrente,
-                                //                    NrAgencia = e.tbContaCorrente.nrAgencia,
-                                //                    NrConta = e.tbContaCorrente.nrConta,
-                                //                    CdBanco = e.tbContaCorrente.cdBanco
-                                //                },
-                                //        Bandeira = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.tbBandeira.dsBandeira.ToUpper() ?? "").FirstOrDefault() ?? "",
-                                //        TipoCartao = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.dsTipoCartao.ToUpper().TrimEnd() ?? "").FirstOrDefault() ?? "",
-                                //        Antecipado = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.flAntecipacao).FirstOrDefault(),
-                                //        Filial = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia.ToUpper() + (p.empresa.filial != null ? " " + p.empresa.filial.ToUpper() : "")) ?? "").FirstOrDefault() ?? "",
-                                //    }).FirstOrDefault();
-
                                 // Adiciona
                                 adicionaElementosConciliadosNaLista(CollectionConciliacaoBancaria, recebimento, movimentacao, TIPO_CONCILIADO.CONCILIADO);
                             }
@@ -1479,40 +1450,6 @@ namespace api.Negocios.Card
                                                         })
                                                         .ToList<ConciliacaoBancaria>();
                         }
-
-                        //List<ConciliacaoBancaria> extratoBancario = queryExtrato
-                        //    // Só considera os extratos que não estão conciliados
-                        //                                        .Where(e => e.RecebimentoParcelas.Count == 0)
-                        //                                        .Select(e => new ConciliacaoBancaria
-                        //                                        {
-                        //                                            Tipo = TIPO_EXTRATO, // extrato
-                        //                                            Grupo = new List<ConciliacaoBancaria.ConciliacaoGrupo> {
-                        //                                                            new ConciliacaoBancaria.ConciliacaoGrupo {
-                        //                                                                Id = e.idExtrato,
-                        //                                                                Documento = e.nrDocumento,
-                        //                                                                Valor = e.vlMovimento ?? new decimal(0.0),
-                        //                                                                Filial = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia + (p.empresa.filial != null ? " " + p.empresa.filial : "")) ?? "").FirstOrDefault() ?? "",
-                        //                                                            }
-                        //                                                        },
-                        //                                            ValorTotal = e.vlMovimento ?? new decimal(0.0),
-                        //                                            Data = e.dtExtrato,
-                        //                                            Adquirente = _db.tbBancoParametro.Where(p => p.dsMemo.Equals(e.dsDocumento))
-                        //                                                                             .Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco))
-                        //                                                                             .Select(p => p.tbAdquirente.nmAdquirente.ToUpper() ?? "")
-                        //                                                                             .FirstOrDefault() ?? "",
-                        //                                            Memo = e.dsDocumento,
-                        //                                            Conta = new ConciliacaoBancaria.ConciliacaoConta
-                        //                                            {
-                        //                                                CdContaCorrente = e.tbContaCorrente.cdContaCorrente,
-                        //                                                NrAgencia = e.tbContaCorrente.nrAgencia,
-                        //                                                NrConta = e.tbContaCorrente.nrConta,
-                        //                                                CdBanco = e.tbContaCorrente.cdBanco
-                        //                                            },
-                        //                                            Bandeira = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.tbBandeira.dsBandeira ?? "").FirstOrDefault() ?? "",
-                        //                                            TipoCartao = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.dsTipoCartao.ToUpper().TrimEnd() ?? "").FirstOrDefault() ?? "",
-                        //                                            Antecipado = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => p.flAntecipacao).FirstOrDefault(),
-                        //                                            Filial = _db.tbBancoParametro.Where(p => p.cdBanco.Equals(e.tbContaCorrente.cdBanco) && p.dsMemo.Equals(e.dsDocumento)).Select(p => (p.empresa.ds_fantasia + (p.empresa.filial != null ? " " + p.empresa.filial : "")) ?? "").FirstOrDefault() ?? "",
-                        //                                        }).ToList<ConciliacaoBancaria>();
 
                         #endregion
 
