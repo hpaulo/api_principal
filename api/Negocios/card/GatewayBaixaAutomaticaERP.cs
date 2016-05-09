@@ -141,7 +141,8 @@ namespace api.Negocios.Card
                                             ", T.vlVenda AS T_vlVenda" +
                                             ", T_filial = UPPER(ET.ds_fantasia + CASE WHEN ET.filial IS NULL THEN '' ELSE ' ' + ET.filial END)" +
                                             ", T.dsBandeira AS T_dsBandeira" +
-                                            ", AAT.nmAdquirente AS T_nmAdquirente" +
+                                            //", AAT.nmAdquirente AS T_nmAdquirente" +
+                                            ", T_nmAdquirente = (SELECT TOP 1 nmAdquirente FROM card.tbAdquirente (NOLOCK) WHERE cdAdquirente = CASE WHEN T.cdAdquirente IS NOT NULL THEN T.cdAdquirente ELSE T.cdAdquirenteNew END)" +
                                             ", T.qtParcelas AS T_qtParcelas" +
                                             ", T.nrParcela AS T_nrParcela" +
                                             ", T.dtTitulo AS T_dtRecebimentoPrevisto" +
@@ -153,7 +154,7 @@ namespace api.Negocios.Card
                                             " JOIN card.tbAdquirente AAR (NOLOCK) ON AAR.cdAdquirente = B.cdAdquirente" +
                                             " JOIN card.tbRecebimentoTitulo T (NOLOCK) ON T.idRecebimentoTitulo = P.idRecebimentoTitulo" +
                                             " JOIN cliente.empresa ET (NOLOCK) ON ET.nu_cnpj = T.nrCNPJ" +
-                                            " JOIN card.tbAdquirente AAT (NOLOCK) ON AAT.cdAdquirente = T.cdAdquirente" +
+                                            //" JOIN card.tbAdquirente AAT (NOLOCK) ON AAT.cdAdquirente = T.cdAdquirente" +
                                             " WHERE P.idRecebimentoTitulo = " + idRecebimentoTitulo;
                             List<IDataRecord> resultado = DataBaseQueries.SqlQuery(script, connection);
 
@@ -169,7 +170,7 @@ namespace api.Negocios.Card
                                 decimal? T_vlVenda = t["T_vlVenda"].Equals(DBNull.Value) ? (decimal?)null : Convert.ToDecimal(t["T_vlVenda"]);
                                 string T_filial = Convert.ToString(t["T_filial"]);
                                 string T_bandeira = Convert.ToString(t["T_dsBandeira"].Equals(DBNull.Value) ? "" : t["T_dsBandeira"]);
-                                string T_adquirente = Convert.ToString(t["T_nmAdquirente"]);
+                                string T_adquirente = Convert.ToString(t["T_nmAdquirente"].Equals(DBNull.Value) ? "" : t["T_nmAdquirente"]);
                                 byte T_qtParcelas = Convert.ToByte(t["T_qtParcelas"].Equals(DBNull.Value) ? 0 : t["T_qtParcelas"]);
                                 byte T_nrParcela = Convert.ToByte(t["T_nrParcela"]);
                                 DateTime T_dtTitulo = (DateTime)t["T_dtRecebimentoPrevisto"];

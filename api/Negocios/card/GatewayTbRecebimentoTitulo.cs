@@ -49,6 +49,7 @@ namespace api.Negocios.Card
             NRPARCELA = 111,
             CDERP = 112,
             DTBAIXAERP = 113, // "" : null | "0" : != null
+            CDSACADO = 114,
 
             // RELACIONAMENTOS
             ID_GRUPO = 216,
@@ -115,7 +116,8 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        entity = entity.Where(e => e.cdAdquirente.Equals(cdAdquirente)).AsQueryable<tbRecebimentoTitulo>();
+                        entity = entity.Where(e => (e.cdAdquirente != null && e.cdAdquirente == cdAdquirente) ||
+                                                   (e.cdAdquirente == null && e.cdAdquirenteNew == cdAdquirente)).AsQueryable<tbRecebimentoTitulo>();
                         break;
                     case CAMPOS.DSBANDEIRA:
                         string dsBandeira = Convert.ToString(item.Value);
@@ -174,6 +176,10 @@ namespace api.Negocios.Card
                             DateTime dtaIni = DateTime.ParseExact(busca + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtBaixaERP != null && e.dtBaixaERP.Value.Year == dtaIni.Year && e.dtBaixaERP.Value.Month == dtaIni.Month && e.dtBaixaERP.Value.Day == dtaIni.Day).AsQueryable<tbRecebimentoTitulo>();
                         }
+                        break;
+                    case CAMPOS.CDSACADO:
+                        string cdSacado = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.cdSacado.Equals(cdSacado)).AsQueryable<tbRecebimentoTitulo>();
                         break;
 
                     // RELACIONAMENTOS
@@ -309,7 +315,8 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDADQUIRENTE:
                         Int32 cdAdquirente = Convert.ToInt32(item.Value);
-                        where.Add(SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente);
+                        where.Add("(" + SIGLA_QUERY + ".cdAdquirente IS NOT NULL AND " + SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente + ") OR " +
+                                  "(" + SIGLA_QUERY + ".cdAdquirente IS NULL AND " + SIGLA_QUERY + ".cdAdquirenteNew = " + cdAdquirente + ")");
                         break;
                     case CAMPOS.DSBANDEIRA:
                         string dsBandeira = Convert.ToString(item.Value);
@@ -374,6 +381,10 @@ namespace api.Negocios.Card
                             string dt = DataBaseQueries.GetDate(dta);
                             where.Add(SIGLA_QUERY + ".dtBaixaERP IS NOT NULL AND " + SIGLA_QUERY + ".dtBaixaERP BETWEEN '" + dt + "' AND '" + dt + " 23:59:00'");
                         }
+                        break;
+                    case CAMPOS.CDSACADO:
+                        string cdSacado = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".cdSacado = '" + cdSacado + "'");
                         break;
 
                     // RELACIONAMENTOS
@@ -556,7 +567,8 @@ namespace api.Negocios.Card
                         nrCNPJ = e.nrCNPJ,
                         nrNSU = e.nrNSU,
                         dtVenda = e.dtVenda,
-                        cdAdquirente = e.cdAdquirente,
+                        //cdAdquirente = e.cdAdquirente,
+                        cdAdquirente = e.cdAdquirente != null ? e.cdAdquirente : e.cdAdquirenteNew,                        
                         dsBandeira = e.dsBandeira,
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
@@ -565,6 +577,7 @@ namespace api.Negocios.Card
                         nrParcela = e.nrParcela,
                         cdERP = e.cdERP,
                         dtBaixaERP = e.dtBaixaERP,
+                        cdSacado = e.cdSacado,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -576,7 +589,8 @@ namespace api.Negocios.Card
                         nrCNPJ = e.nrCNPJ,
                         nrNSU = e.nrNSU,
                         dtVenda = e.dtVenda,
-                        cdAdquirente = e.cdAdquirente,
+                        //cdAdquirente = e.cdAdquirente,
+                        cdAdquirente = e.cdAdquirente != null ? e.cdAdquirente : e.cdAdquirenteNew,                        
                         dsBandeira = e.dsBandeira,
                         vlVenda = e.vlVenda,
                         qtParcelas = e.qtParcelas,
@@ -585,6 +599,7 @@ namespace api.Negocios.Card
                         nrParcela = e.nrParcela,
                         cdERP = e.cdERP,
                         dtBaixaERP = e.dtBaixaERP,
+                        cdSacado = e.cdSacado,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2) // PORTAL: Consulta Títulos ERP (Conciliação Bancária)
@@ -597,7 +612,8 @@ namespace api.Negocios.Card
                         Filial = e.empresa.ds_fantasia.ToUpper() + (e.empresa.filial != null ? " " + e.empresa.filial.ToUpper() : ""),
                         Documento = e.nrNSU,
                         DataVenda = e.dtVenda,
-                        Adquirente = e.tbAdquirente.dsAdquirente.ToUpper(),
+                        //Adquirente = e.tbAdquirente.dsAdquirente.ToUpper(),
+                        Adquirente = _db.tbAdquirentes.Where(t => t.cdAdquirente == (e.cdAdquirente != null ? e.cdAdquirente : e.cdAdquirenteNew)).Select(t => t.nmAdquirente.ToUpper()).FirstOrDefault(),
                         Bandeira = e.dsBandeira,
                         DataPrevista = e.dtTitulo,
                         Valor = e.vlParcela,
@@ -623,8 +639,7 @@ namespace api.Negocios.Card
                                               })
                                               .FirstOrDefault(),
                         dtVenda = e.dtVenda,
-                        tbAdquirente = _db.tbAdquirentes.Where(a => a.cdAdquirente == e.cdAdquirente)
-                                                        .Select(a => new
+                        tbAdquirente = _db.tbAdquirentes.Where(a => a.cdAdquirente == (e.cdAdquirente != null ? e.cdAdquirente : e.cdAdquirenteNew)).Select(a => new
                                                         {
                                                             a.cdAdquirente,
                                                             a.nmAdquirente
@@ -638,6 +653,7 @@ namespace api.Negocios.Card
                         nrParcela = e.nrParcela,
                         cdERP = e.cdERP,
                         dtBaixaERP = e.dtBaixaERP,
+                        cdSacado = e.cdSacado,
                         //conciliado = e.RecebimentoParcelas.Count > 0
                         conciliado = titulosConciliados.Contains(e.idRecebimentoTitulo)
                     }).ToList<dynamic>();

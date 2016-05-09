@@ -20,8 +20,8 @@ namespace api.Models.Mapping
                 .HasMaxLength(41)
                 .IsRequired();
 
-            this.Property(t => t.cdAdquirente)
-                .IsRequired();
+            //this.Property(t => t.cdAdquirente)
+            //    .IsRequired();
 
             this.Property(t => t.dsBandeira)
                 .HasMaxLength(50);
@@ -38,6 +38,12 @@ namespace api.Models.Mapping
             this.Property(t => t.cdERP)
                 .HasMaxLength(40);
 
+            this.Property(t => t.cdSacado)
+                .HasMaxLength(10);
+
+            this.Property(t => t.cdAdquirenteNew)
+                .HasDatabaseGeneratedOption(DatabaseGeneratedOption.Computed);
+
             // Table & Column Mappings
             this.ToTable("tbRecebimentoTitulo", "card");
             this.Property(t => t.idRecebimentoTitulo).HasColumnName("idRecebimentoTitulo");
@@ -53,9 +59,11 @@ namespace api.Models.Mapping
             this.Property(t => t.nrParcela).HasColumnName("nrParcela");
             this.Property(t => t.cdERP).HasColumnName("cdERP");
             this.Property(t => t.dtBaixaERP).HasColumnName("dtBaixaERP");
+            this.Property(t => t.cdSacado).HasColumnName("cdSacado");
+            this.Property(t => t.cdAdquirenteNew).HasColumnName("cdAdquirenteNew");
 
             // Relationships
-            this.HasRequired(t => t.tbAdquirente)
+            this.HasOptional(t => t.tbAdquirente)
                 .WithMany(t => t.tbRecebimentoTitulos)
                 .HasForeignKey(d => d.cdAdquirente);
             this.HasRequired(t => t.empresa)
