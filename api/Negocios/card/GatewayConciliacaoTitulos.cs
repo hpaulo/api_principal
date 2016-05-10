@@ -60,7 +60,7 @@ namespace api.Negocios.Card
         public static string TIPO_TITULO = "T";
         public static string TIPO_RECEBIMENTO = "R";
         // Pré-Conciliação
-        private const int RANGE_DIAS_ANTERIOR = 8;
+        private const int RANGE_DIAS_ANTERIOR = 10;
         private const int RANGE_DIAS_POSTERIOR = 5;
         private static decimal TOLERANCIA = new decimal(0.1); // R$0,10
 
@@ -309,8 +309,8 @@ namespace api.Negocios.Card
 
                         // TITULO
                         // Adiciona join com tbAdquirente, caso não exista
-                        if (!dataBaseQueryTI.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
-                            dataBaseQueryTI.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdAdquirente");
+                        //if (!dataBaseQueryTI.join.ContainsKey("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY))
+                        //    dataBaseQueryTI.join.Add("INNER JOIN card.tbAdquirente " + GatewayTbAdquirente.SIGLA_QUERY, " ON " + GatewayTbAdquirente.SIGLA_QUERY + ".cdAdquirente = " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdAdquirente");
                         if (!dataBaseQueryTI.join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
                             dataBaseQueryTI.join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrCNPJ = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
 
@@ -324,7 +324,8 @@ namespace api.Negocios.Card
                                                           GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlParcela",
                                                           GatewayEmpresa.SIGLA_QUERY + ".ds_fantasia",
                                                           GatewayEmpresa.SIGLA_QUERY + ".filial",
-                                                          GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",                                                         
+                                                          //GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",  
+                                                          "nmAdquirente = (SELECT TOP 1 UPPER(nmAdquirente) FROM card.tbAdquirente (NOLOCK) WHERE cdAdquirente = CASE WHEN " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdAdquirente IS NOT NULL THEN " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdAdquirente ELSE " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdAdquirenteNew END)"
                                                         };
                         dataBaseQueryTI.groupby = null;
                         dataBaseQueryTI.readUncommited = true;
@@ -566,12 +567,17 @@ namespace api.Negocios.Card
                                     DateTime dataFim = recebParcela.Data.AddDays(RANGE_DIAS_POSTERIOR);
                                     //string nsu = "" + Convert.ToInt32(recebParcela.Nsu);
 
+                                    //if (recebParcela.Nsu.Contains("749176220"))
+                                    //    recebParcela.Nsu += "";
+
                                     SimpleDataBaseQuery queryTINaoConciliado = new SimpleDataBaseQuery(dataBaseQueryTI);
 
                                     // WHERE
                                     queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtTitulo BETWEEN '" + DataBaseQueries.GetDate(dataIni) + "' AND '" + DataBaseQueries.GetDate(dataFim) + " 23:59:00'");
                                     // Número da parcela igual
-                                    queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrParcela IN (" + (recebParcela.NumParcela == 0 ? "0, 1" : recebParcela.NumParcela.ToString()) + ")");
+                                    queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrParcela " + (recebParcela.NumParcela == 0 ? "IN (0, 1)" : " = " + recebParcela.NumParcela));
+                                    // Valor igual
+                                    queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlParcela = " + decimal.Round(recebParcela.Valor, 2).ToString(CultureInfo.GetCultureInfo("en-GB")));
                                     if (idsPreConciliados.Count > 0)
                                         queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".idRecebimentoTitulo NOT IN (" + string.Join(", ", idsPreConciliados) + ")");
 
@@ -595,14 +601,14 @@ namespace api.Negocios.Card
                                     {
                                         // Não achou por NSU => Usa sacado e valor de venda
                                         SimpleDataBaseQuery queryTINaoConciliadoParVal = new SimpleDataBaseQuery(queryTINaoConciliado);
-                                        // Valor igual
-                                        queryTINaoConciliadoParVal.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlParcela = " + recebParcela.Valor.ToString(CultureInfo.GetCultureInfo("en-GB")));
                                         //queryTINaoConciliadoParVal.AddWhereClause("ABS(" + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlParcela - " + recebParcela.Valor.ToString(CultureInfo.GetCultureInfo("en-GB")) + ") <= " + TOLERANCIA.ToString(CultureInfo.GetCultureInfo("en-GB")));
                                         // Sacado igual
                                         //if (recebParcela.Sacado != null && !recebParcela.Sacado.Trim().Equals(""))
                                         //    queryTINaoConciliadoParVal.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdSacado IS NOT NULL AND " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdSacado = '" + recebParcela.Sacado + "'");
+                                        // Data da venda (+- um dia)
+                                        queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtVenda IS NULL OR " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtVenda BETWEEN '" + DataBaseQueries.GetDate(recebParcela.DataVenda.Value.AddDays(-1)) + "' AND '" + DataBaseQueries.GetDate(recebParcela.DataVenda.Value.AddDays(1)) + " 23:59:00'");
                                         // Valor da venda igual
-                                        queryTINaoConciliadoParVal.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlVenda = " + recebParcela.ValorVenda.Value.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                                        queryTINaoConciliadoParVal.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlVenda = " + decimal.Round(recebParcela.ValorVenda.Value, 2).ToString(CultureInfo.GetCultureInfo("en-GB")));
 
                                         // Para cada tbRecebimentoVenda, procurar
                                         resultado = DataBaseQueries.SqlQuery(queryTINaoConciliadoParVal.Script(), connection);
@@ -728,9 +734,7 @@ namespace api.Negocios.Card
                         Int32 numParcela = Convert.ToInt32(queryString["" + (int)CAMPOS.NUMPARCELA]);
                         Int32 numParcela2 = numParcela;
                         if (numParcela2 == 0) numParcela2 = 1;
-                        //RecebimentoParcela recebimento = _db.RecebimentoParcelas.Where(e => e.idRecebimento == idRecebimento)
-                        //                                                        .Where(e => e.numParcela == numParcela)
-                        //                                                        .FirstOrDefault();
+
                         List<IDataRecord> resultado = DataBaseQueries.SqlQuery("SELECT R.cnpj, B.cdAdquirente, R.valorVendaBruta, R.dtaVenda, P.valorParcelaBruta" +
                                                              " FROM pos.RecebimentoParcela P (NOLOCK)" +
                                                              " JOIN pos.Recebimento R (NOLOCK)  ON R.id = P.idRecebimento" +
@@ -771,18 +775,20 @@ namespace api.Negocios.Card
 
                         // Consulta títulos com a mesma data da venda
                         string script = "SELECT T.idRecebimentoTitulo, T.nrParcela, T.nrNSU, T.dsBandeira" +
-                                        ", T.dtVenda, T.dtTitulo, E.ds_fantasia, E.filial, A.nmAdquirente" +
+                                        ", T.dtVenda, T.dtTitulo, E.ds_fantasia, E.filial" + //, A.nmAdquirente" +
+                                        ", nmAdquirente = (SELECT TOP 1 UPPER(nmAdquirente) FROM card.tbAdquirente (NOLOCK) WHERE cdAdquirente = CASE WHEN T.cdAdquirente IS NOT NULL THEN T.cdAdquirente ELSE T.cdAdquirenteNew END)" +
                                         ", T.vlParcela, T.vlVenda, diferencaValorVenda = ABS(T.vlVenda - " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ")" +
                                         ", diferencaValorParcela = ABS(T.vlParcela - " + valorParcelaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ")" +
                                         ", diferencaDtVenda = ABS(DATEDIFF(DAY, T.dtVenda, '" + DataBaseQueries.GetDate(dtaVenda) + "'))" +
                                         " FROM card.tbRecebimentoTitulo T (NOLOCK)" +
                                         " JOIN cliente.empresa E (NOLOCK) ON E.nu_cnpj = T.nrCNPJ" +
-                                        " JOIN card.tbAdquirente A (NOLOCK) ON A.cdAdquirente = T.cdAdquirente" +
+                                        //" JOIN card.tbAdquirente A (NOLOCK) ON A.cdAdquirente = T.cdAdquirente" +
                                         " LEFT JOIN pos.RecebimentoParcela P (NOLOCK) ON P.idRecebimentoTitulo = T.idRecebimentoTitulo" +
                                         " WHERE P.idRecebimentoTitulo IS NULL" +
                                         " AND T.dtVenda BETWEEN '" + DataBaseQueries.GetDate(dataIni) + "' AND '" + DataBaseQueries.GetDate(dataFim) + " 23:59:00'" +
                                         " AND T.nrCNPJ = '" + nrCNPJ + "'" +
-                                        " AND T.cdAdquirente = " + cdAdquirente +
+                                        //" AND T.cdAdquirente = " + cdAdquirente +
+                                        " AND (CASE WHEN T.cdAdquirente IS NOT NULL THEN T.cdAdquirente ELSE ISNULL(T.cdAdquirenteNew, 0) END) = " + cdAdquirente +
                                         " AND ABS(T.vlVenda - " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ") <= " + TOLERANCIA.ToString(CultureInfo.GetCultureInfo("en-GB"))
                                         ;
                         resultado = DataBaseQueries.SqlQuery(script, connection);
@@ -800,7 +806,7 @@ namespace api.Negocios.Card
                                                     empresa = Convert.ToString(r["ds_fantasia"].ToString() + (r["filial"].Equals(DBNull.Value) ? "" : " " + r["filial"].ToString())).ToUpper(),
                                                     vlParcela = Convert.ToDecimal(r["vlParcela"]),
                                                     vlVenda = Convert.ToDecimal(r["vlVenda"].Equals(DBNull.Value) ? 0.0 : r["vlVenda"]),
-                                                    tbAdquirente = Convert.ToString(r["nmAdquirente"]).ToUpper(),
+                                                    tbAdquirente = Convert.ToString(r["nmAdquirente"].Equals(DBNull.Value) ? "" : r["nmAdquirente"]).ToUpper(),
                                                     // Malandragens
                                                     diferencaValorVenda = Convert.ToDecimal(r["diferencaValorVenda"]),
                                                     diferencaValorParcela = Convert.ToDecimal(r["diferencaValorParcela"]),
@@ -812,39 +818,6 @@ namespace api.Negocios.Card
                                                 .ThenByDescending(e => e.nrNSU.StartsWith("T"))
                                                 .ToList<dynamic>();
                         }
-                        //List<dynamic> titulos = _db.tbRecebimentoTitulos.Where(e => e.dtVenda != null && /*(e.dtVenda.Value.Year == recebimento.Recebimento.dtaVenda.Year &&
-                        //                                                                                              e.dtVenda.Value.Month == recebimento.Recebimento.dtaVenda.Month &&
-                        //                                                                                              e.dtVenda.Value.Day == recebimento.Recebimento.dtaVenda.Day))*/
-                        //                                                                        e.dtVenda.Value >= dataIni && e.dtVenda.Value <= dataFim)
-                        //                                                            .Where(e => e.nrCNPJ.Equals(nrCNPJ))
-                        //                                                            .Where(e => e.cdAdquirente == cdAdquirente)
-                        //                                                            .Where(e => (e.vlVenda >= valorVendaBruta && (e.vlVenda - valorVendaBruta <= TOLERANCIA)) ||
-                        //                                                                        (e.vlVenda < valorVendaBruta && (valorVendaBruta - e.vlVenda <= TOLERANCIA)))
-                        //                                                            .Where(e => e.RecebimentoParcelas.Count == 0)
-                        //                                                            //.Where(e => (e.vlParcela >= recebimento.valorParcelaLiquida && (e.vlParcela - recebimento.valorParcelaLiquida <= TOLERANCIA)) ||
-                        //                                                            //            (e.vlParcela < recebimento.valorParcelaLiquida && (recebimento.valorParcelaLiquida - e.vlParcela <= TOLERANCIA)))
-                        //                                                            .Select(e => new
-                        //                                                            {
-                        //                                                                e.idRecebimentoTitulo,
-                        //                                                                e.nrParcela,
-                        //                                                                e.nrNSU,
-                        //                                                                bandeira = e.dsBandeira.ToUpper(),
-                        //                                                                e.dtVenda,
-                        //                                                                e.dtTitulo,
-                        //                                                                empresa = e.empresa.ds_fantasia + (e.empresa.filial != null ? " " + e.empresa.filial : ""),
-                        //                                                                e.vlParcela,
-                        //                                                                vlVenda = e.vlVenda != null ? e.vlVenda : new decimal(0.0),
-                        //                                                                tbAdquirente = e.tbAdquirente.nmAdquirente.ToUpper(),
-                        //                                                                // Malandragens
-                        //                                                                diferencaValorVenda = e.vlVenda >= valorVendaBruta ? e.vlVenda - valorVendaBruta : valorVendaBruta - e.vlVenda,
-                        //                                                                diferencaValorParcela = e.vlParcela >= valorParcelaBruta ? e.vlParcela - valorParcelaBruta : valorParcelaBruta - e.vlParcela,
-                        //                                                                diferencaDtVenda = e.dtVenda < dtaVenda ? DbFunctions.DiffDays(e.dtVenda, dtaVenda) : DbFunctions.DiffDays(dtaVenda, e.dtVenda),
-                        //                                                            })
-                        //                                                            .OrderBy(e => e.diferencaDtVenda)
-                        //                                                            .ThenBy(e => e.diferencaValorVenda)
-                        //                                                            .ThenBy(e => e.diferencaValorParcela)
-                        //                                                            .ThenByDescending(e => e.nrNSU.StartsWith("T"))
-                        //                                                            .ToList<dynamic>();
 
                         // Mesma parcela
                         List<dynamic> titulosParcela;

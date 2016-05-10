@@ -139,7 +139,7 @@ namespace api.Negocios.Tax
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             //entity = entity.Where(e => e.dtaVenda >= dtaIni && e.dtaVenda <= dtaFim);
                             entity = entity.Where(e => e.dtEmissao != null && (e.dtEmissao.Value.Year > dtaIni.Year || (e.dtEmissao.Value.Year == dtaIni.Year && e.dtEmissao.Value.Month > dtaIni.Month) ||
                                                                                           (e.dtEmissao.Value.Year == dtaIni.Year && e.dtEmissao.Value.Month == dtaIni.Month && e.dtEmissao.Value.Day >= dtaIni.Day))
@@ -166,7 +166,7 @@ namespace api.Negocios.Tax
                                 busca = item.Value.Replace("<", "");
                             }
                             //busca = item.Value.Replace("<", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtEmissao != null && e.dtEmissao.Value <= dta);
                         }
                         else if (item.Value.Length == 4)
@@ -209,7 +209,7 @@ namespace api.Negocios.Tax
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             //entity = entity.Where(e => e.dtaVenda >= dtaIni && e.dtaVenda <= dtaFim);
                             entity = entity.Where(e => e.dtRecebimento != null && (e.dtRecebimento.Value.Year > dtaIni.Year || (e.dtRecebimento.Value.Year == dtaIni.Year && e.dtRecebimento.Value.Month > dtaIni.Month) ||
                                                                                           (e.dtRecebimento.Value.Year == dtaIni.Year && e.dtRecebimento.Value.Month == dtaIni.Month && e.dtRecebimento.Value.Day >= dtaIni.Day))
@@ -236,7 +236,7 @@ namespace api.Negocios.Tax
                                 busca = item.Value.Replace("<", "");
                             }
                             //busca = item.Value.Replace("<", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtRecebimento != null && e.dtRecebimento.Value <= dta);
                         }
                         else if (item.Value.Length == 4)
@@ -303,7 +303,7 @@ namespace api.Negocios.Tax
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             //entity = entity.Where(e => e.dtaVenda >= dtaIni && e.dtaVenda <= dtaFim);
                             entity = entity.Where(e => e.dtEntrega != null && (e.dtEntrega.Value.Year > dtaIni.Year || (e.dtEntrega.Value.Year == dtaIni.Year && e.dtEntrega.Value.Month > dtaIni.Month) ||
                                                                                           (e.dtEntrega.Value.Year == dtaIni.Year && e.dtEntrega.Value.Month == dtaIni.Month && e.dtEntrega.Value.Day >= dtaIni.Day))
@@ -330,7 +330,7 @@ namespace api.Negocios.Tax
                                 busca = item.Value.Replace("<", "");
                             }
                             //busca = item.Value.Replace("<", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtEntrega != null && e.dtEntrega.Value <= dta);
                         }
                         else if (item.Value.Length == 4)

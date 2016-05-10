@@ -150,7 +150,28 @@ namespace api.Negocios.Card
                 foreach (dynamic registro in retorno.Registros)
                 {
                     string nrCNPJ = registro.nrCNPJ;
-                    Int32 cdAdquirente = Convert.ToInt32(registro.cdAdquirente);
+                    int? cdAdquirente = null;
+                    try 
+                    {
+                        cdAdquirente = Convert.ToInt32(registro.cdAdquirente);
+                    }
+                    catch { }
+                    string cdSacado = null;
+                    try
+                    {
+                        cdSacado = registro.cdSacado;
+                        cdSacado = cdSacado.Trim();
+                    }
+                    catch { }
+
+
+                    var adquirente = _db.tbAdquirentes.Where(a => a.cdAdquirente == (cdAdquirente != null ? cdAdquirente.Value : cdSacado == null ? (int?)null : _db.Database.SqlQuery<int?>("EXEC dbo.FN_cdAdquirente('" + nrCNPJ + "', '" + cdSacado + "')").FirstOrDefault()))
+                                        .Select(r => new
+                                        {
+                                            r.cdAdquirente,
+                                            r.nmAdquirente
+                                        });
+                    
 
                     titulos.Add(new
                     {
@@ -162,11 +183,7 @@ namespace api.Negocios.Card
                         }).FirstOrDefault(),
                         nrNSU = registro.nrNSU,
                         dtVenda = registro.dtVenda,
-                        tbAdquirente = _db.tbAdquirentes.Where(a => a.cdAdquirente == cdAdquirente).Select(a => new
-                        {
-                            a.cdAdquirente,
-                            a.nmAdquirente
-                        }).FirstOrDefault(),
+                        tbAdquirente = adquirente,
                         dsBandeira = registro.dsBandeira,
                         vlVenda = registro.vlVenda,
                         qtParcelas = registro.qtParcelas,
@@ -175,6 +192,7 @@ namespace api.Negocios.Card
                         nrParcela = registro.nrParcela,
                         cdERP = registro.cdERP,
                         dtBaixaERP = registro.dtBaixaERP,
+                        cdSacado = cdSacado,
                     });
                 }
 
@@ -185,7 +203,7 @@ namespace api.Negocios.Card
                 {
                     titulos = titulos.OrderBy(r => r.empresa.ds_fantasia)
                                      .ThenBy(r => r.dtVenda)
-                                     .ThenBy(r => r.tbAdquirente.nmAdquirente)
+                                     //.ThenBy(r => r.tbAdquirente.nmAdquirente)
                                      .ThenBy(r => r.dsBandeira)
                                      .ThenBy(r => r.dtTitulo)
                                      .Skip(skipRows).Take(pageSize)
@@ -196,7 +214,7 @@ namespace api.Negocios.Card
                     pageNumber = 1;
                     titulos = titulos.OrderBy(r => r.empresa.ds_fantasia)
                                      .ThenBy(r => r.dtVenda)
-                                     .ThenBy(r => r.tbAdquirente.nmAdquirente)
+                                     //.ThenBy(r => r.tbAdquirente.nmAdquirente)
                                      .ThenBy(r => r.dsBandeira)
                                      .ThenBy(r => r.dtTitulo)
                                      .ToList<dynamic>();
@@ -340,10 +358,27 @@ namespace api.Negocios.Card
                     string dsBandeira = tit.dsBandeira;
                     if (dsBandeira.Length > 50) dsBandeira = dsBandeira.Substring(0, 50);
 
+                    int? cdAdquirente = null;
+                    try
+                    {
+                        cdAdquirente = Convert.ToInt32(tit.cdAdquirente);
+                        if (cdAdquirente == 0)
+                            cdAdquirente = null;
+                    }
+                    catch { }
+
+                    string cdSacado = null;
+                    try
+                    {
+                        cdSacado = tit.cdSacado;
+                        cdSacado = cdSacado.Trim();
+                    }
+                    catch { }
+
                     tbRecebimentoTitulo tbRecebimentoTitulo = new tbRecebimentoTitulo
                     {
                         dsBandeira = dsBandeira,
-                        cdAdquirente = tit.cdAdquirente,//tit.tbAdquirente.cdAdquirente,
+                        cdAdquirente = cdAdquirente,
                         cdERP = tit.cdERP,
                         dtBaixaERP = tit.dtBaixaERP,
                         dtTitulo = tit.dtTitulo,
@@ -354,6 +389,7 @@ namespace api.Negocios.Card
                         qtParcelas = Convert.ToByte(tit.qtParcelas),
                         vlParcela = Convert.ToDecimal(tit.vlParcela),
                         vlVenda = Convert.ToDecimal(tit.vlVenda),
+                        cdSacado = cdSacado
                     };
 
                     tbRecebimentoTitulo titulo = _db.Database.SqlQuery<tbRecebimentoTitulo>("SELECT T.*" +
@@ -371,19 +407,20 @@ namespace api.Negocios.Card
                     {
                         _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoTitulo" +
                                                        " (nrCNPJ, nrNSU, dtTitulo, nrParcela, cdERP, dtVenda" + 
-                                                       ", cdAdquirente, dsBandeira, vlVenda, qtParcelas, vlParcela, dtBaixaERP)" +
+                                                       ", cdAdquirente, dsBandeira, vlVenda, qtParcelas, vlParcela, dtBaixaERP, cdSacado)" +
                                                        " VALUES ('" + tbRecebimentoTitulo.nrCNPJ + "'" + 
                                                        ", '" + tbRecebimentoTitulo.nrNSU + "'" +
                                                        ", '" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtTitulo) + "'" +
                                                        ", " + tbRecebimentoTitulo.nrParcela +
                                                        ", " + (tbRecebimentoTitulo.cdERP == null ? "NULL" : "'" + tbRecebimentoTitulo.cdERP + "'") +
                                                        ", " + (tbRecebimentoTitulo.dtVenda == null ? "NULL" : "'" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtVenda.Value) + "'") +
-                                                       ", " + tbRecebimentoTitulo.cdAdquirente +
+                                                       ", " + (cdAdquirente == null ? "NULL" : cdAdquirente.Value.ToString()) +
                                                        ", " + (tbRecebimentoTitulo.dsBandeira == null ? "NULL" : "'" + tbRecebimentoTitulo.dsBandeira + "'") +
                                                        ", " + (tbRecebimentoTitulo.vlVenda == null ? "NULL" : tbRecebimentoTitulo.vlVenda.Value.ToString(CultureInfo.GetCultureInfo("en-GB"))) +
                                                        ", " + (tbRecebimentoTitulo.qtParcelas == null ? "NULL" : tbRecebimentoTitulo.qtParcelas.Value.ToString()) +
                                                        ", " + tbRecebimentoTitulo.vlParcela.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", " + (tbRecebimentoTitulo.dtBaixaERP == null ? "NULL" : "'" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtBaixaERP.Value) + "'") +
+                                                       ", " + (tbRecebimentoTitulo.cdSacado != null ? "'" + tbRecebimentoTitulo.cdSacado + "'" : "NULL") +
                                                        ")");
                         _db.SaveChanges();
                         transaction.Commit();
@@ -403,12 +440,13 @@ namespace api.Negocios.Card
                     {
                         _db.Database.ExecuteSqlCommand("UPDATE T" +
                                                        " SET T.dtVenda = " + (tbRecebimentoTitulo.dtVenda == null ? "NULL" : "'" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtVenda.Value) + "'") +
-                                                       ", T.cdAdquirente = " + tbRecebimentoTitulo.cdAdquirente +
+                                                       ", T.cdAdquirente = " + (cdAdquirente == null ? "NULL" : cdAdquirente.Value.ToString()) +
                                                        ", T.dsBandeira = " + (tbRecebimentoTitulo.dsBandeira == null ? "NULL" : "'" + tbRecebimentoTitulo.dsBandeira + "'") +
                                                        ", T.vlVenda = " + (tbRecebimentoTitulo.vlVenda == null ? "NULL" : tbRecebimentoTitulo.vlVenda.Value.ToString(CultureInfo.GetCultureInfo("en-GB"))) +
                                                        ", T.qtParcelas = " + (tbRecebimentoTitulo.qtParcelas == null ? "NULL" : tbRecebimentoTitulo.qtParcelas.Value.ToString()) +
                                                        ", T.vlParcela = " + tbRecebimentoTitulo.vlParcela.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", T.dtBaixaERP = " + (tbRecebimentoTitulo.dtBaixaERP == null ? "NULL" : "'" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtBaixaERP.Value) + "'") +
+                                                       ", T.cdSacado = " + (tbRecebimentoTitulo.cdSacado != null ? "'" + tbRecebimentoTitulo.cdSacado + "'" : "NULL") +
                                                        " FROM card.tbRecebimentoTitulo T" +
                                                        " WHERE T.idRecebimentoTitulo = " + titulo.idRecebimentoTitulo);
 

@@ -83,7 +83,7 @@ namespace api.Negocios.Card
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => (e.dtAntecipacaoBancaria.Year > dtaIni.Year || (e.dtAntecipacaoBancaria.Year == dtaIni.Year && e.dtAntecipacaoBancaria.Month > dtaIni.Month) ||
                                                                                           (e.dtAntecipacaoBancaria.Year == dtaIni.Year && e.dtAntecipacaoBancaria.Month == dtaIni.Month && e.dtAntecipacaoBancaria.Day >= dtaIni.Day))
                                                     && (e.dtAntecipacaoBancaria.Year < dtaFim.Year || (e.dtAntecipacaoBancaria.Year == dtaFim.Year && e.dtAntecipacaoBancaria.Month < dtaFim.Month) ||
@@ -120,7 +120,7 @@ namespace api.Negocios.Card
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(t => t.tbAntecipacaoBancariaDetalhes.Any(e => (e.dtVencimento.Year > dtaIni.Year || (e.dtVencimento.Year == dtaIni.Year && e.dtVencimento.Month > dtaIni.Month) || (e.dtVencimento.Year == dtaIni.Year && e.dtVencimento.Month == dtaIni.Month && e.dtVencimento.Day >= dtaIni.Day))
                                                                                                 && (e.dtVencimento.Year < dtaFim.Year || (e.dtVencimento.Year == dtaFim.Year && e.dtVencimento.Month < dtaFim.Month) || (e.dtVencimento.Year == dtaFim.Year && e.dtVencimento.Month == dtaFim.Month && e.dtVencimento.Day <= dtaFim.Day))));
                         }
@@ -205,7 +205,7 @@ namespace api.Negocios.Card
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
                             string dtInicio = DataBaseQueries.GetDate(dtaIni);
                             string dtFim = DataBaseQueries.GetDate(dtaFim);
@@ -247,7 +247,7 @@ namespace api.Negocios.Card
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
 
                             string dtInicio = DataBaseQueries.GetDate(dtaIni);
                             string dtFim = DataBaseQueries.GetDate(dtaFim);
@@ -410,7 +410,7 @@ namespace api.Negocios.Card
                         {
                             string[] busca = value.Split('|');
                             dtVencimentoIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            dtVencimentoFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            dtVencimentoFim = DateTime.ParseExact(busca[1] + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                         }
                         else // ANO + MES + DIA
                         {

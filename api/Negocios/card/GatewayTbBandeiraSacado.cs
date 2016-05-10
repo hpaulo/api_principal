@@ -319,7 +319,7 @@ namespace api.Negocios.Card
 
                 if (tbBandeira.dsTipo.StartsWith("DÉBITO"))
                     param.qtParcelas = 0;
-                else if (param.qtParcelas == 0)
+                else if (param.qtParcelas <= 0)
                     param.qtParcelas = 36; // default
 
                 _db.tbBandeiraSacados.Add(param);

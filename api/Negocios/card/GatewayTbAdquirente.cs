@@ -112,7 +112,7 @@ namespace api.Negocios.Card
                         {
                             string[] busca = item.Value.Split('|');
                             DateTime dtaIni = DateTime.ParseExact(busca[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
-                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dtaFim = DateTime.ParseExact(busca[1] + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             
                         }
                         else if (item.Value.Contains(">")) // MAIOR IGUAL
@@ -124,7 +124,7 @@ namespace api.Negocios.Card
                         else if (item.Value.Contains("<")) // MENOR IGUAL
                         {
                             string busca = item.Value.Replace("<", "");
-                            DateTime dta = DateTime.ParseExact(busca + " 23:59:59.999", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            DateTime dta = DateTime.ParseExact(busca + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
                             entity = entity.Where(e => e.dtaRecebimento <= dta);
                         }
                         else if (item.Value.Length == 4)
