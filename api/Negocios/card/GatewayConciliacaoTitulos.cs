@@ -63,6 +63,7 @@ namespace api.Negocios.Card
         private const int RANGE_DIAS_ANTERIOR = 10;
         private const int RANGE_DIAS_POSTERIOR = 5;
         private static decimal TOLERANCIA = new decimal(0.1); // R$0,10
+        private static decimal TOLERANCIA_VLPARCELA = new decimal(0.022); // R$0,02
 
 
         /// <summary>
@@ -577,7 +578,7 @@ namespace api.Negocios.Card
                                     // Número da parcela igual
                                     queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrParcela " + (recebParcela.NumParcela == 0 ? "IN (0, 1)" : " = " + recebParcela.NumParcela));
                                     // Valor igual
-                                    queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlParcela = " + decimal.Round(recebParcela.Valor, 2).ToString(CultureInfo.GetCultureInfo("en-GB")));
+                                    queryTINaoConciliado.AddWhereClause("ABS(" + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlParcela - " + decimal.Round(recebParcela.Valor, 2).ToString(CultureInfo.GetCultureInfo("en-GB")) + ") <= " + TOLERANCIA_VLPARCELA.ToString(CultureInfo.GetCultureInfo("en-GB")));
                                     if (idsPreConciliados.Count > 0)
                                         queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".idRecebimentoTitulo NOT IN (" + string.Join(", ", idsPreConciliados) + ")");
 
@@ -608,7 +609,7 @@ namespace api.Negocios.Card
                                         // Data da venda (+- um dia)
                                         queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtVenda IS NULL OR " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtVenda BETWEEN '" + DataBaseQueries.GetDate(recebParcela.DataVenda.Value.AddDays(-1)) + "' AND '" + DataBaseQueries.GetDate(recebParcela.DataVenda.Value.AddDays(1)) + " 23:59:00'");
                                         // Valor da venda igual
-                                        queryTINaoConciliadoParVal.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlVenda = " + decimal.Round(recebParcela.ValorVenda.Value, 2).ToString(CultureInfo.GetCultureInfo("en-GB")));
+                                        queryTINaoConciliadoParVal.AddWhereClause("ABS(" + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlVenda - " + decimal.Round(recebParcela.ValorVenda.Value, 2).ToString(CultureInfo.GetCultureInfo("en-GB")) + " <= " + TOLERANCIA_VLPARCELA.ToString(CultureInfo.GetCultureInfo("en-GB")));
 
                                         // Para cada tbRecebimentoVenda, procurar
                                         resultado = DataBaseQueries.SqlQuery(queryTINaoConciliadoParVal.Script(), connection);
@@ -638,10 +639,41 @@ namespace api.Negocios.Card
                                         }
                                         else
                                         {
-                                            // Mesma filial da venda
-                                            List<ConciliacaoTitulos> titFilial = titulos.Where(e => e.Filial.Equals(recebParcela.Filial)).ToList<ConciliacaoTitulos>();
-                                            if (titFilial.Count == 1)
-                                                titPreConciliado = titFilial.First();
+                                            // Avalia valor da parcela
+                                            decimal valorParcela = decimal.Round(recebParcela.Valor, 2);
+                                            List<ConciliacaoTitulos> titVlParcela = titulos.Where(e => e.Valor == valorParcela).ToList<ConciliacaoTitulos>();
+                                            if (titVlParcela.Count == 1)
+                                                titPreConciliado = titVlParcela.First();
+                                            else
+                                            {
+                                                // Valor da venda
+                                                decimal valorVenda = decimal.Round(recebParcela.ValorVenda.Value, 2);
+                                                List<ConciliacaoTitulos> titVlVenda;
+                                                if (titVlParcela.Count > 0)
+                                                    // Só considera os de mesmo valor de parcela
+                                                    titVlVenda = titVlParcela.Where(e => e.ValorVenda == valorVenda).ToList<ConciliacaoTitulos>();
+                                                else
+                                                    titVlVenda = titulos.Where(e => e.ValorVenda == valorVenda).ToList<ConciliacaoTitulos>();
+
+                                                if (titVlVenda.Count == 1)
+                                                    titPreConciliado = titVlVenda.First();
+                                                else
+                                                {
+                                                    // Mesma filial da venda
+                                                    List<ConciliacaoTitulos> titFilial;
+                                                    if (titVlVenda.Count > 0)
+                                                        // Só considera os de mesmo valor de venda
+                                                        titFilial = titVlVenda.Where(e => e.Filial.Equals(recebParcela.Filial)).ToList<ConciliacaoTitulos>();
+                                                    else if (titVlParcela.Count > 0)
+                                                        // Só considera os de mesmo valor de parcela
+                                                        titFilial = titVlParcela.Where(e => e.Filial.Equals(recebParcela.Filial)).ToList<ConciliacaoTitulos>();
+                                                    else
+                                                        titFilial = titulos.Where(e => e.Filial.Equals(recebParcela.Filial)).ToList<ConciliacaoTitulos>();
+
+                                                    if (titFilial.Count == 1)
+                                                        titPreConciliado = titFilial.First();
+                                                }
+                                            }
                                         }
                                     }
 
@@ -735,7 +767,7 @@ namespace api.Negocios.Card
                         Int32 numParcela2 = numParcela;
                         if (numParcela2 == 0) numParcela2 = 1;
 
-                        List<IDataRecord> resultado = DataBaseQueries.SqlQuery("SELECT R.cnpj, B.cdAdquirente, R.valorVendaBruta, R.dtaVenda, P.valorParcelaBruta" +
+                        List<IDataRecord> resultado = DataBaseQueries.SqlQuery("SELECT R.cnpj, R.nsu, B.cdAdquirente, R.valorVendaBruta, R.dtaVenda, P.valorParcelaBruta" +
                                                              " FROM pos.RecebimentoParcela P (NOLOCK)" +
                                                              " JOIN pos.Recebimento R (NOLOCK)  ON R.id = P.idRecebimento" +
                                                              " JOIN card.tbBandeira B (NOLOCK)  ON R.cdBandeira = B.cdBandeira" +
@@ -752,6 +784,7 @@ namespace api.Negocios.Card
                         }
                         var recebimento = resultado.Select(r => new
                                          {
+                                             nsu = Convert.ToString(r["nsu"]),
                                              cnpj = Convert.ToString(r["cnpj"]),
                                              cdAdquirente = Convert.ToInt32(r["cdAdquirente"]),
                                              valorVendaBruta = Convert.ToDecimal(r["valorVendaBruta"]),
@@ -767,6 +800,7 @@ namespace api.Negocios.Card
                         int cdAdquirente = recebimento.cdAdquirente; // recebimento.Recebimento.tbBandeira.cdAdquirente
                         decimal valorVendaBruta = recebimento.valorVendaBruta;
                         decimal valorParcelaBruta = recebimento.valorParcelaBruta;
+                        string nsu = recebimento.nsu;
 
                         DateTime dtaVenda = recebimento.dtaVenda;
                         DateTime data = Convert.ToDateTime(dtaVenda.ToShortDateString());
@@ -789,8 +823,8 @@ namespace api.Negocios.Card
                                         " AND T.nrCNPJ = '" + nrCNPJ + "'" +
                                         //" AND T.cdAdquirente = " + cdAdquirente +
                                         " AND (CASE WHEN T.cdAdquirente IS NOT NULL THEN T.cdAdquirente ELSE ISNULL(T.cdAdquirenteNew, 0) END) = " + cdAdquirente +
-                                        " AND ABS(T.vlVenda - " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ") <= " + TOLERANCIA.ToString(CultureInfo.GetCultureInfo("en-GB"))
-                                        ;
+                                        " AND (ABS(T.vlVenda - " + valorVendaBruta.ToString(CultureInfo.GetCultureInfo("en-GB")) + ") <= " + TOLERANCIA.ToString(CultureInfo.GetCultureInfo("en-GB")) +
+                                        "      OR (SUBSTRING('000000000000' + CONVERT(VARCHAR(12), T.nrNSU), LEN(T.nrNSU) + 1, 12) = SUBSTRING('000000000000' + CONVERT(VARCHAR(12), '" + nsu + "'), LEN('" + nsu + "') + 1, 12)))"; // nsu
                         resultado = DataBaseQueries.SqlQuery(script, connection);
                         List<dynamic> titulos = new List<dynamic>();
                         if (resultado != null && resultado.Count > 0)
