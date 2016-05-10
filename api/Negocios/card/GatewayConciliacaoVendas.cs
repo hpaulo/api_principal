@@ -42,6 +42,7 @@ namespace api.Negocios.Card
             NU_CNPJ = 103,
             PRECONCILIA_GRUPO = 104,
             NSU = 105,
+            DATAINTERVALORBUSCA = 106,
 
             // RELACIONAMENTOS
             CDADQUIRENTE = 200,
@@ -772,8 +773,33 @@ namespace api.Negocios.Card
           
                         DateTime dtaVenda = venda.dtaVenda;
                         DateTime data = Convert.ToDateTime(dtaVenda.ToShortDateString());
-                        DateTime dataIni = data.AddDays(RANGE_DIAS_ANTERIOR * -1);
-                        DateTime dataFim = data.AddDays(RANGE_DIAS_POSTERIOR);
+                        DateTime dataIni, dataFim;
+
+                        // Enviou um intervalo de data?
+                        if (queryString.TryGetValue("" + (int)CAMPOS.DATAINTERVALORBUSCA, out outValue))
+                        {
+                            string dataIntervalo = queryString["" + (int)CAMPOS.DATAINTERVALORBUSCA];
+                            if (dataIntervalo.Contains("|"))
+                            {
+                                string[] dts = dataIntervalo.Split('|');
+                                dataIni = DateTime.ParseExact(dts[0] + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                dataFim = DateTime.ParseExact(dts[1] + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+
+                                if (dataFim < dataIni)
+                                    dataFim = dataIni;
+                            }
+                            else
+                            {
+                                dataIni = DateTime.ParseExact(dataIntervalo + " 00:00:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                                dataFim = DateTime.ParseExact(dataIntervalo + " 23:59:00.000", "yyyyMMdd HH:mm:ss.fff", CultureInfo.InvariantCulture);
+                            }
+                        }
+                        else
+                        {
+                            // Default
+                            dataIni = data.AddDays(RANGE_DIAS_ANTERIOR * -1);
+                            dataFim = data.AddDays(RANGE_DIAS_POSTERIOR);
+                        }
 
                         // Consulta vendas num intervalo possível de data da venda com valores dentro da margem tolerável
                         // Ordena considerando menor intervalo de data, nsu começando com T e bandeira 

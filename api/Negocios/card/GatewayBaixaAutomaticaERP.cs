@@ -142,7 +142,7 @@ namespace api.Negocios.Card
                                             ", T_filial = UPPER(ET.ds_fantasia + CASE WHEN ET.filial IS NULL THEN '' ELSE ' ' + ET.filial END)" +
                                             ", T.dsBandeira AS T_dsBandeira" +
                                             //", AAT.nmAdquirente AS T_nmAdquirente" +
-                                            ", T_nmAdquirente = (SELECT TOP 1 nmAdquirente FROM card.tbAdquirente (NOLOCK) WHERE cdAdquirente = CASE WHEN T.cdAdquirente IS NOT NULL THEN T.cdAdquirente ELSE T.cdAdquirenteNew END)" +
+                                            ", T_nmAdquirente = (SELECT TOP 1 UPPER(nmAdquirente) FROM card.tbAdquirente (NOLOCK) WHERE cdAdquirente = CASE WHEN T.cdAdquirente IS NOT NULL THEN T.cdAdquirente ELSE T.cdAdquirenteNew END)" +
                                             ", T.qtParcelas AS T_qtParcelas" +
                                             ", T.nrParcela AS T_nrParcela" +
                                             ", T.dtTitulo AS T_dtRecebimentoPrevisto" +

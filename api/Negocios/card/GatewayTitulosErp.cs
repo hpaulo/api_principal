@@ -362,6 +362,8 @@ namespace api.Negocios.Card
                     try
                     {
                         cdAdquirente = Convert.ToInt32(tit.cdAdquirente);
+                        if (cdAdquirente == 0)
+                            cdAdquirente = null;
                     }
                     catch { }
 

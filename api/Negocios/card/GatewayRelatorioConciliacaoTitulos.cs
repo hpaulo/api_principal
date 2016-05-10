@@ -167,7 +167,7 @@ namespace api.Negocios.Card
                                                       "T_Valor = " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlParcela",
                                                       "T_ValorVenda = " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlVenda",
                                                       //"T_Adquirente = " + GatewayTbAdquirente.SIGLA_QUERY + "2.nmAdquirente",
-                                                      "T_Adquirente = (SELECT TOP 1 nmAdquirente FROM card.tbAdquirente (NOLOCK) WHERE cdAdquirente = CASE WHEN " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdAdquirente IS NOT NULL THEN " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdAdquirente ELSE " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdAdquirenteNew) END)",
+                                                      "T_Adquirente = (SELECT TOP 1 UPPER(nmAdquirente) FROM card.tbAdquirente (NOLOCK) WHERE cdAdquirente = CASE WHEN " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdAdquirente IS NOT NULL THEN " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdAdquirente ELSE " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdAdquirenteNew) END)",
                                                       };
                     dataBaseQuery.orderby = new string[] { "CASE WHEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".idRecebimentoTitulo IS NOT NULL THEN 0 ELSE 1 END", // prioriza os que tem títulos
 			                                           "CASE WHEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo IS NOT NULL THEN " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimentoEfetivo ELSE " + GatewayRecebimentoParcela.SIGLA_QUERY + ".dtaRecebimento END", 
