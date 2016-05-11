@@ -374,6 +374,7 @@
     <Compile Include="Controllers\Pos\ValeCardController.cs" />
     <Compile Include="Controllers\Tax\TbControleNSUController.cs" />
     <Compile Include="Controllers\Tax\TbManifestoController.cs" />
+    <Compile Include="Controllers\Upload\UploadTitulosErpController.cs" />
     <Compile Include="Controllers\Util\BancosController.cs" />
     <Compile Include="Controllers\Util\ExportarController.cs" />
     <Compile Include="Models\Mapping\tbAntecipacaoBancariaDetalheMap.cs" />

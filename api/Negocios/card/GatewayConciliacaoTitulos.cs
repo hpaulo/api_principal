@@ -62,8 +62,11 @@ namespace api.Negocios.Card
         // Pré-Conciliação
         private const int RANGE_DIAS_ANTERIOR = 10;
         private const int RANGE_DIAS_POSTERIOR = 5;
+        private const int RANGE_VENDA_DIAS_ANTERIOR = 1;
+        private const int RANGE_VENDA_DIAS_POSTERIOR = 1;
         private static decimal TOLERANCIA = new decimal(0.1); // R$0,10
-        private static decimal TOLERANCIA_VLPARCELA = new decimal(0.022); // R$0,02
+        private static decimal TOLERANCIA_VENDA = new decimal(0.1); // R$0,10
+        private static decimal TOLERANCIA_VLPARCELA = new decimal(0.05); // R$0,02
 
 
         /// <summary>
@@ -577,7 +580,11 @@ namespace api.Negocios.Card
                                     queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtTitulo BETWEEN '" + DataBaseQueries.GetDate(dataIni) + "' AND '" + DataBaseQueries.GetDate(dataFim) + " 23:59:00'");
                                     // Número da parcela igual
                                     queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrParcela " + (recebParcela.NumParcela == 0 ? "IN (0, 1)" : " = " + recebParcela.NumParcela));
-                                    // Valor igual
+                                    // Data da venda (+-)
+                                    queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtVenda IS NULL OR " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtVenda BETWEEN '" + DataBaseQueries.GetDate(recebParcela.DataVenda.Value.AddDays(-1 * RANGE_VENDA_DIAS_ANTERIOR)) + "' AND '" + DataBaseQueries.GetDate(recebParcela.DataVenda.Value.AddDays(RANGE_VENDA_DIAS_POSTERIOR)) + " 23:59:00'");
+                                    // Valor da venda igual
+                                    queryTINaoConciliado.AddWhereClause("ABS(" + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlVenda - " + decimal.Round(recebParcela.ValorVenda.Value, 2).ToString(CultureInfo.GetCultureInfo("en-GB")) + ") <= " + TOLERANCIA_VENDA.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                                    // Valor da parcela igual
                                     queryTINaoConciliado.AddWhereClause("ABS(" + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlParcela - " + decimal.Round(recebParcela.Valor, 2).ToString(CultureInfo.GetCultureInfo("en-GB")) + ") <= " + TOLERANCIA_VLPARCELA.ToString(CultureInfo.GetCultureInfo("en-GB")));
                                     if (idsPreConciliados.Count > 0)
                                         queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".idRecebimentoTitulo NOT IN (" + string.Join(", ", idsPreConciliados) + ")");
@@ -585,34 +592,23 @@ namespace api.Negocios.Card
                                     ConciliacaoTitulos titPreConciliado = null;
                                     resultado = null;
 
-                                    // Tenta pela NSU
-                                    if (!recebParcela.Adquirente.Equals("POLICARD") && !recebParcela.Adquirente.Equals("GETNET") &&
-                                        !recebParcela.Adquirente.Equals("SODEXO") && !recebParcela.Adquirente.Equals("VALECARD"))
-                                    {
-                                        // Tenta usando a NSU
-                                        SimpleDataBaseQuery queryTINaoConciliadoNSU = new SimpleDataBaseQuery(queryTINaoConciliado);
-                                        queryTINaoConciliadoNSU.AddWhereClause("SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrNSU), LEN(" + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrNSU) + 1, 12) = SUBSTRING('000000000000' + CONVERT(VARCHAR(12), '" + recebParcela.Nsu + "'), LEN('" + recebParcela.Nsu + "') + 1, 12)");
-                                        //queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrNSU LIKE '%" + nsu + "'");
-                                        
-                                        // Para cada tbRecebimentoVenda, procurar
-                                        resultado = DataBaseQueries.SqlQuery(queryTINaoConciliadoNSU.Script(), connection);
-                                    }
+                                    // Gera o resultado
+                                    resultado = DataBaseQueries.SqlQuery(queryTINaoConciliado.Script(), connection);
 
-                                    if (resultado == null || resultado.Count == 0)
+                                    if (resultado != null && resultado.Count > 1)
                                     {
-                                        // Não achou por NSU => Usa sacado e valor de venda
-                                        SimpleDataBaseQuery queryTINaoConciliadoParVal = new SimpleDataBaseQuery(queryTINaoConciliado);
-                                        //queryTINaoConciliadoParVal.AddWhereClause("ABS(" + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlParcela - " + recebParcela.Valor.ToString(CultureInfo.GetCultureInfo("en-GB")) + ") <= " + TOLERANCIA.ToString(CultureInfo.GetCultureInfo("en-GB")));
-                                        // Sacado igual
-                                        //if (recebParcela.Sacado != null && !recebParcela.Sacado.Trim().Equals(""))
-                                        //    queryTINaoConciliadoParVal.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdSacado IS NOT NULL AND " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".cdSacado = '" + recebParcela.Sacado + "'");
-                                        // Data da venda (+- um dia)
-                                        queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtVenda IS NULL OR " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".dtVenda BETWEEN '" + DataBaseQueries.GetDate(recebParcela.DataVenda.Value.AddDays(-1)) + "' AND '" + DataBaseQueries.GetDate(recebParcela.DataVenda.Value.AddDays(1)) + " 23:59:00'");
-                                        // Valor da venda igual
-                                        queryTINaoConciliadoParVal.AddWhereClause("ABS(" + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".vlVenda - " + decimal.Round(recebParcela.ValorVenda.Value, 2).ToString(CultureInfo.GetCultureInfo("en-GB")) + " <= " + TOLERANCIA_VLPARCELA.ToString(CultureInfo.GetCultureInfo("en-GB")));
+                                        // Tenta pela NSU
+                                        if (!recebParcela.Adquirente.Equals("POLICARD") && !recebParcela.Adquirente.Equals("GETNET") &&
+                                            !recebParcela.Adquirente.Equals("SODEXO") && !recebParcela.Adquirente.Equals("VALECARD"))
+                                        {
+                                            // Tenta usando a NSU
+                                            SimpleDataBaseQuery queryTINaoConciliadoNSU = new SimpleDataBaseQuery(queryTINaoConciliado);
+                                            queryTINaoConciliadoNSU.AddWhereClause("SUBSTRING('000000000000' + CONVERT(VARCHAR(12), " + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrNSU), LEN(" + GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrNSU) + 1, 12) = SUBSTRING('000000000000' + CONVERT(VARCHAR(12), '" + recebParcela.Nsu + "'), LEN('" + recebParcela.Nsu + "') + 1, 12)");
+                                            //queryTINaoConciliado.AddWhereClause(GatewayTbRecebimentoTitulo.SIGLA_QUERY + ".nrNSU LIKE '%" + nsu + "'");
 
-                                        // Para cada tbRecebimentoVenda, procurar
-                                        resultado = DataBaseQueries.SqlQuery(queryTINaoConciliadoParVal.Script(), connection);
+                                            // Para cada tbRecebimentoVenda, procurar
+                                            resultado = DataBaseQueries.SqlQuery(queryTINaoConciliadoNSU.Script(), connection);
+                                        }
                                     }
                                          
                                     if (resultado != null && resultado.Count > 0)

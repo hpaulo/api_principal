@@ -47,6 +47,7 @@ namespace api.Negocios.Card
             CDSACADO = 109,
             DTAJUSTE = 110,
             DSMENSAGEM = 111,
+            DSDETALHE = 112,
 
             TIPO = 200,
 
@@ -161,6 +162,10 @@ namespace api.Negocios.Card
                     case CAMPOS.DSMENSAGEM:
                         string dsMensagem = Convert.ToString(item.Value);
                         entity = entity.Where(e => e.dsMensagem.Equals(dsMensagem)).AsQueryable<tbRecebimentoVenda>();
+                        break;
+                    case CAMPOS.DSDETALHE:
+                        string dsDetalhe = Convert.ToString(item.Value);
+                        entity = entity.Where(e => e.dsDetalhe.Equals(dsDetalhe)).AsQueryable<tbRecebimentoVenda>();
                         break;
 
                     // RELACIONAMENTOS
@@ -376,6 +381,19 @@ namespace api.Negocios.Card
                         string dsMensagem = Convert.ToString(item.Value);
                         where.Add(SIGLA_QUERY + ".dsMensagem = '" + dsMensagem + "'");
                         break;
+                    case CAMPOS.DSDETALHE:
+                        string dsDetalhe = Convert.ToString(item.Value);
+                        where.Add(SIGLA_QUERY + ".dsDetalhe = '" + dsDetalhe + "'");
+                        break;
+
+                    // RELACIONAMENTOS
+                    case CAMPOS.ID_GRUPO:
+                        Int32 id_grupo = Convert.ToInt32(item.Value);
+                        // JOIN
+                        if (!join.ContainsKey("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY))
+                            join.Add("INNER JOIN cliente.empresa " + GatewayEmpresa.SIGLA_QUERY, " ON " + SIGLA_QUERY + ".nrCNPJ = " + GatewayEmpresa.SIGLA_QUERY + ".nu_cnpj");
+                        where.Add(GatewayEmpresa.SIGLA_QUERY + ".id_grupo = " + id_grupo);
+                        break;
                 }
             }
             #endregion
@@ -569,6 +587,7 @@ namespace api.Negocios.Card
                         cdSacado = e.cdSacado,
                         dsMensagem = e.dsMensagem,
                         dtAjuste = e.dtAjuste,
+                        dsDetalhe = e.dsDetalhe,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 0)
@@ -588,6 +607,7 @@ namespace api.Negocios.Card
                         dsMensagem = e.dsMensagem,
                         dtAjuste = e.dtAjuste,
                         cdSacado = e.cdSacado,
+                        dsDetalhe = e.dsDetalhe,
                     }).ToList<dynamic>();
                 }
                 else if (colecao == 2) // PORTAL: Consulta Vendas ERP
@@ -619,6 +639,7 @@ namespace api.Negocios.Card
                         cdSacado = e.cdSacado,
                         dsMensagem = e.dsMensagem,
                         dtAjuste = e.dtAjuste,
+                        dsDetalhe = e.dsDetalhe,
                         conciliado = vendasConciliadas.Contains(e.idRecebimentoVenda)
                     }).ToList<dynamic>();
                 }

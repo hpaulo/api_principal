@@ -24,7 +24,7 @@ namespace api.Models
         public string cdSacado { get; set; }
         public DateTime? dtAjuste { get; set; }
         public string dsMensagem { get; set; }
-        //public string cdERPPagamento { get; set; }
+        public string dsDetalhe { get; set; }
         //public virtual tbAdquirente tbAdquirente { get; set; }
         public virtual empresa empresa { get; set; }
         public virtual ICollection<Recebimento> Recebimentos { get; set; }

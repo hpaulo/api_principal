@@ -1668,31 +1668,50 @@ namespace api.Negocios.Card
                                                 continue;
                                             }
 
+                                            ConciliacaoBancaria movimentacao = null;
                                             decimal menorDiferenca = decimal.MaxValue;
-                                            int indice = -1;
-                                            // Procura a menor diferença
-                                            for (int m = 0; m < movimentacoes.Count; m++)
+
+                                            // Avalia se tem algum reservado para a filial
+                                            List<ConciliacaoBancaria> movimentacoesFilial = movimentacoes.Where(t => t.Filial.Equals(recebimento.Filial)).ToList();
+                                            if (movimentacoesFilial.Count == 1)
                                             {
-                                                ConciliacaoBancaria mov = movimentacoes[m];
-                                                decimal diferenca = Math.Abs(recebimento.ValorTotal - mov.ValorTotal);
-                                                if (diferenca < menorDiferenca)
+                                                movimentacao = movimentacoesFilial.First();
+                                                menorDiferenca = Math.Abs(recebimento.ValorTotal - movimentacao.ValorTotal);
+                                            }
+                                            else 
+                                            {
+                                                if (movimentacoesFilial.Count > 0)
                                                 {
-                                                    indice = m;
-                                                    menorDiferenca = diferenca;
+                                                    decimal sum = movimentacoesFilial.Sum(t => t.ValorTotal);
+                                                    if (recebimento.ValorTotal >= sum && recebimento.ValorTotal - sum <= TOLERANCIA_LOTE)
+                                                        movimentacoes = movimentacoesFilial;// Só considera as movimentações da mesma filial
                                                 }
+
+                                                int indice = -1;
+                                                // Procura a menor diferença
+                                                for (int m = 0; m < movimentacoes.Count; m++)
+                                                {
+                                                    ConciliacaoBancaria mov = movimentacoes[m];
+                                                    decimal diferenca = Math.Abs(recebimento.ValorTotal - mov.ValorTotal);
+                                                    if (diferenca < menorDiferenca)
+                                                    {
+                                                        indice = m;
+                                                        menorDiferenca = diferenca;
+                                                    }
+                                                }
+
+                                                if (indice == -1 || (recebimento.ValorTotal <= movimentacoes[indice].ValorTotal && menorDiferenca > TOLERANCIA_LOTE))
+                                                {
+                                                    if (!filtroTipoNaoConciliado)
+                                                        // Adiciona o cupom como não conciliado
+                                                        adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, new List<ConciliacaoBancaria>() { recebimento });
+
+                                                    continue;
+                                                }
+
+                                                // Pega a parcela de menor diferença
+                                                movimentacao = movimentacoes[indice];
                                             }
-
-                                            if (indice == -1 || (recebimento.ValorTotal <= movimentacoes[indice].ValorTotal && menorDiferenca > TOLERANCIA_LOTE))
-                                            {
-                                                if (!filtroTipoNaoConciliado)
-                                                    // Adiciona o cupom como não conciliado
-                                                    adicionaElementosNaoConciliadosNaLista(CollectionConciliacaoBancaria, new List<ConciliacaoBancaria>() { recebimento });
-
-                                                continue;
-                                            }
-
-                                            // Pega a parcela de menor diferença
-                                            ConciliacaoBancaria movimentacao = movimentacoes[indice];
 
                                             // SE O VALOR DO RECEBIMENTO ANTECIPADO FOR MAIOR QUE O DO EXTRATO DE MENOR DIFERENÇA
                                             // AVALIA SE TEM OUTRO LANÇAMENTO NO EXTRATO QUE, SOMADOS, IGUALA O VALOR DO RECEBIMENTO...
@@ -1709,7 +1728,8 @@ namespace api.Negocios.Card
                                                 }
 
                                                 // Remove o que foi utilizado
-                                                movimentacoes.RemoveAt(indice);
+                                                //movimentacoes.RemoveAt(indice);
+                                                movimentacoes.Remove(movimentacao);
                                                 // Verifica se a diferença foi complementada com outro lançamento no extrato
                                                 ConciliacaoBancaria mov = movimentacoes.Where(t => Math.Abs(t.ValorTotal - menorDiferenca) < TOLERANCIA_LOTE)
                                                                                        .OrderByDescending(t => t.Filial) // prioriza o que tem filial

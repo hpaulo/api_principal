@@ -94,6 +94,7 @@ namespace api.Negocios.Card
                         Parcelas = item.Parcelas,
                         Adquirente = item.Adquirente,
                         DataCorrecao = item.DataCorrecao,
+                        Detalhe = item.Detalhe,
                     },
                     Recebimento = item.Tipo != TIPO_RECEBIMENTO ? null : new
                     {
@@ -146,6 +147,7 @@ namespace api.Negocios.Card
                         Parcelas = venda.Parcelas,
                         Adquirente = venda.Adquirente,
                         DataCorrecao = venda.DataCorrecao,
+                        Detalhe = venda.Detalhe,
                     },
                     Recebimento = new
                     {
@@ -207,7 +209,7 @@ namespace api.Negocios.Card
                         queryStringTbRecebimentoVenda.Add("" + (int)GatewayTbRecebimentoVenda.CAMPOS.DTVENDA, data);
                     }
                     // GRUPO EMPRESA => OBRIGATÓRIO!
-                    Int32 IdGrupo = Permissoes.GetIdGrupo(token);
+                    Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                     if (IdGrupo == 0 && queryString.TryGetValue("" + (int)CAMPOS.ID_GRUPO, out outValue))
                         IdGrupo = Convert.ToInt32(queryString["" + (int)CAMPOS.ID_GRUPO]);
                     if (IdGrupo != 0)
@@ -336,6 +338,7 @@ namespace api.Negocios.Card
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".vlVenda",
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".qtParcelas",
                                                           GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dtAjuste",
+                                                          GatewayTbRecebimentoVenda.SIGLA_QUERY + ".dsDetalhe",
                                                           GatewayEmpresa.SIGLA_QUERY + ".ds_fantasia",
                                                           GatewayEmpresa.SIGLA_QUERY + ".filial",
                                                           GatewayTbAdquirente.SIGLA_QUERY + ".nmAdquirente",  
@@ -415,6 +418,7 @@ namespace api.Negocios.Card
                                                                 Adquirente = Convert.ToString(r["nmAdquirente"].Equals(DBNull.Value) ? "" : r["nmAdquirente"]).ToUpper(),
                                                                 Parcelas = Convert.ToInt32(r["qtParcelas"]),
                                                                 DataCorrecao = r["dtAjuste"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)r["dtAjuste"],
+                                                                Detalhe = Convert.ToString(r["dsDetalhe"].Equals(DBNull.Value) ? "" : r["dsDetalhe"]),
                                                             }).ToList<ConciliacaoVendas>();
                             }
 
@@ -514,6 +518,7 @@ namespace api.Negocios.Card
                                                                 Adquirente = Convert.ToString(r["nmAdquirente"].Equals(DBNull.Value) ? "" : r["nmAdquirente"]).ToUpper(),
                                                                 Parcelas = Convert.ToInt32(r["qtParcelas"]),
                                                                 DataCorrecao = r["dtAjuste"].Equals(DBNull.Value) ? (DateTime?)null : (DateTime)r["dtAjuste"],
+                                                                Detalhe = Convert.ToString(r["dsDetalhe"].Equals(DBNull.Value) ? "" : r["dsDetalhe"]),
                                                             }).ToList<ConciliacaoVendas>();
                             }
 

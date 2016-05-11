@@ -39,6 +39,9 @@ namespace api.Models.Mapping
                 .HasMaxLength(40)
                 .IsRequired();
 
+            this.Property(t => t.dsDetalhe)
+                .HasMaxLength(50);
+
             //this.Property(t => t.cdERPPagamento)
             //    .HasMaxLength(15);
 
@@ -65,7 +68,7 @@ namespace api.Models.Mapping
             this.Property(t => t.cdSacado).HasColumnName("cdSacado");
             this.Property(t => t.dtAjuste).HasColumnName("dtAjuste");
             this.Property(t => t.dsMensagem).HasColumnName("dsMensagem");
-            //this.Property(t => t.cdERPPagamento).HasColumnName("cdERPPagamento");
+            this.Property(t => t.dsDetalhe).HasColumnName("dsDetalhe");
 
             // Relationships
             //this.HasOptional(t => t.tbAdquirente)

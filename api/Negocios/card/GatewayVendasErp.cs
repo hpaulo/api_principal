@@ -167,6 +167,14 @@ namespace api.Negocios.Card
                         cdSacado = cdSacado.Trim();
                     }
                     catch { }
+
+                    string dsDetalhe = null;
+                    try
+                    {
+                        dsDetalhe = registro.dsDetalhe;
+                        dsDetalhe = dsDetalhe.Trim();
+                    }
+                    catch { }
                     //string cdERPPagamento = null;
                     //try
                     //{
@@ -200,8 +208,8 @@ namespace api.Negocios.Card
                         vlVenda = registro.vlVenda,
                         qtParcelas = registro.qtParcelas,
                         cdERP = registro.cdERP,
-                        //cdERPPagamento = cdERPPagamento,
-                        //dtCorrecaoERP = registro.dtCorrecaoERP,
+                        dsDetalhe = dsDetalhe,
+                        dtAjuste = registro.dtAjuste,
                     });
                 }
 
@@ -360,13 +368,15 @@ namespace api.Negocios.Card
                         cdSacado = cdSacado.Trim();
                     }
                     catch { }
-                    //string cdERPPagamento = null;
-                    //try
-                    //{
-                    //    cdERPPagamento = vd.cdERPPagamento;
-                    //    cdERPPagamento = cdERPPagamento.Trim();
-                    //}
-                    //catch { }
+
+                    string dsDetalhe = null;
+                    try
+                    {
+                        dsDetalhe = vd.dsDetalhe;
+                        dsDetalhe = dsDetalhe.Trim();
+                    }
+                    catch { }
+
                     if (cdSacado != null)
                     {
                         if (cdSacado.Equals(""))
@@ -390,6 +400,7 @@ namespace api.Negocios.Card
                         vlVenda = Convert.ToDecimal(vd.vlVenda),
                         cdSacado = cdSacado,
                         qtParcelas = Convert.ToByte(vd.qtParcelas),
+                        dsDetalhe = dsDetalhe,
                     };
 
                     tbRecebimentoVenda venda = _db.Database.SqlQuery<tbRecebimentoVenda>("SELECT V.*" +
@@ -405,7 +416,7 @@ namespace api.Negocios.Card
                     if (venda == null)
                     {
                         _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoVenda" +
-                                                       " (nrCNPJ, nrNSU, cdERP, dtVenda, dsBandeira, vlVenda, qtParcelas, cdSacado)" + 
+                                                       " (nrCNPJ, nrNSU, cdERP, dtVenda, dsBandeira, vlVenda, qtParcelas, cdSacado, dsDetalhe)" + 
                                                        " VALUES ('" + tbRecebimentoVenda.nrCNPJ + "'" +
                                                        ", '" + tbRecebimentoVenda.nrNSU + "'" +
                                                        ", '" +  tbRecebimentoVenda.cdERP + "'" +
@@ -415,6 +426,7 @@ namespace api.Negocios.Card
                                                        ", " + tbRecebimentoVenda.vlVenda.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", " + tbRecebimentoVenda.qtParcelas +
                                                        ", " + (tbRecebimentoVenda.cdSacado != null ? "'" + tbRecebimentoVenda.cdSacado + "'" : "NULL") +
+                                                       ", " + (tbRecebimentoVenda.dsDetalhe != null ? "'" + tbRecebimentoVenda.dsDetalhe + "'" : "NULL") +
                                                        ")");
                         _db.SaveChanges();
                         transaction.Commit();
@@ -437,6 +449,7 @@ namespace api.Negocios.Card
                                                        ", V.vlVenda = " + tbRecebimentoVenda.vlVenda.ToString(CultureInfo.GetCultureInfo("en-GB")) +
                                                        ", V.qtParcelas = " + tbRecebimentoVenda.qtParcelas +
                                                        ", V.cdSacado = " + (tbRecebimentoVenda.cdSacado != null ? "'" + tbRecebimentoVenda.cdSacado + "'" : "NULL") +
+                                                       ", V.dsDetalhe = " + (tbRecebimentoVenda.dsDetalhe != null ? "'" + tbRecebimentoVenda.dsDetalhe + "'" : "NULL") +
                                                        ", V.dsMensagem = NULL" +
                                                        ", V.dtAjuste = NULL" +
                                                        " FROM card.tbRecebimentoVenda V" +
