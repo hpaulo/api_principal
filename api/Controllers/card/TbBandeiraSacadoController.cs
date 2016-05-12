@@ -91,7 +91,7 @@ namespace api.Controllers.Card
 
 
         // PUT /tbBandeiraSacado/token/
-        public HttpResponseMessage Put(string token, [FromBody]tbBandeiraSacado param)
+        public HttpResponseMessage Put(string token, [FromBody]TbBandeiraSacadoUpdate param)
         {
             // Abre nova conexão
             using (painel_taxservices_dbContext _db = new painel_taxservices_dbContext())

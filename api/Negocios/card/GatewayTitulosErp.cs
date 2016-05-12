@@ -24,14 +24,14 @@ namespace api.Negocios.Card
 {
     public class GatewayTitulosErp
     {
-       // public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
+        // public static painel_taxservices_dbContext _db = new painel_taxservices_dbContext();
 
         /// <summary>
         /// Auto Loader
         /// </summary>
         public GatewayTitulosErp()
         {
-           // _db.Configuration.ProxyCreationEnabled = false;
+            // _db.Configuration.ProxyCreationEnabled = false;
         }
 
         /// <summary>
@@ -151,7 +151,7 @@ namespace api.Negocios.Card
                 {
                     string nrCNPJ = registro.nrCNPJ;
                     int? cdAdquirente = null;
-                    try 
+                    try
                     {
                         cdAdquirente = Convert.ToInt32(registro.cdAdquirente);
                     }
@@ -171,7 +171,7 @@ namespace api.Negocios.Card
                                             r.cdAdquirente,
                                             r.nmAdquirente
                                         });
-                    
+
 
                     titulos.Add(new
                     {
@@ -203,7 +203,7 @@ namespace api.Negocios.Card
                 {
                     titulos = titulos.OrderBy(r => r.empresa.ds_fantasia)
                                      .ThenBy(r => r.dtVenda)
-                                     //.ThenBy(r => r.tbAdquirente.nmAdquirente)
+                        //.ThenBy(r => r.tbAdquirente.nmAdquirente)
                                      .ThenBy(r => r.dsBandeira)
                                      .ThenBy(r => r.dtTitulo)
                                      .Skip(skipRows).Take(pageSize)
@@ -214,7 +214,7 @@ namespace api.Negocios.Card
                     pageNumber = 1;
                     titulos = titulos.OrderBy(r => r.empresa.ds_fantasia)
                                      .ThenBy(r => r.dtVenda)
-                                     //.ThenBy(r => r.tbAdquirente.nmAdquirente)
+                        //.ThenBy(r => r.tbAdquirente.nmAdquirente)
                                      .ThenBy(r => r.dsBandeira)
                                      .ThenBy(r => r.dtTitulo)
                                      .ToList<dynamic>();
@@ -261,8 +261,8 @@ namespace api.Negocios.Card
             try
             {
 
-                if (param != null) 
-                { 
+                if (param != null)
+                {
                     // GRUPO EMPRESA => OBRIGATÓRIO!
                     Int32 IdGrupo = Permissoes.GetIdGrupo(token, _db);
                     //if (IdGrupo == 0 && param.id_grupo != 0) IdGrupo = param.id_grupo;
@@ -406,9 +406,9 @@ namespace api.Negocios.Card
                     if (titulo == null)
                     {
                         _db.Database.ExecuteSqlCommand("INSERT INTO card.tbRecebimentoTitulo" +
-                                                       " (nrCNPJ, nrNSU, dtTitulo, nrParcela, cdERP, dtVenda" + 
+                                                       " (nrCNPJ, nrNSU, dtTitulo, nrParcela, cdERP, dtVenda" +
                                                        ", cdAdquirente, dsBandeira, vlVenda, qtParcelas, vlParcela, dtBaixaERP, cdSacado)" +
-                                                       " VALUES ('" + tbRecebimentoTitulo.nrCNPJ + "'" + 
+                                                       " VALUES ('" + tbRecebimentoTitulo.nrCNPJ + "'" +
                                                        ", '" + tbRecebimentoTitulo.nrNSU + "'" +
                                                        ", '" + DataBaseQueries.GetDate(tbRecebimentoTitulo.dtTitulo) + "'" +
                                                        ", " + tbRecebimentoTitulo.nrParcela +
@@ -556,8 +556,8 @@ namespace api.Negocios.Card
                     string extensao = postedFile.FileName.LastIndexOf(".") > -1 ? postedFile.FileName.Substring(postedFile.FileName.LastIndexOf(".")) : ".csv";
                     if (!extensao.ToLower().Equals(".csv"))
                         throw new Exception("Só são aceitos arquivos do tipo CSV");
-                    
-                    
+
+
                     // Obtém o nome do arquivo upado
                     string nomeArquivo = (postedFile.FileName.LastIndexOf(".") > -1 ? postedFile.FileName.Substring(0, postedFile.FileName.LastIndexOf(".")) : postedFile.FileName) + "_0" + extensao;
 
@@ -597,77 +597,151 @@ namespace api.Negocios.Card
 
                     List<dynamic> titulosERPCSV = new List<dynamic>();
                     // Lê arquivo e preenche lista
-                    using (CSVReader leitor = new CSVReader(filePath))
+                    StreamReader reader;
+                    try
                     {
-                        int contLinha = 1;
-                        CSVFileira fileira = new CSVFileira();
-                        while (leitor.LerLinha(fileira))
-                        {
-                            if (fileira == null || fileira.Count < 10)
-                                throw new Exception("Linha " + contLinha + " do arquivo é inválida!");
-
-                            // CNPJ
-                            string nrCNPJ = fileira[0].Trim();
-                            if (nrCNPJ.Equals(""))
-                                throw new Exception("CNPJ não informado na linha " + contLinha + "!");
-                            
-                            // CNPJ do grupo?
-                            if (!CNPJSEmpresa.Contains(nrCNPJ))
-                                throw new Exception("CNPJ " + nrCNPJ + " não está cadastrado no grupo " + _db.Database.SqlQuery<grupo_empresa>("SELECT UPPER(G.ds_nome)" + 
-                                                                                                                                               " FROM cliente.grupo_empresa G (NOLOCK)" + 
-                                                                                                                                               " WHERE G.id_grupo = " + idGrupo)
-                                                                                                                      .FirstOrDefault());
-
-                            // NSU
-                            string nrNSU = fileira[1].Trim();
-                            if (nrNSU.Equals(""))
-                            {
-                                if(fileira.Count < 11)
-                                    throw new Exception("NSU e código do ERP não informados na linha " + contLinha + "!");
-
-                                nrNSU = "T" + fileira[10]; // "T" + cdERP
-                            }
-
-                            DateTime dtTitulo = DateTime.Now;
-                            try
-                            {
-                                dtTitulo = Convert.ToDateTime(formataDataDoCSV(fileira[7]));
-                            }
-                            catch
-                            {
-                                throw new Exception("Data do título não está no formato esperado (linha " + contLinha + ")!");
-                            }
-                            int nrParcela = 0;
-                            try
-                            {
-                                nrParcela = Convert.ToInt32(fileira[9]);
-                            }
-                            catch
-                            {
-                                throw new Exception("Número da parcela não está no formato esperado (linha " + contLinha + ")!");
-                            };
-
-                            titulosERPCSV.Add(new {
-                                nrCNPJ = nrCNPJ,
-                                nrNSU = nrNSU,
-                                dtVenda = Convert.ToDateTime(formataDataDoCSV(fileira[2])),
-                                cdAdquirente = Convert.ToInt32(fileira[3].Trim()),
-                                dsBandeira = fileira[4],
-                                vlVenda = Convert.ToDouble(fileira[5]),
-                                qtParcelas = Convert.ToInt32(fileira[6]),
-                                dtTitulo = dtTitulo,
-                                vlParcela = Convert.ToDouble(fileira[8]),
-                                nrParcela = nrParcela,
-                                cdERP = fileira.Count < 11 ? (string) null : fileira[10],
-                                dtBaixaERP = fileira.Count < 12 ? (DateTime?)null : Convert.ToDateTime(formataDataDoCSV(fileira[11]))
-                            });
-
-                            contLinha++;        
-                            
-                        }
+                        reader = new StreamReader(filePath);
+                    }
+                    catch
+                    {
+                        throw new Exception("Falha ao ler conteúdo do arquivo!");
                     }
 
-                    if(titulosERPCSV.Count > 0)
+                    // Lê o arquivo todo
+                    string texto = reader.ReadToEnd();
+
+                    // Obtém as linhas
+                    string[] linhas = texto.Replace("\r", "").Split('\n');
+
+                    // Lê as linhas
+                    for (int contLinha = 0; contLinha < linhas.Length; contLinha++)
+                    {
+                        string[] fileira = linhas[contLinha].Split(';');
+                        if (fileira == null) //|| fileira.Count < 10)
+                            throw new Exception("Linha " + contLinha + " do arquivo é inválida!");
+
+                        if (fileira.Length < 10)
+                            continue;
+
+                        // CNPJ
+                        string nrCNPJ = fileira[0].Trim();
+                        if (nrCNPJ.Equals(""))
+                            throw new Exception("CNPJ não informado na linha " + contLinha + "!");
+
+                        // CNPJ do grupo?
+                        if (!CNPJSEmpresa.Contains(nrCNPJ))
+                            throw new Exception("CNPJ " + nrCNPJ + " não está cadastrado no grupo " + _db.Database.SqlQuery<grupo_empresa>("SELECT UPPER(G.ds_nome)" +
+                                                                                                                                           " FROM cliente.grupo_empresa G (NOLOCK)" +
+                                                                                                                                           " WHERE G.id_grupo = " + idGrupo)
+                                                                                                                  .FirstOrDefault());
+
+                        // NSU
+                        string nrNSU = fileira[1].Trim();
+                        if (nrNSU.Equals(""))
+                        {
+                            if (fileira.Length < 11)
+                                throw new Exception("NSU e código do ERP não informados na linha " + contLinha + "!");
+
+                            nrNSU = "T" + fileira[10]; // "T" + cdERP
+                        }
+
+                        DateTime dtTitulo = DateTime.Now;
+                        try
+                        {
+                            dtTitulo = Convert.ToDateTime(formataDataDoCSV(fileira[7]));
+                        }
+                        catch
+                        {
+                            throw new Exception("Data do título não está no formato esperado (linha " + contLinha + ")!");
+                        }
+                        DateTime? dtVenda = null;
+                        if (!fileira[2].Trim().Equals(""))
+                        {
+                            try
+                            {
+                                dtVenda = Convert.ToDateTime(formataDataDoCSV(fileira[2]));
+                            }
+                            catch
+                            {
+                                throw new Exception("Data da venda não está no formato esperado (linha " + contLinha + ")!");
+                            }
+                        }
+                        int nrParcela = 0;
+                        try
+                        {
+                            nrParcela = Convert.ToInt32(fileira[9]);
+                        }
+                        catch
+                        {
+                            throw new Exception("Número da parcela não está no formato esperado (linha " + contLinha + ")!");
+                        };
+                        DateTime? dtBaixaERP = null;
+                        if (fileira.Length >= 12 && !fileira[11].Trim().Equals(""))
+                        {
+                            try
+                            {
+                                dtBaixaERP = Convert.ToDateTime(formataDataDoCSV(fileira[11]));
+                            }
+                            catch
+                            {
+                                throw new Exception("Data da baixa no ERP não está no formato esperado (linha " + contLinha + ")!");
+                            }
+                        }
+                        decimal vlVenda = new decimal(0.0);
+                        try
+                        {
+                            vlVenda = Convert.ToDecimal(fileira[5]);
+                        }
+                        catch
+                        {
+                            throw new Exception("Valor da venda não está no formato esperado (linha " + contLinha + ")!");
+                        };
+                        decimal vlParcela = new decimal(0.0);
+                        try
+                        {
+                            vlParcela = Convert.ToDecimal(fileira[8]);
+                        }
+                        catch
+                        {
+                            throw new Exception("Valor do título não está no formato esperado (linha " + contLinha + ")!");
+                        };
+                        int qtParcelas = 0;
+                        try
+                        {
+                            qtParcelas = Convert.ToInt32(fileira[6]);
+                        }
+                        catch
+                        {
+                            throw new Exception("Quantidade de parcelas não está no formato esperado (linha " + contLinha + ")!");
+                        };
+                        int cdAdquirente = 0;
+                        try
+                        {
+                            cdAdquirente = Convert.ToInt32(fileira[3]);
+                        }
+                        catch
+                        {
+                            throw new Exception("Código da adquirente não está no formato esperado (linha " + contLinha + ")!");
+                        };
+
+                        titulosERPCSV.Add(new
+                        {
+                            nrCNPJ = nrCNPJ,
+                            nrNSU = nrNSU,
+                            dtVenda = dtVenda,
+                            cdAdquirente = cdAdquirente,
+                            dsBandeira = fileira[4],
+                            vlVenda = vlVenda,
+                            qtParcelas = qtParcelas,
+                            dtTitulo = dtTitulo,
+                            vlParcela = vlParcela,
+                            nrParcela = nrParcela,
+                            cdERP = fileira.Length < 11 ? (string)null : fileira[10],
+                            dtBaixaERP = dtBaixaERP
+                        });
+                    }
+
+                    if (titulosERPCSV.Count > 0)
                     {
                         // Importa os títulos em background
                         retorno.Registros = titulosERPCSV;

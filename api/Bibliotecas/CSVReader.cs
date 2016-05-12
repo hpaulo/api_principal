@@ -40,8 +40,8 @@ namespace api.Bibliotecas
 
             fileira.LinhaTexto = ReadLine();
 
-            if (String.IsNullOrEmpty(fileira.LinhaTexto))
-
+            //if (String.IsNullOrEmpty(fileira.LinhaTexto))
+            if(fileira.LinhaTexto == null)
                 return false;
 
 

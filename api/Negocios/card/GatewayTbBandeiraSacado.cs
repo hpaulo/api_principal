@@ -36,6 +36,9 @@ namespace api.Negocios.Card
             CDBANDEIRA = 101,
             QTPARCELAS = 102,
             CDSACADO = 103,
+
+            // RELACIONAMENTOS
+            CDADQUIRENTE = 202
         };
 
         /// <summary>
@@ -77,6 +80,12 @@ namespace api.Negocios.Card
                     case CAMPOS.QTPARCELAS:
                         byte qtParcelas = Convert.ToByte(item.Value);
                         entity = entity.Where(e => e.qtParcelas == qtParcelas).AsQueryable<tbBandeiraSacado>();
+                        break;
+
+                    // RELACIONAMENTOS
+                    case CAMPOS.CDADQUIRENTE:
+                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                        entity = entity.Where(e => e.tbBandeira.cdAdquirente == cdAdquirente).AsQueryable<tbBandeiraSacado>();
                         break;
                 }
             }
@@ -151,6 +160,14 @@ namespace api.Negocios.Card
                     case CAMPOS.QTPARCELAS:
                         byte qtParcelas = Convert.ToByte(item.Value);
                         where.Add(SIGLA_QUERY + ".qtParcelas = " + qtParcelas);
+                        break;
+                    // RELACIONAMENTOS
+                    case CAMPOS.CDADQUIRENTE:
+                        Int32 cdAdquirente = Convert.ToInt32(item.Value);
+                        // JOIN
+                        if (!join.ContainsKey("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY))
+                            join.Add("INNER JOIN card.tbBandeira " + GatewayTbBandeira.SIGLA_QUERY, " ON " + SIGLA_QUERY + ".cdBandeira = " + GatewayTbBandeira.SIGLA_QUERY + ".cdBandeira");
+                        where.Add(GatewayTbBandeira.SIGLA_QUERY + ".cdAdquirente = " + cdAdquirente);
                         break;
                 }
             }
@@ -309,8 +326,11 @@ namespace api.Negocios.Card
             try
             {
                 Int32 cdGrupo = Permissoes.GetIdGrupo(token, _db);
-                if(cdGrupo != 0)
-                    param.cdGrupo = cdGrupo;
+
+                if (param.cdGrupo != 0 && cdGrupo != param.cdGrupo)
+                    throw new Exception("O usuário não está associado ao grupo empresarial cuja relação bandeira-sacado corresponde!");
+
+                param.cdGrupo = cdGrupo;
 
                 // Consulta bandeira
                 tbBandeira tbBandeira = _db.tbBandeiras.Where(t => t.cdBandeira == param.cdBandeira).FirstOrDefault();
@@ -363,6 +383,13 @@ namespace api.Negocios.Card
             //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
+                Int32 idGrupo = Permissoes.GetIdGrupo(token, _db);
+
+                if (cdGrupo != 0 && idGrupo != cdGrupo)
+                    throw new Exception("O usuário não está associado ao grupo empresarial cuja relação bandeira-sacado corresponde!");
+
+                cdGrupo = idGrupo;
+
                 _db.tbBandeiraSacados.RemoveRange(_db.tbBandeiraSacados.Where(e => e.cdGrupo == cdGrupo && e.cdBandeira == cdBandeira && e.qtParcelas == qtParcelas));
                 _db.SaveChanges();
                 //transaction.Commit();
@@ -392,7 +419,7 @@ namespace api.Negocios.Card
         /// </summary>
         /// <param name="param"></param>
         /// <returns></returns>
-        public static void Update(string token, tbBandeiraSacado param, painel_taxservices_dbContext _dbContext = null)
+        public static void Update(string token, TbBandeiraSacadoUpdate param, painel_taxservices_dbContext _dbContext = null)
         {
             painel_taxservices_dbContext _db;
             if (_dbContext == null) _db = new painel_taxservices_dbContext();
@@ -400,35 +427,57 @@ namespace api.Negocios.Card
             //DbContextTransaction transaction = _db.Database.BeginTransaction();
             try
             {
-                tbBandeiraSacado value = _db.tbBandeiraSacados
-                                .Where(e => e.cdGrupo == param.cdGrupo)
-                                .Where(e => e.cdBandeira == param.cdBandeira)
-                                .Where(e => e.qtParcelas == param.qtParcelas)
-                                .First<tbBandeiraSacado>();
+                Int32 cdGrupo = Permissoes.GetIdGrupo(token, _db);
 
-                //if (param.cdGrupo != null && param.cdGrupo != value.cdGrupo)
-                //    value.cdGrupo = param.cdGrupo;
-                if (param.cdBandeira != value.cdBandeira)
-                    value.cdBandeira = param.cdBandeira;
-                if (param.cdBandeira != value.cdBandeira)
+                if (cdGrupo != 0 && cdGrupo != param.cdGrupo)
+                    throw new Exception("O usuário não está associado ao grupo empresarial cuja relação bandeira-sacado corresponde!");
+
+                param.cdGrupo = cdGrupo;
+
+                tbBandeiraSacado value = _db.Database.SqlQuery<tbBandeiraSacado>("SELECT *" +
+                                                                                 " FROM card.tbBandeiraSacado B (NOLOCK)" +
+                                                                                 " WHERE B.cdGrupo = " + param.cdGrupo +
+                                                                                 " AND B.cdBandeira = " + param.oldCdBandeira +
+                                                                                 " AND B.qtParcelas = " + param.oldQtParcelas).FirstOrDefault();
+
+                if (value == null)
+                    throw new Exception("Bandeira-Sacado inexistente!");
+
+
+                List<string> update = new List<string>();
+
+                if (param.newCdBandeira != value.cdBandeira)
                 {
                     // Consulta bandeira
-                    tbBandeira tbBandeira = _db.tbBandeiras.Where(t => t.cdBandeira == param.cdBandeira).FirstOrDefault();
+                    tbBandeira tbBandeira = _db.tbBandeiras.Where(t => t.cdBandeira == param.newCdBandeira).FirstOrDefault();
                     if (tbBandeira == null)
                         throw new Exception("Bandeira inexistente!");
 
+                    update.Add("B.cdBandeira = " + param.newCdBandeira);
+
                     if (tbBandeira.dsTipo.StartsWith("DÉBITO"))
-                        value.qtParcelas = 0;
-                    else if (param.qtParcelas == 0)
-                        value.qtParcelas = 36; // default
+                        update.Add("B.qtParcelas = 0");
+                    else if (param.newQtParcelas == 0)
+                        update.Add("B.qtParcelas = 36"); // default
                     else
-                        value.qtParcelas = param.qtParcelas;
+                        update.Add("B.qtParcelas = " + param.newQtParcelas);
                 }
-                if (param.cdSacado != null && !param.cdSacado.Equals(value.cdSacado))
-                    value.cdSacado = param.cdSacado;
-                
-                _db.SaveChanges();
-                //transaction.Commit();
+                if (param.newCdSacado != null && !param.newCdSacado.Equals(value.cdSacado))
+                    update.Add("B.cdSacado = '" + param.newCdSacado + "'");
+
+
+                if (update.Count > 0)
+                {
+                    string script = "UPDATE B" +
+                                    " SET " + string.Join(", ", update) +
+                                    " FROM card.tbBandeiraSacado B (NOLOCK)" +
+                                    " WHERE B.cdGrupo = " + param.cdGrupo +
+                                    " AND B.cdBandeira = " + param.oldCdBandeira +
+                                    " AND B.qtParcelas = " + param.oldQtParcelas;
+                    _db.Database.ExecuteSqlCommand(script);
+                    _db.SaveChanges();
+                    //transaction.Commit();
+                }
             }
             catch (Exception e)
             {
