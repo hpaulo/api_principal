@@ -71,7 +71,13 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDSACADO:
                         string cdSacado = Convert.ToString(item.Value);
-                        entity = entity.Where(e => e.cdSacado.Equals(cdSacado)).AsQueryable<tbBandeiraSacado>();
+                        if (cdSacado.Contains("%"))
+                        {
+                            string busca = cdSacado.Replace("%", "");
+                            entity = entity.Where(e => e.cdSacado.StartsWith(busca)).AsQueryable<tbBandeiraSacado>(); // STARTS WITH
+                        }
+                        else
+                            entity = entity.Where(e => e.cdSacado.Equals(cdSacado)).AsQueryable<tbBandeiraSacado>();
                         break;
                     case CAMPOS.CDBANDEIRA:
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
@@ -151,7 +157,13 @@ namespace api.Negocios.Card
                         break;
                     case CAMPOS.CDSACADO:
                         string cdSacado = Convert.ToString(item.Value);
-                        where.Add(SIGLA_QUERY + ".cdSacado = '" + cdSacado + "'");
+                        if (cdSacado.Contains("%"))
+                        {
+                            string busca = cdSacado.Replace("%", "");
+                            where.Add(SIGLA_QUERY + ".cdSacado LIKE '" + busca + "%'");
+                        }
+                        else
+                            where.Add(SIGLA_QUERY + ".cdSacado = '" + cdSacado + "'");
                         break;
                     case CAMPOS.CDBANDEIRA:
                         Int32 cdBandeira = Convert.ToInt32(item.Value);
