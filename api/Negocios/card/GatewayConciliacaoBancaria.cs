@@ -1431,7 +1431,7 @@ namespace api.Negocios.Card
                                                                 Valor = Convert.ToDecimal(t["vlMovimento"]),
                                                                 Filial = Convert.ToString(t["ds_fantasia"].Equals(DBNull.Value) ? "" : t["ds_fantasia"] + (t["filial"].Equals(DBNull.Value) ? "" : " " + t["filial"])).ToUpper(),
                                                             }
-                                                        },
+                                                            },
                                                             ValorTotal = Convert.ToDecimal(t["vlMovimento"]),
                                                             Data = (DateTime)t["dtExtrato"],
                                                             Adquirente = Convert.ToString(t["nmAdquirente"].Equals(DBNull.Value) ? "" : t["nmAdquirente"]).ToUpper(),
@@ -1671,6 +1671,69 @@ namespace api.Negocios.Card
                                             ConciliacaoBancaria movimentacao = null;
                                             decimal menorDiferenca = decimal.MaxValue;
 
+                                            // Avalia se tem movimentações de antecipação por bandeira
+                                            List<ConciliacaoBancaria> movimentacoesBandeira = movimentacoes.Where(t => t.Bandeira != null && !t.Bandeira.Trim().Equals("")).ToList<ConciliacaoBancaria>();
+                                            if (movimentacoesBandeira.Count > 0)
+                                            {
+                                                #region TENTA PRÉ-CONCILIAR POR BANDEIRA
+                                                // Remove das pré-conciliações
+                                                movimentacoes.RemoveAll(t => t.Bandeira != null && !t.Bandeira.Trim().Equals(""));
+
+                                                for (int i = 0; i < movimentacoesBandeira.Count; i++)
+                                                {
+                                                    ConciliacaoBancaria mBandeira = movimentacoesBandeira[i];
+
+                                                    ConciliacaoBancaria rBandeira = recebimento.Grupo.Where(t => t.Bandeira.Equals(mBandeira.Bandeira))
+                                                                                                       .GroupBy(t => new { t.Bandeira, t.TipoCartao })
+                                                                                                       .Select(t => new ConciliacaoBancaria
+                                                                                                        {
+                                                                                                            Tipo = TIPO_RECEBIMENTO, // recebimento
+                                                                                                            Grupo = t.ToList<ConciliacaoBancaria.ConciliacaoGrupo>(),
+                                                                                                            ValorTotal = t.Select(r => r.Valor).Sum(),
+                                                                                                            ValorTotalBruto = t.Select(r => r.ValorBruto).Sum(),
+                                                                                                            Data = recebimento.Data,
+                                                                                                            DataVenda = t.GroupBy(r => r.DataVenda).Count() == 1 ? t.Select(r => r.DataVenda).FirstOrDefault() : (DateTime?)null,
+                                                                                                            Adquirente = recebimento.Adquirente,
+                                                                                                            Bandeira = t.Key.Bandeira,
+                                                                                                            Lote = t.GroupBy(r => r.Lote).Count() == 1 ? t.Select(r => r.Lote).FirstOrDefault() : 0,
+                                                                                                            AntecipacaoBancaria = new decimal(0.0),
+                                                                                                            TipoCartao = t.Key.TipoCartao,
+                                                                                                            Antecipado = true,
+                                                                                                            Filial = t.GroupBy(r => r.Filial).Count() == 1 ? t.Select(r => r.Filial).FirstOrDefault() : "",
+                                                                                                        })
+                                                                                                       .FirstOrDefault();
+
+                                                    if (rBandeira != null && Math.Abs(rBandeira.ValorTotal - mBandeira.ValorTotal) <= TOLERANCIA_LOTE)
+                                                    {
+                                                        // Pré-conciliou!
+                                                        if (!filtroTipoNaoConciliado)
+                                                            adicionaElementosConciliadosNaLista(CollectionConciliacaoBancaria, rBandeira, mBandeira, TIPO_CONCILIADO.PRE_CONCILIADO);
+
+                                                        // Remove movimentação bancária
+                                                        extratoBancarioAntecipacao.Remove(mBandeira);
+                                                        movimentacoes.Remove(mBandeira);
+
+                                                        // Remove parcelas
+                                                        recebimento.Grupo.RemoveAll(t => t.Bandeira.Equals(mBandeira.Bandeira));
+
+                                                        // Atualiza
+                                                        recebimento.ValorTotal = recebimento.Grupo.Select(r => r.Valor).Sum();
+                                                        recebimento.ValorTotalBruto = recebimento.Grupo.Select(r => r.ValorBruto).Sum();
+                                                        recebimento.DataVenda = recebimento.Grupo.GroupBy(r => r.DataVenda).Count() == 1 ? recebimento.Grupo.Select(r => r.DataVenda).FirstOrDefault() : (DateTime?)null;
+                                                        recebimento.Bandeira = recebimento.Grupo.GroupBy(r => r.Bandeira).Count() == 1 ? recebimento.Grupo.Select(r => r.Bandeira).FirstOrDefault() : "";
+                                                        recebimento.Lote = recebimento.Grupo.GroupBy(r => r.Lote).Count() == 1 ? recebimento.Grupo.Select(r => r.Lote).FirstOrDefault() : 0;
+                                                        recebimento.TipoCartao = recebimento.Grupo.GroupBy(r => r.TipoCartao).Count() == 1 ? recebimento.Grupo.Select(r => r.TipoCartao).FirstOrDefault() : "";
+
+                                                    }
+                                                }
+
+                                                if (recebimento.Grupo.Count == 0)
+                                                    continue;
+
+                                                #endregion
+
+                                            }
+
                                             // Avalia se tem algum reservado para a filial
                                             List<ConciliacaoBancaria> movimentacoesFilial = movimentacoes.Where(t => t.Filial.Equals(recebimento.Filial)).ToList();
                                             if (movimentacoesFilial.Count == 1)
@@ -1712,6 +1775,7 @@ namespace api.Negocios.Card
                                                 // Pega a parcela de menor diferença
                                                 movimentacao = movimentacoes[indice];
                                             }
+                                            
 
                                             // SE O VALOR DO RECEBIMENTO ANTECIPADO FOR MAIOR QUE O DO EXTRATO DE MENOR DIFERENÇA
                                             // AVALIA SE TEM OUTRO LANÇAMENTO NO EXTRATO QUE, SOMADOS, IGUALA O VALOR DO RECEBIMENTO...
